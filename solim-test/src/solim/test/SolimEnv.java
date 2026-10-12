@@ -80,5 +80,7 @@ public class SolimEnv extends ArcTestEnv {
 		OwnershipContext.clear();
 		ReactiveContext.clear();
 		SignalDispatcher.resetForTests();
+		solim.core.SessionRoot.get().clear();
+		solim.core.SolimAssert.setMainThread(null);
 	}
 }

@@ -376,4 +376,30 @@ class ReactiveGridTest extends SolimEnv {
 				"Short card with grow() must expand vertically to match tall sibling in the same row");
 		grid.dispose();
 	}
+
+	@Test
+	void emptyStateRunnableBindingsAreDisposedWhenGridBecomesPopulated() {
+		Signal<List<String>> items = Signal.of(Collections.emptyList());
+		Signal<String> emptyText = Signal.of("No items available");
+
+		ReactiveGrid<String> grid = new ReactiveGrid<>(items);
+		grid.key(s -> s);
+		grid.children((item, ctx) -> new ItemComp(item));
+		grid.empty(() -> {
+			solim.display.Text t = solim.display.Text.of(emptyText);
+			AttachmentStack.add(t.element());
+		});
+		grid.element();
+
+		assertEquals(1, emptyText.observerCount(), "Empty state text component should observe emptyText signal");
+
+		// Transition to populated
+		items.set(Arrays.asList("First", "Second"));
+		SignalDispatcher.flush();
+
+		assertEquals(0, emptyText.observerCount(),
+				"Empty state bindings should be cleanly disposed when items arrive");
+
+		grid.dispose();
+	}
 }

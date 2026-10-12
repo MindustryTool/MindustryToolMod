@@ -1,5 +1,8 @@
-## ADDED Requirements
+# solim-component-ownership Specification
 
+## Purpose
+TBD - created by archiving change solim-ownership-unification. Update Purpose after archive.
+## Requirements
 ### Requirement: Single base class
 
 `Component` SHALL be an abstract class, not an interface, and SHALL carry every behaviour shared by all components: the parent link, the child list, the flat leaf list, resource adoption, and disposal ordering.
@@ -80,23 +83,3 @@ The ambient ownership stack SHALL hold components directly. Registering an owner
 - **WHEN** a module below `solim-core` references a component as a type
 - **THEN** the type remains available from the contract module
 
-## MODIFIED Requirements
-
-### Requirement: OwnershipContext is the canonical lifecycle-ownership scope
-
-The system SHALL provide `solim.core.OwnershipContext` as the single ambient scope answering WHO disposes a `Disposable`, with `push/pop/current/register/registerChild` semantics. `OwnershipContext` SHALL reside in the same module as `Component` so a component can install itself as owner. It SHALL NOT filter registrations by type: every registered `Disposable` is collected by the active scope. Suspension of ambient collection SHALL be expressed by `OwnershipScope`, not by clearing the stack.
-
-#### Scenario: Build-time resources are owned automatically
-
-- **WHEN** an `Effect`, `Binding`, `Computed`, or child `Component` is created inside a component's build
-- **THEN** it is registered with that component and disposed with it
-
-#### Scenario: Non-Component resources are no longer filtered out of captures
-
-- **WHEN** a capture or factory scope collects resources
-- **THEN** `Computed`, `Effect`, `Query`, and `Subscription` instances are collected alongside components, rather than being dropped
-
-#### Scenario: Reconciler output is owned by the reconciled component
-
-- **WHEN** a keyed collection creates a component through a factory that also constructs a `Computed`
-- **THEN** both the component and the `Computed` are owned by the created component, and neither is attached to the component whose collection triggered reconciliation

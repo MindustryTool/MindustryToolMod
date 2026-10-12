@@ -270,14 +270,24 @@ public final class ReactiveGrid<T> extends Component
 
         if (reconciler.isEmpty()) {
             if (emptyRunnable != null) {
-                Table emptyTable = new Table();
-                AttachmentStack.push(emptyTable);
-                try {
-                    emptyRunnable.run();
-                } finally {
-                    AttachmentStack.pop();
+                if (currentEmptyComponent == null) {
+                    currentEmptyComponent = new Component(new Table()) {
+                        @Override
+                        protected Element build() {
+                            return element();
+                        }
+                    };
+                    Table emptyTable = (Table) currentEmptyComponent.element();
+                    AttachmentStack.push(emptyTable);
+                    OwnershipContext.push(currentEmptyComponent);
+                    try {
+                        emptyRunnable.run();
+                    } finally {
+                        OwnershipContext.pop();
+                        AttachmentStack.pop();
+                    }
                 }
-                table.add(emptyTable).center().colspan(cols).growX();
+                table.add(currentEmptyComponent.element()).center().colspan(cols).growX();
             } else if (emptyViewSupplier != null) {
                 if (currentEmptyComponent == null) {
                     currentEmptyComponent = AttachmentStack.isolate(() -> {
@@ -288,7 +298,9 @@ public final class ReactiveGrid<T> extends Component
                         return c;
                     });
                 }
-                table.add(currentEmptyComponent.element()).center().colspan(cols).growX();
+                if (currentEmptyComponent != null) {
+                    table.add(currentEmptyComponent.element()).center().colspan(cols).growX();
+                }
             }
             return;
         }

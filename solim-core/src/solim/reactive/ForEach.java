@@ -7,7 +7,7 @@ import arc.util.Nullable;
 import java.util.*;
 import arc.func.Func;
 import solim.core.Component;
-import solim.core.Component;
+import solim.core.Disposable;
 import solim.core.SolimToken;
 
 import solim.modifier.CellConfig;
@@ -28,6 +28,7 @@ public final class ForEach<T> extends Component
     private Func<T, ?> keyExtractor = v -> v;
     private final Signal<Func<T, Component>> itemFactorySignal = Signal.of(null);
     private final StructuralReconciler<Object, Component> reconciler = new StructuralReconciler<>();
+    private final List<Disposable> itemBindings = new ArrayList<>();
 
     public ForEach(Readable<? extends Iterable<T>> collection) {
         this.collection = collection;
@@ -172,6 +173,11 @@ public final class ForEach<T> extends Component
         }
         Map<Object, Component> active = reconciler.reconcile(items, this::extractKey, factory);
 
+        for (Disposable d : itemBindings) {
+            d.dispose();
+        }
+        itemBindings.clear();
+
         container.clearChildren();
         for (Component comp : active.values()) {
             Element el = comp.element();
@@ -182,7 +188,11 @@ public final class ForEach<T> extends Component
                 sc = PendingCellConfig.find(el);
             }
             if (sc != null) {
-                sc.applyToCell(cell);
+                List<Disposable> cellEffects = sc.applyToCell(cell);
+                itemBindings.addAll(cellEffects);
+                for (Disposable d : cellEffects) {
+                    comp.adopt(d);
+                }
             } else if (SolimToken.isExpandingChild(el)) {
                 cell.growX();
             }
@@ -201,6 +211,10 @@ public final class ForEach<T> extends Component
 
     @Override
     protected void onDispose() {
+        for (Disposable d : itemBindings) {
+            d.dispose();
+        }
+        itemBindings.clear();
         reconciler.dispose();
         container.clearChildren();
     }

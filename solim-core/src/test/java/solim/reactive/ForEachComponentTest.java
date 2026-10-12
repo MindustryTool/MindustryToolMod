@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,12 +28,23 @@ import solim.test.SolimCoreEnv;
 class ForEachComponentTest extends SolimCoreEnv {
 
 
-    static class TestComponent extends Component {
+    static class TestComponent extends Component implements solim.modifier.CellConfig<TestComponent> {
         final String id;
         boolean wasDisposed = false;
+        private final solim.modifier.PendingCellConfig constraints = new solim.modifier.PendingCellConfig();
 
         TestComponent(String id) {
             this.id = id;
+        }
+
+        @Override
+        public solim.modifier.PendingCellConfig cellConfig() {
+            return constraints;
+        }
+
+        @Override
+        public TestComponent self() {
+            return this;
         }
 
         @Override
@@ -218,5 +230,31 @@ class ForEachComponentTest extends SolimCoreEnv {
 
         fe.dispose();
         col.dispose();
+    }
+
+    @Test
+    void forEachItemCellConstraintsAreDisposedWithItem() {
+        Signal<List<String>> items = Signal.of(Arrays.asList("A", "B"));
+        Signal<Float> padTopSignal = Signal.of(10f);
+
+        ForEach<String> fe = new ForEach<>(items);
+        fe.key(id -> id);
+        fe.children(id -> {
+            TestComponent tc = new TestComponent(id);
+            tc.marginTop(padTopSignal);
+            return tc;
+        });
+        fe.element();
+
+        assertEquals(2, padTopSignal.observerCount(), "Both items should observe padTopSignal");
+
+        // Remove item B
+        items.set(Collections.singletonList("A"));
+        SignalDispatcher.flush();
+
+        assertEquals(1, padTopSignal.observerCount(), "Removed item's cell constraints must be disposed");
+
+        fe.dispose();
+        assertEquals(0, padTopSignal.observerCount(), "All cell constraints must be disposed when ForEach is disposed");
     }
 }

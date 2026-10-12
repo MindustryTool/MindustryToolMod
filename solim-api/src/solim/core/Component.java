@@ -231,6 +231,8 @@ public abstract class Component implements Disposable, DisposableOwner {
 			}
 			if (child.parent != null) {
 				child.parent.children.remove(child);
+			} else {
+				SessionRoot.get().remove(child);
 			}
 			child.parent = this;
 			children.add(child);
@@ -280,6 +282,8 @@ public abstract class Component implements Disposable, DisposableOwner {
 		Component owner = parent;
 		if (owner != null) {
 			owner.children.remove(this);
+		} else {
+			SessionRoot.get().remove(this);
 		}
 		parent = null;
 	}

@@ -58,8 +58,17 @@ public final class OwnershipContext {
 		return disposable;
 	}
 
-	/** Registers a child component with the currently active building component, if any. */
+	/** Registers a child component with the currently active building component, or SessionRoot if unparented. */
 	public static <T extends Component> T registerChild(@Nullable T child) {
-		return register(child);
+		if (child == null) {
+			return null;
+		}
+		DisposableOwner current = stack.peek();
+		if (current != null) {
+			current.adopt(child);
+		} else {
+			SessionRoot.get().adopt(child);
+		}
+		return child;
 	}
 }

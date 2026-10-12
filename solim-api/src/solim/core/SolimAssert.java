@@ -29,4 +29,17 @@ public final class SolimAssert {
                             + "), but was called on: " + Thread.currentThread().getName());
         }
     }
+
+    /**
+     * Asserts that a component is owned, either having an explicit parent or being registered with SessionRoot.
+     */
+    public static void assertOwned(@Nullable Component component) {
+        if (component == null) {
+            throw new IllegalArgumentException("[Solim] Component cannot be null");
+        }
+        if (component.owner() == null && !SessionRoot.get().contains(component)) {
+            throw new AssertionError("[Solim] Component " + component.getClass().getSimpleName()
+                    + " is unowned (no parent and not in SessionRoot)");
+        }
+    }
 }

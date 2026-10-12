@@ -14,7 +14,6 @@ import arc.func.Func2;
 import arc.func.Func;
 import arc.func.Prov;
 import solim.core.Component;
-import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.SolimToken;
 import solim.display.Text;
@@ -25,6 +24,7 @@ import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.TableConfig;
 import solim.runtime.AttachmentStack;
+import solim.runtime.OwnershipScope;
 import solim.runtime.ReactiveContext;
 
 /**
@@ -318,31 +318,42 @@ public final class QueryView<T> extends Component
 
 		cleanupCurrent();
 
-		currentComponent = ReactiveContext.untracked(() -> AttachmentStack.isolate(() -> {
+		currentComponent = ReactiveContext.untracked(() -> {
+			OwnershipScope scope = OwnershipScope.open();
 			try {
-				switch (targetState) {
-					case LOADING:
-						return loadingFactory != null ? loadingFactory.get() : defaultLoadingFactory.get();
-					case ERROR:
-						return errorFactory != null
-								? errorFactory.get(err)
-								: defaultErrorFactory.get(err, query::refetch);
-					case DATA:
-						if (dataWithFetchingFactory != null) {
-							return dataWithFetchingFactory.get(data, isFetching);
-						} else if (dataFactory != null) {
-							return dataFactory.get(data);
+				Component created = AttachmentStack.isolate(() -> {
+					try {
+						switch (targetState) {
+							case LOADING:
+								return loadingFactory != null ? loadingFactory.get() : defaultLoadingFactory.get();
+							case ERROR:
+								return errorFactory != null
+										? errorFactory.get(err)
+										: defaultErrorFactory.get(err, query::refetch);
+							case DATA:
+								if (dataWithFetchingFactory != null) {
+									return dataWithFetchingFactory.get(data, isFetching);
+								} else if (dataFactory != null) {
+									return dataFactory.get(data);
+								}
+								return null;
+							case EMPTY:
+							default:
+								return null;
 						}
-						return null;
-					case EMPTY:
-					default:
-						return null;
+					} catch (Throwable t) {
+						Log.err("[Solim] Error rendering QueryView", t);
+						return defaultErrorFactory.get(t, query::refetch);
+					}
+				});
+				if (created != null) {
+					scope.adoptInto(created);
 				}
-			} catch (Throwable t) {
-				Log.err("[Solim] Error rendering QueryView", t);
-				return defaultErrorFactory.get(t, query::refetch);
+				return created;
+			} finally {
+				scope.close();
 			}
-		}));
+		});
 
 		if (currentComponent != null) {
 			Element el = currentComponent.element();

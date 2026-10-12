@@ -113,11 +113,11 @@ public final class Signal<T> implements Readable<T>, ReactiveSource {
 	}
 
 	// For testing: listener/observer counts
-	int listenerCount() {
+	public int listenerCount() {
 		return listeners.size();
 	}
 
-	int observerCount() {
+	public int observerCount() {
 		return observers.size();
 	}
 }
