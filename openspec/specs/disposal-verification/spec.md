@@ -85,3 +85,47 @@ Component disposal SHALL be verified in three modes: standalone direct instantia
 #### Scenario: Structural container disposes removed and cleared items
 - **WHEN** items are removed from a structural container and the container is later disposed
 - **THEN** removed item components were disposed at removal and remaining item components are disposed with the container
+
+### Requirement: Reactive modifier mixin disposal dual proof
+
+All reactive modifier methods declared on `ElementConfig`, `CellConfig`, and `TableConfig` SHALL create `Effect`s that are strictly owned by the modifying component, whether applied inside an ambient `build()` scope or outside in standalone scope via `ModifierOwnership`. Upon `component.dispose()`, all installed modifier effects SHALL be disposed, second disposal SHALL be an idempotent no-op without throwing, and subsequent mutations of the bound `Signal` SHALL cause zero mutations to the underlying Arc `Element`, `Cell`, or `Table`.
+
+#### Scenario: ElementConfig reactive properties cease updating after disposal
+- **WHEN** a component configured with `width(Readable)`, `height(Readable)`, `size(Readable)`, `x(Readable)`, `y(Readable)`, `visible(Readable)`, `opacity(Readable)`, or `tooltip(Readable)` is disposed and its bound signals are subsequently updated
+- **THEN** the underlying Arc `Element` properties (size, position, visibility, color alpha, tooltip) do not change from their pre-disposal values, and `isDisposed()` returns `true`
+
+#### Scenario: CellConfig reactive constraints cease updating after disposal
+- **WHEN** a component configured with `minWidth(Readable)`, `minHeight(Readable)`, `maxWidth(Readable)`, `maxHeight(Readable)`, or `margin*(Readable)` inside a parent cell is disposed and its bound signals are subsequently updated
+- **THEN** the parent Arc `Cell` constraints and padding do not change from their pre-disposal values
+
+#### Scenario: TableConfig reactive table styling ceases updating after disposal
+- **WHEN** a component configured with `align(Readable)`, `padding*(Readable)`, `gap(Readable)`, `color(Readable)`, `alpha(Readable)`, or `background(Readable)` is disposed and its bound signals are subsequently updated
+- **THEN** the underlying Arc `Table` styling, padding, alignment, and child gap do not change from their pre-disposal values
+
+#### Scenario: Mixin disposal in standalone vs ambient scope leaves no leak
+- **WHEN** mixin reactive methods are invoked outside `build()` (via `ModifierOwnership.own`) or inside `build()` (via `OwnershipContext.register`), and the component is then disposed
+- **THEN** all effects are disposed, `OwnershipContext.size()` is 0, and no double-disposal exception occurs
+
+### Requirement: Comprehensive component-specific reactive disposal
+
+The components `Button`, `SolimSelect`, `SolimCollapser`, `When`, and `SolimVideo` SHALL dispose all owned bindings, two-way listeners, child components, and external listeners upon `dispose()`, preventing any lingering undisposed disposables or post-disposal updates.
+
+#### Scenario: Button disposes all reactive bindings
+- **WHEN** a `Button` with reactive `disabled`, `checked`, `visible`, `style`, `icon`, or `iconColor` bindings is disposed and its signals are updated
+- **THEN** the button does not update its state, style, or icon, and double-disposal is safe
+
+#### Scenario: SolimSelect disposes two-way binding
+- **WHEN** a `SolimSelect` is disposed and either its backing signal is mutated or its widget selection changes
+- **THEN** the widget does not react to signal mutations, the signal is not modified by widget events, and the binding is marked disposed
+
+#### Scenario: SolimCollapser disposes reactive collapsed state and children
+- **WHEN** a `SolimCollapser` is disposed and its `collapsed` or `duration` signals are mutated
+- **THEN** the collapser does not animate or change collapse state, and its child components are marked disposed
+
+#### Scenario: When disposes previous branches and stops branch remounting post-dispose
+- **WHEN** a `When` container switches conditions, and when the container itself is disposed
+- **THEN** replaced branch components are disposed immediately upon condition switch, currently active branch components are disposed when `When` is disposed, and condition changes post-dispose mount nothing
+
+#### Scenario: SolimVideo disposes subcomponents and video player
+- **WHEN** a `SolimVideo` is disposed
+- **THEN** all owned subcomponents (`playButton`, `scrub`, `time`, `replayButton`, `muteButton`) are disposed, url/control signal changes post-dispose cause no action, and video player resources are released

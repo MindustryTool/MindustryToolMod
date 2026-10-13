@@ -15,16 +15,12 @@ The system SHALL provide `SessionRoot` as a process-lifetime `DisposableOwner` r
 
 ### Requirement: Memory-safe ephemeral unregistration
 
-`SessionRoot` SHALL allow top-level components to be unlinked upon disposal or overlay closure, preventing process-lifetime retention leaks.
+SessionRoot SHALL allow top-level components to be unlinked upon disposal or overlay closure, preventing process-lifetime retention leaks, and fail fast without swallowing disposal exceptions.
 
 #### Scenario: Disposed top-level component unregisters from SessionRoot
-- **WHEN** a top-level component adopted by `SessionRoot` is disposed
-- **THEN** it is removed from `SessionRoot.children()`, leaving no retained strong references in the root
+- **WHEN** a top-level component adopted by SessionRoot is disposed
+- **THEN** it is removed from SessionRoot.children(), leaving no retained strong references in the root
 
-### Requirement: Node ownership resolution assertion
-
-The system SHALL provide an assertion that verifies a component or reactive resource is connected to an active owner.
-
-#### Scenario: Asserting ownership on registered component succeeds
-- **WHEN** a component is instantiated inside or outside a scope
-- **THEN** an ownership assertion confirms it has an active non-null owner
+#### Scenario: SessionRoot disposal fails loud
+- **WHEN** SessionRoot.dispose() encounters an exception while disposing a child or resource
+- **THEN** the exception is propagated immediately instead of caught and ignored

@@ -1,6 +1,10 @@
 package solim.input;
 
+import arc.scene.Element;
+import arc.scene.event.ChangeListener;
+import arc.scene.event.ChangeListener.ChangeEvent;
 import arc.scene.ui.TextButton;
+import arc.util.Nullable;
 import java.util.List;
 import solim.core.Component;
 import solim.core.DisposableAction;
@@ -49,13 +53,19 @@ public final class SolimSelect<T> extends Component implements ElementConfig<Sol
                     selectBox.setText(String.valueOf(cur));
                 },
                 onChange -> {
-                    selectBox.changed(() -> {
-                        if (!options.isEmpty()) {
-                            selectedIndex = (selectedIndex + 1) % options.size();
-                            onChange.run();
+                    // Installed as an explicit listener rather than via TextButton.changed(...)
+                    // so disposal can unregister it: the widget must stop driving a dead binding.
+                    ChangeListener listener = new ChangeListener() {
+                        @Override
+                        public void changed(ChangeEvent event, @Nullable Element actor) {
+                            if (!options.isEmpty()) {
+                                selectedIndex = (selectedIndex + 1) % options.size();
+                                onChange.run();
+                            }
                         }
-                    });
-                    return DisposableAction.empty();
+                    };
+                    selectBox.addListener(listener);
+                    return DisposableAction.of(() -> selectBox.removeListener(listener));
                 }));
     }
 

@@ -15,9 +15,9 @@ TBD - created by archiving change solim-ownership-unification. Update Purpose af
 - **WHEN** any component is asked whether it is disposed
 - **THEN** it SHALL report its actual state, never an unconditional `false`
 
-#### Scenario: Disposal order is on the base class
+#### Scenario: Disposal order is on the base class and fails loud
 - **WHEN** a component with children and own leaves is disposed
-- **THEN** `onDispose()` runs first, then child components in reverse adoption order, then own leaves in reverse registration order, and each disposal is attempted independently
+- **THEN** `onDispose()` runs first, then child components in reverse adoption order, then own leaves in reverse registration order, and any exception thrown during disposal SHALL propagate immediately without being swallowed or merely logged
 
 #### Scenario: Owner and ancestry are queryable
 - **WHEN** a component is queried for its owner, its children, or whether it is an ancestor of another component
@@ -41,15 +41,15 @@ TBD - created by archiving change solim-ownership-unification. Update Purpose af
 
 ### Requirement: Reactive resources auto-own
 
-A reactive primitive SHALL be registered with the component that configures it, without per-method bookkeeping. Ownership of such a resource SHALL be automatic and unconditional.
+A reactive primitive SHALL be registered with the component that configures it, without per-method bookkeeping or ad-hoc fallback adapter classes. Ownership of such a resource SHALL be automatic and unconditional via active ambient build scope.
 
 #### Scenario: A reactive modifier needs no self-registration
 - **WHEN** a component configures itself from a `Readable`, for example `icon(icon).color(readable)`
-- **THEN** the installed `Effect` is owned by that component with no explicit registration call at the call site
+- **THEN** the installed `Effect` is owned by that component automatically with no explicit `own(...)` or `ModifierOwnership` call at the call site
 
 #### Scenario: Forgetting to own is not expressible
 - **WHEN** a reactive modifier is added to a component
-- **THEN** there is no per-method step that can be omitted, because ownership is inherited rather than written
+- **THEN** there is no per-method step that can be omitted, because ownership is inherited via ambient `build()` context rather than written manually
 
 #### Scenario: A children block owns what it creates
 - **WHEN** a component's `children(Runnable)` block runs
