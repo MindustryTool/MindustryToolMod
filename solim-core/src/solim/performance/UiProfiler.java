@@ -12,7 +12,8 @@ import java.util.Map;
  * Tracks per-phase timing (act, layout, draw), layout invalidation counts,
  * element tree scale, and framerate.
  *
- * <p>When disabled (the default), all recording hooks are zero-overhead no-ops.
+ * <p>
+ * When disabled (the default), all recording hooks are zero-overhead no-ops.
  */
 public final class UiProfiler {
 
@@ -29,7 +30,8 @@ public final class UiProfiler {
     private static int curDrawCalls = 0;
     private static int curLayoutPasses = 0;
 
-    private UiProfiler() {}
+    private UiProfiler() {
+    }
 
     public static void setEnabled(boolean state) {
         enabled = state;
@@ -56,28 +58,33 @@ public final class UiProfiler {
     }
 
     public static void recordAct(float ms) {
-        if (!enabled) return;
+        if (!enabled)
+            return;
         curActMs += ms;
     }
 
     public static void recordLayout(float ms) {
-        if (!enabled) return;
+        if (!enabled)
+            return;
         curLayoutMs += ms;
     }
 
     public static void recordDraw(float ms, int drawCalls) {
-        if (!enabled) return;
+        if (!enabled)
+            return;
         curDrawMs += ms;
         curDrawCalls += drawCalls;
     }
 
     public static void recordLayoutPass() {
-        if (!enabled) return;
+        if (!enabled)
+            return;
         curLayoutPasses++;
     }
 
     public static synchronized void commitFrame(@Nullable Element sceneRoot) {
-        if (!enabled) return;
+        if (!enabled)
+            return;
 
         PerfFrame frame = new PerfFrame();
         frame.timestamp = System.currentTimeMillis();
@@ -109,7 +116,8 @@ public final class UiProfiler {
     }
 
     public static synchronized @Nullable PerfFrame snapshotAverages(int maxFrames) {
-        if (totalRecorded == 0) return null;
+        if (totalRecorded == 0)
+            return null;
 
         int n = Math.min(maxFrames, totalRecorded);
         PerfFrame avg = new PerfFrame();
@@ -152,15 +160,17 @@ public final class UiProfiler {
     }
 
     public static int[] countElements(@Nullable Element root) {
-        if (root == null) return new int[]{0, 0};
+        if (root == null)
+            return new int[] { 0, 0 };
         Map<Element, Boolean> visited = new IdentityHashMap<>();
-        int[] counts = new int[2]; // [total, visible]
+        int[] counts = new int[2];
         countRecursive(root, counts, visited);
         return counts;
     }
 
     private static void countRecursive(Element element, int[] counts, Map<Element, Boolean> visited) {
-        if (element == null || visited.put(element, Boolean.TRUE) != null) return;
+        if (element == null || visited.put(element, Boolean.TRUE) != null)
+            return;
         counts[0]++;
         if (element.visible) {
             counts[1]++;

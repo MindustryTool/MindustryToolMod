@@ -257,8 +257,6 @@ public class PlayerConnectFeature extends Feature {
         roomsQuery.dispose();
     }
 
-    // ─── Signals & Properties ──────────────────────────────────────
-
     public Readable<Boolean> isFetching() {
         return roomsQuery.fetching();
     }
@@ -294,8 +292,6 @@ public class PlayerConnectFeature extends Feature {
     public @Nullable PlayerConnectLink getActiveLink() {
         return activeLink;
     }
-
-    // ─── Room Hosting & Management ─────────────────────────────────
 
     public void createRoom(String host, int port, Cons<PlayerConnectLink> onSuccess, Cons<Throwable> onError) {
         if (!Vars.net.server()) {
@@ -393,8 +389,6 @@ public class PlayerConnectFeature extends Feature {
         }
     }
 
-    // ─── Join Request Moderation ───────────────────────────────────
-
     private void onPlayerJoin(PlayerJoin event) {
         if (!isHosting() || Boolean.TRUE.equals(autoAcceptConfig.get())) {
             return;
@@ -470,8 +464,6 @@ public class PlayerConnectFeature extends Feature {
         });
     }
 
-    // ─── Real-Time Room Directory & SSE ────────────────────────────
-
     private void startSseSync() {
         stopSseSync();
 
@@ -543,8 +535,6 @@ public class PlayerConnectFeature extends Feature {
         roomsQuery.refetch();
     }
 
-    // ─── Provider Management ───────────────────────────────────────
-
     public void refreshProviders() {
         MindustryTool.getPlayerConnectProviders()
                 .thenAccept(apiProviders -> {
@@ -609,8 +599,6 @@ public class PlayerConnectFeature extends Feature {
             refreshProviders();
         }
     }
-
-    // ─── Pause Menu Injection & HUD Ping ──────────────────────────
 
     private void setupPingLabel() {
         if (Vars.ui == null || Vars.ui.hudGroup == null) {
@@ -706,7 +694,6 @@ public class PlayerConnectFeature extends Feature {
             addedCell.get().name = PAUSE_BUTTON_NAME;
         }
 
-        // Swap with quit button if present
         if (cells.size >= 2) {
             cells.swap(cells.size - 1, cells.size - 2);
         }

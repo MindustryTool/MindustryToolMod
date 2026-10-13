@@ -148,9 +148,7 @@ public final class Perf {
     }
 
     private static void uninstallDebugServices() {
-        // Clear the outgoing debug instances rather than only dropping the reference,
-        // so nothing
-        // is retained by a caller that still holds the previous instance.
+
         ReactiveContext context = ReactiveContext.instance();
         if (context instanceof DebugReactiveContext) {
             ((DebugReactiveContext) context).clearState();
@@ -249,9 +247,6 @@ public final class Perf {
         return AttachmentStack.traceId();
     }
 
-    // --- profiling session
-    // ------------------------------------------------------------------------
-
     public static boolean isProfiling() {
         return profiling;
     }
@@ -326,7 +321,7 @@ public final class Perf {
         try {
             ProfileReportExporter.writeFile(spans, dropped, id, components, file);
         } catch (IOException e) {
-            // A failed export must not propagate into the frame flush that triggered it.
+
             Log.err("[Solim] Failed to write profile report to @", file, e);
         }
         return file;

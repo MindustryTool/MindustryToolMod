@@ -115,9 +115,7 @@ class ButtonComponentTest extends SolimEnv {
 
     @Test
     void checkedBindingWinsOverArcClickAutoToggle() {
-        // Arc's Button toggles `checked` on every click. A signal-backed .checked()
-        // binding must re-assert its value so clicking an already-selected toggle does
-        // not visually deselect it.
+
         Signal<Boolean> checked = Signal.of(true);
         Button btn = new Button().checked(checked);
 
@@ -136,9 +134,7 @@ class ButtonComponentTest extends SolimEnv {
 
     @Test
     void constantCheckedReadableIsNotReassertedOnClick() {
-        // Readable.of(...) is not a ReactiveSource; such buttons rely on
-        // rebuild-on-toggle
-        // and must keep Arc's default per-click auto-toggle behavior.
+
         Button btn = new Button().checked(Readable.of(false));
 
         assertFalse(btn.button().isChecked());
@@ -150,9 +146,7 @@ class ButtonComponentTest extends SolimEnv {
 
     @Test
     void checkedBindingTracksSignalAcrossClicks() {
-        // Clicking a toggle whose signal flips (e.g. select a different option) must
-        // land
-        // on the new signal value, not a stale re-assert.
+
         Signal<Boolean> checked = Signal.of(false);
         Button btn = new Button(() -> checked.set(!checked.peek())).checked(checked);
 

@@ -16,9 +16,12 @@ import mindustry.Vars;
 import static solim.UI.unit;
 
 /**
- * Custom on-screen joystick element: a fixed outer base with a movable inner knob.
- * Touch input drives {@link JoystickFeature#moveVector}; double-tapping the knob
- * snaps the camera onto the player unit. Direct Arc element because Solim has no
+ * Custom on-screen joystick element: a fixed outer base with a movable inner
+ * knob.
+ * Touch input drives {@link JoystickFeature#moveVector}; double-tapping the
+ * knob
+ * snaps the camera onto the player unit. Direct Arc element because Solim has
+ * no
  * joystick primitive.
  */
 public class JoystickWidget extends Element {
@@ -46,7 +49,6 @@ public class JoystickWidget extends Element {
                     return false;
                 }
 
-                //double-tap the knob to snap the camera onto the player unit
                 long now = Time.millis();
                 if (dist <= knobRadius() && now - lastKnobTapMillis < TAP_INTERVAL_MILLIS
                         && Vars.player != null && !Vars.player.dead()) {
@@ -129,7 +131,7 @@ public class JoystickWidget extends Element {
     @Override
     public void act(float delta) {
         super.act(delta);
-        //apply size changes from settings to layout
+
         float current = diameter();
         if (lastDiameter >= 0f && Math.abs(current - lastDiameter) > 0.5f) {
             invalidateHierarchy();
@@ -142,19 +144,16 @@ public class JoystickWidget extends Element {
         Float opacity = feature.opacityConfig.get();
         float alpha = opacity != null ? Mathf.clamp(opacity) : 1f;
 
-        //draw() runs in the parent's coordinate space; offset by this element's own position
         float cx = x + getWidth() / 2f;
         float cy = y + getHeight() / 2f;
         float radius = radius();
 
-        //outer base
         Draw.color(0f, 0f, 0f, 0.35f * alpha);
         Fill.circle(cx, cy, radius);
         Draw.color(Color.white, 0.5f * alpha);
         Lines.stroke(unit(1f));
         Lines.circle(cx, cy, radius - Lines.getStroke() / 2f);
 
-        //inner knob
         Draw.color(Color.white, 0.85f * alpha);
         Fill.circle(cx + knobX, cy + knobY, knobRadius());
 

@@ -28,7 +28,6 @@ import solim.test.SolimEnv;
 
 class NetworkImageComponentTest extends SolimEnv {
 
-
     @BeforeEach
     void setup() {
         SignalDispatcher.resetForTests();
@@ -93,7 +92,6 @@ class NetworkImageComponentTest extends SolimEnv {
         h.set(90f);
         SignalDispatcher.flush();
 
-        // After disposal, dimensions must remain at previous state
         assertEquals(80f, img.image().getWidth(), 0.01f);
         assertEquals(60f, img.image().getHeight(), 0.01f);
     }
@@ -140,7 +138,6 @@ class NetworkImageComponentTest extends SolimEnv {
         alpha.set(0.9f);
         SignalDispatcher.flush();
 
-        // Stopped updating after dispose
         assertFalse(img.image().visible);
         assertEquals(0.4f, img.image().color.a, 0.01f);
     }
@@ -162,7 +159,6 @@ class NetworkImageComponentTest extends SolimEnv {
         assertEquals(15f, CellAccess.minHeight(cell), 0.01f);
         assertEquals(80f, CellAccess.maxHeight(cell), 0.01f);
 
-        // Mutating size on attached image updates parent cell
         img.size(45f, 35f);
         assertEquals(45f, CellAccess.minWidth(cell), 0.01f);
         assertEquals(35f, CellAccess.minHeight(cell), 0.01f);
@@ -202,7 +198,6 @@ class NetworkImageComponentTest extends SolimEnv {
         assertEquals(10f, CellAccess.padBottom(cell), 0.01f);
         assertEquals(10f, CellAccess.padRight(cell), 0.01f);
 
-        // Directional margin update on attached element
         img.margin(2f, 4f, 6f, 8f);
         assertEquals(2f, CellAccess.padTop(cell), 0.01f);
         assertEquals(4f, CellAccess.padLeft(cell), 0.01f);
@@ -254,7 +249,7 @@ class NetworkImageComponentTest extends SolimEnv {
 
         topPad.set(50f);
         SignalDispatcher.flush();
-        // Stops updating after dispose
+
         assertEquals(25f, CellAccess.padTop(cell), 0.01f);
     }
 
@@ -262,21 +257,18 @@ class NetworkImageComponentTest extends SolimEnv {
     void declarativeAndImperativeAlignment() {
         Table table = new Table();
 
-        // Declarative alignment before attachment
         NetworkImage declarativeImg = new NetworkImage().top().left();
         Cell<?> cell1 = table.add(declarativeImg.element());
         declarativeImg.cellConfig().applyToCell(cell1);
 
         assertEquals(Align.top | Align.left, CellAccess.align(cell1));
 
-        // Declarative center
         NetworkImage centerImg = new NetworkImage().center();
         Cell<?> cell2 = table.add(centerImg.element());
         centerImg.cellConfig().applyToCell(cell2);
 
         assertEquals(Align.center, CellAccess.align(cell2));
 
-        // Imperative alignment after attachment
         NetworkImage imperativeImg = new NetworkImage();
         Cell<?> cell3 = table.add(imperativeImg.element());
         imperativeImg.bottom().right();
@@ -367,21 +359,16 @@ class NetworkImageComponentTest extends SolimEnv {
 
         NetworkImage.applyRoundedMask(pixmap, radius);
 
-        // Outer corner tips must be fully transparent (alpha == 0)
         assertEquals(0, pixmap.get(0, 0) & 0xFF, "Top-left tip must be transparent");
         assertEquals(0, pixmap.get(width - 1, 0) & 0xFF, "Top-right tip must be transparent");
         assertEquals(0, pixmap.get(0, height - 1) & 0xFF, "Bottom-left tip must be transparent");
         assertEquals(0, pixmap.get(width - 1, height - 1) & 0xFF, "Bottom-right tip must be transparent");
 
-        // Center must remain fully opaque (alpha == 255)
         assertEquals(255, pixmap.get(width / 2, height / 2) & 0xFF, "Center must remain fully opaque");
 
-        // Flat edge centers must remain fully opaque
         assertEquals(255, pixmap.get(width / 2, 0) & 0xFF, "Top middle edge must remain opaque");
         assertEquals(255, pixmap.get(0, height / 2) & 0xFF, "Left middle edge must remain opaque");
 
-        // Near the boundary inside corner (e.g. x = radius - 1, y = radius - 1), alpha
-        // should be > 0
         int cornerInteriorAlpha = pixmap.get(radius - 1, radius - 1) & 0xFF;
         assertTrue(cornerInteriorAlpha > 0, "Inside corner should preserve opacity");
 
@@ -390,8 +377,7 @@ class NetworkImageComponentTest extends SolimEnv {
 
     @Test
     void networkImageApplyRoundedMaskWithTargetScaling() {
-        // Pixmap is 60x60, but display size is 30x30 (2x scale factor)
-        // Radius is 8 in display units -> effective radius should be 16 in pixmap units
+
         int width = 60;
         int height = 60;
         int displayRadius = 8;
@@ -406,14 +392,11 @@ class NetworkImageComponentTest extends SolimEnv {
 
         NetworkImage.applyRoundedMask(pixmap, displayRadius, 30f, 30f);
 
-        // Corner tip at (0, 0) must be transparent
         assertEquals(0, pixmap.get(0, 0) & 0xFF);
 
-        // At (2, 2), which is outside the corner curve for R=16, alpha must be < 255
         int scaledCornerAlpha = pixmap.get(2, 2) & 0xFF;
         assertTrue(scaledCornerAlpha < 255, "Should be within the scaled corner curvature");
 
-        // Center (30, 30) must remain fully opaque
         assertEquals(255, pixmap.get(30, 30) & 0xFF);
 
         pixmap.dispose();

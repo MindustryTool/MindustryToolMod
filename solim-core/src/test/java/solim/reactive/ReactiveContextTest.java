@@ -10,67 +10,69 @@ import solim.runtime.ReactiveContext;
 import solim.test.SolimEnv;
 
 class ReactiveContextTest extends SolimEnv {
-	@AfterEach
-	void clear() {
-		ReactiveContext.clear();
-	}
+    @AfterEach
+    void clear() {
+        ReactiveContext.clear();
+    }
 
-	@Test
-	void pushPopCurrent() {
-		ReactiveObserver dummy = new ReactiveObserver() {
-			@Override
-			public void addDependency(ReactiveSource observable) {}
+    @Test
+    void pushPopCurrent() {
+        ReactiveObserver dummy = new ReactiveObserver() {
+            @Override
+            public void addDependency(ReactiveSource observable) {
+            }
 
-			@Override
-			public void invalidate() {}
-		};
-		assertNull(ReactiveContext.current());
-		ReactiveContext.push(dummy);
-		assertEquals(dummy, ReactiveContext.current());
-		assertEquals(1, ReactiveContext.size());
-		ReactiveContext.push(dummy);
-		assertEquals(2, ReactiveContext.size());
-		ReactiveContext.pop();
-		assertEquals(1, ReactiveContext.size());
-		ReactiveContext.pop();
-		assertNull(ReactiveContext.current());
-		assertEquals(0, ReactiveContext.size());
-	}
+            @Override
+            public void invalidate() {
+            }
+        };
+        assertNull(ReactiveContext.current());
+        ReactiveContext.push(dummy);
+        assertEquals(dummy, ReactiveContext.current());
+        assertEquals(1, ReactiveContext.size());
+        ReactiveContext.push(dummy);
+        assertEquals(2, ReactiveContext.size());
+        ReactiveContext.pop();
+        assertEquals(1, ReactiveContext.size());
+        ReactiveContext.pop();
+        assertNull(ReactiveContext.current());
+        assertEquals(0, ReactiveContext.size());
+    }
 
-	@Test
-	void nestedEvaluationStack() {
-		Signal<Integer> s = Signal.of(1);
-		Computed<String> inner = Signal.computed(() -> "inner:" + s.get());
-		Computed<String> outer = Signal.computed(() -> "outer:" + inner.get() + s.get());
-		assertEquals("outer:inner:11", outer.get());
-		// after get, stack should be empty
-		assertEquals(0, ReactiveContext.size());
-	}
+    @Test
+    void nestedEvaluationStack() {
+        Signal<Integer> s = Signal.of(1);
+        Computed<String> inner = Signal.computed(() -> "inner:" + s.get());
+        Computed<String> outer = Signal.computed(() -> "outer:" + inner.get() + s.get());
+        assertEquals("outer:inner:11", outer.get());
 
-	@Test
-	void trackWithoutObserverIsNoOp() {
-		ReactiveContext.clear();
-		Signal<Integer> s = Signal.of(5);
-		// should not throw when no observer
-		assertDoesNotThrow(() -> ReactiveContext.track(s));
-		assertEquals(5, s.get());
-	}
+        assertEquals(0, ReactiveContext.size());
+    }
 
-	@Test
-	void testUntrackedExecution() {
-		Signal<Integer> count = Signal.of(0);
-		int[] effectRuns = new int[]{0};
+    @Test
+    void trackWithoutObserverIsNoOp() {
+        ReactiveContext.clear();
+        Signal<Integer> s = Signal.of(5);
 
-		Effect.of(() -> {
-			effectRuns[0]++;
-			// read inside untracked
-			int val = ReactiveContext.untracked(count::get);
-			assertEquals(val, count.peek());
-		});
+        assertDoesNotThrow(() -> ReactiveContext.track(s));
+        assertEquals(5, s.get());
+    }
 
-		assertEquals(1, effectRuns[0]);
-		count.set(1);
-		count.set(2);
-		assertEquals(1, effectRuns[0], "Effect should not re-run because signal read was untracked");
-	}
+    @Test
+    void testUntrackedExecution() {
+        Signal<Integer> count = Signal.of(0);
+        int[] effectRuns = new int[] { 0 };
+
+        Effect.of(() -> {
+            effectRuns[0]++;
+
+            int val = ReactiveContext.untracked(count::get);
+            assertEquals(val, count.peek());
+        });
+
+        assertEquals(1, effectRuns[0]);
+        count.set(1);
+        count.set(2);
+        assertEquals(1, effectRuns[0], "Effect should not re-run because signal read was untracked");
+    }
 }

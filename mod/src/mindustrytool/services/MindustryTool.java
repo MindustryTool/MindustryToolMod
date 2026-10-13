@@ -60,14 +60,10 @@ public final class MindustryTool {
     private MindustryTool() {
     }
 
-    // ─── Ping ──────────────────────────────────────────────────────
-
     public static CompletableFuture<Void> ping(String client) {
         return publicApi.get("/ping?client=" + client).sendAsync().thenAccept(r -> {
         });
     }
-
-    // ─── Maps ──────────────────────────────────────────────────────
 
     public static CompletableFuture<byte[]> downloadMap(String itemId) {
         return publicApi
@@ -99,8 +95,6 @@ public final class MindustryTool {
                 .sendAsync()
                 .thenApply(r -> JsonUtils.fromJsonArray(MapData.class, r.body()));
     }
-
-    // ─── Schematics ────────────────────────────────────────────────
 
     public static CompletableFuture<byte[]> downloadSchematic(String itemId) {
         return publicApi
@@ -134,8 +128,6 @@ public final class MindustryTool {
                 .thenApply(r -> JsonUtils.fromJsonArray(SchematicData.class, r.body()));
     }
 
-    // ─── Content Patches ──────────────────────────────────────────
-
     public static CompletableFuture<String> downloadContentPatch(String itemId) {
         return publicApi
                 .get("/content-patches/" + itemId + "/data")
@@ -167,16 +159,12 @@ public final class MindustryTool {
                 .thenApply(r -> JsonUtils.fromJsonArray(ContentPatchData.class, r.body()));
     }
 
-    // ─── Tags ──────────────────────────────────────────────────────
-
     public static CompletableFuture<List<TagCategory>> getTags(String group) {
         return publicApi
                 .get("/tags?group=" + group)
                 .sendAsync()
                 .thenApply(r -> JsonUtils.fromJsonArray(TagCategory.class, r.body()));
     }
-
-    // ─── Users ─────────────────────────────────────────────────────
 
     public static CompletableFuture<List<UserData>> getUserBatch(List<String> ids) {
         String json = JsonUtils.toJson(new UserBatchRequest(ids));
@@ -187,13 +175,9 @@ public final class MindustryTool {
                 .thenApply(r -> JsonUtils.fromJsonArray(UserData.class, r.body()));
     }
 
-    // ─── Planets ───────────────────────────────────────────────────
-
     public static CompletableFuture<List<ModData>> getPlanets() {
         return publicApi.get("/planets").sendAsync().thenApply(r -> JsonUtils.fromJsonArray(ModData.class, r.body()));
     }
-
-    // ─── Servers ───────────────────────────────────────────────────
 
     public static CompletableFuture<List<ServerData>> getServers(int page, int size) {
         return publicApi
@@ -201,8 +185,6 @@ public final class MindustryTool {
                 .sendAsync()
                 .thenApply(r -> JsonUtils.fromJsonArray(ServerData.class, r.body()));
     }
-
-    // ─── Player Connect ────────────────────────────────────────────
 
     public static CompletableFuture<List<PlayerConnectRoom>> searchRooms(String query) {
         return publicApi
@@ -219,8 +201,6 @@ public final class MindustryTool {
                 .sendAsync()
                 .thenApply(r -> JsonUtils.fromJsonArray(PlayerConnectProvider.class, r.body()));
     }
-
-    // ─── Chat ──────────────────────────────────────────────────────
 
     public static CompletableFuture<List<ChannelDto>> getChatChannels() {
         return api.get("/chats/channels")
@@ -277,8 +257,6 @@ public final class MindustryTool {
                 });
     }
 
-    // ─── Player Connect ────────────────────────────────────────────
-
     public static CompletableFuture<Void> playerConnectStream(Cons<String> lineConsumer) {
         return publicApi.get("/player-connect/sse")
                 .header("Accept", "text/event-stream")
@@ -304,8 +282,6 @@ public final class MindustryTool {
                 .sendAsync()
                 .thenApply(r -> JsonUtils.fromJsonArray(PlayerConnectProvider.class, r.body()));
     }
-
-    // ─── Auth ──────────────────────────────────────────────────────
 
     public static CompletableFuture<UserSession> getSession() {
         return api.get("/auth/session").timeout(Duration.ofMinutes(1)).sendAsync().thenApply(r -> {
@@ -335,7 +311,7 @@ public final class MindustryTool {
 
     public static CompletableFuture<Void> logout(String accessToken, String refreshToken) {
         String json = JsonUtils.toJson(new LogoutRequest(accessToken, refreshToken));
-        // Use withoutAuth and manually attach token to avoid refresh recursion
+
         if (accessToken != null && !accessToken.isEmpty()) {
             return publicApi
                     .post("/auth/app/logout")
@@ -366,15 +342,11 @@ public final class MindustryTool {
                 .thenApply(r -> JsonUtils.fromJson(AuthTokenResponse.class, r.body()));
     }
 
-    // ─── Crash Report ──────────────────────────────────────────────
-
     public static CompletableFuture<Void> submitCrashReport(String crashData) {
         String json = JsonUtils.toJson(new CrashReportRequest(crashData));
         return publicApi.post("/crashes").json(json).sendAsync().thenAccept(r -> {
         });
     }
-
-    // ─── Images ────────────────────────────────────────────────────
 
     public static CompletableFuture<byte[]> downloadSchematicImage(String itemId, boolean preview) {
         String u = "/schematics/" + itemId + "/image.png";
@@ -398,9 +370,6 @@ public final class MindustryTool {
                 .thenApply(r -> r.body());
     }
 
-    // ─── Translation ────────────────────────────────────────────────
-    // Network-only by contract: translation keys are unbounded per sentence,
-    // so no long-term QueryCache retention. Callers guard duplicate taps.
     public static CompletableFuture<String> translate(String content, String targetLanguage) {
         if (content == null || content.trim().isEmpty()) {
             return CompletableFuture.completedFuture(content != null ? content : "");
@@ -413,8 +382,6 @@ public final class MindustryTool {
                 .sendAsync()
                 .thenApply(Request.Response::body);
     }
-
-    // ─── Media Upload ──────────────────────────────────────────────
 
     public static CompletableFuture<String> uploadMedia(byte[] imageBytes, String fileName) {
         String boundary = "----MindustryToolBoundary" + UUID.randomUUID().toString().replace("-", "");

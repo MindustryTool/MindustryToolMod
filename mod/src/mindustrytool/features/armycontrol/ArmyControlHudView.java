@@ -13,7 +13,8 @@ import solim.overlay.Hud;
 import solim.reactive.Readable;
 
 /**
- * Standalone persistent draggable HUD view for ArmyControl when display mode is set to HUD.
+ * Standalone persistent draggable HUD view for ArmyControl when display mode is
+ * set to HUD.
  */
 public class ArmyControlHudView extends Component {
 
@@ -31,7 +32,7 @@ public class ArmyControlHudView extends Component {
         Readable<Float> dragIconSize = scale.map(s -> unit(6) * (s != null ? s : 1f));
 
         hud = hud(() -> {
-            // Drag handle
+
             when(feature.hideDragHandleConfig.signal())
                     .elseDo(() -> button()
                             .style(WebStyles.ghost())

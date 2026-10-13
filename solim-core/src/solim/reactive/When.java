@@ -225,8 +225,7 @@ public final class When extends Component
     }
 
     private void mount(Boolean value) {
-        // Capture and eager-build inside untracked so signals read during the
-        // branch runnables never re-trigger this When effect.
+
         Fragment fragment = ReactiveContext.untracked(() -> {
             Fragment f = Fragment.capture(() -> {
                 if (Boolean.TRUE.equals(value)) {

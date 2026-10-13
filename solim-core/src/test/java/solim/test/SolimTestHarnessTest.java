@@ -17,105 +17,104 @@ import solim.runtime.SignalDispatcher;
 
 class SolimTestHarnessTest extends SolimEnv {
 
-	@Test
-	void harnessEnsuresCleanAmbientContexts() {
-		assertEquals(0, AttachmentStack.size());
-		assertEquals(0, OwnershipContext.size());
-		assertEquals(0, ReactiveContext.size());
-		assertEquals(0, SignalDispatcher.size());
-		assertFalse(SignalDispatcher.isFlushing());
-	}
+    @Test
+    void harnessEnsuresCleanAmbientContexts() {
+        assertEquals(0, AttachmentStack.size());
+        assertEquals(0, OwnershipContext.size());
+        assertEquals(0, ReactiveContext.size());
+        assertEquals(0, SignalDispatcher.size());
+        assertFalse(SignalDispatcher.isFlushing());
+    }
 
-	@Test
-	void testDisposableTracksLifecycleAndOrder() {
-		TestDisposable.resetSequence();
-		TestDisposable d1 = new TestDisposable("d1");
-		TestDisposable d2 = new TestDisposable("d2");
+    @Test
+    void testDisposableTracksLifecycleAndOrder() {
+        TestDisposable.resetSequence();
+        TestDisposable d1 = new TestDisposable("d1");
+        TestDisposable d2 = new TestDisposable("d2");
 
-		assertFalse(d1.isDisposed());
-		assertFalse(d2.isDisposed());
+        assertFalse(d1.isDisposed());
+        assertFalse(d2.isDisposed());
 
-		d2.dispose();
-		d1.dispose();
+        d2.dispose();
+        d1.dispose();
 
-		assertTrue(d1.isDisposed());
-		assertTrue(d2.isDisposed());
-		assertEquals(1, d2.getDisposalOrder());
-		assertEquals(2, d1.getDisposalOrder());
-		assertEquals(1, d1.getDisposeCount());
+        assertTrue(d1.isDisposed());
+        assertTrue(d2.isDisposed());
+        assertEquals(1, d2.getDisposalOrder());
+        assertEquals(2, d1.getDisposalOrder());
+        assertEquals(1, d1.getDisposeCount());
 
-		// Idempotency
-		d1.dispose();
-		assertEquals(2, d1.getDisposeCount());
-		assertTrue(d1.isDisposed());
-	}
+        d1.dispose();
+        assertEquals(2, d1.getDisposeCount());
+        assertTrue(d1.isDisposed());
+    }
 
-	@Test
-	void testDisposableFailingThrows() {
-		TestDisposable failing = TestDisposable.failing("error");
-		assertThrows(RuntimeException.class, failing::dispose);
-		assertTrue(failing.isDisposed());
-	}
+    @Test
+    void testDisposableFailingThrows() {
+        TestDisposable failing = TestDisposable.failing("error");
+        assertThrows(RuntimeException.class, failing::dispose);
+        assertTrue(failing.isDisposed());
+    }
 
-	@Test
-	void testComponentSingleMaterializationAndDisposal() {
-		TestDisposable owned = new TestDisposable("owned");
-		TestComponent comp = new TestComponent("test-comp").withDisposable(owned);
+    @Test
+    void testComponentSingleMaterializationAndDisposal() {
+        TestDisposable owned = new TestDisposable("owned");
+        TestComponent comp = new TestComponent("test-comp").withDisposable(owned);
 
-		assertEquals(0, comp.getBuildCount());
-		Element el1 = comp.element();
-		Element el2 = comp.element();
+        assertEquals(0, comp.getBuildCount());
+        Element el1 = comp.element();
+        Element el2 = comp.element();
 
-		assertSame(el1, el2);
-		assertEquals(1, comp.getBuildCount());
-		assertFalse(comp.isDisposed());
-		assertFalse(owned.isDisposed());
+        assertSame(el1, el2);
+        assertEquals(1, comp.getBuildCount());
+        assertFalse(comp.isDisposed());
+        assertFalse(owned.isDisposed());
 
-		comp.dispose();
+        comp.dispose();
 
-		assertTrue(comp.isDisposed());
-		assertTrue(owned.isDisposed());
-		assertEquals(1, comp.getDisposeCount());
-	}
+        assertTrue(comp.isDisposed());
+        assertTrue(owned.isDisposed());
+        assertEquals(1, comp.getDisposeCount());
+    }
 
-	@Test
-	void testSchedulerFlushesDeterministically() {
-		Signal<Integer> sig = Signal.of(10);
-		int[] runs = new int[1];
+    @Test
+    void testSchedulerFlushesDeterministically() {
+        Signal<Integer> sig = Signal.of(10);
+        int[] runs = new int[1];
 
-		Effect effect = Effect.of(() -> {
-			runs[0]++;
-			sig.get();
-		});
+        Effect effect = Effect.of(() -> {
+            runs[0]++;
+            sig.get();
+        });
 
-		assertEquals(1, runs[0]);
-		sig.set(20);
-		assertEquals(1, TestScheduler.pendingCount());
+        assertEquals(1, runs[0]);
+        sig.set(20);
+        assertEquals(1, TestScheduler.pendingCount());
 
-		TestScheduler.flush();
+        TestScheduler.flush();
 
-		assertEquals(2, runs[0]);
-		assertEquals(0, TestScheduler.pendingCount());
+        assertEquals(2, runs[0]);
+        assertEquals(0, TestScheduler.pendingCount());
 
-		effect.dispose();
-	}
+        effect.dispose();
+    }
 
-	@Test
-	void testObserverRecordsDependenciesAndInvalidations() {
-		TestObserver observer = new TestObserver("obs");
-		Signal<String> sig1 = Signal.of("A");
-		Signal<String> sig2 = Signal.of("B");
+    @Test
+    void testObserverRecordsDependenciesAndInvalidations() {
+        TestObserver observer = new TestObserver("obs");
+        Signal<String> sig1 = Signal.of("A");
+        Signal<String> sig2 = Signal.of("B");
 
-		ReactiveContext.push(observer);
-		ReactiveContext.track(sig1);
-		ReactiveContext.track(sig2);
-		ReactiveContext.pop();
+        ReactiveContext.push(observer);
+        ReactiveContext.track(sig1);
+        ReactiveContext.track(sig2);
+        ReactiveContext.pop();
 
-		assertEquals(2, observer.getDependencies().size());
-		assertSame(sig1, observer.getDependencies().get(0));
-		assertSame(sig2, observer.getDependencies().get(1));
+        assertEquals(2, observer.getDependencies().size());
+        assertSame(sig1, observer.getDependencies().get(0));
+        assertSame(sig2, observer.getDependencies().get(1));
 
-		observer.invalidate();
-		assertEquals(1, observer.getInvalidateCount());
-	}
+        observer.invalidate();
+        assertEquals(1, observer.getInvalidateCount());
+    }
 }

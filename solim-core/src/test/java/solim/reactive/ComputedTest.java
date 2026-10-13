@@ -19,10 +19,10 @@ class ComputedTest extends SolimEnv {
         assertEquals(0, runs.get(), "Should not compute until first get");
         assertEquals("Count: 0", title.get());
         assertEquals(1, runs.get());
-        title.get(); // second get without change should not rerun
+        title.get();
         assertEquals(1, runs.get());
         count.set(10);
-        // after set, should NOT have run yet if lazy
+
         assertEquals(1, runs.get(), "Should not recompute until get");
         assertEquals("Count: 10", title.get());
         assertEquals(2, runs.get());
@@ -40,10 +40,10 @@ class ComputedTest extends SolimEnv {
         assertEquals("alice@example.com", v.get());
         assertEquals(2, v.dependencyCount());
         username.set("Bob");
-        // v should still be email value, not dirty
+
         assertFalse(v.isDirty(), "Should not be dirty after old dep change");
         assertEquals("alice@example.com", v.get());
-        // email change should dirty
+
         email.set("new@example.com");
         assertTrue(v.isDirty());
         assertEquals("new@example.com", v.get());
@@ -67,7 +67,7 @@ class ComputedTest extends SolimEnv {
         assertEquals(2, b.get());
         assertEquals(3, c.get());
         a.set(5);
-        // both should be dirty before get
+
         assertTrue(b.isDirty());
         assertTrue(c.isDirty());
         assertEquals(6, b.get());
@@ -78,21 +78,21 @@ class ComputedTest extends SolimEnv {
     void subscriptionAndDispose() {
         Signal<Integer> s = Signal.of(1);
         Computed<Integer> comp = Signal.computed(() -> s.get() * 2);
-        comp.get(); // prime dependencies
+        comp.get();
         AtomicInteger seen = new AtomicInteger(-1);
         Subscription sub = comp.subscribe(v -> seen.set(v));
-        // trigger change
+
         s.set(2);
-        // subscriber should be notified (eager recompute)
+
         assertEquals(4, seen.get());
         comp.dispose();
         assertTrue(comp.isDisposed());
         assertEquals(0, comp.dependencyCount());
         assertEquals(0, comp.listenerCount());
         s.set(3);
-        // after dispose, no notification
+
         assertEquals(4, seen.get());
-        // dispose idempotent
+
         assertDoesNotThrow(comp::dispose);
         sub.dispose();
     }
@@ -111,7 +111,7 @@ class ComputedTest extends SolimEnv {
         Signal<Integer> a = Signal.of(1);
         Computed<Integer> b = a.map(v -> v + 1);
         Computed<Integer> c = b.map(v -> v * 2);
-        assertEquals(4, c.get()); // (1+1)*2
+        assertEquals(4, c.get());
         a.set(2);
         assertEquals(6, c.get());
     }

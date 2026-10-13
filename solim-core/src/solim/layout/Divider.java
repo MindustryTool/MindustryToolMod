@@ -1,4 +1,5 @@
 package solim.layout;
+
 import solim.modifier.CellConfig;
 
 import arc.Core;
@@ -40,8 +41,7 @@ public final class Divider extends Component implements CellConfig<Divider>, Ele
         own(image);
         this.image.element().name = "solim-divider";
         this.image.color(Color.darkGray);
-        // Stretch (not fit): the source is a square pixel, and fit would shrink it
-        // into a centered dot instead of a line filling the cell.
+
         this.image.scaling(Scaling.stretch);
 
         if (this.direction == Direction.Y) {
@@ -106,7 +106,6 @@ public final class Divider extends Component implements CellConfig<Divider>, Ele
         image.height(height);
         return this;
     }
-
 
     @Override
     public PendingCellConfig cellConfig() {

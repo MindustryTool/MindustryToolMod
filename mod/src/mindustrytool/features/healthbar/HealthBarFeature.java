@@ -32,8 +32,10 @@ import solim.overlay.SolimDialog;
 /**
  * Draws health bars above damaged units and a single shield bar with a
  * whole-bar count above shielded units, plus optional HP bars above damaged
- * buildings. Configuration is synchronized to primitive cached fields via reactive
- * signal subscriptions; frame scratch fields copy these primitives once per frame with
+ * buildings. Configuration is synchronized to primitive cached fields via
+ * reactive
+ * signal subscriptions; frame scratch fields copy these primitives once per
+ * frame with
  * zero boxing, allocations, or signal peeking.
  */
 public class HealthBarFeature extends Feature {
@@ -65,7 +67,6 @@ public class HealthBarFeature extends Feature {
         }
     }
 
-    // Cached primitive configurations synchronized via signal subscriptions
     private boolean cachedShowFriendlyUnits = true;
     private boolean cachedShowEnemyUnits = true;
     private boolean cachedShowFriendlyBlocks = false;
@@ -75,7 +76,6 @@ public class HealthBarFeature extends Feature {
     private float cachedScale = 1f;
     private float cachedWidth = 1f;
 
-    // Per-frame scratch written once in draw(), read by the per-entity loops.
     private boolean frameShowFriendlyUnits;
     private boolean frameShowEnemyUnits;
     private boolean frameShowFriendlyBlocks;
@@ -106,7 +106,6 @@ public class HealthBarFeature extends Feature {
         scaleConfig = config.floatValue("scale", 1f);
         widthConfig = config.floatValue("width", 1f);
 
-        // Synchronize primitive caches on reactive signal changes
         showFriendlyUnitsConfig.signal().subscribe(v -> cachedShowFriendlyUnits = v != null ? v : true);
         showEnemyUnitsConfig.signal().subscribe(v -> cachedShowEnemyUnits = v != null ? v : true);
         showFriendlyBlocksConfig.signal().subscribe(v -> cachedShowFriendlyBlocks = v != null ? v : false);

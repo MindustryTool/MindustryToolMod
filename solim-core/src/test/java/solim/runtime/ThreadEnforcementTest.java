@@ -109,7 +109,7 @@ class ThreadEnforcementTest extends SolimCoreEnv {
                 throw new IllegalStateException("boom");
             });
         } catch (IllegalStateException ignored) {
-            // expected
+
         }
 
         assertEquals(entryDepth, ReactiveContext.size());

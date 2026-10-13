@@ -577,8 +577,7 @@ public class FactorySupplyTask implements AutoplayTask {
 
     private int planSupplyTake(Unit unit, Building source, Seq<Building> factories, int primaryIndex,
             Building primary, Item input) {
-        // Size by buffer free space, not one craft cycle: the take must fill what the
-        // tour factories can actually hold, otherwise tours splinter into micro-takes.
+
         int total = spaceOf(primary, input);
         if (total < 1) {
             return 0;
@@ -601,7 +600,7 @@ public class FactorySupplyTask implements AutoplayTask {
 
     @Override
     public boolean update(Unit unit) {
-        // Batching tours end when the unit is empty or switches item type.
+
         if (unit == null || unit.stack.amount == 0 || unit.stack.item == null) {
             ai.resetTour();
         } else if (ai.tourItem() == null || ai.tourItem() != unit.stack.item) {
@@ -662,8 +661,6 @@ public class FactorySupplyTask implements AutoplayTask {
             }
         }
 
-        // Batch outputs: top up the same held item from another factory before hauling
-        // home.
         if (ai.tourStops() < MAX_TOUR_STOPS && amount < unit.type.itemCapacity) {
             int room = unit.type.itemCapacity - amount;
             for (int offset = 0; offset < factories.size; offset++) {
@@ -673,8 +670,7 @@ public class FactorySupplyTask implements AutoplayTask {
                 if (take <= 0 || !outputProducts(factory).contains(held)) {
                     continue;
                 }
-                // Only require the current load to still be landable; demanding room for the
-                // projected total vetoes every top-up exactly when storage is tight.
+
                 if (findDepositStorageForHeld(held, amount, unit, cores, containers) == null) {
                     continue;
                 }
@@ -741,8 +737,7 @@ public class FactorySupplyTask implements AutoplayTask {
                     if (source == null) {
                         continue;
                     }
-                    // Tour sizing: one take across this and further same-item needs (any
-                    // positive need accumulates so small per-craft requirements still batch).
+
                     int take = planSupplyTake(unit, source, factories, index, factory, input);
                     if (take <= 0) {
                         continue;
@@ -787,8 +782,7 @@ public class FactorySupplyTask implements AutoplayTask {
 
     private boolean reassertSupplyJob(Unit unit, Seq<Building> cores, Seq<Building> containers,
             Seq<Building> factories) {
-        // Stick to an unfinished take: re-assert the same SUPPLY without advancing cursors
-        // so the planned take actually fires instead of being overwritten every tick.
+
         if (ai.job() != FactorySupplyAI.Job.SUPPLY || ai.targetFactory() == null || ai.targetItem() == null
                 || Time.time - ai.jobStartTick() >= STICKY_JOB_TIMEOUT
                 || !isFactoryStillValid(ai.targetFactory(), factories)
@@ -814,8 +808,7 @@ public class FactorySupplyTask implements AutoplayTask {
 
     private boolean reassertCollectJob(Unit unit, Seq<Building> cores, Seq<Building> containers,
             Seq<Building> factories) {
-        // Same for an unfinished collect: don't let the next decision steal the target
-        // mid-approach.
+
         if (ai.job() != FactorySupplyAI.Job.COLLECT || ai.targetFactory() == null || ai.targetItem() == null
                 || Time.time - ai.jobStartTick() >= STICKY_JOB_TIMEOUT
                 || !isFactoryStillValid(ai.targetFactory(), factories)
@@ -830,7 +823,7 @@ public class FactorySupplyTask implements AutoplayTask {
         if (dest == null) {
             return false;
         }
-        
+
         ai.setJob(FactorySupplyAI.Job.COLLECT, ai.targetFactory(), dest, ai.targetItem(), 0);
         status.set(Core.bundle.format("feature.autoplay.status.collecting", ai.targetItem().localizedName));
         return true;
@@ -911,7 +904,6 @@ public class FactorySupplyTask implements AutoplayTask {
         private int prevAmount = 0;
         private @Nullable Item pendingItem;
 
-        // Tracks the current job identity so jobStartTick only resets when the job changes.
         private @Nullable String currentKey;
         private float jobStartTick = 0f;
 
@@ -1110,8 +1102,7 @@ public class FactorySupplyTask implements AutoplayTask {
                         return;
                     }
                 }
-                // Collect top-up: a COLLECT job stays a fetch even while loaded, so batch
-                // tours accumulate instead of degrading into a trip home on every stop.
+
                 if (job == Job.COLLECT && factory != null && factory.isValid() && !factory.dead()
                         && item != null && unit.stack.item == item) {
                     int room = unit.type.itemCapacity - unit.stack.amount;
@@ -1144,7 +1135,8 @@ public class FactorySupplyTask implements AutoplayTask {
             }
 
             switch (job) {
-                case SUPPLY:                    if (factory == null || storage == null || !factory.isValid() || !storage.isValid()) {
+                case SUPPLY:
+                    if (factory == null || storage == null || !factory.isValid() || !storage.isValid()) {
                         return;
                     }
                     moveTo(storage, Vars.itemTransferRange * ENGAGE_RANGE_FACTOR);
@@ -1177,7 +1169,7 @@ public class FactorySupplyTask implements AutoplayTask {
                 case DELIVER_TO_FACTORY:
                 case DELIVER_TO_STORAGE:
                 case DROP_HELD:
-                    // Handled in the carrying branch above; the switch only runs with an empty stack.
+
                     break;
             }
         }

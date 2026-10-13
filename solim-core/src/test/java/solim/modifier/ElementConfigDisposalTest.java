@@ -36,8 +36,7 @@ class ElementConfigDisposalTest extends SolimEnv {
 
     @BeforeEach
     void setUp() {
-        // Reactive tooltip builds an Arc Label, which resolves a LabelStyle from the
-        // scene.
+
         newScene();
     }
 
@@ -251,8 +250,6 @@ class ElementConfigDisposalTest extends SolimEnv {
         assertEquals(20f, element.getWidth(), 0.01f, "Host disposal must freeze build-scoped width");
         assertFalse(element.visible, "Host disposal must freeze build-scoped visibility");
     }
-
-    // ---------- helpers ----------
 
     private void forScope(Cons2<Row, ModifierScope> scenario) {
         for (ModifierScope scope : ModifierScope.values()) {

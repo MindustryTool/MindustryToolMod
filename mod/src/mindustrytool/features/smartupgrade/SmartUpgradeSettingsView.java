@@ -45,7 +45,7 @@ public class SmartUpgradeSettingsView extends Component {
 
     private Component rulesCard() {
         return SettingCard.section(Icon.wrench, Core.bundle.get("feature.smart-upgrade.settings.rules"), () -> {
-            // Only Replace Exact Block Type
+
             row().growX().gap(unit(2)).center().children(() -> {
                 column().growX().gap(unit(1.5f)).left().children(() -> {
                     text(Core.bundle.get("feature.smart-upgrade.settings.only-same-type"))
@@ -63,7 +63,6 @@ public class SmartUpgradeSettingsView extends Component {
 
             divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            // Traverse Bridges & Junctions
             row().growX().gap(unit(2)).center().children(() -> {
                 column().growX().gap(unit(1.5f)).left().children(() -> {
                     text(Core.bundle.get("feature.smart-upgrade.settings.traverse-bridges"))
@@ -83,7 +82,7 @@ public class SmartUpgradeSettingsView extends Component {
 
     private Component modeAndLimitsCard() {
         return SettingCard.section(Icon.settings, Core.bundle.get("feature.smart-upgrade.settings.limits"), () -> {
-            // Trigger Mode selection
+
             column().growX().gap(unit(1.5f)).left().children(() -> {
                 column().growX().gap(unit(1.5f)).left().children(() -> {
                     text(Core.bundle.get("feature.smart-upgrade.settings.trigger-mode"))
@@ -117,7 +116,6 @@ public class SmartUpgradeSettingsView extends Component {
 
             divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            // Max Upgraded Blocks slider with above-track label and clean readout
             SettingSlider.of(
                     Core.bundle.get("feature.smart-upgrade.settings.max-upgrades"),
                     Core.bundle.get("feature.smart-upgrade.settings.max-upgrades.desc"),

@@ -119,7 +119,7 @@ public class RoomBrowserView extends Component {
                 .gap(unit(2))
                 .left()
                 .children(() -> {
-                    // Header Bar
+
                     row().growX().gap(unit(2)).center().children(() -> {
                         button(() -> collapsed.set(!Boolean.TRUE.equals(collapsed.get())))
                                 .style(WebStyles.outline())
@@ -130,7 +130,6 @@ public class RoomBrowserView extends Component {
                                                 : FileIcon.of("chevron-down.png", Icon.downOpen)))
                                         .width(unit(6)));
 
-                        // Search field
                         row().growX().height(unit(11)).border(1.5f, Color.darkGray).paddingX(unit(2)).rounded(unit(2))
                                 .children(() -> {
                                     textField(searchQuery)
@@ -138,7 +137,7 @@ public class RoomBrowserView extends Component {
                                             .style(WebStyles.clearInput());
 
                                 });
-                        // Refresh button
+
                         button(feature.getRoomsQuery()::refetch)
                                 .style(WebStyles.outline())
                                 .size(unit(11))
@@ -162,7 +161,6 @@ public class RoomBrowserView extends Component {
                                             }
                                         }));
 
-                        // Join via Link button
                         button(Core.bundle.get("feature.player-connect.join-link-title", "Join via Link"), () -> {
                             feature.getJoinRoomDialog().show();
                         })
@@ -173,7 +171,6 @@ public class RoomBrowserView extends Component {
 
                     divider();
 
-                    // Collapsible room list
                     when(collapsed)
                             .thenDo(() -> row())
                             .elseDo(() -> column().growX().children(() -> {
@@ -205,7 +202,7 @@ public class RoomBrowserView extends Component {
                                                                 for (ProviderRoomGroup group : groups) {
                                                                     column().growX().gap(unit(2)).left()
                                                                             .children(() -> {
-                                                                                // Provider group header
+
                                                                                 row().growX().gap(unit(2))
                                                                                         .children(() -> {
                                                                                             text(group.providerName)
@@ -214,7 +211,6 @@ public class RoomBrowserView extends Component {
                                                                                                     .size() + ")");
                                                                                         });
 
-                                                                                // Grid of rooms for this provider
                                                                                 reactiveGrid(group.rooms)
                                                                                         .columns(columnCount)
                                                                                         .key(PlayerConnectRoom::getLink)

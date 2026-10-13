@@ -178,14 +178,6 @@ public class ReactiveContext {
         }
     }
 
-    // --- reactive lifecycle hooks, delegated to the installed instance
-    // --------------------------------
-    //
-    // The static entry points below are what the reactive primitives call. They
-    // exist separately from
-    // the protected hooks so the same name is not overloaded across static and
-    // instance scope.
-
     public static void signalCreated(@Nullable Object signal) {
         INSTANCE.onSignalCreated(signal);
     }

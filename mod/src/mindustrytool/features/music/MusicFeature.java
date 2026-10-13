@@ -84,8 +84,6 @@ public class MusicFeature extends Feature {
             trackSignals.put(type, Signal.of(new Seq<>()));
         }
 
-        // keep the UI in sync with the game's actual playback and re-roll slot music on
-        // entry
         Events.run(Trigger.update, () -> {
             currentMusic.set(Vars.control.sound.getCurrent());
 
@@ -109,7 +107,6 @@ public class MusicFeature extends Feature {
             }
         }));
 
-        // SoundControl.reload() reassigns the music lists, so re-apply afterwards
         Events.on(MusicRegisterEvent.class, e -> Core.app.post(() -> {
             if (isEnabled()) {
                 recaptureOriginalMusic();
@@ -117,8 +114,6 @@ public class MusicFeature extends Feature {
             }
         }));
     }
-
-    // region Config helpers
 
     public Seq<String> pathsFor(MusicType type) {
         ConfigValue<Seq<String>> value = pathsConfig(type);
@@ -154,10 +149,6 @@ public class MusicFeature extends Feature {
         return currentMusic;
     }
 
-    // endregion
-
-    // region Lifecycle
-
     @Override
     public void onEnable() {
         captureOriginalMusic();
@@ -188,8 +179,7 @@ public class MusicFeature extends Feature {
     }
 
     private void recaptureOriginalMusic() {
-        // restore slots before capturing so a custom track is never captured as an
-        // original
+
         if (originalMenu != null) {
             Musics.menu = originalMenu;
         }
@@ -220,13 +210,8 @@ public class MusicFeature extends Feature {
             }
         }
 
-        // stop whatever the game player is currently previewing
         Vars.control.sound.stop();
     }
-
-    // endregion
-
-    // region Loading
 
     public void loadAllCustomMusic() {
         for (MusicType type : MusicType.values()) {
@@ -411,10 +396,6 @@ public class MusicFeature extends Feature {
         }
     }
 
-    // endregion
-
-    // region Track operations
-
     /**
      * Checks if a file exists or is readable. On Android (SAF), {@link Fi#exists()}
      * returns false because content URIs are not filesystem paths, but
@@ -531,7 +512,7 @@ public class MusicFeature extends Feature {
         name = sanitizeFileName(name);
         String ext = extensionOf(name);
         if (ext.isEmpty()) {
-            // Android SAF document ID without extension (e.g. audio_12345), default to .mp3
+
             name = name + ".mp3";
         }
         return name;
@@ -689,7 +670,7 @@ public class MusicFeature extends Feature {
         trackStates.remove(state.disabledKey());
 
         setPaths(type, remaining);
-        // also drops the disabled entry through pruning
+
         loadMusicType(type);
     }
 
@@ -757,10 +738,6 @@ public class MusicFeature extends Feature {
             Vars.control.sound.playMusic(state.music, true);
         }
     }
-
-    // endregion
-
-    // region Helpers
 
     public String trackName(Music music) {
         Fi file = music.file;
@@ -830,8 +807,6 @@ public class MusicFeature extends Feature {
     private void playRandom() {
         Vars.control.sound.playRandom();
     }
-
-    // endregion
 
     @Override
     public @Nullable Prov<SolimDialog> getSettingDialog() {

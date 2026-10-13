@@ -297,7 +297,6 @@ public final class QueryView<T> extends Component
             targetState = ViewState.EMPTY;
         }
 
-        // Avoid unnecessary rebuilding if neither state nor data changed
         if (currentComponent != null && targetState == currentViewState) {
             if (targetState == ViewState.DATA) {
                 boolean isFetchingRelevant = dataWithFetchingFactory != null;

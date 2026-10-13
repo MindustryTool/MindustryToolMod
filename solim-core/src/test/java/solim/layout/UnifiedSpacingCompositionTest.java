@@ -34,7 +34,6 @@ public class UnifiedSpacingCompositionTest extends SolimEnv {
             return;
         TableConfig<?> tc = (TableConfig<?>) comp;
 
-        // Apply 4 distinct directional paddings
         tc.padding(12f, 15f, 18f, 21f);
 
         Table t = tc.table();
@@ -44,7 +43,6 @@ public class UnifiedSpacingCompositionTest extends SolimEnv {
         assertEquals(18f, t.getMarginBottom(), 0.01f);
         assertEquals(21f, t.getMarginRight(), 0.01f);
 
-        // Put component inside parent table: padding must NOT bleed into parent Cell pad
         Table parent = new Table();
         Cell<?> cell = parent.add(comp.element());
         assertEquals(0f, CellAccess.padTop(cell), 0.01f);
@@ -55,7 +53,7 @@ public class UnifiedSpacingCompositionTest extends SolimEnv {
 
     @Test
     void testMarginOuterPaddingIsolation() {
-        // Test margin on Column, Row, Card, Button, Text
+
         Component[] components = new Component[] {
                 new Column(),
                 new Row(),
@@ -74,13 +72,11 @@ public class UnifiedSpacingCompositionTest extends SolimEnv {
                 ((Text) comp).margin(5f, 10f, 15f, 20f);
             }
 
-            // Margin should be applied to cell
             assertEquals(5f, CellAccess.padTop(cell), 0.01f, comp.getClass().getSimpleName() + " padTop");
             assertEquals(10f, CellAccess.padLeft(cell), 0.01f, comp.getClass().getSimpleName() + " padLeft");
             assertEquals(15f, CellAccess.padBottom(cell), 0.01f, comp.getClass().getSimpleName() + " padBottom");
             assertEquals(20f, CellAccess.padRight(cell), 0.01f, comp.getClass().getSimpleName() + " padRight");
 
-            // Inner table margins (padding) must remain 0
             if (comp instanceof TableConfig) {
                 Table inner = ((TableConfig<?>) comp).table();
                 if (inner != null) {
@@ -108,11 +104,9 @@ public class UnifiedSpacingCompositionTest extends SolimEnv {
         Cell<?> cell1 = col.table().getCell(btn1.element());
         Cell<?> cell2 = col.table().getCell(btn2.element());
 
-        // First visible element gets zero gap offset: padTop = marginTop (4)
         assertEquals(4f, CellAccess.padTop(cell1), 0.01f);
         assertEquals(6f, CellAccess.padLeft(cell1), 0.01f);
 
-        // Second visible element gets gap offset (12): padTop = marginTop (4) + gap (12) = 16
         assertEquals(16f, CellAccess.padTop(cell2), 0.01f);
         assertEquals(6f, CellAccess.padLeft(cell2), 0.01f);
     }
@@ -131,11 +125,9 @@ public class UnifiedSpacingCompositionTest extends SolimEnv {
         Cell<?> cell1 = row.table().getCell(btn1.element());
         Cell<?> cell2 = row.table().getCell(btn2.element());
 
-        // First visible: padLeft = marginLeft (3)
         assertEquals(3f, CellAccess.padLeft(cell1), 0.01f);
         assertEquals(7f, CellAccess.padTop(cell1), 0.01f);
 
-        // Second visible: padLeft = marginLeft (3) + gap (10) = 13
         assertEquals(13f, CellAccess.padLeft(cell2), 0.01f);
         assertEquals(7f, CellAccess.padTop(cell2), 0.01f);
     }
@@ -158,16 +150,13 @@ public class UnifiedSpacingCompositionTest extends SolimEnv {
         assertEquals(5f, CellAccess.padTop(cell1), 0.01f);
         assertEquals(19f, CellAccess.padTop(cell2), 0.01f);
 
-        // Hide btn1: btn2 becomes the leading visible child
         btn1.element().visible = false;
         col.respace();
 
-        // btn1 receives 0 pad when hidden
         assertEquals(0f, CellAccess.padTop(cell1), 0.01f);
-        // btn2 is now leading visible child: padTop = 5 + 0 = 5
+
         assertEquals(5f, CellAccess.padTop(cell2), 0.01f);
 
-        // Show btn1 again
         btn1.element().visible = true;
         col.respace();
 

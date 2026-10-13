@@ -35,7 +35,8 @@ class AutoplayHudPopupTest extends MindustryTestEnv {
 
     static class PopupSpyFeature extends AutoplayFeature {
         boolean popupToggled;
-        @Nullable Element receivedBar;
+        @Nullable
+        Element receivedBar;
 
         @Override
         public void togglePopup(@Nullable Element quickAccessBar) {
@@ -187,7 +188,7 @@ class AutoplayHudPopupTest extends MindustryTestEnv {
             assertFalse(feature.isTaskVisible(firstId));
             assertEquals(initialVisibleCount - 1, feature.visibleTasks().peek().size);
             assertFalse(feature.visibleTasks().peek().contains(t -> t.getId().equals(firstId)));
-            // All tasks list remains unchanged
+
             assertEquals(initialVisibleCount, feature.tasks().peek().size);
 
             feature.setTaskVisible(firstId, true);

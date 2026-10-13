@@ -205,8 +205,7 @@ public class QuickRotateFeature extends Feature {
         if (Core.camera == null || Core.graphics == null || currentMenu == null) {
             return;
         }
-        // Anchor the building's top edge in world space so camera zoom scales
-        // it, then nudge up by half the menu height plus a screen-space gap.
+
         Boolean offsetAbove = offsetAboveConfig.get();
         boolean above = !Boolean.FALSE.equals(offsetAbove);
         float anchorY = above ? building.y + building.block.size * Vars.tilesize / 2f : building.y;

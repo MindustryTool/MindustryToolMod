@@ -16,7 +16,8 @@ import solim.reactive.Readable;
 
 /**
  * Component rendering saved Control Groups list with recall and delete buttons.
- * Each row shows the group's living-unit icons plus count; group names are not shown.
+ * Each row shows the group's living-unit icons plus count; group names are not
+ * shown.
  * Renders nothing when no groups are saved.
  */
 public class ControlGroupList extends Component {
@@ -65,14 +66,14 @@ public class ControlGroupList extends Component {
                 .gap(unit(2))
                 .center()
                 .children(() -> {
-                    // Recall button
+
                     button()
                             .style(WebStyles.secondary())
                             .growX()
                             .padding(unit(1.5f))
                             .onClick(() -> feature.recallGroup(group))
                             .children(() -> row().growX().gap(unit(1.5f)).center().children(() -> {
-                                // Icons of living unit types in group
+
                                 row().gap(unit(1)).growX().left().children(() -> {
                                     for (UnitType ut : summary.keys()) {
                                         image(new TextureRegionDrawable(ut.uiIcon)).size(unit(4));
@@ -84,7 +85,6 @@ public class ControlGroupList extends Component {
                                         .right();
                             }));
 
-                    // Delete group button
                     button()
                             .style(WebStyles.danger())
                             .size(unit(9), unit(9))

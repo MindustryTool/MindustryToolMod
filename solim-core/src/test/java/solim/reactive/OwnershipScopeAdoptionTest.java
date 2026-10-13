@@ -72,8 +72,6 @@ class OwnershipScopeAdoptionTest extends SolimCoreEnv {
                 "The factory-created Computed must be adopted by the component the factory returned");
         assertEquals(1, source.observerCount(), "The adopted Computed must still be subscribed while live");
 
-        // Removing the key disposes the component, which must dispose the adopted
-        // Computed.
         reconciler.reconcile(new ArrayList<String>(), item -> item, key -> new Owner());
 
         assertTrue(derived.isDisposed(), "Removing the key must dispose the factory-created Computed");
@@ -189,9 +187,7 @@ class OwnershipScopeAdoptionTest extends SolimCoreEnv {
             if (trigger.get() == 0) {
                 return;
             }
-            // The component registers with the effect's open scope; failing the body
-            // afterwards
-            // must destroy it rather than leave it attached to the session.
+
             created.add(new Owner());
             created.get(created.size() - 1).element();
             throw new IllegalStateException("body failed after creating a component");

@@ -13,7 +13,6 @@ import solim.test.SolimEnv;
 
 class DividerTest extends SolimEnv {
 
-
     @Test
     void defaultDirectionIsX() {
         Divider d = new Divider();
@@ -63,8 +62,7 @@ class DividerTest extends SolimEnv {
 
     @Test
     void dividerStretchesDrawableToFillCell() {
-        // Scaling.fit would shrink the square source pixel into a centered dot
-        // instead of a line, rendering the divider effectively invisible.
+
         assertEquals(Scaling.stretch, new Divider(Direction.X).solimImage().getScaling());
         assertEquals(Scaling.stretch, new Divider(Direction.Y).solimImage().getScaling());
     }

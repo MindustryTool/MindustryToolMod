@@ -23,215 +23,207 @@ import solim.test.TestDisposable;
 
 public class LifecycleAndOwnershipRegressionTest extends SolimEnv {
 
-	@Test
-	void lazyBuildExecutesOnlyOnFirstElementCall() {
-		AtomicInteger builds = new AtomicInteger(0);
-		Component comp = new Component() {
-			@Override
-			protected Element build() {
-				builds.incrementAndGet();
-				Element el = new Element();
-				el.name = "lazy-target";
-				return el;
-			}
-		};
+    @Test
+    void lazyBuildExecutesOnlyOnFirstElementCall() {
+        AtomicInteger builds = new AtomicInteger(0);
+        Component comp = new Component() {
+            @Override
+            protected Element build() {
+                builds.incrementAndGet();
+                Element el = new Element();
+                el.name = "lazy-target";
+                return el;
+            }
+        };
 
-		assertEquals(0, builds.get(), "build() must not be executed upon instantiation");
+        assertEquals(0, builds.get(), "build() must not be executed upon instantiation");
 
-		Element el1 = comp.element();
-		assertEquals(1, builds.get(), "build() must execute on first element() call");
-		assertEquals("lazy-target", el1.name);
+        Element el1 = comp.element();
+        assertEquals(1, builds.get(), "build() must execute on first element() call");
+        assertEquals("lazy-target", el1.name);
 
-		Element el2 = comp.element();
-		assertEquals(1, builds.get(), "build() must not re-run on subsequent element() calls");
-		assertSame(el1, el2, "Cached element must be returned");
-	}
+        Element el2 = comp.element();
+        assertEquals(1, builds.get(), "build() must not re-run on subsequent element() calls");
+        assertSame(el1, el2, "Cached element must be returned");
+    }
 
-	@Test
-	void elementAccessAfterDisposalThrowsDescriptiveException() {
-		Component comp = new Component() {
-			@Override
-			protected Element build() {
-				return new Element();
-			}
-		};
+    @Test
+    void elementAccessAfterDisposalThrowsDescriptiveException() {
+        Component comp = new Component() {
+            @Override
+            protected Element build() {
+                return new Element();
+            }
+        };
 
-		comp.element();
-		comp.dispose();
-		assertTrue(comp.isDisposed());
+        comp.element();
+        comp.dispose();
+        assertTrue(comp.isDisposed());
 
-		IllegalStateException ex = assertThrows(IllegalStateException.class, comp::element);
-		assertTrue(ex.getMessage().contains("Cannot use disposed component"));
-	}
+        IllegalStateException ex = assertThrows(IllegalStateException.class, comp::element);
+        assertTrue(ex.getMessage().contains("Cannot use disposed component"));
+    }
 
-	@Test
-	void childrenDisposeBeforeOwnResources() {
-		List<String> disposalLog = new ArrayList<>();
+    @Test
+    void childrenDisposeBeforeOwnResources() {
+        List<String> disposalLog = new ArrayList<>();
 
-		Component parent = new Component() {
-			@Override
-			protected Element build() {
-				own(new TestDisposable("parent-res-1") {
-					@Override
-					public void dispose() {
-						super.dispose();
-						disposalLog.add("parent-res-1");
-					}
-				});
+        Component parent = new Component() {
+            @Override
+            protected Element build() {
+                own(new TestDisposable("parent-res-1") {
+                    @Override
+                    public void dispose() {
+                        super.dispose();
+                        disposalLog.add("parent-res-1");
+                    }
+                });
 
-				new Component() {
-					@Override
-					protected Element build() {
-						own(new TestDisposable("child-res-1") {
-							@Override
-							public void dispose() {
-								super.dispose();
-								disposalLog.add("child-res-1");
-							}
-						});
-						own(new TestDisposable("child-res-2") {
-							@Override
-							public void dispose() {
-								super.dispose();
-								disposalLog.add("child-res-2");
-							}
-						});
-						return new Element();
-					}
-				}.element();
+                new Component() {
+                    @Override
+                    protected Element build() {
+                        own(new TestDisposable("child-res-1") {
+                            @Override
+                            public void dispose() {
+                                super.dispose();
+                                disposalLog.add("child-res-1");
+                            }
+                        });
+                        own(new TestDisposable("child-res-2") {
+                            @Override
+                            public void dispose() {
+                                super.dispose();
+                                disposalLog.add("child-res-2");
+                            }
+                        });
+                        return new Element();
+                    }
+                }.element();
 
-				own(new TestDisposable("parent-res-2") {
-					@Override
-					public void dispose() {
-						super.dispose();
-						disposalLog.add("parent-res-2");
-					}
-				});
+                own(new TestDisposable("parent-res-2") {
+                    @Override
+                    public void dispose() {
+                        super.dispose();
+                        disposalLog.add("parent-res-2");
+                    }
+                });
 
-				return new Element();
-			}
-		};
+                return new Element();
+            }
+        };
 
-		parent.element();
-		parent.dispose();
+        parent.element();
+        parent.dispose();
 
-		// The child is a separate node from the parent's own leaves, and the whole child subtree
-		// is disposed first. Within each group the order is still reverse registration.
-		assertEquals(
-				Arrays.asList("child-res-2", "child-res-1", "parent-res-2", "parent-res-1"),
-				disposalLog,
-				"Child components dispose before the owning component's own resources, each group LIFO"
-		);
-	}
+        assertEquals(
+                Arrays.asList("child-res-2", "child-res-1", "parent-res-2", "parent-res-1"),
+                disposalLog,
+                "Child components dispose before the owning component's own resources, each group LIFO");
+    }
 
-	@Test
-	void disposalErrorIsolationPreservesRemainingDisposables() {
-		List<String> disposed = new ArrayList<>();
-		TestDisposable.resetSequence();
+    @Test
+    void disposalErrorIsolationPreservesRemainingDisposables() {
+        List<String> disposed = new ArrayList<>();
+        TestDisposable.resetSequence();
 
-		Component comp = new Component() {
-			@Override
-			protected Element build() {
-				own(DisposableAction.of(() -> disposed.add("res-1")));
-				own(DisposableAction.of(() -> {
-					disposed.add("failing-res-1");
-					throw new RuntimeException("Simulated error 1");
-				}));
-				own(DisposableAction.of(() -> disposed.add("res-2")));
-				own(DisposableAction.of(() -> {
-					disposed.add("failing-res-2");
-					throw new RuntimeException("Simulated error 2");
-				}));
-				own(DisposableAction.of(() -> disposed.add("res-3")));
-				return new Element();
-			}
-		};
+        Component comp = new Component() {
+            @Override
+            protected Element build() {
+                own(DisposableAction.of(() -> disposed.add("res-1")));
+                own(DisposableAction.of(() -> {
+                    disposed.add("failing-res-1");
+                    throw new RuntimeException("Simulated error 1");
+                }));
+                own(DisposableAction.of(() -> disposed.add("res-2")));
+                own(DisposableAction.of(() -> {
+                    disposed.add("failing-res-2");
+                    throw new RuntimeException("Simulated error 2");
+                }));
+                own(DisposableAction.of(() -> disposed.add("res-3")));
+                return new Element();
+            }
+        };
 
-		comp.element();
-		assertThrows(RuntimeException.class, comp::dispose);
+        comp.element();
+        assertThrows(RuntimeException.class, comp::dispose);
 
-		assertEquals(
-				Arrays.asList("res-3", "failing-res-2", "res-2", "failing-res-1", "res-1"),
-				disposed,
-				"All disposables must be invoked in reverse order even when multiple disposables throw"
-		);
-		assertTrue(comp.isDisposed());
-	}
+        assertEquals(
+                Arrays.asList("res-3", "failing-res-2", "res-2", "failing-res-1", "res-1"),
+                disposed,
+                "All disposables must be invoked in reverse order even when multiple disposables throw");
+        assertTrue(comp.isDisposed());
+    }
 
-	@Test
-	void partialBuildFailureCleansUpAndUnwindsContext() {
-		List<String> cleanupLog = new ArrayList<>();
+    @Test
+    void partialBuildFailureCleansUpAndUnwindsContext() {
+        List<String> cleanupLog = new ArrayList<>();
 
-		assertThrows(RuntimeException.class, () -> {
-			new Component() {
-				@Override
-				protected Element build() {
-					own(DisposableAction.of(() -> cleanupLog.add("first")));
-					own(DisposableAction.of(() -> cleanupLog.add("second")));
-					throw new RuntimeException("Crash during build");
-				}
-			}.element();
-		});
+        assertThrows(RuntimeException.class, () -> {
+            new Component() {
+                @Override
+                protected Element build() {
+                    own(DisposableAction.of(() -> cleanupLog.add("first")));
+                    own(DisposableAction.of(() -> cleanupLog.add("second")));
+                    throw new RuntimeException("Crash during build");
+                }
+            }.element();
+        });
 
-		assertEquals(Arrays.asList("second", "first"), cleanupLog,
-				"Partially registered resources must be cleaned up in LIFO order upon build exception");
-		assertEquals(0, OwnershipContext.size(), "OwnershipContext must be empty after partial build failure");
-	}
+        assertEquals(Arrays.asList("second", "first"), cleanupLog,
+                "Partially registered resources must be cleaned up in LIFO order upon build exception");
+        assertEquals(0, OwnershipContext.size(), "OwnershipContext must be empty after partial build failure");
+    }
 
-	@Test
-	void disposableContractAcrossFrameworkImplementations() {
-		// 1. DisposableAction
-		AtomicInteger actionRuns = new AtomicInteger(0);
-		DisposableAction da = DisposableAction.of(actionRuns::incrementAndGet);
-		assertFalse(da.isDisposed());
-		da.dispose();
-		assertTrue(da.isDisposed());
-		assertEquals(1, actionRuns.get());
-		da.dispose();
-		assertEquals(1, actionRuns.get(), "Repeated dispose must be a no-op");
+    @Test
+    void disposableContractAcrossFrameworkImplementations() {
 
-		// 2. Computed
-		Signal<Integer> sig = Signal.of(10);
-		Computed<Integer> computed = sig.map(v -> v * 2);
-		assertFalse(computed.isDisposed());
-		assertEquals(20, (int) computed.get());
-		computed.dispose();
-		assertTrue(computed.isDisposed());
-		computed.dispose();
-		assertTrue(computed.isDisposed());
+        AtomicInteger actionRuns = new AtomicInteger(0);
+        DisposableAction da = DisposableAction.of(actionRuns::incrementAndGet);
+        assertFalse(da.isDisposed());
+        da.dispose();
+        assertTrue(da.isDisposed());
+        assertEquals(1, actionRuns.get());
+        da.dispose();
+        assertEquals(1, actionRuns.get(), "Repeated dispose must be a no-op");
 
-		// 3. Effect
-		AtomicInteger effectRuns = new AtomicInteger(0);
-		Effect effect = Effect.of(() -> {
-			effectRuns.incrementAndGet();
-			sig.get();
-		});
-		assertFalse(effect.isDisposed());
-		effect.dispose();
-		assertTrue(effect.isDisposed());
-		effect.dispose();
-		assertTrue(effect.isDisposed());
+        Signal<Integer> sig = Signal.of(10);
+        Computed<Integer> computed = sig.map(v -> v * 2);
+        assertFalse(computed.isDisposed());
+        assertEquals(20, (int) computed.get());
+        computed.dispose();
+        assertTrue(computed.isDisposed());
+        computed.dispose();
+        assertTrue(computed.isDisposed());
 
-		// 4. TwoWayBinding
-		Signal<String> textSig = Signal.of("init");
-		TwoWayBinding<String> twb = new TwoWayBinding<>(
-				textSig,
-				textSig::get,
-				val -> {},
-				listener -> DisposableAction.empty()
-		);
-		assertFalse(twb.isDisposed());
-		twb.dispose();
-		assertTrue(twb.isDisposed());
-		twb.dispose();
-		assertTrue(twb.isDisposed());
+        AtomicInteger effectRuns = new AtomicInteger(0);
+        Effect effect = Effect.of(() -> {
+            effectRuns.incrementAndGet();
+            sig.get();
+        });
+        assertFalse(effect.isDisposed());
+        effect.dispose();
+        assertTrue(effect.isDisposed());
+        effect.dispose();
+        assertTrue(effect.isDisposed());
 
-		// 5. StructuralReconciler
-		StructuralReconciler<String, TestComponent> reconciler = new StructuralReconciler<>();
-		assertFalse(reconciler.isDisposed());
-		reconciler.dispose();
-		assertTrue(reconciler.isDisposed());
-		reconciler.dispose();
-		assertTrue(reconciler.isDisposed());
-	}
+        Signal<String> textSig = Signal.of("init");
+        TwoWayBinding<String> twb = new TwoWayBinding<>(
+                textSig,
+                textSig::get,
+                val -> {
+                },
+                listener -> DisposableAction.empty());
+        assertFalse(twb.isDisposed());
+        twb.dispose();
+        assertTrue(twb.isDisposed());
+        twb.dispose();
+        assertTrue(twb.isDisposed());
+
+        StructuralReconciler<String, TestComponent> reconciler = new StructuralReconciler<>();
+        assertFalse(reconciler.isDisposed());
+        reconciler.dispose();
+        assertTrue(reconciler.isDisposed());
+        reconciler.dispose();
+        assertTrue(reconciler.isDisposed());
+    }
 }

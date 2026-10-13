@@ -37,8 +37,6 @@ import org.junit.jupiter.api.BeforeEach;
  */
 public class ArcTestEnv {
 
-    // Per-class snapshot, restored in @AfterAll so class-level mutations
-    // (e.g. a custom graphics mock) cannot leak into other classes/modules.
     private static Application classApp;
     private static Graphics classGraphics;
     private static GL20 classGl;
@@ -47,7 +45,6 @@ public class ArcTestEnv {
     private static Settings classSettings;
     private static TextureAtlas classAtlas;
 
-    // Per-test snapshot, restored in @AfterEach.
     private Application testApp;
     private Graphics testGraphics;
     private GL20 testGl;
@@ -76,17 +73,14 @@ public class ArcTestEnv {
             Core.gl20 = (MockGL20) Core.gl;
         }
         if (Core.atlas == null) {
-            // Minimal atlas: widgets resolve a default region by name in their constructor
-            // (Image, Checkbox, …). Without it those constructors throw, which reactive
-            // components under test would otherwise surface as failures.
+
             Core.atlas = minimalAtlas();
         }
     }
 
     public static TextureAtlas minimalAtlas() {
         TextureAtlas atlas = new TextureAtlas();
-        // The mocking-only Texture constructor takes no GL call, so this stays
-        // headless-safe.
+
         Texture placeholder = new MockTexture();
         atlas.addRegion("white", placeholder, 0, 0, 1, 1);
         atlas.addRegion("whiteui", placeholder, 0, 0, 1, 1);
@@ -128,8 +122,6 @@ public class ArcTestEnv {
 
         Timer.instance().clear();
 
-        // Headless by default: components key fallbacks on Core.scene == null.
-        // Tests needing a live scene call newScene() in their own setup.
         Core.scene = null;
 
         Core.settings = new Settings();
@@ -139,8 +131,7 @@ public class ArcTestEnv {
     @AfterEach
     public void tearDownArcTestEnv() {
         Timer.instance().clear();
-        // Idempotent-safe: app/graphics/gl must never be nulled, so a repeated
-        // teardown (manual + JUnit) cannot clear the initialized statics.
+
         if (testApp != null) {
             Core.app = testApp;
         }

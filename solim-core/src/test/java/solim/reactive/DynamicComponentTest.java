@@ -560,7 +560,8 @@ class DynamicComponentTest extends SolimCoreEnv {
         parent.add(dyn.element());
         parent.pack();
 
-        assertTrue(dyn.container().visible, "Container must be visible when factory returns a fallback component for null source");
+        assertTrue(dyn.container().visible,
+                "Container must be visible when factory returns a fallback component for null source");
         assertEquals(1, dyn.container().getChildren().size, "Fallback component must be added to container");
         TestComponent fallbackComp = instances.get("fallback");
         assertNotNull(fallbackComp, "Fallback component instance must exist");
@@ -684,7 +685,7 @@ class DynamicComponentTest extends SolimCoreEnv {
 
         boomPhase[0] = 1;
         source.set("next");
-        // Fail-fast: a throwing factory must not be swallowed by the hosting effect.
+
         IllegalStateException thrown = assertThrows(IllegalStateException.class, SignalDispatcher::flush);
         assertEquals("boom", thrown.getMessage());
         assertFalse(SignalDispatcher.isFlushing(), "Dispatcher must not stay marked as flushing");
@@ -736,7 +737,7 @@ class DynamicComponentTest extends SolimCoreEnv {
                 Card card = new Card();
                 card.name("pc-card");
                 card.children(() -> {
-                    // child content
+
                 });
                 cardHolder[0] = card;
             });
@@ -783,7 +784,6 @@ class DynamicComponentTest extends SolimCoreEnv {
         assertEquals(Align.center, dyn.container().getAlign());
         assertEquals(Align.center, CellAccess.align(dyn.container().getCells().first()));
 
-        // Update source value to trigger remount
         source.set("world");
         SignalDispatcher.flush();
         colTable.layout();

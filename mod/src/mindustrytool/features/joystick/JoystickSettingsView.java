@@ -45,7 +45,7 @@ public class JoystickSettingsView extends Component {
     private Component sizingCard() {
         return SettingCard.section(Icon.spray,
                 Core.bundle.get("feature.joystick.settings.sizing", "Sizing & Appearance"), () -> {
-                    // Size Slider
+
                     SettingSlider.of(
                             Core.bundle.get("feature.joystick.settings.size", "Joystick Size"),
                             feature.sizeConfig.signal(),
@@ -54,7 +54,6 @@ public class JoystickSettingsView extends Component {
                             0.1f,
                             feature.sizeConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100)));
 
-                    // Opacity Slider
                     SettingSlider.of(
                             Core.bundle.get("feature.joystick.settings.opacity", "Opacity"),
                             feature.opacityConfig.signal(),

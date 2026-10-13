@@ -30,11 +30,10 @@ class PrettyChatFeatureTest extends MindustryTestEnv {
 
     @Test
     void testPipelineOrderPreserved() {
-        // Order 1: caps then reverse
+
         feature.config().setEnabledIds(Arrays.asList("caps", "reverse"));
         assertEquals("DLROW OLLEH", feature.transform("hello world"));
 
-        // Order 2: reverse then lowercase
         feature.config().setEnabledIds(Arrays.asList("reverse", "lowercase"));
         assertEquals("dlrow olleh", feature.transform("HELLO WORLD"));
     }
@@ -56,23 +55,19 @@ class PrettyChatFeatureTest extends MindustryTestEnv {
 
     @Test
     void testClampSafe() {
-        // Normal text within limit
+
         assertEquals("hello", PrettyChatFeature.clampSafe("hello", 10));
 
-        // Truncate cleanly
         assertEquals("hello", PrettyChatFeature.clampSafe("hello world", 5));
 
-        // Clamps incomplete color bracket
         String colored = "[#ff0000]red text";
-        // If truncated inside the bracket, bracket should be discarded
+
         String clampedInsideBracket = PrettyChatFeature.clampSafe(colored, 5);
         assertFalse(clampedInsideBracket.contains("["), "Dangling open bracket should be removed");
 
-        // Clamps with balanced tags
         String closed = PrettyChatFeature.clampSafe("[#ff0000]hello[]", 16);
         assertTrue(closed.endsWith("[]"), "Color tags should close properly");
 
-        // Clamps strictly without exceeding maxLength when open color tag is cut
         String rainbow = "[#ff0000]a[#00ff00]b[#0000ff]c[#ffff00]d[#ff00ff]e[]";
         for (int limit = 1; limit <= rainbow.length(); limit++) {
             String clamped = PrettyChatFeature.clampSafe(rainbow, limit);
@@ -88,16 +83,13 @@ class PrettyChatFeatureTest extends MindustryTestEnv {
         PrettyChatConfig config = feature.config();
         config.setEnabledIds(Arrays.asList("caps", "reverse"));
 
-        // Toggle existing ID -> disables it
         config.toggle("caps");
         assertFalse(config.isEnabled("caps"));
         assertTrue(config.isEnabled("reverse"));
 
-        // Toggle non-existing ID -> enables it
         config.toggle("uwu");
         assertTrue(config.isEnabled("uwu"));
 
-        // Move item
         config.setEnabledIds(Arrays.asList("caps", "reverse", "uwu"));
         config.move("uwu", -1);
         List<String> current = config.getEnabledIds();
@@ -116,13 +108,11 @@ class PrettyChatFeatureTest extends MindustryTestEnv {
         assertTrue(result.endsWith("[]"), "Gradient should close color tags");
         assertTrue(result.length() <= 150, "Gradient must not exceed max text length");
 
-        // Test with preset
         gradient.setScript("cyberpunk");
         String cpResult = gradient.transform("Cyberpunk City");
         assertTrue(cpResult.contains("[#"), "Should contain hex tags for cyberpunk preset");
         assertTrue(cpResult.endsWith("[]"));
 
-        // Reset
         gradient.resetScript();
         assertEquals(BuiltinPrettiers.GradientPrettier.DEFAULT_PALETTE, gradient.getScript());
     }

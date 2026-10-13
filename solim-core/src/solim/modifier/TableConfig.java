@@ -32,8 +32,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
 
     Table table();
 
-    // ---------- alignment ----------
-
     default SELF align(int align) {
         Table t = table();
         if (t != null)
@@ -75,8 +73,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
             t.center();
         return self();
     }
-
-    // ---------- padding (inner insets on Table) ----------
 
     default SELF padding(float padding) {
         Table t = table();
@@ -137,8 +133,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         }
         return self();
     }
-
-    // ---------- padding (reactive) ----------
 
     default SELF padding(@Nullable Readable<Float> padding) {
         if (padding == null)
@@ -243,8 +237,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    // ---------- gap ----------
-
     default SELF gap(float gap) {
         GenericGapContainer.setGap(table(), gap);
         return self();
@@ -265,8 +257,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
     default void respace() {
         GapContainer.respace(table());
     }
-
-    // ---------- rounded ----------
 
     default RoundedDrawable getOrCreateRounded(int defaultRadius) {
         return RoundedHelper.getOrCreateRounded(table(), defaultRadius);
@@ -305,8 +295,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    // ---------- border ----------
-
     default SELF border(float stroke, @Nullable Color color) {
         Table t = table();
         if (t == null)
@@ -332,8 +320,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         }
         return self();
     }
-
-    // ---------- background ----------
 
     default SELF background(@Nullable Drawable bg) {
         Table t = table();
@@ -384,8 +370,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         }
         return self();
     }
-
-    // ---------- internal ----------
 
     SELF self();
 }

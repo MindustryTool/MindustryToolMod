@@ -40,7 +40,7 @@ public class TeamResourceSettingsView extends Component {
     private Component layoutCard() {
         return SettingCard.section(Icon.settings,
                 Core.bundle.get("team-resources.settings.section.layout", "Overlay Layout"), () -> {
-                    // Opacity Slider
+
                     SettingSlider.of(
                             Core.bundle.get("team-resources.opacity", "Opacity"),
                             feature.opacityConfig.signal(),
@@ -49,7 +49,6 @@ public class TeamResourceSettingsView extends Component {
                             0.05f,
                             feature.opacityConfig.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
 
-                    // Scale Slider
                     SettingSlider.of(
                             Core.bundle.get("team-resources.size", "Scale"),
                             feature.scaleConfig.signal(),
@@ -58,7 +57,6 @@ public class TeamResourceSettingsView extends Component {
                             0.05f,
                             feature.scaleConfig.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
 
-                    // Overlay Width Slider
                     SettingSlider.of(
                             Core.bundle.get("team-resources.width", "Overlay Width"),
                             feature.overlayWidthConfig.signal(),

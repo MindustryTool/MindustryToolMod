@@ -102,7 +102,6 @@ class RenderLoopAllocationTest extends MindustryTestEnv {
     void testVisualizerBridgeFlowStateZeroAllocation() {
         BridgeFlowState state = new BridgeFlowState();
 
-        // Warm up state transitions and JIT tiers
         for (int i = 0; i < 100; i++) {
             state.step(10f * i);
             state.addItem(2.5f);
@@ -110,14 +109,13 @@ class RenderLoopAllocationTest extends MindustryTestEnv {
             state.formatRate(rate);
         }
 
-        // Measure steady-state execution over 60 simulated frames
         long startAlloc = threadBean.getThreadAllocatedBytes(threadId);
         for (int frame = 0; frame < 60; frame++) {
             state.step(1000f + frame * 10f);
             state.addItem(3.0f);
             float rate = state.calculateRate();
             String formatted = state.formatRate(rate);
-            // Verify output is deterministic and non-null
+
             assertTrue(formatted != null && !formatted.isEmpty());
         }
         long endAlloc = threadBean.getThreadAllocatedBytes(threadId);
@@ -128,13 +126,12 @@ class RenderLoopAllocationTest extends MindustryTestEnv {
 
     @Test
     void testVisualizerFormatFlowRateLookupTableZeroAllocation() {
-        // Warm up static cache lookups
+
         for (int i = 0; i <= 100; i++) {
             VisualizerFeature.formatFlowRate((float) i);
             VisualizerFeature.formatFlowRate(0.0005f);
         }
 
-        // Measure steady-state lookup over 1000 iterations
         long startAlloc = threadBean.getThreadAllocatedBytes(threadId);
         for (int iter = 0; iter < 1000; iter++) {
             int rateInt = iter % 101;
@@ -151,14 +148,12 @@ class RenderLoopAllocationTest extends MindustryTestEnv {
     void testVisualizerBadgeAndTargetCalculationsZeroAllocation() {
         VisualizerFeature feature = new VisualizerFeature();
 
-        // Warm up
         for (int i = 0; i < 50; i++) {
             feature.calculateBadgeSize(1 + (i % 4));
             feature.getTargetHealthFraction(null);
             feature.calculateAmmoFraction(null);
         }
 
-        // Measure steady state
         long startAlloc = threadBean.getThreadAllocatedBytes(threadId);
         for (int frame = 0; frame < 60; frame++) {
             float badgeSize = feature.calculateBadgeSize(2);
@@ -179,12 +174,10 @@ class RenderLoopAllocationTest extends MindustryTestEnv {
     void testRangeDisplayFrustumCullingCalculationZeroAllocation() {
         Rect viewBounds = new Rect(0f, 0f, 800f, 600f);
 
-        // Pre-allocated coordinates and ranges
         float[] unitX = { 100f, 400f, 750f, 1500f, -200f };
         float[] unitY = { 100f, 300f, 550f, 1200f, -300f };
         float range = 120f;
 
-        // Warm up loop
         for (int i = 0; i < 100; i++) {
             for (int u = 0; u < unitX.length; u++) {
                 boolean culled = unitX[u] + range < viewBounds.x || unitX[u] - range > viewBounds.x + viewBounds.width
@@ -193,7 +186,6 @@ class RenderLoopAllocationTest extends MindustryTestEnv {
             }
         }
 
-        // Measure 60 frames of frustum culling checks
         long startAlloc = threadBean.getThreadAllocatedBytes(threadId);
         int culledCount = 0;
         for (int frame = 0; frame < 60; frame++) {
@@ -217,14 +209,13 @@ class RenderLoopAllocationTest extends MindustryTestEnv {
         Color scratchColor = new Color();
         Color teamColor = Color.royal;
 
-        // Warm up
         for (int i = 0; i < 100; i++) {
             float hpPercent = (i % 100) / 100f;
             scratchColor.set(teamColor).lerp(Color.scarlet, 1f - hpPercent);
         }
 
         float lastHpPercent = 0f;
-        // Measure 60 frames of health metric interpolation
+
         long startAlloc = threadBean.getThreadAllocatedBytes(threadId);
         for (int frame = 0; frame < 60; frame++) {
             float health = 150f;
@@ -241,7 +232,7 @@ class RenderLoopAllocationTest extends MindustryTestEnv {
 
     @Test
     void testBlockStatsEfficiencyZeroAllocation() {
-        // Pre-cached percentage strings as used in BlockStatsDisplayFeature
+
         String[] percentStrings = new String[301];
         for (int i = 0; i <= 300; i++) {
             percentStrings[i] = i + "%";
@@ -249,7 +240,6 @@ class RenderLoopAllocationTest extends MindustryTestEnv {
 
         float[] testEfficiencies = { 0f, 0.45f, 0.85f, 1.0f, 1.5f, 2.25f, 3.5f };
 
-        // Warm up loop
         for (int i = 0; i < 100; i++) {
             float eff = testEfficiencies[i % testEfficiencies.length];
             int effInt = Mathf.clamp(Math.round(eff * 100f), 0, 300);
@@ -259,7 +249,6 @@ class RenderLoopAllocationTest extends MindustryTestEnv {
             assertNotNull(effColor);
         }
 
-        // Measure steady state allocation across 60 frames
         long startAlloc = threadBean.getThreadAllocatedBytes(threadId);
         for (int frame = 0; frame < 60; frame++) {
             for (float eff : testEfficiencies) {

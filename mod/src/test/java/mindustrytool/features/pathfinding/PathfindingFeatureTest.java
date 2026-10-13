@@ -42,7 +42,6 @@ class PathfindingFeatureTest extends MindustryTestEnv {
         assertNotNull(manager.get(key1));
         assertNotNull(manager.get(key2));
 
-        // Cleanup with currentTime=70, maxAge=30 -> key1 (age 60) removed, key2 (age 20) preserved
         manager.cleanup(70f, 30f);
         assertNull(manager.get(key1));
         assertNotNull(manager.get(key2));
@@ -85,6 +84,6 @@ class PathfindingFeatureTest extends MindustryTestEnv {
     void testResetClearsCaches() {
         PathfindingFeature feature = new PathfindingFeature();
         feature.reset();
-        // Verifies reset() completes smoothly without exceptions
+
     }
 }

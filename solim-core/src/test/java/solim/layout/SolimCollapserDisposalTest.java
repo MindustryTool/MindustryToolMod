@@ -73,11 +73,7 @@ class SolimCollapserDisposalTest extends SolimEnv {
 
     @Test
     void zeroDurationCollapseAppliesImmediatelyInsteadOfAnimating() {
-        // The only Solim-owned part of `duration` is whether a collapse jump-cut or
-        // animates.
-        // A plain Element reports a zero pref height in both states, so the meaningful
-        // case is
-        // the non-animated one: it must leave nothing running after disposal.
+
         SolimCollapser instant = new SolimCollapser().duration(0f);
         instant.children(() -> AttachmentStack.add(new Element()));
         instant.collapsed(false);
@@ -149,8 +145,6 @@ class SolimCollapserDisposalTest extends SolimEnv {
         assertTrue(collapser.isDisposed());
         assertEquals(0, OwnershipContext.size(), "No ownership scope may leak");
     }
-
-    // ---------- helpers ----------
 
     private void assertDisposed(SolimCollapser collapser, Signal<?> signal) {
         assertTrue(collapser.isDisposed(), "The collapser must report itself disposed");

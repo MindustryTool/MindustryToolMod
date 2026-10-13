@@ -15,7 +15,6 @@ import solim.test.SolimEnv;
 
 public class AxisSpacingTest extends SolimEnv {
 
-
     @Test
     void columnAndRowAxisSpacing() {
         Column col = new Column().paddingX(16f).paddingY(8f);
@@ -64,7 +63,7 @@ public class AxisSpacingTest extends SolimEnv {
         img.paddingX(10f).paddingY(5f).marginX(8f).marginY(4f);
 
         Cell<?> cell = parent.getCell(img.element());
-        // padding (10, 5) + margin (8, 4) = 18 horizontal, 9 vertical
+
         assertEquals(18f, CellAccess.padLeft(cell), 0.01f);
         assertEquals(18f, CellAccess.padRight(cell), 0.01f);
         assertEquals(9f, CellAccess.padTop(cell), 0.01f);

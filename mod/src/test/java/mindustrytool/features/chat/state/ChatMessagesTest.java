@@ -96,7 +96,7 @@ class ChatMessagesTest extends SolimEnv {
         ChatMessages messages = new ChatMessages(activeId);
 
         messages.append(msg("temp_123", "ch1", "Sending..."));
-        // SSE delivers real message first before HTTP POST returns
+
         messages.append(msg("server_999", "ch1", "Live delivery"));
 
         ChatMessage real = msg("server_999", "ch1", "Live delivery");
@@ -161,12 +161,10 @@ class ChatMessagesTest extends SolimEnv {
         assertEquals("Connection timed out", messages.currentActiveError());
         assertEquals("Connection timed out", messages.activeError().get());
 
-        // Channel switch reflects respective channel's state
         activeId.set("ch2");
         assertFalse(messages.isActiveLoadingInitial());
         assertNull(messages.currentActiveError());
 
-        // Replace clears error
         activeId.set("ch1");
         assertEquals("Connection timed out", messages.currentActiveError());
         messages.replace("ch1", Arrays.asList(msg("10", "ch1", "Hi")));
@@ -179,7 +177,6 @@ class ChatMessagesTest extends SolimEnv {
         Signal<String> activeId = Signal.of("ch1");
         ChatMessages chatMessages = new ChatMessages(activeId);
 
-        // Component 1 binds to forChannel("ch1") and is then disposed
         Component comp1 = new Component() {
             @Override
             protected Element build() {
@@ -191,17 +188,14 @@ class ChatMessagesTest extends SolimEnv {
         comp1.element();
         comp1.dispose();
 
-        // Component 2 mounts later and binds to forChannel("ch1")
         Component comp2 = new Component() {
             @Override
             protected Element build() {
                 Readable<List<ChatMessage>> binding = chatMessages.forChannel("ch1");
                 assertTrue(binding.get().isEmpty());
 
-                // New message arrives
                 chatMessages.append(msg("m1", "ch1", "Hello"));
 
-                // Component 2's binding must reactively update
                 assertEquals(1, binding.get().size());
                 assertEquals("m1", binding.get().get(0).getId());
                 return new Table();
@@ -211,4 +205,3 @@ class ChatMessagesTest extends SolimEnv {
         comp2.dispose();
     }
 }
-

@@ -42,26 +42,22 @@ class ReflectUtilTest {
 
     @Test
     void testFindFieldDirectAndInherited() {
-        // Direct field
+
         Field fChild = ReflectUtil.findField(Child.class, "childField");
         assertNotNull(fChild);
         assertEquals("childField", fChild.getName());
 
-        // Inherited from Parent
         Field fParent = ReflectUtil.findField(Child.class, "parentField");
         assertNotNull(fParent);
         assertEquals("parentField", fParent.getName());
 
-        // Inherited from GrandParent
         Field fGrand = ReflectUtil.findField(Child.class, "grandParentField");
         assertNotNull(fGrand);
         assertEquals("grandParentField", fGrand.getName());
 
-        // Protected field
         Field fProtected = ReflectUtil.findField(Child.class, "protectedCount");
         assertNotNull(fProtected);
 
-        // Non-existent field returns null, never throws
         Field fNone = ReflectUtil.findField(Child.class, "doesNotExist");
         assertNull(fNone);
     }
@@ -75,10 +71,8 @@ class ReflectUtilTest {
         assertEquals("grandparent", ReflectUtil.getOrNull(child, "grandParentField"));
         assertEquals(42, (Integer) ReflectUtil.getOrNull(child, "protectedCount"));
 
-        // Non-existent returns null
         assertNull(ReflectUtil.getOrNull(child, "missing"));
 
-        // Null target returns null
         assertNull(ReflectUtil.getOrNull(null, "childField"));
         assertNull(ReflectUtil.getOrNull(child, null));
     }
@@ -96,10 +90,8 @@ class ReflectUtilTest {
         assertTrue(ReflectUtil.setSafe(child, "grandParentField", "newGrand"));
         assertEquals("newGrand", ReflectUtil.getOrNull(child, "grandParentField"));
 
-        // Non-existent field returns false without exception
         assertFalse(ReflectUtil.setSafe(child, "missingField", "value"));
 
-        // Null handling
         assertFalse(ReflectUtil.setSafe(null, "childField", "val"));
         assertFalse(ReflectUtil.setSafe(child, null, "val"));
     }
@@ -111,28 +103,24 @@ class ReflectUtilTest {
         Method mGreet = ReflectUtil.findMethod(Child.class, "greet", String.class);
         assertNotNull(mGreet);
 
-        String result = ReflectUtil.invokeOrNull(child, "greet", new Object[]{"world"}, String.class);
+        String result = ReflectUtil.invokeOrNull(child, "greet", new Object[] { "world" }, String.class);
         assertEquals("hello world", result);
 
-        String secret = ReflectUtil.invokeOrNull(child, "secretMessage", new Object[]{});
+        String secret = ReflectUtil.invokeOrNull(child, "secretMessage", new Object[] {});
         assertEquals("from grandparent", secret);
 
-        // Non-existent method
         assertNull(ReflectUtil.findMethod(Child.class, "nonExistentMethod"));
-        assertNull(ReflectUtil.invokeOrNull(child, "nonExistentMethod", new Object[]{}));
+        assertNull(ReflectUtil.invokeOrNull(child, "nonExistentMethod", new Object[] {}));
     }
 
     @Test
     void testCachingPerformanceAndConsistency() {
         Child child = new Child();
 
-        // Initial lookup populates cache
         assertEquals("parent", ReflectUtil.getOrNull(child, "parentField"));
 
-        // Subsequent lookup should be identical and retrieved from cache
         assertEquals("parent", ReflectUtil.getOrNull(child, "parentField"));
 
-        // Negative caching (non-existent field)
         assertNull(ReflectUtil.getOrNull(child, "noSuchField"));
         assertNull(ReflectUtil.getOrNull(child, "noSuchField"));
     }

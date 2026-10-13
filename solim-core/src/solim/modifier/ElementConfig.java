@@ -42,8 +42,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
 
     Element element();
 
-    // ---------- size ----------
-
     default SELF width(float width) {
         Element el = element();
         if (el == null)
@@ -140,8 +138,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         return self();
     }
 
-    // ---------- position ----------
-
     default SELF x(float x) {
         Element el = element();
         if (el != null)
@@ -198,8 +194,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         return self();
     }
 
-    // ---------- visibility ----------
-
     default SELF visible(boolean visible) {
         Element el = element();
         if (el == null)
@@ -224,8 +218,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         }
         return self();
     }
-
-    // ---------- opacity / alpha ----------
 
     default SELF opacity(float opacity) {
         Element el = element();
@@ -258,16 +250,12 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         return opacity(alpha);
     }
 
-    // ---------- name ----------
-
     default SELF name(String name) {
         Element el = element();
         if (el != null)
             el.name = name;
         return self();
     }
-
-    // ---------- click ----------
 
     /**
      * Makes this element clickable, replacing any previously registered handler.
@@ -297,8 +285,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
             binding.stop = stop;
         return self();
     }
-
-    // ---------- tooltip ----------
 
     static void removeTooltips(@Nullable Element el) {
         if (el == null)
@@ -363,8 +349,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         return self();
     }
 
-    // ---------- draggable ----------
-
     default SELF draggable() {
         Hud.makeDraggable(element(), null, null, null);
         return self();
@@ -403,8 +387,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         element().rotation = degree;
         return self();
     }
-
-    // ---------- internal ----------
 
     SELF self();
 }

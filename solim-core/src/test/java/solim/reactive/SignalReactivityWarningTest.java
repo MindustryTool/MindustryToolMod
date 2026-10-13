@@ -9,38 +9,38 @@ import solim.test.SolimEnv;
 
 class SignalReactivityWarningTest extends SolimEnv {
 
-	@Test
-	void peekReturnsValueWithoutTracking() {
-		Signal<Integer> sig = Signal.of(42);
-		assertEquals(42, sig.peek());
+    @Test
+    void peekReturnsValueWithoutTracking() {
+        Signal<Integer> sig = Signal.of(42);
+        assertEquals(42, sig.peek());
 
-		Computed<Integer> comp = Signal.computed(() -> sig.get() * 2);
-		assertEquals(84, comp.peek());
+        Computed<Integer> comp = Signal.computed(() -> sig.get() * 2);
+        assertEquals(84, comp.peek());
 
-		sig.set(10);
-		assertEquals(20, comp.peek());
-	}
+        sig.set(10);
+        assertEquals(20, comp.peek());
+    }
 
-	@Test
-	void getInsideComponentBuildIsDetected() {
-		Signal<String> testSignal = Signal.of("initial");
-		boolean[] getCalledInsideBuild = {false};
+    @Test
+    void getInsideComponentBuildIsDetected() {
+        Signal<String> testSignal = Signal.of("initial");
+        boolean[] getCalledInsideBuild = { false };
 
-		class SampleComponent extends Component {
-			@Override
-			protected Element build() {
-				// Calling get() inside build()
-				String val = testSignal.get();
-				if ("initial".equals(val)) {
-					getCalledInsideBuild[0] = true;
-				}
-				return new Element();
-			}
-		}
+        class SampleComponent extends Component {
+            @Override
+            protected Element build() {
 
-		SampleComponent c = new SampleComponent();
-		c.element();
+                String val = testSignal.get();
+                if ("initial".equals(val)) {
+                    getCalledInsideBuild[0] = true;
+                }
+                return new Element();
+            }
+        }
 
-		assertTrue(getCalledInsideBuild[0]);
-	}
+        SampleComponent c = new SampleComponent();
+        c.element();
+
+        assertTrue(getCalledInsideBuild[0]);
+    }
 }

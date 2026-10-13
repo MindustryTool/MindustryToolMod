@@ -6,7 +6,8 @@ import java.util.regex.Pattern;
 
 /**
  * Intelligent filter that identifies messages that should bypass translation
- * (such as system notices, bot bridges, coordinates, schematics, and universal acronyms).
+ * (such as system notices, bot bridges, coordinates, schematics, and universal
+ * acronyms).
  */
 public final class ChatFilter {
 
@@ -32,9 +33,9 @@ public final class ChatFilter {
             "(?:has connected|has disconnected|đã kết nối|đã ngắt kết nối|joined the game|left the game|server restarting|game over|next wave in)",
             Pattern.CASE_INSENSITIVE);
 
-    // Universal gamer acronyms that need no translation
     private static final String[] UNIVERSAL_ACRONYMS = {
-            "gg", "ggwp", "glhf", "gl", "hf", "ty", "np", "thx", "pls", "plz", "wp", "afk", "brb", "omg", "wtf", "xd", "lol"
+            "gg", "ggwp", "glhf", "gl", "hf", "ty", "np", "thx", "pls", "plz", "wp", "afk", "brb", "omg", "wtf", "xd",
+            "lol"
     };
 
     private ChatFilter() {
@@ -52,12 +53,10 @@ public final class ChatFilter {
             return false;
         }
 
-        // Check if the overall message is a system/bot message or broadcast event
         if (isSystemOrBotMessage(clean) || SYSTEM_EVENT_PHRASES.matcher(clean).find()) {
             return false;
         }
 
-        // Extract content after sender prefix (e.g. "PlayerName: hello")
         String content = extractMessageContent(clean);
         if (content.isEmpty()) {
             return false;
@@ -67,7 +66,8 @@ public final class ChatFilter {
     }
 
     /**
-     * Determines whether an outgoing chat message typed by the player should be translated.
+     * Determines whether an outgoing chat message typed by the player should be
+     * translated.
      */
     public static boolean shouldTranslateOutgoing(@Nullable String raw) {
         if (raw == null) {
@@ -78,24 +78,20 @@ public final class ChatFilter {
             return false;
         }
 
-        // Escape prefix: //message bypasses translation
         if (text.startsWith("//")) {
             return false;
         }
 
-        // Forced translation commands: /tr <text> or /dich <text>
         if (text.startsWith("/tr ") || text.startsWith("/dich ")) {
             String sub = text.startsWith("/tr ") ? text.substring(4).trim() : text.substring(6).trim();
             return !sub.isEmpty();
         }
 
-        // Team chat (/t ) or Admin chat (/a ) can be translated
         if (text.startsWith("/t ") || text.startsWith("/a ")) {
             String sub = text.substring(3).trim();
             return !sub.isEmpty() && !isNoise(sub);
         }
 
-        // Other commands starting with / are game commands (e.g. /vote, /help)
         if (text.startsWith("/")) {
             return false;
         }
@@ -114,7 +110,8 @@ public final class ChatFilter {
     }
 
     /**
-     * Checks if the text is pure noise: numbers, punctuation, emoticons, URLs, schematics, or universal acronyms.
+     * Checks if the text is pure noise: numbers, punctuation, emoticons, URLs,
+     * schematics, or universal acronyms.
      */
     public static boolean isNoise(String text) {
         if (text == null) {
@@ -125,32 +122,26 @@ public final class ChatFilter {
             return true;
         }
 
-        // Pure numbers
         if (NUMBERS_ONLY.matcher(clean).matches()) {
             return true;
         }
 
-        // Coordinates
         if (COORDINATES_PATTERN.matcher(clean).matches()) {
             return true;
         }
 
-        // URLs
         if (URL_PATTERN.matcher(clean).matches()) {
             return true;
         }
 
-        // Schematics
         if (isSchematic(clean)) {
             return true;
         }
 
-        // Punctuation, symbols, or emoticons only (e.g. ":)", ":D", "^^", "???", "...")
         if (isPunctuationOrEmoticonOnly(clean)) {
             return true;
         }
 
-        // Universal gaming acronyms
         String lower = clean.toLowerCase();
         for (String acr : UNIVERSAL_ACRONYMS) {
             if (lower.equals(acr)) {
@@ -172,7 +163,8 @@ public final class ChatFilter {
     }
 
     /**
-     * Checks if a string contains only punctuation, math symbols, whitespace, or emoticons.
+     * Checks if a string contains only punctuation, math symbols, whitespace, or
+     * emoticons.
      */
     public static boolean isPunctuationOrEmoticonOnly(String text) {
         if (text == null || text.isEmpty()) {
@@ -191,7 +183,6 @@ public final class ChatFilter {
             return true;
         }
 
-        // Known short letter-based emoticons
         String trimmed = text.trim();
         if (trimmed.length() <= 4) {
             String lower = trimmed.toLowerCase();
@@ -204,7 +195,8 @@ public final class ChatFilter {
     }
 
     /**
-     * Extracts the message body after sender name prefix, e.g. "Player: hello" -> "hello".
+     * Extracts the message body after sender name prefix, e.g. "Player: hello" ->
+     * "hello".
      * If no colon is found, returns the clean text.
      */
     public static String extractMessageContent(String cleanText) {

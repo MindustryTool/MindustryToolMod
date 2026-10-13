@@ -68,21 +68,23 @@ import solim.reactive.Signal;
 
 /**
  * Unified feature responsible for rendering real-time tactical visualizations:
- * - Items & fluids in motion across bridge conveyors, duct bridges, and liquid bridges.
+ * - Items & fluids in motion across bridge conveyors, duct bridges, and liquid
+ * bridges.
  * - Real in-game bridge throughput flow rate tracking.
- * - Turret tactical data: loaded ammo badges with fill gauge and target pointer lines with health reticles.
+ * - Turret tactical data: loaded ammo badges with fill gauge and target pointer
+ * lines with health reticles.
  *
  * Optimized for 60 FPS real-time rendering:
  * - Zero allocations in draw() loop.
  * - Pre-allocated predicate and consumer delegates.
- * - Primitive configuration cache to eliminate boxing/unboxing and signal overhead.
+ * - Primitive configuration cache to eliminate boxing/unboxing and signal
+ * overhead.
  * - Viewport frustum culling.
  */
 public class VisualizerFeature extends Feature {
 
     public final ConfigGroup config;
 
-    // Bridge Configurations
     public final ConfigValue<Boolean> showItemBridgesConfig;
     public final ConfigValue<Boolean> showDuctBridgesConfig;
     public final ConfigValue<Boolean> showLiquidBridgesConfig;
@@ -92,7 +94,6 @@ public class VisualizerFeature extends Feature {
     public final ConfigValue<Boolean> hideIdleBridgeFlowConfig;
     public final ConfigValue<Float> bridgeFlowRateScaleConfig;
 
-    // Turret Configurations
     public final ConfigValue<Boolean> showAmmoBadgeConfig;
     public final ConfigValue<Boolean> showTargetLineConfig;
     public final ConfigValue<Boolean> targetLineAllyConfig;
@@ -107,11 +108,9 @@ public class VisualizerFeature extends Feature {
     private final GlyphLayout glyphLayout = new GlyphLayout();
     private @Nullable VisualizerSettingsDialog settingsDialog;
 
-    // Per-turret enabled bitset indexed by block.id for zero-allocation O(1) checks during 60 FPS draw
     private @Nullable BitSet turretEnabled;
     private final ObjectMap<String, Signal<Boolean>> turretSignals = new ObjectMap<>();
 
-    // Flow tracking per bridge position
     private final IntMap<BridgeFlowState> bridgeFlowStates = new IntMap<>();
     private final Seq<BridgeFlowState> statePool = new Seq<>(256);
     private final IntSeq staleKeys = new IntSeq();
@@ -131,14 +130,12 @@ public class VisualizerFeature extends Feature {
         }
     }
 
-    // Pre-allocated functional interfaces for zero GC allocation during eachBlock
     private static final Boolf<Building> IS_VISUALIZED = b -> b instanceof ItemBridgeBuild
             || b instanceof LiquidBridgeBuild
             || b instanceof DirectionBridgeBuild
             || b instanceof TurretBuild;
     private final Cons<Building> buildingDrawer = this::drawBuilding;
 
-    // Cached primitive configurations to avoid repeated getter calls, boxing, and unboxing in draw()
     private boolean cachedShowItemBridges = true;
     private boolean cachedShowDuctBridges = true;
     private boolean cachedShowLiquidBridges = true;
@@ -191,7 +188,6 @@ public class VisualizerFeature extends Feature {
 
         config = configGroup();
 
-        // Bridges
         showItemBridgesConfig = config.boolValue("show-item-bridges", true);
         showDuctBridgesConfig = config.boolValue("show-duct-bridges", true);
         showLiquidBridgesConfig = config.boolValue("show-liquid-bridges", true);
@@ -201,7 +197,6 @@ public class VisualizerFeature extends Feature {
         hideIdleBridgeFlowConfig = config.boolValue("hide-idle-bridge-flow", false);
         bridgeFlowRateScaleConfig = config.floatValue("bridge-flow-rate-scale", 1.0f);
 
-        // Turrets
         showAmmoBadgeConfig = config.boolValue("show-ammo-badge", true);
         showTargetLineConfig = config.boolValue("show-target-line", true);
         targetLineAllyConfig = config.boolValue("target-line-ally", true);
@@ -210,7 +205,6 @@ public class VisualizerFeature extends Feature {
         turretBadgeScaleConfig = config.floatValue("turret-badge-scale", 1.0f);
         targetLineOpacityConfig = config.floatValue("target-line-opacity", 0.6f);
 
-        // Synchronize primitive caches on reactive signal changes
         showItemBridgesConfig.signal().subscribe(v -> cachedShowItemBridges = v != null ? v : true);
         showDuctBridgesConfig.signal().subscribe(v -> cachedShowDuctBridges = v != null ? v : true);
         showLiquidBridgesConfig.signal().subscribe(v -> cachedShowLiquidBridges = v != null ? v : true);
@@ -228,7 +222,6 @@ public class VisualizerFeature extends Feature {
         turretBadgeScaleConfig.signal().subscribe(v -> cachedTurretBadgeScale = v != null ? v : 1.0f);
         targetLineOpacityConfig.signal().subscribe(v -> cachedTargetLineOpacity = v != null ? v : 0.6f);
 
-        // Initialize cache values
         syncConfigCache();
 
         bindToggle("visualizer", KeyCode.unset);
@@ -430,7 +423,6 @@ public class VisualizerFeature extends Feature {
         float cy = viewBounds.y + viewBounds.height / 2f;
         float range = Math.max(viewBounds.width, viewBounds.height) * 0.75f + 160f;
 
-        // Periodic cleanup of stale bridge flow states to avoid memory retention
         if (Time.time - lastCleanupTime > 300f) {
             lastCleanupTime = Time.time;
             if (bridgeFlowStates.size > 500) {
@@ -469,8 +461,6 @@ public class VisualizerFeature extends Feature {
             drawBridge(build);
         }
     }
-
-    // ─── Bridge Rendering ──────────────────────────────────────────
 
     private void drawBridge(Building build) {
         if (build instanceof BufferedItemBridgeBuild) {
@@ -783,8 +773,6 @@ public class VisualizerFeature extends Feature {
         Draw.rect(icon, lx, ly, width, height);
     }
 
-    // ─── Bridge Flow Rate Rendering ────────────────────────────────
-
     public BridgeFlowState getOrCreateBridgeFlowState(int pos) {
         BridgeFlowState state = bridgeFlowStates.get(pos);
         if (state == null) {
@@ -1054,7 +1042,8 @@ public class VisualizerFeature extends Feature {
         drawBridgeFlowBadge(mx, my, current, state, text, rate);
     }
 
-    public float calculateLiquidFlowRate(Building build, @Nullable Building linked, @Nullable Liquid current, boolean isFlowing) {
+    public float calculateLiquidFlowRate(Building build, @Nullable Building linked, @Nullable Liquid current,
+            boolean isFlowing) {
         if (!isFlowing || current == null || linked == null || build.liquids == null || linked.liquids == null
                 || linked.block == null || !linked.block.hasLiquids || build.block == null || !build.block.hasLiquids) {
             return 0f;
@@ -1141,18 +1130,15 @@ public class VisualizerFeature extends Feature {
         float badgeWidth = (icon != null ? iconSize + 1.5f * s : 0f) + textWidth + padX * 2f;
         float badgeHeight = Math.max(iconSize, textHeight) + padY * 2f;
 
-        // Background pill
         Draw.color(0f, 0f, 0f, 0.7f * cachedBridgeOpacity);
         Fill.rect(mx, my, badgeWidth, badgeHeight);
 
-        // Icon
         if (icon != null) {
             float iconX = mx - badgeWidth / 2f + padX + iconSize / 2f;
             Draw.color(Color.white, cachedBridgeOpacity);
             Draw.rect(icon, iconX, my, iconSize, iconSize);
         }
 
-        // Text
         Color textColor = rate <= 0.001f ? Color.lightGray : (rate >= 10f ? Pal.heal : Pal.accent);
         colorScratch.set(textColor);
         colorScratch.a = cachedBridgeOpacity;
@@ -1162,8 +1148,6 @@ public class VisualizerFeature extends Feature {
         Fonts.outline.draw(text, textX, textY, colorScratch, fontScale, false, Align.left);
         Draw.reset();
     }
-
-    // ─── Turret Rendering ──────────────────────────────────────────
 
     private void drawTurret(TurretBuild turret) {
         if (!isTurretEnabled(turret.block)) {
@@ -1204,23 +1188,19 @@ public class VisualizerFeature extends Feature {
         float half = sizePx / 2f;
         float badgeSize = calculateBadgeSize(turret.block.size);
 
-        // Position badge at bottom-right of turret footprint with adaptive margin
         float margin = Math.min(1.2f, turret.block.size * 0.5f);
         float bx = turret.x + half - badgeSize * 0.5f - margin;
         float by = turret.y - half + badgeSize * 0.5f + margin;
 
         float gaugeRadius = badgeSize * 0.62f;
 
-        // Dark circular backing for contrast against busy backgrounds
         Draw.color(0f, 0f, 0f, 0.65f);
         Fill.circle(bx, by, badgeSize * 0.55f);
 
-        // Background gauge track
         Draw.color(0f, 0f, 0f, 0.7f);
         Lines.stroke(1.2f * cachedTurretBadgeScale);
         Lines.circle(bx, by, gaugeRadius);
 
-        // Real in-game ammo fill gauge
         float ammoFrac = calculateAmmoFraction(turret);
         if (ammoFrac > 0.001f) {
             if (ammoFrac < 0.25f) {
@@ -1234,7 +1214,6 @@ public class VisualizerFeature extends Feature {
             Lines.arc(bx, by, gaugeRadius, ammoFrac, 90f);
         }
 
-        // Render official ammo icon
         Draw.color(Color.white);
         Draw.rect(icon, bx, by, badgeSize, badgeSize);
         Draw.reset();
@@ -1304,17 +1283,15 @@ public class VisualizerFeature extends Feature {
                 && ty + 16f >= viewBounds.y && ty - 16f <= viewBounds.y + viewBounds.height;
 
         if (targetOnScreen) {
-            // Real target health indicator around reticle
+
             if (target instanceof Healthc) {
                 float healthFrac = getTargetHealthFraction(target);
                 float reticleRadius = 8.5f;
 
-                // Background subtle track
                 Draw.color(0f, 0f, 0f, colorScratch.a * 0.6f);
                 Lines.stroke(1.2f);
                 Lines.circle(tx, ty, reticleRadius);
 
-                // Real target health arc
                 if (healthFrac > 0.001f) {
                     if (healthFrac > 0.5f) {
                         healthColorScratch.set(Pal.health);
@@ -1344,25 +1321,24 @@ public class VisualizerFeature extends Feature {
     }
 
     /**
-     * Internal state per active bridge to track real-time flow rate using a rolling window.
+     * Internal state per active bridge to track real-time flow rate using a rolling
+     * window.
      */
     public static class BridgeFlowState implements Poolable {
         public static final int BUCKET_COUNT = 6;
-        public static final float BUCKET_TICKS = 10f; // 6 buckets * 10 ticks = 60 ticks (1.0 sec)
+        public static final float BUCKET_TICKS = 10f;
 
         public final float[] buckets = new float[BUCKET_COUNT];
         public int currentBucket = 0;
         public float lastBucketTime = 0f;
         public float lastSampleTime = 0f;
 
-        // Bridge specific state for delta detection
         public boolean initialized = false;
         public long lastHeadEntry = 0L;
         public int lastCount = 0;
         public float lastCounter = 0f;
         public float lastProgress = 0f;
 
-        // Formatting and layout cache
         public float lastFormattedRate = -1f;
         public String cachedRateString = ZERO_RATE_TEXT;
         public float cachedTextWidth = 0f;

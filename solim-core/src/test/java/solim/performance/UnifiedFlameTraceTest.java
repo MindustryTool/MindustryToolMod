@@ -20,9 +20,12 @@ import solim.runtime.ReactiveContext;
 import solim.test.SolimEnv;
 
 /**
- * Verifies the unified flame timeline: component {@code build} spans and reactive
- * {@code signal} / {@code computed} / {@code effect} / {@code flush} spans all land in one
- * hierarchical trace with correct parent-child linkage, and that tracing costs nothing when off.
+ * Verifies the unified flame timeline: component {@code build} spans and
+ * reactive
+ * {@code signal} / {@code computed} / {@code effect} / {@code flush} spans all
+ * land in one
+ * hierarchical trace with correct parent-child linkage, and that tracing costs
+ * nothing when off.
  */
 class UnifiedFlameTraceTest extends SolimEnv {
 
@@ -83,7 +86,7 @@ class UnifiedFlameTraceTest extends SolimEnv {
 
         Signal<Integer> signal = Signal.of(0);
         Effect.of(() -> {
-            // Reading inside the effect body establishes the dependency that drives the rerun.
+
             signal.get();
         });
         signal.set(1);
@@ -157,8 +160,6 @@ class UnifiedFlameTraceTest extends SolimEnv {
         TraceSpan flush = firstWithPhase(spans, "flush");
         assertNotNull(flush, "expected a flush-phase span");
 
-        // The effect also runs once at creation time (outside any flush), so assert that *some*
-        // effect run is parented by the flush rather than assuming it is the only one.
         boolean nested = false;
         for (TraceSpan span : spans) {
             nested |= "effect".equals(span.phase) && span.parentId == flush.spanId;

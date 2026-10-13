@@ -198,8 +198,6 @@ class CellConfigDisposalTest extends SolimEnv {
         assertEquals(6f, CellAccess.padTop(built.cell), 0.01f, "Host disposal must freeze build-scoped margin");
     }
 
-    // ---------- helpers ----------
-
     private static final class Target {
         final Row component;
         final Cell<?> cell;

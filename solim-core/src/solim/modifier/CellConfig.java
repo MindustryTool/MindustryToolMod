@@ -47,8 +47,6 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
      */
     PendingCellConfig cellConfig();
 
-    // ---------- minimum size ----------
-
     default SELF minWidth(float v) {
         cellConfig().minWidth = Readable.of(v);
         if (this instanceof Component) {
@@ -90,8 +88,6 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         }
         return self();
     }
-
-    // ---------- maximum size ----------
 
     default SELF maxWidth(float v) {
         cellConfig().maxWidth = Readable.of(v);
@@ -135,8 +131,6 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return self();
     }
 
-    // ---------- grow ----------
-
     /**
      * Marks this component as wanting to grow on the X axis in its parent cell.
      * Independent from {@code width()} — both can coexist (CSS flex-basis style).
@@ -172,8 +166,6 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
     default SELF grow() {
         return growX().growY();
     }
-
-    // ---------- margin (outer spacing via parent cell pad) ----------
 
     default SELF margin(float m) {
         return margin(m, m, m, m);
@@ -340,8 +332,6 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         }
         return self();
     }
-
-    // ---------- internal ----------
 
     SELF self();
 }

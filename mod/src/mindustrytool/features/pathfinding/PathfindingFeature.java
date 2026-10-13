@@ -80,7 +80,6 @@ public class PathfindingFeature extends Feature {
 
     private @Nullable PathfindingSettingsDialog settingsDialog;
 
-    // Fast primitive cached configuration
     private boolean cachedDrawUnitPath = true;
     private boolean cachedDrawSpawnPath = true;
     private boolean cachedDrawAllies = false;
@@ -202,7 +201,8 @@ public class PathfindingFeature extends Feature {
     }
 
     private void update() {
-        if (!isEnabled() || Vars.state == null || !Vars.state.isGame() || Vars.world == null || Vars.world.isGenerating() || Vars.pathfinder == null) {
+        if (!isEnabled() || Vars.state == null || !Vars.state.isGame() || Vars.world == null
+                || Vars.world.isGenerating() || Vars.pathfinder == null) {
             return;
         }
 
@@ -222,7 +222,8 @@ public class PathfindingFeature extends Feature {
     }
 
     private void draw() {
-        if (!isEnabled() || Vars.state == null || !Vars.state.isGame() || Vars.world == null || Vars.world.isGenerating() || Vars.ui == null || Core.camera == null) {
+        if (!isEnabled() || Vars.state == null || !Vars.state.isGame() || Vars.world == null
+                || Vars.world.isGenerating() || Vars.ui == null || Core.camera == null) {
             return;
         }
 
@@ -292,7 +293,8 @@ public class PathfindingFeature extends Feature {
 
         long packedPos = Point2.pack(unit.tileX(), unit.tileY());
         long cacheKey = isCommanded
-                ? (((long) unit.id) << 32) | ((long) Point2.pack((int) (commandTarget.x / 8), (int) (commandTarget.y / 8)))
+                ? (((long) unit.id) << 32)
+                        | ((long) Point2.pack((int) (commandTarget.x / 8), (int) (commandTarget.y / 8)))
                 : (((long) packedPos) << 32) | ((long) costType << 8) | (long) unit.team.id;
 
         PathfindingCache cacheEntry = pathCache.get(cacheKey);
@@ -346,8 +348,8 @@ public class PathfindingFeature extends Feature {
         int totalUnits = Groups.unit.size();
         return (totalUnits > 2000) ? MAX_STEPS_VERY_HIGH
                 : (totalUnits > 1000) ? MAX_STEPS_HIGH
-                : (totalUnits > 500) ? MAX_STEPS_MEDIUM
-                : MAX_STEPS_LOW;
+                        : (totalUnits > 500) ? MAX_STEPS_MEDIUM
+                                : MAX_STEPS_LOW;
     }
 
     private void recalculateWavePath(Unit unit, PathfindingCache cacheEntry, int maxSteps) {
@@ -449,7 +451,8 @@ public class PathfindingFeature extends Feature {
 
         long packedPos = Point2.pack(unit.tileX(), unit.tileY());
         long cacheKey = isCommanded
-                ? (((long) unit.id) << 32) | ((long) Point2.pack((int) (commandTarget.x / 8), (int) (commandTarget.y / 8)))
+                ? (((long) unit.id) << 32)
+                        | ((long) Point2.pack((int) (commandTarget.x / 8), (int) (commandTarget.y / 8)))
                 : (((long) packedPos) << 32) | ((long) unit.type.flowfieldPathType << 8) | (long) unit.team.id;
 
         PathfindingCache cacheEntry = pathCache.get(cacheKey);
@@ -463,7 +466,6 @@ public class PathfindingFeature extends Feature {
         }
         cacheEntry.lastUsedTime = currentTime;
 
-        // Keep root of path attached to live unit position
         cacheEntry.data[0] = unit.x;
         cacheEntry.data[1] = unit.y;
 

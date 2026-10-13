@@ -58,7 +58,7 @@ public class GeneralSettingsView extends Component {
 
     private Component preferencesCard() {
         return SettingCard.section(Icon.settings, Core.bundle.get("setting.section.preferences"), () -> {
-            // Beta updates toggle
+
             row().growX().gap(unit(2)).center().children(() -> {
                 column().growX().gap(unit(1.5f)).left().children(() -> {
                     text(Core.bundle.get("setting.beta.participate"))
@@ -76,7 +76,6 @@ public class GeneralSettingsView extends Component {
 
             divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            // Game presence toggle
             row().growX().gap(unit(2)).center().children(() -> {
                 column().growX().gap(unit(1.5f)).left().children(() -> {
                     text(Core.bundle.get("setting.share-presence"))
@@ -94,7 +93,6 @@ public class GeneralSettingsView extends Component {
 
             divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            // Universal scale slider
             SettingSlider.of(
                     Core.bundle.get("setting.universal-scale"),
                     ModSettings.universalScale.signal(),

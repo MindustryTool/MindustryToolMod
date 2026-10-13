@@ -39,7 +39,7 @@ public class WavePreviewPanelView extends Component {
                 .visible(() -> Vars.ui != null && Vars.ui.hudfrag != null && Vars.ui.hudfrag.shown
                         && Vars.state.isGame() && Vars.state.rules != null && Vars.state.rules.waves)
                 .children(() -> {
-                    // Wave sections
+
                     dynamic(feature.getState().waves(), waves -> column().growX().left().children(() -> {
                         if (waves == null || waves.isEmpty()) {
                             return;
@@ -107,7 +107,7 @@ public class WavePreviewPanelView extends Component {
                         image(entry.type.uiIcon != null
                                 ? new TextureRegionDrawable(entry.type.uiIcon)
                                 : new TextureRegionDrawable())
-                                        .size(iconSize);
+                                .size(iconSize);
 
                         text(String.valueOf(entry.amount))
                                 .style(Styles.outlineLabel)

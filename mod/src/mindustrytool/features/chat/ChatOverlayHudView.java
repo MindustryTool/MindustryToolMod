@@ -148,13 +148,12 @@ public class ChatOverlayHudView extends Component {
                 ? Core.bundle.get("feature.chat.ui.expand-users", "Show Members")
                 : Core.bundle.get("feature.chat.ui.collapse-users", "Hide Members"));
 
-        // Shared floating message-action popup (zero-footprint overlay driver).
         ChatActionPopup.install(store);
 
         return card(Styles.black9)
                 .children(() -> {
                     column().grow().children(() -> {
-                        // Window Action Bar (draggable bar wrapping title & action buttons)
+
                         row().growX()
                                 .background(colored(new Color(0.45f, 0.35f, 0.9f, 0.3f), Tex.whiteui))
                                 .padding(unit(1), unit(2), unit(1), unit(2))
@@ -228,7 +227,7 @@ public class ChatOverlayHudView extends Component {
 
     private Component buildDesktopBody() {
         return row().grow().children(() -> {
-            // Channel List
+
             when(store.ui().channelsCollapsed())
                     .elseDo(() -> row().growY().children(() -> {
                         row().width(unit(80)).growY().children(() -> {
@@ -238,14 +237,12 @@ public class ChatOverlayHudView extends Component {
                     }))
                     .growY();
 
-            // Message Area & Input
             column().grow().children(() -> {
                 new ChatMessageListView(store, service);
                 divider();
                 new ChatInputView(store, service);
             });
 
-            // User List
             when(store.ui().usersCollapsed())
                     .elseDo(() -> row().growY().children(() -> {
                         divider(Direction.Y);
@@ -282,7 +279,7 @@ public class ChatOverlayHudView extends Component {
         if (!Objects.equals(store.channels().currentActiveId(), channelId)) {
             return false;
         }
-        // If mobile/narrow layout, message feed is only visible on tab 1 (Messages)
+
         if (Units.width().peek() < 1200) {
             return store.ui().mobileTab().peek() == 1;
         }
@@ -297,4 +294,3 @@ public class ChatOverlayHudView extends Component {
         }
     }
 }
-

@@ -16,14 +16,21 @@ import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
 /**
- * Verifies the {@code solim.debug.enabled} contract driven through {@link Perf#init()}: the property
- * is the only supported external trigger, it defaults to off, an unrecognized value is treated as
+ * Verifies the {@code solim.debug.enabled} contract driven through
+ * {@link Perf#init()}: the property
+ * is the only supported external trigger, it defaults to off, an unrecognized
+ * value is treated as
  * off, and {@code init()} is re-invocable.
  *
- * <p>The class-load path itself is deliberately not covered. {@code Perf} used to read the property
- * from a static initializer, which silently never ran because no shipped build referenced the
- * class; every test here imports {@code Perf}, so it could load it and the defect was invisible.
- * The invariant that {@code Main} calls {@code Perf.init()} is asserted by the corrected
+ * <p>
+ * The class-load path itself is deliberately not covered. {@code Perf} used to
+ * read the property
+ * from a static initializer, which silently never ran because no shipped build
+ * referenced the
+ * class; every test here imports {@code Perf}, so it could load it and the
+ * defect was invisible.
+ * The invariant that {@code Main} calls {@code Perf.init()} is asserted by the
+ * corrected
  * {@code solim-debug-runtime} bootstrap scenario, not by an executable check.
  */
 class PerfDebugFlagTest extends SolimEnv {
@@ -78,8 +85,8 @@ class PerfDebugFlagTest extends SolimEnv {
 
     @Test
     void unrecognizedValuesLeaveDebugModeOff() {
-        // A typo'd value must fail closed rather than accidentally entering the debug path.
-        for (String value : new String[]{"", " ", "yes", "1", "on", "enabled", "truthy"}) {
+
+        for (String value : new String[] { "", " ", "yes", "1", "on", "enabled", "truthy" }) {
             System.setProperty(Perf.debugProperty, value);
 
             assertFalse(Perf.debugEnabledByProperty(),
@@ -158,9 +165,7 @@ class PerfDebugFlagTest extends SolimEnv {
 
     @Test
     void initDoesNotDependOnPriorEnablement() {
-        // The regression this class guards: Perf used to read the property from a static block,
-        // which never ran because nothing in a shipped build referenced the class. init() is the
-        // explicit trigger, so it must work from a fully clean state.
+
         System.setProperty(Perf.debugProperty, "true");
         Perf.setEnabled(false);
         Perf.setTracingEnabled(false);

@@ -524,16 +524,14 @@ class FluentCollectionsTest extends SolimEnv {
         Signal<List<String>> items = Signal.of(new ArrayList<>(Arrays.asList("A", "B", "C", "D")));
 
         ReactiveGrid<String> grid = new ReactiveGrid<>(items);
-        // Eagerly build element as UI.reactiveGrid does
+
         grid.element();
 
-        // Chain columns and children after build
         grid.columns(cols);
         grid.children(ItemComp::new);
 
         assertEquals(4, grid.table().getChildren().size);
 
-        // Update columnCount signal
         cols.set(4);
         SignalDispatcher.flush();
 
@@ -555,7 +553,6 @@ class FluentCollectionsTest extends SolimEnv {
         assertEquals(5, grid.table().getChildren().size);
         assertEquals(2, grid.context().columnCount().get().intValue());
 
-        // Reconfigure at runtime
         grid.columns(5);
         SignalDispatcher.flush();
 
@@ -595,16 +592,14 @@ class FluentCollectionsTest extends SolimEnv {
         Signal<List<String>> items = Signal.of(new ArrayList<>(Arrays.asList("A", "B")));
 
         ForEach<String> fe = new ForEach<>(items);
-        // Eagerly build element as UI.forEach does
+
         fe.element();
 
-        // Attach children factory afterwards
         fe.children(ItemComp::new);
         SignalDispatcher.flush();
 
         assertEquals(2, fe.container().getChildren().size);
 
-        // Update collection
         items.set(new ArrayList<>(Arrays.asList("A", "B", "C")));
         SignalDispatcher.flush();
 

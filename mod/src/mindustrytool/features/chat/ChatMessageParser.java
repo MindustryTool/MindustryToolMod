@@ -64,23 +64,19 @@ public final class ChatMessageParser {
     private static ParsedChatMessage parseInternal(ChatMessage message) {
         String content = message.getContent() != null ? message.getContent().trim() : "";
 
-        // 0. Exact-match command tokens (e.g. browser shortcuts)
         CommandKind commandKind = CommandKind.fromToken(content);
         if (commandKind != null) {
             return new CommandMessage(message, commandKind);
         }
 
-        // 1. Room invite
         if (PlayerConnectLink.isValid(content)) {
             return new RoomInviteMessage(message, content);
         }
 
-        // 2. Direct network image
         if (IMAGE_URL_PATTERN.matcher(content).matches()) {
             return new ImageMessage(message, content);
         }
 
-        // 3. MindustryTool web links (maps or schematics)
         Matcher matcher = MINDUSTRY_TOOL_LINK_PATTERN.matcher(content);
         if (matcher.find()) {
             String fullUrl = matcher.group(0);
@@ -89,7 +85,6 @@ public final class ChatMessageParser {
             return new MindustryToolLinkMessage(message, fullUrl, type, itemId);
         }
 
-        // 4. Mindustry base64 schematic
         if (Vars.schematicBaseStart != null) {
             int schemPos = content.indexOf(Vars.schematicBaseStart);
             if (schemPos != -1) {
@@ -118,7 +113,6 @@ public final class ChatMessageParser {
             }
         }
 
-        // 5. Standard text message
         boolean mentioned = isMentioningCurrentUser(content);
         return new TextMessage(message, content, mentioned);
     }

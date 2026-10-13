@@ -135,7 +135,7 @@ public class TimeControlHudView extends Component {
 
     private static Component buildSliderContent(TimeControlFeature feature, Readable<Float> buttonSize,
             Readable<Float> resetIconSize, Readable<Float> fontScale, @Nullable Readable<Boolean> canEdit) {
-        // Fixed-width reactive speed label so bar width never changes as value changes.
+
         Computed<String> label = feature.speedSignal()
                 .map(value -> Core.bundle.format("feature.time-control.speed.format",
                         TimeControlFeature.formatSpeed(value != null ? value : 1f)));
@@ -147,8 +147,6 @@ public class TimeControlHudView extends Component {
                 .gap(unit(1))
                 .marginLeft(unit(1))
                 .children(() -> {
-                    // Slider binds to the intermediate u-space position signal (single-directional:
-                    // u -> speed).
 
                     row().rounded(unit(2), WebStyles.Colors.SECONDARY_BG).border(1f, WebStyles.Colors.BORDER)
                             .height(buttonSize).center().children(() -> {
@@ -176,7 +174,6 @@ public class TimeControlHudView extends Component {
                                 text(label).center().fontScale(fontScale);
                             });
 
-                    // Reset button: zeroes slider position so widget and speed land exactly on 1x.
                     Button resetBtn = button()
                             .style(WebStyles.ghost())
                             .size(buttonSize)

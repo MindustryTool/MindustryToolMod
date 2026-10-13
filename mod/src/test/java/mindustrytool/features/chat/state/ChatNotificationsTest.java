@@ -50,7 +50,6 @@ class ChatNotificationsTest extends SolimEnv {
         assertTrue(notifications.isCurrentlyMuted("ch2"));
         assertFalse(notifications.isCurrentlyMuted("ch3"));
 
-        // Simulate reload from settings
         ChatNotifications reloaded = new ChatNotifications();
         assertTrue(reloaded.isCurrentlyMuted("ch1"));
         assertTrue(reloaded.isCurrentlyMuted("ch2"));
@@ -73,7 +72,6 @@ class ChatNotificationsTest extends SolimEnv {
         flushEffects();
         assertEquals(2, runs.get());
 
-        // Redundant set does not trigger update because set is equality-checked
         notifications.setMuted("ch1", true);
         flushEffects();
         assertEquals(2, runs.get());
@@ -82,7 +80,6 @@ class ChatNotificationsTest extends SolimEnv {
         flushEffects();
         assertEquals(3, runs.get());
 
-        // After disposal, updates stop
         effect.dispose();
         notifications.setMuted("ch1", true);
         flushEffects();

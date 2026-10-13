@@ -64,7 +64,7 @@ public class RangeDisplaySettingsView extends Component {
     private Component visualStylingCard() {
         return SettingCard.section(Icon.image,
                 Core.bundle.get("feature.range-display.settings.section.visual", "Visual Styling"), () -> {
-                    // Opacity Slider
+
                     SettingSlider.of(
                             Core.bundle.get("feature.range-display.settings.opacity"),
                             feature.opacityConfig.signal(),
@@ -73,7 +73,6 @@ public class RangeDisplaySettingsView extends Component {
                             0.05f,
                             feature.opacityConfig.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
 
-                    // Stroke Width Slider
                     SettingSlider.of(
                             Core.bundle.get("feature.range-display.settings.stroke-width"),
                             feature.strokeWidthConfig.signal(),
@@ -85,7 +84,6 @@ public class RangeDisplaySettingsView extends Component {
 
                     divider().color(WebStyles.Colors.SECTION_BORDER);
 
-                    // Min Zoom Slider
                     SettingSlider.of(
                             Core.bundle.get("feature.range-display.settings.min-zoom"),
                             feature.zoomThresholdConfig.signal(),
@@ -115,7 +113,6 @@ public class RangeDisplaySettingsView extends Component {
                     checkbox(Core.bundle.get("feature.range-display.settings.proximity-filter"),
                             feature.proximityFilterConfig.signal()).growX();
 
-                    // Proximity Radius Slider
                     SettingSlider.of(
                             Core.bundle.get("feature.range-display.settings.proximity-radius"),
                             feature.proximityRadiusConfig.signal(),

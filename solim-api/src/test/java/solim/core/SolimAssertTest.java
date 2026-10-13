@@ -73,7 +73,7 @@ class SolimAssertTest {
             List<Path> sources = new ArrayList<>();
             paths.filter(path -> path.getFileName().toString().endsWith(".java")).forEach(sources::add);
             for (Path source : sources) {
-                // This file names the flag in order to search for it; scanning it is circular.
+
                 if (source.getFileName().toString().equals("SolimAssertTest.java") || isExcluded(root, source)) {
                     continue;
                 }

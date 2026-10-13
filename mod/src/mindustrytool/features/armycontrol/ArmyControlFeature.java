@@ -34,7 +34,8 @@ import solim.reactive.Signal;
 import solim.reactive.Signals;
 
 /**
- * Feature providing RTS army selection (map/screen), control groups, and unit type deselection.
+ * Feature providing RTS army selection (map/screen), control groups, and unit
+ * type deselection.
  */
 public class ArmyControlFeature extends Feature {
 
@@ -56,7 +57,6 @@ public class ArmyControlFeature extends Feature {
     public final Signal<Float> xSignal;
     public final Signal<Float> ySignal;
 
-    // Active selection state
     private final Signal<ObjectIntMap<UnitType>> activeSelectionSignal = Signal.of(new ObjectIntMap<>());
     private final Signal<Seq<ControlGroup>> controlGroupsSignal = Signal.of(new Seq<>());
     private final Computed<Boolean> contentEmpty = Signal.computed(() -> {
@@ -150,7 +150,8 @@ public class ArmyControlFeature extends Feature {
     }
 
     /**
-     * Saves currently selected unit IDs to slot index 1..9 (creating or replacing the group).
+     * Saves currently selected unit IDs to slot index 1..9 (creating or replacing
+     * the group).
      */
     public void saveControlGroupSlot(int slot) {
         IntSeq selected = getSelectedUnitIds();
@@ -202,7 +203,7 @@ public class ArmyControlFeature extends Feature {
     }
 
     private void onWorldReset() {
-        // Clear ephemeral control groups on new match or reset
+
         controlGroupsSignal.set(new Seq<>());
         activeSelectionSignal.set(new ObjectIntMap<>());
     }
@@ -324,10 +325,9 @@ public class ArmyControlFeature extends Feature {
         };
     }
 
-    // --- Core Army Selection Actions ---
-
     /**
-     * Selects all living units on the player's team across the map, excluding the player's unit,
+     * Selects all living units on the player's team across the map, excluding the
+     * player's unit,
      * and activates RTS Command Mode without moving the camera.
      */
     public void selectAllMap() {
@@ -338,8 +338,7 @@ public class ArmyControlFeature extends Feature {
         selected.clear();
         if (Groups.unit != null) {
             for (Unit u : Groups.unit) {
-                // Match vanilla select-all: only commandable units stick, the game loop
-                // prunes the rest every frame and stale chips would confuse deselection.
+
                 if (u.team == Vars.player.team() && u != Vars.player.unit() && u.isValid() && u.allowCommand()) {
                     selected.add(u);
                 }
@@ -350,7 +349,8 @@ public class ArmyControlFeature extends Feature {
     }
 
     /**
-     * Selects all living units on the player's team within the camera viewport, excluding player's unit,
+     * Selects all living units on the player's team within the camera viewport,
+     * excluding player's unit,
      * and activates RTS Command Mode without moving the camera.
      */
     public void selectScreen() {
@@ -385,7 +385,8 @@ public class ArmyControlFeature extends Feature {
     }
 
     /**
-     * Deselects / excludes all units of the given UnitType from the current selection.
+     * Deselects / excludes all units of the given UnitType from the current
+     * selection.
      * Keeps RTS Command Mode active so the remaining selection stays commanded,
      * matching select/recall behavior.
      */
@@ -440,8 +441,6 @@ public class ArmyControlFeature extends Feature {
         return true;
     }
 
-    // --- Control Group Management ---
-
     /**
      * Creates a new control group from the current selection or candidate IDs.
      */
@@ -462,7 +461,8 @@ public class ArmyControlFeature extends Feature {
     }
 
     /**
-     * Recalls a saved control group: selects all living members and turns on RTS command mode.
+     * Recalls a saved control group: selects all living members and turns on RTS
+     * command mode.
      */
     public void recallGroup(ControlGroup group) {
         if (Vars.control == null || Vars.control.input == null || group == null) {

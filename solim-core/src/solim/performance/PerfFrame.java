@@ -8,7 +8,6 @@ public class PerfFrame {
     public int registeredComponents;
     public int activeBindings;
 
-    // Per-phase timings in milliseconds for the instrumented overlay
     public float actMs;
     public float layoutMs;
     public float drawMs;

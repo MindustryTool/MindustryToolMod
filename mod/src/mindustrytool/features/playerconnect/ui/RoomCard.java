@@ -53,7 +53,6 @@ public class RoomCard extends Component {
         String playerInfo = Iconc.players + " " + playerCount
                 + (data != null && data.getLocale() != null ? " (" + data.getLocale() + ")" : "");
 
-        // Mod difference calculations
         List<String> roomMods = data != null && data.getMods() != null ? data.getMods() : new ArrayList<>();
         Seq<String> localMods = Vars.mods != null ? Vars.mods.getModStrings() : new Seq<>();
         List<String> missingMods = new ArrayList<>();
@@ -78,7 +77,7 @@ public class RoomCard extends Component {
                 .left()
                 .grow()
                 .children(() -> {
-                    // Header row: Title + Copy link button
+
                     row().growX().height(unit(6)).gap(unit(2)).children(() -> {
                         text(title)
                                 .style(Styles.outlineLabel)
@@ -100,13 +99,12 @@ public class RoomCard extends Component {
                     });
 
                     if (!displayPlayerList) {
-                        // Fixed Row 2: Map and mode
+
                         row().growX().height(unit(4.5f)).children(() -> {
                             text(!mapMode.isEmpty() ? mapMode : Core.bundle.get("none", "None"))
                                     .growX().ellipsis().left();
                         });
 
-                        // Fixed Row 3: Mindustry Version (always allocated for invariant height)
                         row().growX().height(unit(4.5f)).children(() -> {
                             String verStr = room.getData() != null && room.getData().getVersion() != null
                                     ? room.getData().getVersion()
@@ -114,7 +112,6 @@ public class RoomCard extends Component {
                             text(verStr).color(Color.lightGray).fontScale(0.9f).growX().ellipsis().left();
                         });
 
-                        // Fixed Row 4: Compatibility and players
                         String compatBadge = !protocolMatch
                                 ? "[scarlet]" + Core.bundle.get("feature.chat.ui.incompatible-protocol", "Incompatible")
                                 : (!missingMods.isEmpty() || !unneededMods.isEmpty()
@@ -127,7 +124,7 @@ public class RoomCard extends Component {
                             }
                         });
                     } else {
-                        // Map and mode
+
                         if (!mapMode.isEmpty()) {
                             text(mapMode).growX().ellipsis().left();
                         }
@@ -137,7 +134,6 @@ public class RoomCard extends Component {
                             text(room.getData().getVersion()).growX().ellipsis();
                         }
 
-                        // Players
                         text(playerInfo).color(Color.lightGray).left();
 
                         if (room.getData() != null && room.getData().getPlayers() != null) {
@@ -148,7 +144,6 @@ public class RoomCard extends Component {
                             });
                         }
 
-                        // Mod conflicts indicator
                         if (!missingMods.isEmpty()) {
                             text("[scarlet]Missing mods: " + String.join(", ", missingMods)).wrap().growX().left();
                         }
@@ -163,7 +158,6 @@ public class RoomCard extends Component {
                         spacer();
                     }
 
-                    // Row 5: Action buttons row
                     if (!protocolMatch) {
                         button(Core.bundle.get("feature.player-connect.incompatible", "Incompatible"), () -> {
                         })
@@ -175,9 +169,9 @@ public class RoomCard extends Component {
                         row().gap(unit(1)).growX().height(unit(11)).children(() -> {
                             button(Core.bundle.get("join", "Join"),
                                     () -> promptJoin(secured, missingMods, unneededMods))
-                                            .style(displayPlayerList ? WebStyles.secondary() : WebStyles.primary())
-                                            .growX()
-                                            .height(unit(11));
+                                    .style(displayPlayerList ? WebStyles.secondary() : WebStyles.primary())
+                                    .growX()
+                                    .height(unit(11));
 
                             if (!displayPlayerList) {
                                 button(() -> {

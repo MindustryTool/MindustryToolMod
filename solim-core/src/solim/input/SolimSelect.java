@@ -18,7 +18,8 @@ import solim.modifier.PendingCellConfig;
  * SelectBox unavailable in this version). State held in signal; visual updates
  * on change.
  */
-public final class SolimSelect<T> extends Component implements ElementConfig<SolimSelect<T>>, CellConfig<SolimSelect<T>> {
+public final class SolimSelect<T> extends Component
+        implements ElementConfig<SolimSelect<T>>, CellConfig<SolimSelect<T>> {
     private final TextButton selectBox;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private int selectedIndex = 0;
@@ -52,8 +53,7 @@ public final class SolimSelect<T> extends Component implements ElementConfig<Sol
                     selectBox.setText(String.valueOf(cur));
                 },
                 onChange -> {
-                    // Installed as an explicit listener rather than via TextButton.changed(...)
-                    // so disposal can unregister it: the widget must stop driving a dead binding.
+
                     ChangeListener listener = new ChangeListener() {
                         @Override
                         public void changed(ChangeEvent event, @Nullable Element actor) {

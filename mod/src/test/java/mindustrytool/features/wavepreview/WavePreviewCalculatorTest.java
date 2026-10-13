@@ -143,8 +143,6 @@ class WavePreviewCalculatorTest extends ArcTestEnv {
 
         Seq<SpawnGroup> spawns = Seq.with(normalGroup, bossGroup);
 
-        // 3 * 1.5 = 4.5 -> normal rounded to 5; boss truncated to 4
-        // With 2 spawners: normal = 5 * 2 = 10; boss = 4 * 2 = 8
         WaveSectionData section = WavePreviewCalculator.computeWave(
                 1,
                 spawns,

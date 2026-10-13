@@ -24,8 +24,10 @@ import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
 /**
- * Verifies the contract that {@link Perf#setEnabled(boolean)} swaps <em>all three</em> runtime
- * services as one operation, and that disabling releases every piece of recorded debug state.
+ * Verifies the contract that {@link Perf#setEnabled(boolean)} swaps <em>all
+ * three</em> runtime
+ * services as one operation, and that disabling releases every piece of
+ * recorded debug state.
  */
 class PerfServiceSwapTest extends SolimEnv {
 
@@ -146,8 +148,6 @@ class PerfServiceSwapTest extends SolimEnv {
         });
         flushEffects();
 
-        // With the base context installed nothing is tracked, and enabling later starts from a
-        // clean slate rather than replaying pre-enable activity.
         Perf.setEnabled(true);
         DebugReactiveContext debug = (DebugReactiveContext) ReactiveContext.instance();
         assertFalse(debug.hasMetrics());

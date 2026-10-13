@@ -54,7 +54,6 @@ class VisualizerFeatureTest extends MindustryTestEnv {
     void testConfigMutationsAndReset() {
         VisualizerFeature feature = new VisualizerFeature();
 
-        // Mutate bridge configs
         feature.showItemBridgesConfig.set(false);
         feature.showDuctBridgesConfig.set(false);
         feature.showLiquidBridgesConfig.set(false);
@@ -64,7 +63,6 @@ class VisualizerFeatureTest extends MindustryTestEnv {
         feature.hideIdleBridgeFlowConfig.set(true);
         feature.bridgeFlowRateScaleConfig.set(1.4f);
 
-        // Mutate turret configs
         feature.showAmmoBadgeConfig.set(false);
         feature.showTargetLineConfig.set(false);
         feature.targetLineAllyConfig.set(false);
@@ -73,7 +71,6 @@ class VisualizerFeatureTest extends MindustryTestEnv {
         feature.turretBadgeScaleConfig.set(1.8f);
         feature.targetLineOpacityConfig.set(0.9f);
 
-        // Verify mutations
         assertFalse(feature.showItemBridgesConfig.get());
         assertFalse(feature.showDuctBridgesConfig.get());
         assertFalse(feature.showLiquidBridgesConfig.get());
@@ -91,10 +88,8 @@ class VisualizerFeatureTest extends MindustryTestEnv {
         assertEquals(1.8f, feature.turretBadgeScaleConfig.get(), 0.001f);
         assertEquals(0.9f, feature.targetLineOpacityConfig.get(), 0.001f);
 
-        // Reset
         feature.resetToDefaults();
 
-        // Verify defaults restored
         assertTrue(feature.showItemBridgesConfig.get());
         assertTrue(feature.showDuctBridgesConfig.get());
         assertTrue(feature.showLiquidBridgesConfig.get());
@@ -144,22 +139,18 @@ class VisualizerFeatureTest extends MindustryTestEnv {
 
         feature.rebuildBitSet();
 
-        // By default turrets are enabled
         assertTrue(feature.isTurretEnabled(duo));
         assertTrue(feature.isTurretEnabled(lancer));
 
-        // Toggle individual turret
         feature.setTurretEnabled(duo, false);
         assertFalse(feature.isTurretEnabled(duo));
         assertFalse(feature.getTurretSignal(duo).peek());
         assertTrue(feature.isTurretEnabled(lancer));
 
-        // Re-enable
         feature.setTurretEnabled(duo, true);
         assertTrue(feature.isTurretEnabled(duo));
         assertTrue(feature.getTurretSignal(duo).peek());
 
-        // Test setAllTurretsEnabled
         feature.setAllTurretsEnabled(false);
         assertFalse(feature.isTurretEnabled(duo));
         assertFalse(feature.isTurretEnabled(lancer));
@@ -168,7 +159,6 @@ class VisualizerFeatureTest extends MindustryTestEnv {
         assertTrue(feature.isTurretEnabled(duo));
         assertTrue(feature.isTurretEnabled(lancer));
 
-        // Test resetToDefaults
         feature.setTurretEnabled(duo, false);
         assertFalse(feature.isTurretEnabled(duo));
         feature.resetToDefaults();
@@ -179,15 +169,12 @@ class VisualizerFeatureTest extends MindustryTestEnv {
     void testCalculateBadgeSize() {
         VisualizerFeature feature = new VisualizerFeature();
 
-        // Default scale (1.0f):
-        // 1x1 turret: 2.4 + 1.5 = 3.9f
         assertEquals(3.9f, feature.calculateBadgeSize(1), 0.001f);
-        // 2x2 turret: 2.4 + 3.0 = 5.4f
+
         assertEquals(5.4f, feature.calculateBadgeSize(2), 0.001f);
-        // 3x3 turret: 2.4 + 4.5 = 6.9f
+
         assertEquals(6.9f, feature.calculateBadgeSize(3), 0.001f);
 
-        // Mutated scale (0.5f)
         feature.turretBadgeScaleConfig.set(0.5f);
         assertEquals(1.95f, feature.calculateBadgeSize(1), 0.001f);
         assertEquals(2.7f, feature.calculateBadgeSize(2), 0.001f);
@@ -199,23 +186,19 @@ class VisualizerFeatureTest extends MindustryTestEnv {
         assertEquals(0f, state.calculateRate(), 0.001f);
         assertEquals("0/s", state.formatRate(0f));
 
-        // Start at time 10f
         state.step(10f);
         state.addItem(3f);
         assertEquals(3f, state.calculateRate(), 0.001f);
 
-        // Advance by 10 ticks to time 20f (next bucket)
         state.step(20f);
         state.addItem(2f);
-        // Total in window: 3 + 2 = 5
+
         assertEquals(5f, state.calculateRate(), 0.001f);
 
-        // Advance 50 more ticks (total elapsed > 60 ticks without new items) -> oldest buckets cleared
         state.step(70f);
-        // Bucket at 10f is now cleared, only bucket at 20f remains
+
         assertEquals(2f, state.calculateRate(), 0.001f);
 
-        // Advance another 20 ticks -> all buckets cleared (idle / stalled bridge)
         state.step(90f);
         assertEquals(0f, state.calculateRate(), 0.001f);
         assertEquals("0/s", state.formatRate(state.calculateRate()));
@@ -236,7 +219,6 @@ class VisualizerFeatureTest extends MindustryTestEnv {
     void testLiquidFlowRateCalculation() {
         VisualizerFeature feature = new VisualizerFeature();
 
-        // Stalled or idle bridge with isFlowing = false
         float rate = feature.calculateLiquidFlowRate(null, null, null, false);
         assertEquals(0f, rate, 0.001f);
 
@@ -247,7 +229,6 @@ class VisualizerFeatureTest extends MindustryTestEnv {
         Building b2 = Building.create();
         b2.block = dummyBlock;
 
-        // Building without liquids
         assertEquals(0f, feature.calculateLiquidFlowRate(b1, b2, null, true), 0.001f);
     }
 
@@ -262,23 +243,18 @@ class VisualizerFeatureTest extends MindustryTestEnv {
         build.block = duo;
         build.tile = new Tile(2, 2);
 
-        // Empty ammo
         build.totalAmmo = 0;
         assertEquals(0f, feature.calculateAmmoFraction(build), 0.001f);
 
-        // Low ammo (16.6% < 25%)
         build.totalAmmo = 5;
         assertEquals(5f / 30f, feature.calculateAmmoFraction(build), 0.001f);
 
-        // Half ammo (50%)
         build.totalAmmo = 15;
         assertEquals(0.5f, feature.calculateAmmoFraction(build), 0.001f);
 
-        // Full ammo
         build.totalAmmo = 30;
         assertEquals(1.0f, feature.calculateAmmoFraction(build), 0.001f);
 
-        // Over capacity clamped to 1
         build.totalAmmo = 45;
         assertEquals(1.0f, feature.calculateAmmoFraction(build), 0.001f);
     }
@@ -287,10 +263,8 @@ class VisualizerFeatureTest extends MindustryTestEnv {
     void testTargetHealthFraction() {
         VisualizerFeature feature = new VisualizerFeature();
 
-        // Null target defaults to 1.0f
         assertEquals(1.0f, feature.getTargetHealthFraction(null), 0.001f);
 
-        // Healthc building target
         ItemTurret dummyBlock = new ItemTurret("vis-target-dummy");
         Building target = Building.create();
         target.block = dummyBlock;

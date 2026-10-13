@@ -81,7 +81,6 @@ public class HostRoomDialog extends SolimDialog {
                         text(Core.bundle.get("feature.player-connect.step1-title", "Room Settings"))
                                 .color(Pal.accent);
 
-                        // Room Name
                         column().growX().gap(unit(1.5f)).left().children(() -> {
                             text(Core.bundle.get("feature.player-connect.room-name", "Room Name:")).left();
                             row().growX().height(unit(11)).border(1.5f, Color.darkGray).paddingX(unit(2))
@@ -93,7 +92,6 @@ public class HostRoomDialog extends SolimDialog {
                                     });
                         });
 
-                        // Password
                         column().growX().gap(unit(1.5f)).left().children(() -> {
                             text(Core.bundle.get("feature.player-connect.password", "Password:")).left();
                             row().growX().height(unit(11)).border(1.5f, Color.darkGray).paddingX(unit(2))
@@ -105,7 +103,6 @@ public class HostRoomDialog extends SolimDialog {
                                     });
                         });
 
-                        // Max Players
                         Signal<String> maxPlayersSig = Signal.of(String.valueOf(feature.maxPlayerConfig.get()));
                         maxPlayersSig.subscribe(str -> {
                             try {
@@ -127,7 +124,6 @@ public class HostRoomDialog extends SolimDialog {
                                     });
                         });
 
-                        // Auto Accept
                         column().growX().gap(unit(1.5f)).left().children(() -> {
                             text(Core.bundle.get("feature.player-connect.auto-accept", "Auto-accept players:"))
                                     .left();

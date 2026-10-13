@@ -30,10 +30,6 @@ import solim.test.TestScheduler;
 
 public class PropertyAndRandomizedRegressionTest extends SolimEnv {
 
-    // ==========================================
-    // Phase 22: Randomized Property Tests
-    // ==========================================
-
     @Test
     void randomizedSignalAndDynamicComputedNetwork() {
         Random random = new Random(42);
@@ -43,12 +39,6 @@ public class PropertyAndRandomizedRegressionTest extends SolimEnv {
             signals.add(Signal.of(i * 10));
         }
 
-        // Dynamic branching computed:
-        // if (signals.get(0).get() % 2 == 0) {
-        // sum(signals[1..3])
-        // } else {
-        // sum(signals[4..7])
-        // }
         Computed<Integer> dynamicSum = Signal.computed(() -> {
             int selector = signals.get(0).get();
             int sum = 0;
@@ -64,13 +54,11 @@ public class PropertyAndRandomizedRegressionTest extends SolimEnv {
             return sum;
         });
 
-        // 1000 randomized state transitions
         for (int step = 0; step < 1000; step++) {
             int targetSignal = random.nextInt(numSignals);
             int newValue = random.nextInt(100);
             signals.get(targetSignal).set(newValue);
 
-            // Calculate expected value using oracle logic
             int expectedSum = 0;
             int currentSelector = signals.get(0).peek();
             if (currentSelector % 2 == 0) {
@@ -83,7 +71,6 @@ public class PropertyAndRandomizedRegressionTest extends SolimEnv {
                 }
             }
 
-            // Verify computed value matches oracle calculation
             assertEquals(expectedSum, dynamicSum.get().intValue(), "Computed must match oracle at step " + step);
         }
 
@@ -117,7 +104,6 @@ public class PropertyAndRandomizedRegressionTest extends SolimEnv {
         Map<String, TestRowComponent> createdComponents = new HashMap<>();
         int nextKeyId = 0;
 
-        // Initial seed
         for (int i = 0; i < 5; i++) {
             String k = "k" + (nextKeyId++);
             shadowKeys.add(k);
@@ -134,37 +120,36 @@ public class PropertyAndRandomizedRegressionTest extends SolimEnv {
 
         assertEquals(5, reconciler.activeComponents().size());
 
-        // 500 randomized mutations
         for (int op = 0; op < 500; op++) {
             int action = random.nextInt(6);
             switch (action) {
-                case 0: // Add key
+                case 0:
                     String newKey = "k" + (nextKeyId++);
                     int insertIdx = shadowKeys.isEmpty() ? 0 : random.nextInt(shadowKeys.size() + 1);
                     shadowKeys.add(insertIdx, newKey);
                     break;
-                case 1: // Remove key
+                case 1:
                     if (!shadowKeys.isEmpty()) {
                         int removeIdx = random.nextInt(shadowKeys.size());
                         shadowKeys.remove(removeIdx);
                     }
                     break;
-                case 2: // Swap / Reorder
+                case 2:
                     if (shadowKeys.size() >= 2) {
                         int i1 = random.nextInt(shadowKeys.size());
                         int i2 = random.nextInt(shadowKeys.size());
                         Collections.swap(shadowKeys, i1, i2);
                     }
                     break;
-                case 3: // Reverse
+                case 3:
                     if (shadowKeys.size() >= 2) {
                         Collections.reverse(shadowKeys);
                     }
                     break;
-                case 4: // Clear
+                case 4:
                     shadowKeys.clear();
                     break;
-                case 5: // Batch append
+                case 5:
                     int toAdd = random.nextInt(4) + 1;
                     for (int b = 0; b < toAdd; b++) {
                         shadowKeys.add("k" + (nextKeyId++));
@@ -172,7 +157,6 @@ public class PropertyAndRandomizedRegressionTest extends SolimEnv {
                     break;
             }
 
-            // Reconcile
             reconciler.reconcile(
                     shadowKeys,
                     k -> k,
@@ -182,24 +166,18 @@ public class PropertyAndRandomizedRegressionTest extends SolimEnv {
                         return comp;
                     });
 
-            // Assertions against shadow oracle:
-            // 1. Component count matches shadow keys
             assertEquals(shadowKeys.size(), reconciler.activeComponents().size(),
                     "Active component count mismatch at op " + op);
 
-            // 2. Keys match shadow keys in order
             List<String> activeKeys = new ArrayList<>(reconciler.activeComponents().keySet());
             assertEquals(shadowKeys, activeKeys, "Active keys mismatch at op " + op);
 
-            // 3. Invariant: all active components must NOT be disposed
             for (String k : shadowKeys) {
                 TestRowComponent activeComp = reconciler.activeComponents().get(k);
                 assertNotNull(activeComp);
                 assertFalse(activeComp.isDisposed(), "Active component " + k + " must not be disposed at op " + op);
             }
 
-            // 5. Invariant: all previously created but currently inactive components MUST
-            // be disposed
             for (Map.Entry<String, TestRowComponent> entry : createdComponents.entrySet()) {
                 if (!shadowKeys.contains(entry.getKey())) {
                     assertTrue(entry.getValue().isDisposed(),
@@ -217,10 +195,6 @@ public class PropertyAndRandomizedRegressionTest extends SolimEnv {
             assertTrue(comp.isDisposed(), "All components must be disposed after reconciler disposal");
         }
     }
-
-    // ==========================================
-    // Phase 24: Permanent Historical Regressions
-    // ==========================================
 
     @Test
     void regressionSolimTokenMetadataPreservedAcrossArcMutations() {
@@ -275,7 +249,6 @@ public class PropertyAndRandomizedRegressionTest extends SolimEnv {
         TestRowComponent c1 = reconciler.activeComponents().get("item1");
         TestRowComponent c2 = reconciler.activeComponents().get("item2");
 
-        // Attempt reconciliation with a failing item: item1, item2, crashItem
         List<String> newKeys = new ArrayList<>();
         newKeys.add("item1");
         newKeys.add("item2");
@@ -293,7 +266,6 @@ public class PropertyAndRandomizedRegressionTest extends SolimEnv {
                     });
         });
 
-        // State must roll back: active keys still item1 and item2, neither disposed
         assertEquals(2, reconciler.activeComponents().size());
         assertSame(c1, reconciler.activeComponents().get("item1"));
         assertSame(c2, reconciler.activeComponents().get("item2"));
@@ -313,7 +285,6 @@ public class PropertyAndRandomizedRegressionTest extends SolimEnv {
 
         assertEquals(1, textSignal.observerCount(), "Text component creates an internal effect observing textSignal");
 
-        // Run layout passes
         TestObserver observer = new TestObserver("layout-test");
         try {
             label.layout();
@@ -321,8 +292,7 @@ public class PropertyAndRandomizedRegressionTest extends SolimEnv {
             label.getPrefHeight();
             label.act(0.016f);
         } finally {
-            // Layout passes must not have invoked .get() inside any ambient tracking
-            // observer count on textSignal must remain unchanged
+
             assertEquals(1, textSignal.observerCount());
             assertEquals(0, observer.getDependencies().size());
         }

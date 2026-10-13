@@ -22,13 +22,6 @@ import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.reactive.Subscription;
 
-/**
- * Modern declarative Solim settings view for Chat Translation with tabbed
- * navigation:
- * - Tab 0: Display & Live Message Preview
- * - Tab 1: Outgoing Chat Translation
- * - Tab 2: Translation Engine & Providers
- */
 public class TranslationSettingsView extends Component {
 
     public static final String[] COLOR_PRESETS = {
@@ -137,7 +130,6 @@ public class TranslationSettingsView extends Component {
                             .wrap()
                             .growX();
 
-                    // Incoming Simulation Box
                     column().growX().padding(unit(2)).rounded(6, WebStyles.Colors.SECONDARY).gap(unit(1)).left()
                             .children(() -> {
                                 text("[#ffa100]Alex: [white]Bonjour! Pouvons-nous construire du thorium?")
@@ -207,7 +199,6 @@ public class TranslationSettingsView extends Component {
     private Component appearanceCard() {
         return SettingCard.section(Icon.spray,
                 Core.bundle.get("feature.translation.appearance.title", "Appearance & Styling"), () -> {
-                    // Highlight Color Palette
                     column().growX().gap(unit(1.5f)).left().children(() -> {
                         text(Core.bundle.get("feature.translation.appearance.color", "Translation Color"))
                                 .left()
@@ -229,7 +220,6 @@ public class TranslationSettingsView extends Component {
                                         });
                             }
 
-                            // Custom hex input with color indicator swatch
                             row().height(unit(7)).gap(unit(1)).paddingX(unit(1.5f))
                                     .rounded(4, WebStyles.Colors.CLEAR_BG)
                                     .border(1f, WebStyles.Colors.BORDER_INPUT)
@@ -254,13 +244,11 @@ public class TranslationSettingsView extends Component {
 
                     divider();
 
-                    // Checkbox: Show original alongside translated message
                     checkbox(
                             Core.bundle.get("feature.translation.pref.show-original",
                                     "Show original message alongside translation"),
                             feature.showOriginalConfig.signal()).wrap().growX();
 
-                    // Checkbox: Show In-Game Chat HUD Pill
                     checkbox(
                             Core.bundle.get("feature.translation.appearance.show-pill",
                                     "Show quick translation pill above chat field"),
@@ -271,13 +259,11 @@ public class TranslationSettingsView extends Component {
     private Component outgoingCard() {
         return SettingCard.section(Icon.upload,
                 Core.bundle.get("feature.translation.outgoing.title", "Outgoing Chat"), () -> {
-                    // Toggle Outgoing translation
                     checkbox(
                             Core.bundle.get("feature.translation.outgoing.enable",
                                     "Translate outgoing chat messages automatically"),
                             feature.outgoingEnabledConfig.signal()).wrap().growX();
 
-                    // Target Language row
                     row().growX().gap(unit(2)).center().children(() -> {
                         text(Core.bundle.get("feature.translation.outgoing.target-lang", "Outgoing Target Language"))
                                 .left()
@@ -287,7 +273,6 @@ public class TranslationSettingsView extends Component {
                         languageDropdown = new LanguageDropdown(feature);
                     });
 
-                    // Format row
                     column().growX().gap(unit(1.5f)).left().children(() -> {
                         text(Core.bundle.get("feature.translation.outgoing.format", "Outgoing Format"))
                                 .left()
@@ -314,7 +299,6 @@ public class TranslationSettingsView extends Component {
                         });
                     });
 
-                    // Quick hint
                     row().growX().gap(unit(1.5f)).padding(unit(1.5f)).rounded(4, WebStyles.Colors.SECONDARY)
                             .children(() -> {
                                 icon(Icon.infoCircle).size(unit(4)).color(Pal.accent);
@@ -331,7 +315,6 @@ public class TranslationSettingsView extends Component {
     private Component providerCard() {
         return SettingCard.section(Icon.settings,
                 Core.bundle.get("feature.translation.settings.providers", "Translation Provider"), () -> {
-                    // Provider chips wrap
                     wrap().growX().gap(unit(1.5f)).children(() -> {
                         for (TranslationProvider provider : feature.getProviders()) {
                             Readable<Boolean> isSelected = feature.providerConfig.signal()
@@ -354,12 +337,10 @@ public class TranslationSettingsView extends Component {
                         }
                     });
 
-                    // Dynamic Provider Configuration (API Key, links, etc.)
                     dynamic(feature.providerConfig.signal(), this::buildApiKeyRow).growX();
 
                     divider();
 
-                    // Connection Test row
                     row().growX().gap(unit(2)).center().children(() -> {
                         column().growX().gap(unit(0.5f)).left().children(() -> {
                             text(Core.bundle.get("feature.translation.test.title", "Connection Test"))
@@ -386,7 +367,6 @@ public class TranslationSettingsView extends Component {
                                 });
                     });
 
-                    // Error indicator if last error is present
                     dynamic(feature.lastError, err -> {
                         if (err != null && !err.trim().isEmpty()) {
                             row().growX().gap(unit(1.5f)).padding(unit(1.5f)).rounded(4, WebStyles.Colors.SECONDARY)

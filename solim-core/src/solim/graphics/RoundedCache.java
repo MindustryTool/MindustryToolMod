@@ -13,8 +13,11 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * In-memory cache for white continuous-curvature rounded NinePatchDrawables.
  *
- * <p>Textures are pure white (#FFFFFF) with sub-pixel anti-aliasing. A single texture
- * per radius or stroke width is reused across all components and tinted dynamically via
+ * <p>
+ * Textures are pure white (#FFFFFF) with sub-pixel anti-aliasing. A single
+ * texture
+ * per radius or stroke width is reused across all components and tinted
+ * dynamically via
  * vertex colors.
  */
 public final class RoundedCache {
@@ -26,7 +29,8 @@ public final class RoundedCache {
     }
 
     /**
-     * Retrieves or generates a white solid rounded NinePatchDrawable for the given radius.
+     * Retrieves or generates a white solid rounded NinePatchDrawable for the given
+     * radius.
      */
     public static NinePatchDrawable getSolid(int radius) {
         int r = Math.max(1, radius);
@@ -66,7 +70,6 @@ public final class RoundedCache {
             pixmap.dispose();
         }
 
-        // Fallback for headless testing environments without OpenGL context
         return new NinePatchDrawable();
     }
 

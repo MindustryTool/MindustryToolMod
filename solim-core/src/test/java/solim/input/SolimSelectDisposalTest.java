@@ -26,104 +26,108 @@ import solim.test.SolimEnv;
 /**
  * Disposal proof for the two-way binding a {@link SolimSelect} installs.
  *
- * <p>The binding owns two halves that must both die with the component: the effect that pushes the
- * signal into the widget, and the widget listener that pushes the widget back into the signal.
- * Only the second is easy to get wrong — a surviving listener keeps writing a signal whose owner
+ * <p>
+ * The binding owns two halves that must both die with the component: the effect
+ * that pushes the
+ * signal into the widget, and the widget listener that pushes the widget back
+ * into the signal.
+ * Only the second is easy to get wrong — a surviving listener keeps writing a
+ * signal whose owner
  * is gone — so detachment is asserted directly on the widget's listener list.
  */
 class SolimSelectDisposalTest extends SolimEnv {
 
-	private static final List<String> options = Arrays.asList("A", "B", "C");
+    private static final List<String> options = Arrays.asList("A", "B", "C");
 
-	@BeforeEach
-	void setUp() {
-		newScene();
-		// A TextButton resolves both TextButtonStyle and its ButtonStyle parent from the scene.
-		Font font = new Font(new FontData() {
-			@Override
-			public boolean hasGlyph(char ch) {
-				return true;
-			}
-		}, new TextureRegion(), false);
-		Core.scene.addStyle(ButtonStyle.class, new ButtonStyle());
-		TextButtonStyle style = new TextButtonStyle();
-		style.font = font;
-		Core.scene.addStyle(TextButtonStyle.class, style);
-	}
+    @BeforeEach
+    void setUp() {
+        newScene();
 
-	@Test
-	void bindingFlowsBothWaysWhileAlive() {
-		Signal<String> selection = Signal.of("A");
-		SolimSelect<String> select = SolimSelect.of(selection, options);
-		assertEquals("A", text(select));
+        Font font = new Font(new FontData() {
+            @Override
+            public boolean hasGlyph(char ch) {
+                return true;
+            }
+        }, new TextureRegion(), false);
+        Core.scene.addStyle(ButtonStyle.class, new ButtonStyle());
+        TextButtonStyle style = new TextButtonStyle();
+        style.font = font;
+        Core.scene.addStyle(TextButtonStyle.class, style);
+    }
 
-		selection.set("B");
-		flushEffects();
-		assertEquals("B", text(select), "Signal to widget must flow while bound");
+    @Test
+    void bindingFlowsBothWaysWhileAlive() {
+        Signal<String> selection = Signal.of("A");
+        SolimSelect<String> select = SolimSelect.of(selection, options);
+        assertEquals("A", text(select));
 
-		select.selectBox().fire(new ChangeListener.ChangeEvent());
-		flushEffects();
-		assertEquals("C", selection.peek(), "Widget to signal must flow while bound");
-	}
+        selection.set("B");
+        flushEffects();
+        assertEquals("B", text(select), "Signal to widget must flow while bound");
 
-	@Test
-	void disposeSeversBothDirectionsAndDetachesTheWidgetListener() {
-		Signal<String> selection = Signal.of("A");
-		SolimSelect<String> select = SolimSelect.of(selection, options);
+        select.selectBox().fire(new ChangeListener.ChangeEvent());
+        flushEffects();
+        assertEquals("C", selection.peek(), "Widget to signal must flow while bound");
+    }
 
-		selection.set("B");
-		flushEffects();
-		assertEquals("B", text(select));
+    @Test
+    void disposeSeversBothDirectionsAndDetachesTheWidgetListener() {
+        Signal<String> selection = Signal.of("A");
+        SolimSelect<String> select = SolimSelect.of(selection, options);
 
-		int listenersWhileBound = select.selectBox().getListeners().size;
-		select.dispose();
-		assertTrue(select.isDisposed(), "The select must report itself disposed");
-		assertEquals(listenersWhileBound - 1, select.selectBox().getListeners().size,
-				"Disposal must unregister the widget listener that drove the binding");
-		assertEquals(0, selection.observerCount(), "Disposal must drain the bound signal's observers");
+        selection.set("B");
+        flushEffects();
+        assertEquals("B", text(select));
 
-		selection.set("C");
-		flushEffects();
-		assertEquals("B", text(select), "Signal to widget must stop after dispose");
+        int listenersWhileBound = select.selectBox().getListeners().size;
+        select.dispose();
+        assertTrue(select.isDisposed(), "The select must report itself disposed");
+        assertEquals(listenersWhileBound - 1, select.selectBox().getListeners().size,
+                "Disposal must unregister the widget listener that drove the binding");
+        assertEquals(0, selection.observerCount(), "Disposal must drain the bound signal's observers");
 
-		select.selectBox().fire(new ChangeListener.ChangeEvent());
-		assertEquals("C", selection.peek(), "Widget to signal must stop after dispose");
-	}
+        selection.set("C");
+        flushEffects();
+        assertEquals("B", text(select), "Signal to widget must stop after dispose");
 
-	@Test
-	void disposeIsIdempotent() {
-		Signal<String> selection = Signal.of("A");
-		SolimSelect<String> select = SolimSelect.of(selection, options);
+        select.selectBox().fire(new ChangeListener.ChangeEvent());
+        assertEquals("C", selection.peek(), "Widget to signal must stop after dispose");
+    }
 
-		select.dispose();
-		assertDoesNotThrow(select::dispose, "Double dispose must be safe");
-		assertDoesNotThrow(select::dispose, "Repeated dispose must stay safe");
-		assertTrue(select.isDisposed());
-		assertEquals(0, OwnershipContext.size(), "No ownership scope may leak");
-	}
+    @Test
+    void disposeIsIdempotent() {
+        Signal<String> selection = Signal.of("A");
+        SolimSelect<String> select = SolimSelect.of(selection, options);
 
-	@Test
-	void selectCreatedInsideABuildScopeIsDisposedWithItsHost() {
-		Signal<String> selection = Signal.of("A");
-		AtomicReference<SolimSelect<String>> target = new AtomicReference<>();
-		BuildScopeHost host = new BuildScopeHost(() -> target.set(SolimSelect.of(selection, options)));
-		host.element();
-		SolimSelect<String> select = target.get();
+        select.dispose();
+        assertDoesNotThrow(select::dispose, "Double dispose must be safe");
+        assertDoesNotThrow(select::dispose, "Repeated dispose must stay safe");
+        assertTrue(select.isDisposed());
+        assertEquals(0, OwnershipContext.size(), "No ownership scope may leak");
+    }
 
-		selection.set("B");
-		flushEffects();
-		assertEquals("B", text(select), "Build-scoped select must follow the signal");
+    @Test
+    void selectCreatedInsideABuildScopeIsDisposedWithItsHost() {
+        Signal<String> selection = Signal.of("A");
+        AtomicReference<SolimSelect<String>> target = new AtomicReference<>();
+        BuildScopeHost host = new BuildScopeHost(() -> target.set(SolimSelect.of(selection, options)));
+        host.element();
+        SolimSelect<String> select = target.get();
 
-		host.dispose();
-		assertTrue(select.isDisposed(), "The build-scoped select must dispose with its host");
-		assertEquals(0, selection.observerCount(), "Disposing the host must drain the binding observers");
+        selection.set("B");
+        flushEffects();
+        assertEquals("B", text(select), "Build-scoped select must follow the signal");
 
-		selection.set("C");
-		flushEffects();
-		assertEquals("B", text(select), "Host disposal must freeze the build-scoped select");
-	}
+        host.dispose();
+        assertTrue(select.isDisposed(), "The build-scoped select must dispose with its host");
+        assertEquals(0, selection.observerCount(), "Disposing the host must drain the binding observers");
 
-	private static String text(SolimSelect<?> select) {
-		return select.selectBox().getText().toString();
-	}
+        selection.set("C");
+        flushEffects();
+        assertEquals("B", text(select), "Host disposal must freeze the build-scoped select");
+    }
+
+    private static String text(SolimSelect<?> select) {
+        return select.selectBox().getText().toString();
+    }
 }

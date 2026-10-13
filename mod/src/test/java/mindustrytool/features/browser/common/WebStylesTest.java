@@ -158,13 +158,8 @@ class WebStylesTest extends MindustryTestEnv {
         SolimButtonStyle action = WebStyles.actionChip();
         SolimButtonStyle filter = WebStyles.filterChip();
 
-        // Arc's Button renders style.checked whenever isChecked is true, and Arc toggles
-        // isChecked on every click. A null checked drawable makes that toggle inert so an
-        // action chip can never latch into a selected appearance.
         assertNull(action.style().checked);
 
-        // Everything Arc can actually draw must match filterChip so action chips are
-        // visually indistinguishable from toggle chips apart from the selected state.
         RoundedDrawable actionUp = (RoundedDrawable) action.style().up;
         RoundedDrawable filterUp = (RoundedDrawable) filter.style().up;
         assertEquals(rgba(filterUp.getFillColor()), rgba(actionUp.getFillColor()));
@@ -182,7 +177,6 @@ class WebStylesTest extends MindustryTestEnv {
         assertEquals(rgba(filterDown.getFillColor()), rgba(actionDown.getFillColor()));
         assertEquals(rgba(filterDown.getBorderColor()), rgba(actionDown.getBorderColor()));
 
-        // The toggle counterpart must still be able to show a selected state.
         assertNotNull(filter.style().checked);
     }
 
@@ -209,7 +203,6 @@ class WebStylesTest extends MindustryTestEnv {
         RoundedDrawable cardDown = (RoundedDrawable) card.style().down;
         assertEquals(rgba(cardDown.getFillColor()), rgba(actionDown.getFillColor()));
 
-        // cardAction is a real toggle style (GodMode player selection) and must keep one.
         assertNotNull(card.style().checked);
     }
 
@@ -217,8 +210,7 @@ class WebStylesTest extends MindustryTestEnv {
     void cardActionCheckedStateIsVisibleRatherThanTransparent() {
         RoundedDrawable checked = (RoundedDrawable) WebStyles.cardAction().style().checked;
         assertNotNull(checked, "cardAction is used as a toggle and must declare a checked visual");
-        // A transparent checked fill made the GodMode player-selection toggle look
-        // unselected; the selected state must actually differ from the up state's fill.
+
         RoundedDrawable up = (RoundedDrawable) WebStyles.cardAction().style().up;
         assertTrue(checked.getFillColor().a > 0.001f, "checked fill must be visible, not transparent");
         assertTrue(rgba(checked.getFillColor()) != rgba(up.getFillColor()),
@@ -227,9 +219,7 @@ class WebStylesTest extends MindustryTestEnv {
 
     @Test
     void nonToggleStylesResolveToNoCheckedState() {
-        // These styles declare no checked state, so Arc's per-click auto-toggle must not
-        // be able to repaint them. A phantom (transparent) checked drawable additionally
-        // suppresses the hover highlight, because Arc checks `checked` before `over`.
+
         assertNull(WebStyles.outline().style().checked);
         assertNull(WebStyles.sectionPanel().style().checked);
         assertNull(WebStyles.clearFilters().style().checked);
@@ -252,8 +242,7 @@ class WebStylesTest extends MindustryTestEnv {
     @Test
     void clearInputReturnsCachedSingleton() {
         assertSame(WebStyles.clearInput(), WebStyles.clearInput());
-        // Slot blankness is covered in solim-core InputStyleTest with stub
-        // drawables: Tex.clear is null until the game loads assets headless.
+
     }
 
     @Test

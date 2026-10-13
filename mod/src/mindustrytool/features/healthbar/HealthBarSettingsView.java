@@ -77,7 +77,7 @@ public class HealthBarSettingsView extends Component {
 
     private Component visualStylingCard() {
         return SettingCard.section(Icon.image, Core.bundle.get("feature.health-bar.settings.section.visual"), () -> {
-            // Min Zoom Slider
+
             SettingSlider.of(
                     Core.bundle.get("feature.health-bar.settings.min-zoom"),
                     feature.zoomThresholdConfig.signal(),
@@ -91,7 +91,6 @@ public class HealthBarSettingsView extends Component {
                                 : String.format(Locale.US, "%.1fx", val);
                     }));
 
-            // Opacity Slider
             SettingSlider.of(
                     Core.bundle.get("feature.health-bar.settings.opacity"),
                     feature.opacityConfig.signal(),
@@ -101,7 +100,6 @@ public class HealthBarSettingsView extends Component {
                     feature.opacityConfig.signal()
                             .map(v -> String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100)));
 
-            // Scale Slider
             SettingSlider.of(
                     Core.bundle.get("feature.health-bar.settings.scale"),
                     feature.scaleConfig.signal(),
@@ -111,7 +109,6 @@ public class HealthBarSettingsView extends Component {
                     feature.scaleConfig.signal()
                             .map(v -> String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100)));
 
-            // Width Slider
             SettingSlider.of(
                     Core.bundle.get("feature.health-bar.settings.width"),
                     feature.widthConfig.signal(),

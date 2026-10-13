@@ -330,9 +330,6 @@ public class GriefAlertFeature extends Feature {
         }
 
         Player builder = event.unit != null ? event.unit.getPlayer() : null;
-        // if (builder != null && builder == Vars.player) {
-        // return;
-        // }
 
         String builderName = builder != null ? builder.name : event.team.coloredName();
 

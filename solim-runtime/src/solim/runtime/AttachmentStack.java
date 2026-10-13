@@ -375,16 +375,9 @@ public class AttachmentStack {
         if (runnable == null) {
             return;
         }
-        // Run the block with an open ownership scope: components register here in
-        // creation order
-        // (Component via registerChild, plain components like Row/Column via register),
-        // and so
-        // does every non-component resource (Computed, Effect, Query, Binding).
-        // Components become
-        // roots; the rest are handed to the sink that owns the capture.
+
         OwnershipScope scope = OwnershipScope.open();
-        // Runnable.run() cannot throw checked exceptions, so RuntimeException/Error is
-        // exhaustive.
+
         RuntimeException runtimeFailure = null;
         Error errorFailure = null;
         try {
@@ -396,8 +389,7 @@ public class AttachmentStack {
         } catch (Error t) {
             errorFailure = t;
         } finally {
-            // Nothing was adopted on the failure path, so close() destroys every partial
-            // resource.
+
             scope.close();
         }
         if (runtimeFailure != null) {

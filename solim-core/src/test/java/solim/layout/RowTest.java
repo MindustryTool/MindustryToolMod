@@ -20,7 +20,6 @@ import solim.test.SolimEnv;
 
 class RowTest extends SolimEnv {
 
-
     @Test
     void createsTableWithDefaultName() {
         Row row = new Row();
@@ -209,15 +208,12 @@ class RowTest extends SolimEnv {
         Cell<?> c1 = row.table().getCell(e1);
         Cell<?> c2 = row.table().getCell(e2);
 
-        // Both cell alignments must include Align.top and Align.left
         assertEquals(Align.top | Align.left, CellAccess.align(c1) & (Align.top | Align.left));
         assertEquals(Align.top | Align.left, CellAccess.align(c2) & (Align.top | Align.left));
 
-        // Both children must be flush with the top edge of the row (y + height == 200)
         assertEquals(200f, e1.y + e1.getHeight(), 0.01f, "Child 1 must be aligned to top of row");
         assertEquals(200f, e2.y + e2.getHeight(), 0.01f, "Child 2 must be aligned to top of row");
 
-        // Left alignment: e1 at left (0), e2 immediately following (50)
         assertEquals(0f, e1.x, 0.01f, "Child 1 must be at left edge");
         assertEquals(50f, e2.x, 0.01f, "Child 2 must follow Child 1");
     }
@@ -255,11 +251,9 @@ class RowTest extends SolimEnv {
         row.table().setSize(300f, 200f);
         row.table().layout();
 
-        // Both children must be flush with the bottom edge of the row (y == 0)
         assertEquals(0f, e1.y, 0.01f, "Child 1 must be aligned to bottom");
         assertEquals(0f, e2.y, 0.01f, "Child 2 must be aligned to bottom");
 
-        // Right alignment: e2 ends at 300, e1 before it
         assertEquals(300f, e2.x + e2.getWidth(), 0.01f, "Child 2 must be at right edge");
         assertEquals(200f, e1.x + e1.getWidth(), 0.01f, "Child 1 must precede Child 2");
     }
@@ -280,7 +274,6 @@ class RowTest extends SolimEnv {
         };
         row.children(() -> AttachmentStack.add(e1));
 
-        // Call top() after children are added
         row.top();
         row.table().setSize(300f, 200f);
         row.table().layout();
@@ -335,11 +328,9 @@ class RowTest extends SolimEnv {
         Row row = (Row) SolimToken.getComponent(scroll.content().getChildren().first());
         row.table().layout();
 
-        // Both img and det must be flush with the top of the row table (400)
         assertEquals(400f, img.y + img.getHeight(), 0.01f, "Image must align to the top");
         assertEquals(400f, det.y + det.getHeight(), 0.01f, "Details must align to the top");
 
-        // Left alignment with gap
         assertEquals(0f, img.x, 0.01f, "Image starts at left edge");
         assertEquals(128f, det.x, 0.01f, "Details starts after image + gap");
     }

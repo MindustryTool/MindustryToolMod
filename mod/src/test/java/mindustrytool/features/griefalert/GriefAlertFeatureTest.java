@@ -47,15 +47,15 @@ class GriefAlertFeatureTest extends MindustryTestEnv {
     private static final int REACTOR_TILE_X = 23;
     private static final int REACTOR_TILE_Y = 33;
 
-    private static Control createMockControl(){
-        try{
+    private static Control createMockControl() {
+        try {
             Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
             Field field = unsafeClass.getDeclaredField("theUnsafe");
             field.setAccessible(true);
             Object unsafe = field.get(null);
             Method allocate = unsafeClass.getMethod("allocateInstance", Class.class);
-            return (Control)allocate.invoke(unsafe, Control.class);
-        }catch(Exception e){
+            return (Control) allocate.invoke(unsafe, Control.class);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -65,16 +65,15 @@ class GriefAlertFeatureTest extends MindustryTestEnv {
     private static @Nullable ConstructBlock constructBlock;
 
     @BeforeAll
-    static void initCore(){
+    static void initCore() {
         Core.camera = new Camera();
-        if(Core.bundle == null){
+        if (Core.bundle == null) {
             Core.bundle = I18NBundle.createEmptyBundle();
         }
-        if(Vars.content == null){
+        if (Vars.content == null) {
             Vars.content = new ContentLoader();
         }
 
-        // Content objects register globally by name, so they are created once per JVM.
         coreBlock = new CoreBlock("grief-alert-test-core");
         reactorBlock = new PowerGenerator("grief-alert-test-reactor");
         reactorBlock.explosionRadius = 20;
@@ -82,7 +81,7 @@ class GriefAlertFeatureTest extends MindustryTestEnv {
     }
 
     @BeforeEach
-    void setUp(){
+    void setUp() {
         Vars.world = new World();
         Vars.state = new GameState();
         Vars.player = null;
@@ -90,7 +89,7 @@ class GriefAlertFeatureTest extends MindustryTestEnv {
     }
 
     @AfterEach
-    void tearDown(){
+    void tearDown() {
         Vars.control = null;
         Vars.player = null;
         Vars.world = null;
@@ -98,18 +97,18 @@ class GriefAlertFeatureTest extends MindustryTestEnv {
         Vars.ui = null;
     }
 
-    private GriefAlertFeature enabledFeature(){
+    private GriefAlertFeature enabledFeature() {
         GriefAlertFeature feature = new GriefAlertFeature();
         feature.enabled().set(true);
         return feature;
     }
 
-    private static GriefAlertInfo alertAt(float worldX, float worldY){
+    private static GriefAlertInfo alertAt(float worldX, float worldY) {
         return new GriefAlertInfo("griefer", "Reactor", 5, 6, worldX, worldY, CORE_TILE_X, CORE_TILE_Y);
     }
 
     @Test
-    void raiseAlert_publishesAlertToReactiveSignal(){
+    void raiseAlert_publishesAlertToReactiveSignal() {
         GriefAlertFeature feature = enabledFeature();
         List<GriefAlertInfo> observed = new ArrayList<>();
         feature.activeAlertSignal().subscribe(alert -> observed.add(alert));
@@ -124,7 +123,7 @@ class GriefAlertFeatureTest extends MindustryTestEnv {
     }
 
     @Test
-    void raiseAlert_newerAlertReplacesTheShowingBanner(){
+    void raiseAlert_newerAlertReplacesTheShowingBanner() {
         GriefAlertFeature feature = enabledFeature();
 
         GriefAlertInfo first = alertAt(10f, 20f);
@@ -136,7 +135,7 @@ class GriefAlertFeatureTest extends MindustryTestEnv {
     }
 
     @Test
-    void dismissAlert_clearsBannerWithoutMovingCamera(){
+    void dismissAlert_clearsBannerWithoutMovingCamera() {
         GriefAlertFeature feature = enabledFeature();
         Core.camera.position.set(500f, 600f);
         feature.raiseAlert(alertAt(120f, 240f));
@@ -150,7 +149,7 @@ class GriefAlertFeatureTest extends MindustryTestEnv {
     }
 
     @Test
-    void tick_keepsAlertWithinWindowThenAutoDismisses(){
+    void tick_keepsAlertWithinWindowThenAutoDismisses() {
         GriefAlertFeature feature = enabledFeature();
         feature.raiseAlert(alertAt(120f, 240f));
 
@@ -162,7 +161,7 @@ class GriefAlertFeatureTest extends MindustryTestEnv {
     }
 
     @Test
-    void raiseAlert_honorsCustomDurationConfig(){
+    void raiseAlert_honorsCustomDurationConfig() {
         GriefAlertFeature feature = enabledFeature();
         feature.durationConfig.set(25f);
         feature.raiseAlert(alertAt(120f, 240f));
@@ -175,7 +174,7 @@ class GriefAlertFeatureTest extends MindustryTestEnv {
     }
 
     @Test
-    void tick_leavesNothingToDismissWhenNoAlertIsShowing(){
+    void tick_leavesNothingToDismissWhenNoAlertIsShowing() {
         GriefAlertFeature feature = enabledFeature();
 
         feature.tick(Long.MAX_VALUE);
@@ -184,7 +183,7 @@ class GriefAlertFeatureTest extends MindustryTestEnv {
     }
 
     @Test
-    void jumpToAlert_centersCameraStartsHighlightAndDismissesBanner(){
+    void jumpToAlert_centersCameraStartsHighlightAndDismissesBanner() {
         Vars.control = createMockControl();
         DesktopInput input = new DesktopInput();
         Vars.control.input = input;
@@ -204,11 +203,12 @@ class GriefAlertFeatureTest extends MindustryTestEnv {
     }
 
     @Test
-    void jumpToAlert_clearsSpectatedUnitSoCameraStaysOnTarget(){
+    void jumpToAlert_clearsSpectatedUnitSoCameraStaysOnTarget() {
         Vars.control = createMockControl();
         DesktopInput input = new DesktopInput();
         Vars.control.input = input;
-        input.spectating = new UnitEntity(){};
+        input.spectating = new UnitEntity() {
+        };
 
         GriefAlertFeature feature = enabledFeature();
         GriefAlertInfo alert = alertAt(120f, 240f);
@@ -220,7 +220,7 @@ class GriefAlertFeatureTest extends MindustryTestEnv {
     }
 
     @Test
-    void jumpToAlert_withoutAlertLeavesCameraAndBannerUntouched(){
+    void jumpToAlert_withoutAlertLeavesCameraAndBannerUntouched() {
         Vars.control = createMockControl();
         Vars.control.input = new DesktopInput();
 
@@ -236,7 +236,7 @@ class GriefAlertFeatureTest extends MindustryTestEnv {
     }
 
     @Test
-    void jumpToAlert_afterDismissalCannotStartTheHighlight(){
+    void jumpToAlert_afterDismissalCannotStartTheHighlight() {
         Vars.control = createMockControl();
         Vars.control.input = new DesktopInput();
 
@@ -251,11 +251,10 @@ class GriefAlertFeatureTest extends MindustryTestEnv {
     }
 
     @Test
-    void detection_raisesAlertInsteadOfPostingToChatOrToast(){
+    void detection_raisesAlertInsteadOfPostingToChatOrToast() {
         GriefAlertFeature feature = enabledFeature();
         placeCore(CORE_TILE_X, CORE_TILE_Y);
 
-        // No UI is installed: the alert must travel through the reactive HUD banner signal only.
         assertNull(Vars.ui);
 
         fireReactorBuild(REACTOR_TILE_X, REACTOR_TILE_Y);
@@ -271,11 +270,10 @@ class GriefAlertFeatureTest extends MindustryTestEnv {
     }
 
     @Test
-    void detection_alertSignalDrivesBannerContentAndClearsOnDismiss(){
+    void detection_alertSignalDrivesBannerContentAndClearsOnDismiss() {
         GriefAlertFeature feature = enabledFeature();
         placeCore(CORE_TILE_X, CORE_TILE_Y);
 
-        // Stands in for what the banner renders: any projection of the alert signal.
         Readable<String> bannerContent = feature.activeAlertSignal()
                 .map(alert -> alert == null ? "" : alert.builderName + " " + alert.tileX + "," + alert.tileY);
 
@@ -293,7 +291,7 @@ class GriefAlertFeatureTest extends MindustryTestEnv {
     }
 
     @Test
-    void detection_beyondAlertRadiusDoesNotRaiseAnAlert(){
+    void detection_beyondAlertRadiusDoesNotRaiseAnAlert() {
         GriefAlertFeature feature = enabledFeature();
         placeCore(CORE_TILE_X, CORE_TILE_Y);
 
@@ -303,7 +301,7 @@ class GriefAlertFeatureTest extends MindustryTestEnv {
     }
 
     @Test
-    void hudView_buildsTableWithChildrenOnlyAndSingleCell(){
+    void hudView_buildsTableWithChildrenOnlyAndSingleCell() {
         GriefAlertFeature feature = enabledFeature();
         GriefAlertHudView view = new GriefAlertHudView(feature);
         Element element = view.element();
@@ -314,7 +312,7 @@ class GriefAlertFeatureTest extends MindustryTestEnv {
         view.dispose();
     }
 
-    private void placeCore(int x, int y){
+    private void placeCore(int x, int y) {
         Tile tile = new Tile(x, y);
         CoreBlock.CoreBuild core = coreBlock.new CoreBuild();
         core.tile = tile;
@@ -324,14 +322,13 @@ class GriefAlertFeatureTest extends MindustryTestEnv {
         Vars.state.teams.get(Team.sharded).cores.add(core);
     }
 
-    private void fireReactorBuild(int x, int y){
+    private void fireReactorBuild(int x, int y) {
         Tile tile = new Tile(x, y);
         ConstructBlock.ConstructBuild build = constructBlock.new ConstructBuild();
         build.tile = tile;
         tile.build = build;
         build.current = reactorBlock;
 
-        // No builder unit: the banner falls back to the owning team's name.
         Events.fire(new BlockBuildBeginEvent(tile, Team.sharded, null, false));
     }
 }

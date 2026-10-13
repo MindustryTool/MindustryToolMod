@@ -62,7 +62,6 @@ class SmartUpgradeFeatureTest {
         Vars.content = new ContentLoader();
     }
 
-
     @Test
     void testConfigMutationsAndReset() {
         SmartUpgradeFeature feature = new SmartUpgradeFeature();
@@ -163,11 +162,9 @@ class SmartUpgradeFeatureTest {
         assertEquals(1, candidates.size);
         assertEquals(conv2, candidates.first());
 
-        // For wall: no other wall of size 1 exists in content
         Seq<Block> wallCandidates = feature.getUpgradeCandidates(wall);
         assertTrue(wallCandidates.isEmpty());
 
-        // For null block
         assertTrue(feature.getUpgradeCandidates(null).isEmpty());
     }
 

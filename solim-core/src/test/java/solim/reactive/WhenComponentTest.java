@@ -579,7 +579,7 @@ class WhenComponentTest extends SolimCoreEnv {
                         Card card = new Card();
                         card.name("pc-card");
                         card.children(() -> {
-                            // child content
+
                         });
                         cardHolder[0] = card;
                     });
@@ -628,7 +628,6 @@ class WhenComponentTest extends SolimCoreEnv {
         assertEquals(Align.center, when.container().getAlign());
         assertEquals(Align.center, CellAccess.align(when.container().getCells().first()));
 
-        // Switch branch to false
         cond.set(false);
         SignalDispatcher.flush();
         colTable.layout();
@@ -641,4 +640,3 @@ class WhenComponentTest extends SolimCoreEnv {
         col.dispose();
     }
 }
-

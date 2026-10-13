@@ -120,8 +120,7 @@ public final class Signals {
     }
 
     private static void refreshNetNow() {
-        // Null guards: this shared library also loads in headless test JVMs where Vars
-        // is uninitialized.
+
         boolean active = Vars.net != null && Vars.net.active();
         boolean server = Vars.net != null && Vars.net.server();
         boolean client = Vars.net != null && Vars.net.client();

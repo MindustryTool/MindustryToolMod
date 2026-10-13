@@ -79,8 +79,7 @@ public class PatchBrowserDialog extends SolimDialog {
 
         @Override
         protected Element build() {
-            // Declared here rather than in field initialisers: inside build() this component is
-            // the active ownership scope, so the derived values live and die with the view.
+
             Computed<Float> viewportWidth = dvw(100f);
             Computed<Float> viewportHeight = dvh(100f);
 

@@ -479,7 +479,7 @@ public class AutoplayFeature extends Feature {
         if (currentTask instanceof FactorySupplyTask) {
             float cooldown = ((FactorySupplyTask) currentTask).cooldownSeconds();
             if (cooldown > 0.05f && Fonts.outline != null) {
-                // Locale-independent tenths: String.format would render "0,4s" in some locales.
+
                 String label = ((int) Math.round(cooldown * 10f)) / 10f + "s";
                 Draw.z(Layer.overlayUI);
                 Fonts.outline.draw(label,

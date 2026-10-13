@@ -44,7 +44,7 @@ public class CalloutSettingsView extends Component {
 
     private Component settingsCard() {
         return SettingCard.section(Icon.settings, Core.bundle.get("feature.callout.settings.general"), () -> {
-            // Team Chat by default
+
             row().growX().gap(unit(2)).center().children(() -> {
                 column().growX().gap(unit(0.5f)).left().children(() -> {
                     text(Core.bundle.get("feature.callout.settings.team-chat"))
@@ -62,7 +62,6 @@ public class CalloutSettingsView extends Component {
 
             divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            // Close on send
             row().growX().gap(unit(2)).center().children(() -> {
                 column().growX().gap(unit(0.5f)).left().children(() -> {
                     text(Core.bundle.get("feature.callout.settings.close-on-send"))

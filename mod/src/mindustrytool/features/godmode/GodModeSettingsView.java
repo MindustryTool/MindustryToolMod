@@ -39,7 +39,7 @@ public class GodModeSettingsView extends Component {
     private Component displayLayoutCard() {
         return SettingCard.section(Icon.layers,
                 Core.bundle.get("feature.god-mode.settings.display-layout", "Display & Layout"), () -> {
-                    // Display Mode Chips
+
                     row().growX().center().children(() -> {
                         text(Core.bundle.get("feature.god-mode.settings.display-mode", "Display Mode"))
                                 .color(WebStyles.Colors.GHOST_FG)
@@ -66,7 +66,6 @@ public class GodModeSettingsView extends Component {
 
                     divider().color(WebStyles.Colors.SECTION_BORDER);
 
-                    // Scale Slider
                     SettingSlider.of(
                             Core.bundle.get("feature.god-mode.settings.scale", "HUD Scale"),
                             feature.scaleConfig.signal(),
@@ -77,7 +76,6 @@ public class GodModeSettingsView extends Component {
 
                     divider().color(WebStyles.Colors.SECTION_BORDER);
 
-                    // Hide Drag Handle Toggle
                     checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle", "Hide Drag Handle"),
                             feature.hideDragHandleConfig.signal()).growX();
                 });

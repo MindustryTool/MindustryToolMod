@@ -125,7 +125,7 @@ public final class Effect implements ReactiveObserver, DisposableOwner, Schedula
             return;
         }
         running = true;
-        // run previous cleanups before re-running
+
         runCleanups();
 
         Set<ReactiveSource> newDeps = staging;
@@ -134,12 +134,7 @@ public final class Effect implements ReactiveObserver, DisposableOwner, Schedula
         ReactiveContext.push(this);
         ReactiveContext.effectStart(this);
         long startNs = System.nanoTime();
-        // The effect body runs at flush time when no component owns it, so resources it
-        // creates would otherwise leak. The scope adopts them into this effect; they
-        // are
-        // released with the effect, not before the next run — a re-running effect may
-        // own
-        // live UI that must survive until the effect itself dies.
+
         OwnershipScope scope = OwnershipScope.open();
         Runnable returned = null;
         try {
@@ -270,7 +265,7 @@ public final class Effect implements ReactiveObserver, DisposableOwner, Schedula
             return;
         disposed = true;
         pending = false;
-        // unsubscribe from dependencies
+
         for (ReactiveSource dep : new ArrayList<>(dependencies)) {
             dep.removeObserver(this);
         }
@@ -283,13 +278,9 @@ public final class Effect implements ReactiveObserver, DisposableOwner, Schedula
         return disposed;
     }
 
-    // For tests
     int dependencyCount() {
         return dependencies.size();
     }
-
-    // --- debug introspection (solim-runtime profiling)
-    // --------------------------------------------
 
     @Override
     public String debugLabel() {

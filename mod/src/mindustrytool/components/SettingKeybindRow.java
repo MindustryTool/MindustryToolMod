@@ -14,7 +14,6 @@ import solim.core.Component;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-
 public class SettingKeybindRow extends Component {
     private static volatile boolean anyListening = false;
 
@@ -58,7 +57,7 @@ public class SettingKeybindRow extends Component {
                 .gap(unit(2))
                 .center()
                 .children(() -> {
-                    // Left: Keybind name & help
+
                     column()
                             .growX()
                             .gap(unit(0.5f))
@@ -77,7 +76,6 @@ public class SettingKeybindRow extends Component {
 
                     spacer();
 
-                    // Keybind chip button
                     button()
                             .style(listening.map(l -> Boolean.TRUE.equals(l)
                                     ? WebStyles.keybindListening().style()
@@ -87,7 +85,6 @@ public class SettingKeybindRow extends Component {
                             .onClick(this::toggleListening)
                             .children(() -> text(keyText).color(keyTextColor));
 
-                    // Reset button
                     button()
                             .style(WebStyles.ghost())
                             .size(unit(8))
@@ -144,7 +141,7 @@ public class SettingKeybindRow extends Component {
             return;
         }
         if (code == KeyCode.mouseLeft) {
-            // Ignore left mouse button to prevent conflict with standard UI interaction
+
             return;
         }
         cancelListening();

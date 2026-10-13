@@ -49,38 +49,31 @@ public class TranslationFeature extends Feature {
 
     public final ConfigGroup config;
 
-    // Provider selection
     public final ConfigValue<String> providerConfig;
     public final ConfigValue<Boolean> showOriginalConfig;
     public final ConfigValue<String> translationColorConfig;
     public final ConfigValue<Boolean> showPillConfig;
 
-    // Gemini configs
     public final ConfigValue<String> geminiApiKeyConfig;
     public final ConfigValue<String> geminiModelConfig;
     public final ConfigValue<Integer> geminiTimeoutConfig;
     public final ConfigValue<Integer> geminiMaxHistoryConfig;
 
-    // DeepL configs
     public final ConfigValue<String> deeplApiKeyConfig;
     public final ConfigValue<Integer> deeplTimeoutConfig;
 
-    // MindustryTool configs
     public final ConfigValue<Integer> mindustryToolTimeoutConfig;
 
-    // DevXconfigs
     public final ConfigValue<String> devxApiKeyConfig;
     public final ConfigValue<String> devxModelConfig;
     public final ConfigValue<Integer> devxTimeoutConfig;
     public final ConfigValue<Integer> devxMaxHistoryConfig;
 
-    // Outgoing translation (Dịch ngược) configs
     public final ConfigValue<Boolean> outgoingEnabledConfig;
     public final ConfigValue<String> outgoingTargetLangConfig;
     public final ConfigValue<String> outgoingFormatConfig;
     public final ConfigValue<Boolean> outgoingShowOriginalConfig;
 
-    // Diagnostic state
     public final Signal<String> lastError = Signal.of(null);
     private long lastIncomingErrorToastTime = 0L;
     private static final long INCOMING_ERROR_TOAST_COOLDOWN_MS = 20_000L;
@@ -137,7 +130,6 @@ public class TranslationFeature extends Feature {
         translationColorConfig = config.stringValue("color", "#00ff00");
         showPillConfig = config.boolValue("show-pill", true);
 
-        // Outgoing translation configs
         outgoingEnabledConfig = config.boolValue("outgoing.enabled", true);
         outgoingTargetLangConfig = config.stringValue("outgoing.target-lang", "English");
         outgoingFormatConfig = config.stringValue("outgoing.format", "both");
@@ -169,11 +161,9 @@ public class TranslationFeature extends Feature {
         providers.add(new DevXTranslationProvider(this));
         providers.add(new DeepLTranslationProvider(this));
 
-        // Register packet replacements for incoming translation
         PacketReplacer.register(SendMessageCallPacket.class, SendTranslatedMessageCallPacket::new);
         PacketReplacer.register(SendMessageCallPacket2.class, SendTranslatedMessageCallPacket2::new);
 
-        // Register outgoing chat hook
         Events.run(Trigger.update, this::updateChatHook);
 
         Events.on(ClientLoadEvent.class, e -> {
@@ -250,7 +240,7 @@ public class TranslationFeature extends Feature {
         }
         if (!Boolean.TRUE.equals(outgoingEnabledConfig.get())
                 || "none".equalsIgnoreCase(outgoingTargetLangConfig.get())) {
-            // Even when outgoing translation is globally off, explicit /tr or /dich commands should still work
+
             if (text.startsWith("/tr ") || text.startsWith("/dich ")) {
                 return ChatFilter.shouldTranslateOutgoing(text);
             }
@@ -324,7 +314,8 @@ public class TranslationFeature extends Feature {
         TranslationProvider provider = getActiveProvider();
         if (!provider.isConfigured()) {
             String providerName = provider.getName();
-            String warnMsg = Core.bundle.format("feature.translation.error.not-configured", providerName) + providerName + "\" is not configured. Please enter an API key in settings.";
+            String warnMsg = Core.bundle.format("feature.translation.error.not-configured", providerName) + providerName
+                    + "\" is not configured. Please enter an API key in settings.";
             lastError.set(warnMsg);
             Core.app.post(() -> {
                 if (Vars.ui != null && Vars.ui.hudfrag != null) {
@@ -347,13 +338,14 @@ public class TranslationFeature extends Feature {
                     String errorMsg = cause.getMessage() != null ? cause.getMessage() : "Unknown error";
                     lastError.set(errorMsg);
                     Log.warn("Outgoing translation failed: @", errorMsg);
-                    String toastMsg = Core.bundle.format("feature.translation.error.outgoing-failed", errorMsg) + errorMsg;
+                    String toastMsg = Core.bundle.format("feature.translation.error.outgoing-failed", errorMsg)
+                            + errorMsg;
                     Core.app.post(() -> {
                         if (Vars.ui != null && Vars.ui.hudfrag != null) {
                             Vars.ui.hudfrag.showToast(Icon.warning, "[scarlet]" + toastMsg);
                         }
                     });
-                    // Never drop outgoing message on error
+
                     onDeliver.get(rawMessage);
                     return null;
                 });
@@ -377,13 +369,12 @@ public class TranslationFeature extends Feature {
             }
             String text = raw.trim();
 
-            // Urgent send: Shift + Enter bypasses translation completely
-            boolean isShiftHeld = Core.input != null && (Core.input.keyDown(KeyCode.shiftLeft) || Core.input.keyDown(KeyCode.shiftRight));
+            boolean isShiftHeld = Core.input != null
+                    && (Core.input.keyDown(KeyCode.shiftLeft) || Core.input.keyDown(KeyCode.shiftRight));
             if (isShiftHeld) {
                 return;
             }
 
-            // Escape prefix: //message sends "message" directly without translation or prettifying
             if (text.startsWith("//")) {
                 return;
             }
@@ -392,8 +383,6 @@ public class TranslationFeature extends Feature {
                 return;
             }
 
-            // Clear the field immediately so Mindustry's scheduled sendMessage() will see
-            // empty text and do nothing!
             chatfield.setText("");
 
             handleOutgoingMessage(text, translatedMsg -> {
@@ -427,7 +416,8 @@ public class TranslationFeature extends Feature {
 
         TranslationProvider provider = getActiveProvider();
         if (!provider.isConfigured()) {
-            String errorMsg = Core.bundle.format("feature.translation.error.not-configured", provider.getName()) + provider.getName() + "\" is not configured. Please enter an API key in settings.";
+            String errorMsg = Core.bundle.format("feature.translation.error.not-configured", provider.getName())
+                    + provider.getName() + "\" is not configured. Please enter an API key in settings.";
             lastError.set(errorMsg);
             notifyIncomingErrorThrottled(errorMsg);
             onDeliver.get(message);
@@ -457,7 +447,7 @@ public class TranslationFeature extends Feature {
                     Log.warn("Translation failed: @", errorMsg);
                     notifyIncomingErrorThrottled(errorMsg);
                     Core.app.post(() -> {
-                        // Never drop messages on error
+
                         onDeliver.get(message);
                     });
                     return null;
@@ -485,8 +475,7 @@ public class TranslationFeature extends Feature {
         if (!provider.isConfigured()) {
             return CompletableFuture.completedFuture(text);
         }
-        // Network-only by contract: translation keys are unbounded per sentence,
-        // so no long-term QueryCache retention. Callers guard duplicate taps.
+
         String cleanText = text.trim();
         return provider.translate(cleanText, targetLanguage);
     }

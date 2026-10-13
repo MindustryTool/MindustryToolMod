@@ -24,8 +24,7 @@ public class QuickAccessSettingsView extends Component {
 
     @Override
     protected Element build() {
-        // Granted wider-viewport exception (unify-remaining-settings-ui): dense
-        // reorderable grid needs up to 750f.
+
         return column().grow().top().center().maxWidth(750f).children(() -> {
             scroll().grow().scrollX(false).children(() -> {
                 column().growX().top().center().gap(unit(3)).padding(unit(2)).children(() -> {

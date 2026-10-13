@@ -59,7 +59,6 @@ class HealthBarFeatureTest extends MindustryTestEnv {
     void test8PrimitiveCacheFieldsSynchronizeOnSignalAndConfigChanges() throws Exception {
         HealthBarFeature feature = new HealthBarFeature();
 
-        // 1. Verify default values
         assertTrue(getCachedBool(feature, "cachedShowFriendlyUnits"));
         assertTrue(getCachedBool(feature, "cachedShowEnemyUnits"));
         assertFalse(getCachedBool(feature, "cachedShowFriendlyBlocks"));
@@ -69,7 +68,6 @@ class HealthBarFeatureTest extends MindustryTestEnv {
         assertEquals(1.0f, getCachedFloat(feature, "cachedScale"), 0.001f);
         assertEquals(1.0f, getCachedFloat(feature, "cachedWidth"), 0.001f);
 
-        // 2. Mutate configs via ConfigValue.set()
         feature.showFriendlyUnitsConfig.set(false);
         feature.showEnemyUnitsConfig.set(false);
         feature.showFriendlyBlocksConfig.set(true);
@@ -88,7 +86,6 @@ class HealthBarFeatureTest extends MindustryTestEnv {
         assertEquals(1.5f, getCachedFloat(feature, "cachedScale"), 0.001f);
         assertEquals(2.0f, getCachedFloat(feature, "cachedWidth"), 0.001f);
 
-        // 3. Mutate configs directly via signal().set()
         feature.showFriendlyUnitsConfig.signal().set(true);
         feature.showFriendlyBlocksConfig.signal().set(false);
         feature.zoomThresholdConfig.signal().set(0.8f);
@@ -103,7 +100,6 @@ class HealthBarFeatureTest extends MindustryTestEnv {
         assertEquals(1.1f, getCachedFloat(feature, "cachedScale"), 0.001f);
         assertEquals(1.2f, getCachedFloat(feature, "cachedWidth"), 0.001f);
 
-        // 4. Null signal fallback
         feature.showFriendlyUnitsConfig.signal().set(null);
         feature.zoomThresholdConfig.signal().set(null);
         feature.opacityConfig.signal().set(null);
@@ -111,13 +107,12 @@ class HealthBarFeatureTest extends MindustryTestEnv {
         assertEquals(0.5f, getCachedFloat(feature, "cachedZoomThreshold"), 0.001f);
         assertEquals(1.0f, getCachedFloat(feature, "cachedOpacity"), 0.001f);
 
-        // 5. Reset to defaults
         feature.opacityConfig.set(0.1f);
         feature.resetToDefaults();
         assertEquals(1.0f, getCachedFloat(feature, "cachedOpacity"), 0.001f);
         assertTrue(getCachedBool(feature, "cachedShowFriendlyUnits"));
     }
-    
+
     @Test
     void testDrawBuildingCheckZeroAndNegativeSizeBoundsHandling() throws Exception {
         HealthBarFeature feature = new HealthBarFeature();
@@ -127,7 +122,6 @@ class HealthBarFeatureTest extends MindustryTestEnv {
         Method drawBuildingCheckMethod = HealthBarFeature.class.getDeclaredMethod("drawBuildingCheck", Building.class);
         drawBuildingCheckMethod.setAccessible(true);
 
-        // 1. Null building
         assertDoesNotThrow(() -> drawBuildingCheckMethod.invoke(feature, (Building) null));
 
         Camera prevCamera = Core.camera;
@@ -146,7 +140,6 @@ class HealthBarFeatureTest extends MindustryTestEnv {
             frameShowEnemyBlocksField.setAccessible(true);
             frameShowEnemyBlocksField.setBoolean(feature, true);
 
-            // 2. Off-screen building with size = 0: must cull without invoking drawBuildingBar
             ItemTurret blockZero = new ItemTurret("test-zero-block");
             blockZero.size = 0;
 
@@ -162,7 +155,6 @@ class HealthBarFeatureTest extends MindustryTestEnv {
             assertDoesNotThrow(() -> drawBuildingCheckMethod.invoke(feature, bZeroOff),
                     "Off-screen building with size 0 must cull safely without error");
 
-            // 3. Off-screen building with size = -1: must cull without invoking drawBuildingBar
             ItemTurret blockNeg = new ItemTurret("test-neg-block");
             blockNeg.size = -1;
 
@@ -178,29 +170,20 @@ class HealthBarFeatureTest extends MindustryTestEnv {
             assertDoesNotThrow(() -> drawBuildingCheckMethod.invoke(feature, bNegOff),
                     "Off-screen building with negative size must cull safely without error");
 
-            // 4. Mathematical bounds test mirroring drawBuildingCheck logic
-            // float halfSize = (build.block.size * Vars.tilesize) / 2f;
-            // culled = x + halfSize < viewBounds.x || x - halfSize > viewBounds.x + width
-            //       || y + halfSize + 16f < viewBounds.y || y - halfSize > viewBounds.y + height;
-
-            // Scenario 4A: Size = 0 at center (400, 300) -> halfSize = 0 -> not culled
             float halfSize0 = (0 * 8f) / 2f;
             boolean culledCenter0 = 400f + halfSize0 < 0f || 400f - halfSize0 > 800f
                     || 300f + halfSize0 + 16f < 0f || 300f - halfSize0 > 600f;
             assertFalse(culledCenter0, "Center building with size 0 must be in view");
 
-            // Scenario 4B: Size = 0 at (-10, 300) -> culled
             boolean culledOff0 = -10f + halfSize0 < 0f || -10f - halfSize0 > 800f
                     || 300f + halfSize0 + 16f < 0f || 300f - halfSize0 > 600f;
             assertTrue(culledOff0, "Off-screen building with size 0 must be culled");
 
-            // Scenario 4C: Size = -1 at center (400, 300) -> halfSize = -4 -> not culled
             float halfSizeNeg = (-1 * 8f) / 2f;
             boolean culledCenterNeg = 400f + halfSizeNeg < 0f || 400f - halfSizeNeg > 800f
                     || 300f + halfSizeNeg + 16f < 0f || 300f - halfSizeNeg > 600f;
             assertFalse(culledCenterNeg, "Center building with size -1 must be in view");
 
-            // Scenario 4D: Size = -1 at (2500, 300) -> culled
             boolean culledOffNeg = 2500f + halfSizeNeg < 0f || 2500f - halfSizeNeg > 800f
                     || 300f + halfSizeNeg + 16f < 0f || 300f - halfSizeNeg > 600f;
             assertTrue(culledOffNeg, "Off-screen building with size -1 must be culled");

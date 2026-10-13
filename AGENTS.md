@@ -15,7 +15,7 @@ Prioritize:
 7. Performance optimization
 
 Do not introduce complexity unless it provides clear value.
-
+Do not ever write comments, variable, function must explain it self
 ---
 
 # Internationalization (i18n) — Mandatory

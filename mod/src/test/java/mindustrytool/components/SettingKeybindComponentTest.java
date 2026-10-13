@@ -35,7 +35,8 @@ class SettingKeybindComponentTest extends MindustryTestEnv {
         }
 
         KeyBind addKey(String name, KeyCode code) {
-            return bindAction(name, code, () -> {});
+            return bindAction(name, code, () -> {
+            });
         }
     }
 
@@ -79,40 +80,35 @@ class SettingKeybindComponentTest extends MindustryTestEnv {
     @Test
     void settingKeybindRow_rendersAndHandlesInputLifecycle() {
         KeyBind bind = KeyBind.add("test.row.bind", KeyCode.g, "MindustryTool");
-        FeatureKeybind featureKeybind = new FeatureKeybind(bind, () -> {}, false);
+        FeatureKeybind featureKeybind = new FeatureKeybind(bind, () -> {
+        }, false);
         SettingKeybindRow row = new SettingKeybindRow(featureKeybind);
 
         assertNotNull(row.element());
         assertEquals(KeyCode.g, featureKeybind.getKeyCode());
         assertTrue(featureKeybind.isDefault());
 
-        // Start listening
         row.startListening();
 
-        // Reject mouseLeft (must remain listening, no change)
         row.handleInput(KeyCode.mouseLeft);
         assertEquals(KeyCode.g, featureKeybind.getKeyCode());
         assertTrue(SettingKeybindRow.isAnyListening());
 
-        // Cancel with Escape
         row.handleInput(KeyCode.escape);
         assertEquals(KeyCode.g, featureKeybind.getKeyCode());
         assertFalse(SettingKeybindRow.isAnyListening());
 
-        // Rebind to H
         row.startListening();
         row.handleInput(KeyCode.h);
         flushEffects();
         assertEquals(KeyCode.h, featureKeybind.getKeyCode());
         assertFalse(featureKeybind.isDefault());
 
-        // Clear with Backspace
         row.startListening();
         row.handleInput(KeyCode.backspace);
         flushEffects();
         assertEquals(KeyCode.unset, featureKeybind.getKeyCode());
 
-        // Reset to default
         featureKeybind.resetToDefault();
         assertEquals(KeyCode.g, featureKeybind.getKeyCode());
         assertTrue(featureKeybind.isDefault());
@@ -125,8 +121,10 @@ class SettingKeybindComponentTest extends MindustryTestEnv {
         KeyBind bind1 = KeyBind.add("test.col.1", KeyCode.f, "MindustryTool");
         KeyBind bind2 = KeyBind.add("test.col.2", KeyCode.h, "MindustryTool");
         Seq<FeatureKeybind> list = new Seq<>();
-        list.add(new FeatureKeybind(bind1, () -> {}, false));
-        list.add(new FeatureKeybind(bind2, () -> {}, false));
+        list.add(new FeatureKeybind(bind1, () -> {
+        }, false));
+        list.add(new FeatureKeybind(bind2, () -> {
+        }, false));
 
         Component card = SettingKeybindCard.of("Test Binds", list);
         assertNotNull(card);
@@ -143,9 +141,9 @@ class SettingKeybindComponentTest extends MindustryTestEnv {
         Element elem = card.element();
         assertNotNull(elem);
 
-        // Find all SettingKeybindRow root tables by looking for children containing the bind name
         Seq<Element> children = new Seq<>();
-        findMatchingElements(elem, e -> e instanceof Label && "singleKey".equals(((Label) e).getText().toString()), children);
+        findMatchingElements(elem, e -> e instanceof Label && "singleKey".equals(((Label) e).getText().toString()),
+                children);
         assertEquals(1, children.size, "Should render exactly 1 row for 1 keybind, no duplicates");
     }
 
@@ -163,7 +161,8 @@ class SettingKeybindComponentTest extends MindustryTestEnv {
     @Test
     void isAnyListening_tracksListeningState() {
         KeyBind bind = KeyBind.add("test.listen.track", KeyCode.k, "MindustryTool");
-        FeatureKeybind featureKeybind = new FeatureKeybind(bind, () -> {}, false);
+        FeatureKeybind featureKeybind = new FeatureKeybind(bind, () -> {
+        }, false);
         SettingKeybindRow row = new SettingKeybindRow(featureKeybind);
 
         assertFalse(SettingKeybindRow.isAnyListening());

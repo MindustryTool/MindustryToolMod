@@ -77,8 +77,7 @@ public class MapBrowserDialog extends SolimDialog {
 
         @Override
         protected Element build() {
-            // Declared here rather than in field initialisers: inside build() this component is
-            // the active ownership scope, so the derived values live and die with the view.
+
             Computed<Float> viewportWidth = dvw(100f);
             Computed<Float> viewportHeight = dvh(100f);
             Computed<Integer> columnCount = new Computed<>(() -> {
@@ -149,9 +148,9 @@ public class MapBrowserDialog extends SolimDialog {
                                                                 .empty(() -> {
                                                                     text(Core.bundle
                                                                             .get("browser.empty"))
-                                                                                    .color(Color.gray)
-                                                                                    .padding(unit(4));
-                                                                                })
+                                                                            .color(Color.gray)
+                                                                            .padding(unit(4));
+                                                                })
                                                                 .gap(BrowserLayout.CARD_GAP)
                                                                 .children(item -> new MapCard(
                                                                         item,

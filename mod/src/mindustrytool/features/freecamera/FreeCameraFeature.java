@@ -24,15 +24,14 @@ import mindustrytool.features.FeatureMetadata;
 import mindustrytool.input.ModMobileInput;
 
 /**
- * Provides an unconstrained free camera that stays detached from the player unit.
+ * Provides an unconstrained free camera that stays detached from the player
+ * unit.
  * On desktop, decouples WASD movement from camera snapping so players can scout
  * the map freely. On mobile, coordinates with the virtual joystick.
  * While enabled, a centered status label is drawn at the top of the view.
  */
 public class FreeCameraFeature extends Feature {
 
-
-    // TODO: Draw a line from center of the screen to player unit (can toggle on off)
     private static final float SCALE_DIVISOR = 1000f;
     private static final float TOP_MARGIN = 48f;
     private static final float PAD_X = 16f;
@@ -134,7 +133,7 @@ public class FreeCameraFeature extends Feature {
         Draw.color(Color.black, BACKDROP_ALPHA);
         Fill.rect(centerX, baseline + textHeight / 2f,
                 textWidth + PAD_X * 2f * scale, textHeight + PAD_Y * 2f * scale);
-        // v160.1 Font.draw(str, x, y, color, scale, integer, halign): centers on x with Align.center.
+
         Fonts.outline.draw(label, centerX, baseline, Pal.accent, scale, false, Align.center);
         Draw.z(z);
         Draw.reset();

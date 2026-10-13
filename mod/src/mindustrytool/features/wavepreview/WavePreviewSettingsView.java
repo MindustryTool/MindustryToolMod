@@ -45,7 +45,7 @@ public class WavePreviewSettingsView extends Component {
     private Component settingsCard() {
         return SettingCard.section(Icon.settings, Core.bundle.get("feature.wave-preview.settings.section.settings"),
                 () -> {
-                    // Opacity Slider
+
                     SettingSlider.of(
                             Core.bundle.get("feature.wave-preview.settings.opacity"),
                             feature.opacityConfig.signal(),
@@ -55,7 +55,6 @@ public class WavePreviewSettingsView extends Component {
                             feature.opacityConfig.signal()
                                     .map(v -> String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100)));
 
-                    // Scale Slider
                     SettingSlider.of(
                             Core.bundle.get("feature.wave-preview.settings.scale"),
                             feature.scaleConfig.signal(),
@@ -65,7 +64,6 @@ public class WavePreviewSettingsView extends Component {
                             feature.scaleConfig.signal()
                                     .map(v -> String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100)));
 
-                    // Lookahead depth Slider
                     SettingSlider.of(
                             Core.bundle.get("feature.wave-preview.settings.depth"),
                             feature.depthConfig.signal(),

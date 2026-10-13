@@ -51,7 +51,8 @@ public class ChatService {
     private final Seq<CompletableFuture<?>> activeRequests = new Seq<>();
 
     public ChatService(ChatStore store, Prov<Boolean> windowOpenSupplier) {
-        this(store, channelId -> windowOpenSupplier.get() && Objects.equals(store.channels().currentActiveId(), channelId));
+        this(store,
+                channelId -> windowOpenSupplier.get() && Objects.equals(store.channels().currentActiveId(), channelId));
     }
 
     public ChatService(ChatStore store, Boolf<String> feedVisiblePredicate) {
@@ -509,7 +510,8 @@ public class ChatService {
                         Core.app.post(() -> {
                             store.session().setConnected(true);
                             store.messages().remove(del.getChannelId(), del.getId());
-                            if (store.ui().currentReplyTarget() != null && Objects.equals(store.ui().currentReplyTarget().getId(), del.getId())) {
+                            if (store.ui().currentReplyTarget() != null
+                                    && Objects.equals(store.ui().currentReplyTarget().getId(), del.getId())) {
                                 store.ui().setReplyTarget(null);
                             }
                             if (del.getChannelId() != null && del.getLastMessageId() != null) {
@@ -538,9 +540,7 @@ public class ChatService {
             }
         }
         if (!missing.isEmpty()) {
-            // Network-only by contract: user profiles are fetched directly per
-            // batch with no long-term QueryCache retention. The store itself
-            // dedupes repeat authors within the session.
+
             MindustryTool.getUserBatch(missing).thenAccept(userDataList -> {
                 if (userDataList != null) {
                     Core.app.post(() -> store.users().putAll(userDataList));

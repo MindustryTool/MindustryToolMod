@@ -36,19 +36,17 @@ class VirtualListTest extends SolimEnv {
 
     @Test
     void testBinarySearchVisibleBounds() {
-        float[] yOffsets = new float[] {0f, 100f, 200f, 300f, 400f};
-        float[] heights = new float[] {100f, 100f, 100f, 100f, 100f};
+        float[] yOffsets = new float[] { 0f, 100f, 200f, 300f, 400f };
+        float[] heights = new float[] { 100f, 100f, 100f, 100f, 100f };
 
-        // At scrollY = 0, first visible should be 0
         assertEquals(0, VirtualList.findFirstVisible(yOffsets, heights, 0f));
-        // At scrollY = 150, first visible should be 1 (since 100 + 100 >= 150)
+
         assertEquals(1, VirtualList.findFirstVisible(yOffsets, heights, 150f));
-        // At scrollY = 200, first visible should be 2
+
         assertEquals(2, VirtualList.findFirstVisible(yOffsets, heights, 200f));
 
-        // At bottom = 250, last visible should be 2 (since offset 200 < 250, but 300 >= 250)
         assertEquals(2, VirtualList.findLastVisible(yOffsets, 250f));
-        // At bottom = 150, last visible should be 1
+
         assertEquals(1, VirtualList.findLastVisible(yOffsets, 150f));
     }
 
@@ -90,15 +88,13 @@ class VirtualListTest extends SolimEnv {
         }
         SignalDispatcher.flush();
 
-        // Total height for 100 items @ 50px = 5000px
         assertEquals(5000f, vl.getTotalHeight(), 0.001f);
 
-        // When not scrolled (top 0..1000 viewport by default in headless),
-        // 1000px viewport fits 20 items (indices 0..19), plus 2 overscan = indices 0..21 (22 items)
-        assertTrue(vl.getMountedCount() <= 25, "Should only mount visible items + overscan, but was: " + vl.getMountedCount());
+        assertTrue(vl.getMountedCount() <= 25,
+                "Should only mount visible items + overscan, but was: " + vl.getMountedCount());
         assertTrue(vl.getMountedCount() >= 10);
         assertTrue(created.containsKey("item-0"));
-        // Far away items must NOT have been instantiated
+
         assertFalse(created.containsKey("item-90"));
 
         vl.dispose();
@@ -114,7 +110,6 @@ class VirtualListTest extends SolimEnv {
         vl.element();
         SignalDispatcher.flush();
 
-        // 3 items * 50 + 2 gaps * 10 = 170
         assertEquals(170f, vl.getTotalHeight(), 0.001f);
         vl.dispose();
     }
@@ -169,7 +164,7 @@ class VirtualListTest extends SolimEnv {
             @Override
             protected Element build() {
                 childBuildCount.incrementAndGet();
-                // Reading a child signal during component build
+
                 String val = childSignal.get();
                 Element el = new Element();
                 el.name = val;
@@ -186,14 +181,12 @@ class VirtualListTest extends SolimEnv {
 
         assertEquals(1, childBuildCount.get());
 
-        // Mutate child signal
         childSignal.set("updated");
 
-        // The collection observer should NOT be queued in SignalDispatcher
-        assertEquals(0, SignalDispatcher.size(), "Child signal mutation must not trigger VirtualList collection effect");
+        assertEquals(0, SignalDispatcher.size(),
+                "Child signal mutation must not trigger VirtualList collection effect");
         SignalDispatcher.flush();
 
-        // childBuildCount should still be 1 (not rebuilt by collection effect)
         assertEquals(1, childBuildCount.get());
 
         vl.dispose();

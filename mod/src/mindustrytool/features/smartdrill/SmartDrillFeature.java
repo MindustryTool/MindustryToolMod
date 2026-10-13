@@ -194,17 +194,15 @@ public class SmartDrillFeature extends Feature {
 
         Table directionTable = new Table();
 
-        // Up
         directionTable.add().size(44f);
         directionTable.button(Icon.up, () -> showDrillMenu(tile, drop, Direction.UP, isBeam)).size(44f).pad(2);
         directionTable.add().size(44f).row();
 
-        // Left, Cancel, Right
         directionTable.button(Icon.left, () -> showDrillMenu(tile, drop, Direction.LEFT, isBeam)).size(44f).pad(2);
         directionTable.button(Icon.cancel, this::closeMenu).size(44f).pad(2);
-        directionTable.button(Icon.right, () -> showDrillMenu(tile, drop, Direction.RIGHT, isBeam)).size(44f).pad(2).row();
+        directionTable.button(Icon.right, () -> showDrillMenu(tile, drop, Direction.RIGHT, isBeam)).size(44f).pad(2)
+                .row();
 
-        // Down
         directionTable.add().size(44f);
         directionTable.button(Icon.down, () -> showDrillMenu(tile, drop, Direction.DOWN, isBeam)).size(44f).pad(2);
         directionTable.add().size(44f);
@@ -451,7 +449,8 @@ public class SmartDrillFeature extends Feature {
                 int ductOffX = nodeOffX == 0 ? 1 : 0;
                 int ductOffY = nodeOffY == 0 ? 1 : 0;
 
-                BuildPlan powerNodePlan = new BuildPlan(x + nodeOffX, y + nodeOffY, direction.rotation, Blocks.beamNode);
+                BuildPlan powerNodePlan = new BuildPlan(x + nodeOffX, y + nodeOffY, direction.rotation,
+                        Blocks.beamNode);
                 BuildPlan drillDuctPlan = new BuildPlan(x + nodeOffX + ductOffX, y + nodeOffY + ductOffY,
                         opposite.rotation, Blocks.duct);
 

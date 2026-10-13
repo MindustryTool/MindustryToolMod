@@ -32,7 +32,6 @@ public class JoinApprovalHudView extends Component {
         hud.background(Styles.black8);
         hud.visible(feature.currentRequestSignal().map(r -> r != null));
 
-        // Center at top of screen
         hud.position(
                 Units.screenWidth() / 2f,
                 Units.screenHeight() - 50f);

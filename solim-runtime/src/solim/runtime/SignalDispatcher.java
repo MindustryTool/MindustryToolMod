@@ -53,10 +53,7 @@ public class SignalDispatcher {
         if (SolimAssert.getMainThread() == null) {
             SolimAssert.setMainThread(Thread.currentThread());
         }
-        // Resolves INSTANCE at call time rather than capturing it, so swapping the
-        // singleton via
-        // install(...) takes effect on the next frame without re-registering the event
-        // listener.
+
         Events.run(Trigger.update, (Runnable) () -> flush());
     }
 

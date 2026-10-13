@@ -13,7 +13,6 @@ import solim.test.SolimEnv;
 
 class NetworkImageTest extends SolimEnv {
 
-
     @BeforeEach
     void setup() {
         NetworkImage.clearCache();
@@ -46,7 +45,6 @@ class NetworkImageTest extends SolimEnv {
         assertNotNull(img.image().getDrawable());
         assertTrue(NetworkImage.isCached("https://example.com/avatar.png"));
 
-        // Second image loads from cache immediately even if loader is empty
         NetworkImage.setImageLoader((url, radius, targetW, targetH, success, error) -> {
             fail("Loader should not be called when cached");
         });
@@ -128,4 +126,3 @@ class NetworkImageTest extends SolimEnv {
         img.dispose();
     }
 }
-

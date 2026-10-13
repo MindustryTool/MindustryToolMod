@@ -73,7 +73,8 @@ class FeatureKeybindTest extends MindustryTestEnv {
     @Test
     void descriptor_rebindAndResetUpdatesSignalAndSettings() {
         KeyBind bind = KeyBind.add("test.descriptor.rebind", KeyCode.g, "MindustryTool");
-        FeatureKeybind keybind = new FeatureKeybind(bind, () -> {}, false);
+        FeatureKeybind keybind = new FeatureKeybind(bind, () -> {
+        }, false);
 
         assertEquals(KeyCode.g, keybind.getKeyCode());
         assertTrue(keybind.isDefault());
@@ -303,8 +304,7 @@ class FeatureKeybindTest extends MindustryTestEnv {
         assertNotNull(settingsBind);
         assertFalse(settingsBind.isRequireEnabled());
 
-        // Test slot save & recall logic
-        feature.saveControlGroupSlot(1); // empty selection clears or does nothing
+        feature.saveControlGroupSlot(1);
         assertNull(feature.controlGroupsSignal().peek().find(g -> g.getId() == 1));
 
         IntSeq mockIds = new IntSeq();

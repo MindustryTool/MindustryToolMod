@@ -19,7 +19,6 @@ import solim.test.SolimEnv;
 
 class ColumnTest extends SolimEnv {
 
-
     @Test
     void createsTableWithDefaultName() {
         Column col = new Column();
@@ -196,7 +195,6 @@ class ColumnTest extends SolimEnv {
         assertEquals(Align.top | Align.left, CellAccess.align(c1) & (Align.top | Align.left));
         assertEquals(Align.top | Align.left, CellAccess.align(c2) & (Align.top | Align.left));
 
-        // Left aligned: both start at x = 0
         assertEquals(0f, e1.x, 0.01f, "Child 1 must be at left edge");
         assertEquals(0f, e2.x, 0.01f, "Child 2 must be at left edge");
     }
@@ -234,7 +232,6 @@ class ColumnTest extends SolimEnv {
         col.table().setSize(200f, 300f);
         col.table().layout();
 
-        // Right aligned: both end at x = 200
         assertEquals(200f, e1.x + e1.getWidth(), 0.01f, "Child 1 must be flush with right edge");
         assertEquals(200f, e2.x + e2.getWidth(), 0.01f, "Child 2 must be flush with right edge");
     }

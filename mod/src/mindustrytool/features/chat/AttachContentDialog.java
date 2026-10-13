@@ -18,7 +18,7 @@ import solim.reactive.Signal;
 
 public class AttachContentDialog extends SolimDialog {
 
-    private static final long MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
+    private static final long MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
     private final Cons<String> callback;
     private final Signal<Boolean> uploading = Signal.of(false);
@@ -36,61 +36,61 @@ public class AttachContentDialog extends SolimDialog {
                         .thenDo(() -> row().growX().padding(unit(4)).center().gap(unit(2)).children(() -> {
                             image(Icon.refresh).size(unit(6), unit(6)).color(Color.white);
                             text(Core.bundle.get("chat.uploading-image", "Uploading image..."))
-                                            .color(Color.lightGray);
-                                }))
+                                    .color(Color.lightGray);
+                        }))
                         .elseDo(() -> column().growX().gap(unit(2)).children(() -> {
-                        button(this::selectImageFile)
-                                .style(Styles.defaultb)
-                                .growX()
-                                .height(unit(12))
-                                .children(() -> {
-                                    row().growX().gap(unit(2)).children(() -> {
-                                        image(Icon.image).size(unit(6), unit(6));
-                                        text(Core.bundle.get("chat.select-image", "Image (.png)"))
-                                                .color(Color.white)
-                                                .left();
+                            button(this::selectImageFile)
+                                    .style(Styles.defaultb)
+                                    .growX()
+                                    .height(unit(12))
+                                    .children(() -> {
+                                        row().growX().gap(unit(2)).children(() -> {
+                                            image(Icon.image).size(unit(6), unit(6));
+                                            text(Core.bundle.get("chat.select-image", "Image (.png)"))
+                                                    .color(Color.white)
+                                                    .left();
+                                        });
                                     });
-                                });
 
-                        button(this::selectSchematicFile)
-                                .style(Styles.defaultb)
-                                .growX()
-                                .height(unit(12))
-                                .children(() -> {
-                                    row().growX().gap(unit(2)).children(() -> {
-                                        image(Icon.file).size(unit(6), unit(6));
-                                        text(Core.bundle.get("chat.select-file", "Select File (.msch)"))
-                                                .color(Color.white)
-                                                .left();
+                            button(this::selectSchematicFile)
+                                    .style(Styles.defaultb)
+                                    .growX()
+                                    .height(unit(12))
+                                    .children(() -> {
+                                        row().growX().gap(unit(2)).children(() -> {
+                                            image(Icon.file).size(unit(6), unit(6));
+                                            text(Core.bundle.get("chat.select-file", "Select File (.msch)"))
+                                                    .color(Color.white)
+                                                    .left();
+                                        });
                                     });
-                                });
 
-                        button(this::selectSaveFile)
-                                .style(Styles.defaultb)
-                                .growX()
-                                .height(unit(12))
-                                .children(() -> {
-                                    row().growX().gap(unit(2)).children(() -> {
-                                        image(Icon.map).size(unit(6), unit(6));
-                                        text(Core.bundle.get("map", "Map / Save (.msav)"))
-                                                .color(Color.white)
-                                                .left();
+                            button(this::selectSaveFile)
+                                    .style(Styles.defaultb)
+                                    .growX()
+                                    .height(unit(12))
+                                    .children(() -> {
+                                        row().growX().gap(unit(2)).children(() -> {
+                                            image(Icon.map).size(unit(6), unit(6));
+                                            text(Core.bundle.get("map", "Map / Save (.msav)"))
+                                                    .color(Color.white)
+                                                    .left();
+                                        });
                                     });
-                                });
 
-                        button(this::pasteFromClipboard)
-                                .style(Styles.defaultb)
-                                .growX()
-                                .height(unit(12))
-                                .children(() -> {
-                                    row().growX().gap(unit(2)).children(() -> {
-                                        image(Icon.paste).size(unit(6), unit(6));
-                                        text(Core.bundle.get("chat.paste-link", "Paste from Clipboard"))
-                                                .color(Color.white)
-                                                .left();
+                            button(this::pasteFromClipboard)
+                                    .style(Styles.defaultb)
+                                    .growX()
+                                    .height(unit(12))
+                                    .children(() -> {
+                                        row().growX().gap(unit(2)).children(() -> {
+                                            image(Icon.paste).size(unit(6), unit(6));
+                                            text(Core.bundle.get("chat.paste-link", "Paste from Clipboard"))
+                                                    .color(Color.white)
+                                                    .left();
+                                        });
                                     });
-                                });
-                    }))
+                        }))
                         .grow();
             });
         });

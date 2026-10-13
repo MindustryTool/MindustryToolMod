@@ -118,7 +118,6 @@ public final class ChangelogFormatter {
         String targetClean = targetVersion.trim();
         int targetIndex = -1;
 
-        // 1. Exact tag name match
         for (int i = 0; i < list.size(); i++) {
             if (list.get(i).tagName.equalsIgnoreCase(targetClean)) {
                 targetIndex = i;
@@ -126,7 +125,6 @@ public final class ChangelogFormatter {
             }
         }
 
-        // 2. Parsed version comparison
         if (targetIndex < 0) {
             int[] targetParts = VersionUtils.parseVersion(targetClean);
             if (targetParts.length > 0) {
@@ -134,7 +132,6 @@ public final class ChangelogFormatter {
                 boolean targetIsBeta = lowerTarget.contains("beta") || lowerTarget.contains("alpha")
                         || lowerTarget.contains("preview");
 
-                // Priority pass: match channel (stable vs beta)
                 for (int i = 0; i < list.size(); i++) {
                     ReleaseInfo r = list.get(i);
                     int[] rParts = VersionUtils.parseVersion(r.tagName);
@@ -149,7 +146,6 @@ public final class ChangelogFormatter {
                     }
                 }
 
-                // Fallback pass: match any version component match
                 if (targetIndex < 0) {
                     for (int i = 0; i < list.size(); i++) {
                         ReleaseInfo r = list.get(i);

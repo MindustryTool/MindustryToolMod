@@ -108,8 +108,6 @@ public final class Request {
         }
     }
 
-    // ─── HTTP verbs ────────────────────────────────────────────────
-
     public RequestBuilder get(String url) {
         return new RequestBuilder(this, "GET", url);
     }
@@ -125,8 +123,6 @@ public final class Request {
     public RequestBuilder delete(String url) {
         return new RequestBuilder(this, "DELETE", url);
     }
-
-    // ─── Response & Handlers ───────────────────────────────────────
 
     public static final class Response<T> {
         private final int statusCode;
@@ -197,8 +193,6 @@ public final class Request {
         }
     }
 
-    // ─── Builder ───────────────────────────────────────────────────
-
     public static final class RequestBuilder {
         private final Request outer;
         private final String method;
@@ -227,8 +221,6 @@ public final class Request {
             this.timeoutOverride = timeout;
             return this;
         }
-
-        // ─── Query parameters ──────────────────────────────────────
 
         public RequestBuilder query(String key, String value) {
             if (key == null)
@@ -501,7 +493,7 @@ public final class Request {
             if (baseUrl == null || baseUrl.isEmpty()) {
                 return url;
             }
-            // Query or fragment should append directly without extra slash
+
             if (url.startsWith("?") || url.startsWith("#")) {
                 return baseUrl + url;
             }
@@ -516,8 +508,6 @@ public final class Request {
             return baseUrl + url;
         }
     }
-
-    // ─── Helpers ───────────────────────────────────────────────────
 
     public static byte[] readAllBytes(InputStream in) throws IOException {
         if (in == null) {
@@ -537,8 +527,6 @@ public final class Request {
             }
         }
     }
-
-    // ─── Multipart helper (kept for upload) ────────────────────────
 
     public static byte[] buildMultipartFormData(String boundary, String fieldName, String fileName, String contentType,
             byte[] fileBytes) {

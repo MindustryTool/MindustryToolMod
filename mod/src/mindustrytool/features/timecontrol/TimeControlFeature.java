@@ -192,13 +192,12 @@ public class TimeControlFeature extends Feature {
             return;
         }
         if (Float.compare(preset, 1f) == 0) {
-            // 1x is boost-locked: always resets to 1x and clears boost; double-tap is a
-            // no-op.
+
             selectedPreset.set(1f);
             boosted.set(false);
             speed.set(1f);
         } else if (Float.compare(preset, selectedPreset.peek()) == 0) {
-            // Same non-1x preset tapped again: toggle boost.
+
             boosted.set(!Boolean.TRUE.equals(boosted.peek()));
             speed.set(effectiveSpeed(preset, Boolean.TRUE.equals(boosted.peek())));
         } else {
@@ -214,7 +213,7 @@ public class TimeControlFeature extends Feature {
      */
     public void resetSlider() {
         sliderPosition.set(0f);
-        // speed will be updated reactively via the sliderPosition subscriber.
+
     }
 
     public void togglePause() {
@@ -274,7 +273,7 @@ public class TimeControlFeature extends Feature {
     public void resetSpeed() {
         selectedPreset.set(1f);
         boosted.set(false);
-        // Route through sliderPosition so slider widget stays in sync in slider mode.
+
         sliderPosition.set(0f);
         speed.set(1f);
         restoreDefaultProvider();
@@ -421,8 +420,7 @@ public class TimeControlFeature extends Feature {
     }
 
     private void restoreDefaultProvider() {
-        // Time exposes no getter or reset; restate the vanilla ClientLauncher form
-        // verbatim.
+
         Time.setDeltaProvider(() -> {
             float result = Core.graphics.getDeltaTime() * 60f;
             return (Float.isNaN(result) || Float.isInfinite(result)) ? 1f

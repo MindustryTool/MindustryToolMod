@@ -235,14 +235,10 @@ public final class ProfileReportExporter {
             try {
                 writer.close();
             } catch (IOException ignored) {
-                // The write either succeeded or already failed; closing adds no new failure
-                // mode.
+
             }
         }
     }
-
-    // --- static document fragments
-    // -------------------------------------------------------------
 
     private static String header(int spanCount, int droppedCount, long traceId) {
         return "<header class=\"bar\"><h1>Solim Profile Report</h1><div class=\"meta\">"
@@ -350,7 +346,7 @@ public final class ProfileReportExporter {
                 "function el(t,c){var n=document.createElement(t);if(c)n.className=c;return n;}",
                 "function txt(v){return v===null||v===undefined?'':String(v);}",
                 "function ns(v){return (v||0)/1e6;}",
-                // --- tabs ---
+
                 "Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(btn){",
                 "btn.addEventListener('click',function(){",
                 "Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(b){b.classList.remove('active');});",
@@ -360,7 +356,7 @@ public final class ProfileReportExporter {
                 "if(btn.dataset.tab==='flame')drawFlame();",
                 "});",
                 "});",
-                // --- flame graph ---
+
                 "var ROW=20,PAD=4;",
                 "var view={start:0,end:1,filter:'',minMs:0,selected:null};",
                 "var canvas=document.getElementById('flame-canvas'),ctx=canvas.getContext('2d');",
@@ -456,7 +452,7 @@ public final class ProfileReportExporter {
                 "document.getElementById('flame-min').addEventListener('input',function(ev){view.minMs=parseFloat(ev.target.value)||0;drawFlame();});",
                 "document.getElementById('flame-reset').addEventListener('click',function(){resetZoom();drawFlame();});",
                 "window.addEventListener('resize',function(){if(document.getElementById('tab-flame').classList.contains('active'))drawFlame();});",
-                // --- component tree ---
+
                 "var selectedId=null;",
                 "function badge(n,s,c,e){",
                 "var out=[];if(n)out.push(n+' child');if(s)out.push(s+' sig');if(c)out.push(c+' comp');if(e)out.push(e+' fx');",
@@ -530,7 +526,7 @@ public final class ProfileReportExporter {
                 "wrap.insertAdjacentHTML('beforeend',html);return wrap;",
                 "}",
                 "document.getElementById('tree-search').addEventListener('input',function(ev){renderTree(ev.target.value);});",
-                // --- hotspots ---
+
                 "function collect(list,node,out){",
                 "(list||[]).forEach(function(n){out.push(n);});",
                 "(node.children||[]).forEach(function(k){collect(list,k,out);});",
@@ -570,7 +566,7 @@ public final class ProfileReportExporter {
                 "{key:'totalMs',label:'Total (ms)',num:true},{key:'avgMs',label:'Avg (ms)',num:true},",
                 "{key:'lastMs',label:'Last (ms)',num:true},{key:'deps',label:'Deps',num:true}]);",
                 "}",
-                // --- column sorting ---
+
                 "document.addEventListener('click',function(ev){",
                 "var th=ev.target;if(th.tagName!=='TH')return;",
                 "var table2=th.closest('table');if(!table2)return;",
@@ -613,7 +609,7 @@ public final class ProfileReportExporter {
                 } else if (c == '\t') {
                     sb.append("\\t");
                 } else if (c == '<') {
-                    // Escaped so a value containing "</script>" cannot terminate the JSON block.
+
                     sb.append("\\u003c");
                 } else if (c == '>') {
                     sb.append("\\u003e");

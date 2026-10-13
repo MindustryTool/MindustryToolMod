@@ -51,7 +51,8 @@ public class TeamResourceHudView extends Component {
         Readable<Float> iconSize = scale.map(s -> unit(6) * (s != null ? s : 1f));
         Readable<Boolean> expanded = feature.expandedConfig.signal();
 
-        Signal<Float> screenWidth = EventsUtil.createSignal(this, ResizeEvent.class, TeamResourceFeature::getSceneWidth);
+        Signal<Float> screenWidth = EventsUtil.createSignal(this, ResizeEvent.class,
+                TeamResourceFeature::getSceneWidth);
 
         Readable<Float> hudWidth = new Computed<>(() -> {
             Float sw = screenWidth.get();
@@ -84,10 +85,10 @@ public class TeamResourceHudView extends Component {
         hud = hud();
         hud.children(() -> {
             column().maxWidth(hudWidth).left().gap(unit(1.5f)).padding(unit(1.5f)).children(() -> {
-                // 1. Header Row
+
                 when(feature.hideHeaderConfig.signal())
                         .elseDo(() -> row().growX().gap(unit(1)).children(() -> {
-                            // Drag handle
+
                             when(feature.hideDragHandleConfig.signal())
                                     .elseDo(() -> button()
                                             .style(WebStyles.ghost())
@@ -95,18 +96,19 @@ public class TeamResourceHudView extends Component {
                                             .children(() -> icon(Icon.move).size(iconSize))
                                             .draggable(hud, feature.xSignal, feature.ySignal));
 
-                            // Expand / Collapse toggle button
                             button()
                                     .style(WebStyles.ghost())
                                     .size(buttonSize)
                                     .onClick(() -> feature.expandedConfig
                                             .set(!Boolean.TRUE.equals(feature.expandedConfig.get())))
                                     .tooltip(expanded.map(exp -> Core.bundle.get(
-                                            Boolean.TRUE.equals(exp) ? "team-resources.collapse" : "team-resources.expand",
+                                            Boolean.TRUE.equals(exp) ? "team-resources.collapse"
+                                                    : "team-resources.expand",
                                             "Toggle Expand")))
-                                    .children(() -> icon(expanded.map(exp -> Boolean.TRUE.equals(exp) ? Icon.down : Icon.right)).size(iconSize));
+                                    .children(() -> icon(
+                                            expanded.map(exp -> Boolean.TRUE.equals(exp) ? Icon.down : Icon.right))
+                                            .size(iconSize));
 
-                            // Team selector chips
                             dynamic(state.validTeamsSignal, teams -> row().gap(unit(1)).children(() -> {
                                 if (teams != null) {
                                     int limit = Math.min(teams.size, 5);
@@ -130,7 +132,6 @@ public class TeamResourceHudView extends Component {
 
                             spacer();
 
-                            // Settings button
                             button()
                                     .style(WebStyles.ghost())
                                     .size(buttonSize)
@@ -139,9 +140,9 @@ public class TeamResourceHudView extends Component {
                                     .children(() -> icon(Icon.settings).size(iconSize));
                         }));
 
-                // 2. Expanded Content Panel
-                Readable<Boolean> showContent = new Computed<>(() ->
-                        Boolean.TRUE.equals(feature.hideHeaderConfig.signal().get()) || Boolean.TRUE.equals(expanded.get()));
+                Readable<Boolean> showContent = new Computed<>(
+                        () -> Boolean.TRUE.equals(feature.hideHeaderConfig.signal().get())
+                                || Boolean.TRUE.equals(expanded.get()));
 
                 when(showContent)
                         .thenDo(() -> buildExpandedContent(scale, itemCols))
@@ -156,7 +157,6 @@ public class TeamResourceHudView extends Component {
         hud.position(feature.xSignal, feature.ySignal);
         hud.toFrontOnTouch();
 
-        // Screen resize clamping with automatic ownership cleanup
         listen(ResizeEvent.class, e -> {
             keepInScreen();
             Core.app.post(this::keepInScreen);
@@ -171,7 +171,6 @@ public class TeamResourceHudView extends Component {
             });
         });
 
-        // Initial layout stabilization
         Core.app.post(() -> {
             if (hud != null) {
                 hud.keepInScreen();
@@ -179,7 +178,6 @@ public class TeamResourceHudView extends Component {
             }
         });
 
-        // Frame update to poll state
         hud.element().update(() -> {
             if (!hud.element().visible)
                 return;
@@ -202,12 +200,12 @@ public class TeamResourceHudView extends Component {
             when(feature.hideHeaderConfig.signal())
                     .elseDo(() -> divider());
 
-            // Core Items Section
             when(feature.showItemsConfig.signal())
                     .thenDo(() -> column().growX().children(() -> {
                         when(state.usedItemsSignal.map(items -> items == null || items.isEmpty()))
-                                .thenDo(() -> row().left().children(() -> text(Core.bundle.get("team-resources.no-items", "No core items"))
-                                        .color(Color.gray).style(Styles.outlineLabel)))
+                                .thenDo(() -> row().left().children(
+                                        () -> text(Core.bundle.get("team-resources.no-items", "No core items"))
+                                                .color(Color.gray).style(Styles.outlineLabel)))
                                 .growX();
 
                         reactiveGrid(state.usedItemsSignal).columns(itemCols)
@@ -217,12 +215,12 @@ public class TeamResourceHudView extends Component {
                     .elseDo(() -> row())
                     .growX();
 
-            // Units Section
             when(feature.showUnitsConfig.signal())
                     .thenDo(() -> column().growX().children(() -> {
                         when(state.usedUnitsSignal.map(units -> units == null || units.isEmpty()))
-                                .thenDo(() -> row().left().children(() -> text(Core.bundle.get("team-resources.no-units", "No active units"))
-                                        .color(Color.gray).style(Styles.outlineLabel)))
+                                .thenDo(() -> row().left().children(
+                                        () -> text(Core.bundle.get("team-resources.no-units", "No active units"))
+                                                .color(Color.gray).style(Styles.outlineLabel)))
                                 .growX();
 
                         reactiveGrid(state.usedUnitsSignal).columns(itemCols)
@@ -232,7 +230,6 @@ public class TeamResourceHudView extends Component {
                     .elseDo(() -> row())
                     .growX();
 
-            // Power Section
             when(feature.showPowerConfig.signal())
                     .thenDo(() -> createPowerSection(scale))
                     .elseDo(() -> row())
@@ -324,7 +321,8 @@ public class TeamResourceHudView extends Component {
                 .growX()
                 .children(() -> {
                     row().left().growX().gap(unit(1)).center().children(() -> {
-                        icon(Icon.power).size(iconSize).color(state.tickSignal.map(t -> state.getTeamGraphs().isEmpty() ? Color.gray : state.getPowerBalanceColor()));
+                        icon(Icon.power).size(iconSize).color(state.tickSignal
+                                .map(t -> state.getTeamGraphs().isEmpty() ? Color.gray : state.getPowerBalanceColor()));
                         text(state.tickSignal.map(t -> {
                             if (state.getTeamGraphs().isEmpty()) {
                                 return Core.bundle.get("team-resources.no-power", "No power network");
@@ -347,10 +345,11 @@ public class TeamResourceHudView extends Component {
                             .thenDo(() -> column(() -> {
                                 row().left().growX().gap(unit(1)).center().children(() -> {
                                     icon(Icon.powerSmall).size(iconSize);
-                                    text(state.tickSignal.map(t -> Core.bundle.get("team-resources.stored-prefix", "Stored: ")
-                                            + state.getFormattedStoredPower()))
-                                                    .style(Styles.outlineLabel)
-                                                    .fontScale(scale.map(s -> 0.80f * (s != null ? s : 1f)));
+                                    text(state.tickSignal
+                                            .map(t -> Core.bundle.get("team-resources.stored-prefix", "Stored: ")
+                                                    + state.getFormattedStoredPower()))
+                                            .style(Styles.outlineLabel)
+                                            .fontScale(scale.map(s -> 0.80f * (s != null ? s : 1f)));
                                 });
 
                                 SplitBar storedBar = new SplitBar(state.getTeamGraphs(), SplitBar.Mode.STORED,

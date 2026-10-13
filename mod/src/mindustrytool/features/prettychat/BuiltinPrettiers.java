@@ -85,9 +85,9 @@ public final class BuiltinPrettiers {
                 return input;
             }
 
-            int closingTagLen = 2; // "[]"
+            int closingTagLen = 2;
             int availableForTags = maxLength - input.length() - closingTagLen;
-            if (availableForTags < 5) { // Minimum tag length is 5 ("[red]")
+            if (availableForTags < 5) {
                 return input;
             }
 
@@ -99,7 +99,6 @@ public final class BuiltinPrettiers {
                 return COLORS[0] + words[0] + "[]";
             }
 
-            // Calculate maximum number of color tags that fit within available budget
             int k = 0;
             int currentTagCost = 0;
             for (int i = 0; i < words.length; i++) {
@@ -116,7 +115,6 @@ public final class BuiltinPrettiers {
                 return input;
             }
 
-            // If we can afford a color tag for every word, color every word individually
             if (k >= words.length) {
                 StringBuilder sb = new StringBuilder(input.length() + currentTagCost + closingTagLen);
                 for (int i = 0; i < words.length; i++) {
@@ -129,7 +127,6 @@ public final class BuiltinPrettiers {
                 return sb.toString();
             }
 
-            // Otherwise, group words into k clusters so the entire message is preserved
             StringBuilder sb = new StringBuilder(input.length() + currentTagCost + closingTagLen);
             int numWords = words.length;
             for (int cluster = 0; cluster < k; cluster++) {
@@ -264,9 +261,9 @@ public final class BuiltinPrettiers {
                 }
             }
 
-            int closingTagLen = 2; // "[]"
+            int closingTagLen = 2;
             int availableForTags = maxLength - input.length() - closingTagLen;
-            if (availableForTags < 9) { // At least 1 hex tag "[#123456]"
+            if (availableForTags < 9) {
                 return input;
             }
 
@@ -1003,12 +1000,10 @@ public final class BuiltinPrettiers {
                 return input;
             }
 
-            // If it's a simple template without complex JS constructs, do fast replace
             if (!script.contains("function") && !script.contains("return") && !script.contains(";")) {
                 return script.replace("<message>", input);
             }
 
-            // If JS scripts engine is available in Mindustry Desktop
             if (Vars.mods != null && Vars.mods.getScripts() != null) {
                 try {
                     String escaped = input.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");

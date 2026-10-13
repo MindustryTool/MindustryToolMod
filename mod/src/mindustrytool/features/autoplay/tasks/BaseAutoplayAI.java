@@ -35,11 +35,12 @@ public abstract class BaseAutoplayAI extends AIController {
 
     @Override
     public void updateTargeting() {
-        // Targeted by specific task logic
+
     }
 
     @Override
-    public void moveTo(Position target, float circleLength, float smooth, boolean keepDistance, @Nullable Vec2 offset, boolean arrive) {
+    public void moveTo(Position target, float circleLength, float smooth, boolean keepDistance, @Nullable Vec2 offset,
+            boolean arrive) {
         if (unit == null || target == null) {
             return;
         }

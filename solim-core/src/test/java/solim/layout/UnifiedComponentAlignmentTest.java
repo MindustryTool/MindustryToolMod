@@ -40,7 +40,7 @@ public class UnifiedComponentAlignmentTest extends SolimEnv {
     @ParameterizedTest(name = "{0} - individual alignment directions")
     @MethodSource("alignableComponents")
     void testIndividualAlignmentDirections(ComponentAdapter adapter) {
-        // top
+
         Component compTop = adapter.create();
         invokeAlignment(compTop, "top");
         PendingCellConfig cfgTop = ComponentAdapter.getCellConfig(compTop);
@@ -49,7 +49,6 @@ public class UnifiedComponentAlignmentTest extends SolimEnv {
         assertTrue((cfgTop.align & Align.top) != 0, adapter.name + ".top() must include Align.top");
         assertFalse((cfgTop.align & Align.bottom) != 0, adapter.name + ".top() must not include Align.bottom");
 
-        // bottom
         Component compBottom = adapter.create();
         invokeAlignment(compBottom, "bottom");
         PendingCellConfig cfgBottom = ComponentAdapter.getCellConfig(compBottom);
@@ -58,7 +57,6 @@ public class UnifiedComponentAlignmentTest extends SolimEnv {
         assertTrue((cfgBottom.align & Align.bottom) != 0, adapter.name + ".bottom() must include Align.bottom");
         assertFalse((cfgBottom.align & Align.top) != 0, adapter.name + ".bottom() must not include Align.top");
 
-        // left
         Component compLeft = adapter.create();
         invokeAlignment(compLeft, "left");
         PendingCellConfig cfgLeft = ComponentAdapter.getCellConfig(compLeft);
@@ -67,7 +65,6 @@ public class UnifiedComponentAlignmentTest extends SolimEnv {
         assertTrue((cfgLeft.align & Align.left) != 0, adapter.name + ".left() must include Align.left");
         assertFalse((cfgLeft.align & Align.right) != 0, adapter.name + ".left() must not include Align.right");
 
-        // right
         Component compRight = adapter.create();
         invokeAlignment(compRight, "right");
         PendingCellConfig cfgRight = ComponentAdapter.getCellConfig(compRight);
@@ -76,7 +73,6 @@ public class UnifiedComponentAlignmentTest extends SolimEnv {
         assertTrue((cfgRight.align & Align.right) != 0, adapter.name + ".right() must include Align.right");
         assertFalse((cfgRight.align & Align.left) != 0, adapter.name + ".right() must not include Align.left");
 
-        // center
         Component compCenter = adapter.create();
         invokeAlignment(compCenter, "center");
         PendingCellConfig cfgCenter = ComponentAdapter.getCellConfig(compCenter);
@@ -110,7 +106,7 @@ public class UnifiedComponentAlignmentTest extends SolimEnv {
     @ParameterizedTest(name = "{0} - 4 corner alignment compositions")
     @MethodSource("alignableComponents")
     void testCornerAlignmentCompositions(ComponentAdapter adapter) {
-        // top().left()
+
         Component c1 = adapter.create();
         invokeAlignment(c1, "top");
         invokeAlignment(c1, "left");
@@ -118,7 +114,6 @@ public class UnifiedComponentAlignmentTest extends SolimEnv {
         assertNotNull(cfg1);
         assertEquals(Align.top | Align.left, cfg1.align.intValue());
 
-        // left().top() (order independence)
         Component c1b = adapter.create();
         invokeAlignment(c1b, "left");
         invokeAlignment(c1b, "top");
@@ -126,7 +121,6 @@ public class UnifiedComponentAlignmentTest extends SolimEnv {
         assertNotNull(cfg1b);
         assertEquals(Align.top | Align.left, cfg1b.align.intValue());
 
-        // top().right()
         Component c2 = adapter.create();
         invokeAlignment(c2, "top");
         invokeAlignment(c2, "right");
@@ -134,7 +128,6 @@ public class UnifiedComponentAlignmentTest extends SolimEnv {
         assertNotNull(cfg2);
         assertEquals(Align.top | Align.right, cfg2.align.intValue());
 
-        // bottom().left()
         Component c3 = adapter.create();
         invokeAlignment(c3, "bottom");
         invokeAlignment(c3, "left");
@@ -142,7 +135,6 @@ public class UnifiedComponentAlignmentTest extends SolimEnv {
         assertNotNull(cfg3);
         assertEquals(Align.bottom | Align.left, cfg3.align.intValue());
 
-        // bottom().right()
         Component c4 = adapter.create();
         invokeAlignment(c4, "bottom");
         invokeAlignment(c4, "right");
@@ -154,7 +146,7 @@ public class UnifiedComponentAlignmentTest extends SolimEnv {
     @ParameterizedTest(name = "{0} - center compositions")
     @MethodSource("alignableComponents")
     void testCenterCompositions(ComponentAdapter adapter) {
-        // top().center()
+
         Component c1 = adapter.create();
         invokeAlignment(c1, "top");
         invokeAlignment(c1, "center");
@@ -162,7 +154,6 @@ public class UnifiedComponentAlignmentTest extends SolimEnv {
         assertNotNull(cfg1);
         assertEquals(Align.center, cfg1.align.intValue());
 
-        // center().top()
         Component c2 = adapter.create();
         invokeAlignment(c2, "center");
         invokeAlignment(c2, "top");
@@ -170,7 +161,6 @@ public class UnifiedComponentAlignmentTest extends SolimEnv {
         assertNotNull(cfg2);
         assertTrue((cfg2.align & Align.top) != 0);
 
-        // center().bottom()
         Component c3 = adapter.create();
         invokeAlignment(c3, "center");
         invokeAlignment(c3, "bottom");
@@ -178,7 +168,6 @@ public class UnifiedComponentAlignmentTest extends SolimEnv {
         assertNotNull(cfg3);
         assertTrue((cfg3.align & Align.bottom) != 0);
 
-        // center().left()
         Component c4 = adapter.create();
         invokeAlignment(c4, "center");
         invokeAlignment(c4, "left");
@@ -186,7 +175,6 @@ public class UnifiedComponentAlignmentTest extends SolimEnv {
         assertNotNull(cfg4);
         assertTrue((cfg4.align & Align.left) != 0);
 
-        // center().right()
         Component c5 = adapter.create();
         invokeAlignment(c5, "center");
         invokeAlignment(c5, "right");
@@ -202,14 +190,12 @@ public class UnifiedComponentAlignmentTest extends SolimEnv {
         PendingCellConfig cfg = ComponentAdapter.getCellConfig(comp);
         assertNotNull(cfg);
 
-        // top() then bottom() -> must clear top and set bottom
         invokeAlignment(comp, "top");
         assertTrue((cfg.align & Align.top) != 0);
         invokeAlignment(comp, "bottom");
         assertFalse((cfg.align & Align.top) != 0, "bottom() after top() must clear top");
         assertTrue((cfg.align & Align.bottom) != 0, "bottom() after top() must set bottom");
 
-        // left() then right() -> must clear left and set right
         invokeAlignment(comp, "left");
         assertTrue((cfg.align & Align.left) != 0);
         invokeAlignment(comp, "right");

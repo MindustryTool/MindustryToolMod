@@ -117,8 +117,6 @@ public final class NetworkImage extends Component implements CellConfig<NetworkI
         }
     }
 
-    // --- Decode helpers ---
-
     public static TextureRegion decodeTexture(byte[] bytes) {
         return decodeTexture(bytes, 0, 0f, 0f);
     }
@@ -183,8 +181,6 @@ public final class NetworkImage extends Component implements CellConfig<NetworkI
         int newAlpha = Math.round(currentAlpha * alpha);
         pixmap.set(x, y, (pixel & 0xFFFFFF00) | (newAlpha & 0xFF));
     }
-
-    // --- Instance ---
 
     private @Nullable Drawable placeholder;
     private @Nullable Drawable fallback;
@@ -484,8 +480,6 @@ public final class NetworkImage extends Component implements CellConfig<NetworkI
         } catch (Throwable ignored) {
         }
     }
-
-    // --- Disk cache (shared with DefaultImageLoader) ---
 
     private static @Nullable Fi cacheDir() {
         try {

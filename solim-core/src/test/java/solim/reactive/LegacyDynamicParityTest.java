@@ -48,11 +48,6 @@ import solim.test.SolimCoreEnv;
  */
 class LegacyDynamicParityTest extends SolimCoreEnv {
 
-    // ------------------------------------------------------------------
-    // LegacyDynamic: verbatim port of the pre-migration Dynamic
-    // (Func<T, Component> factory, AttachmentStack.isolate, single cell).
-    // ------------------------------------------------------------------
-
     static final class LegacyDynamic<T> extends Component
             implements CellConfig<LegacyDynamic<T>>, TableConfig<LegacyDynamic<T>>, ElementConfig<LegacyDynamic<T>> {
         private static final Object SENTINEL = new Object();
@@ -187,10 +182,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         }
     }
 
-    // ------------------------------------------------------------------
-    // Harness: stubs, structure signatures and parity assertions.
-    // ------------------------------------------------------------------
-
     static final class Leaf extends Component {
         Leaf(String name) {
             name(name);
@@ -304,10 +295,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         oldSide.dispose();
         newSide.dispose();
     }
-
-    // ------------------------------------------------------------------
-    // S1: boolean-exclusive container roots (then/else).
-    // ------------------------------------------------------------------
 
     /**
      * Covers AttachContentDialog (uploading row vs form column).
@@ -677,10 +664,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    // ------------------------------------------------------------------
-    // S2: boolean then-only (false collapses).
-    // ------------------------------------------------------------------
-
     /**
      * Covers GodModeHudView, TimeControlHudView, QuickAccessHudView and
      * QuickSchematicGridHudView hide-drag-handle buttons plus
@@ -761,10 +744,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    // ------------------------------------------------------------------
-    // S3: boolean else-only (true collapses).
-    // ------------------------------------------------------------------
-
     /**
      * Covers ChatOverlayHudView channel/user side panels.
      */
@@ -798,10 +777,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         assertParity("collapsed", oldBox, oldSide.parentTable, newBox, newSide.parentTable);
         finish(oldBox, oldSide, newBox, newSide);
     }
-
-    // ------------------------------------------------------------------
-    // S4: nullable value source (null collapses / method-ref always root).
-    // ------------------------------------------------------------------
 
     /**
      * Covers ChatMessageListView translated text and translating indicator
@@ -942,10 +917,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         assertParity("provider-b", oldBox, oldSide.parentTable, newBox, newSide.parentTable);
         finish(oldBox, oldSide, newBox, newSide);
     }
-
-    // ------------------------------------------------------------------
-    // S5: value-based multi-way branches (never null).
-    // ------------------------------------------------------------------
 
     /**
      * Covers ChatOverlayHudView desktop vs mobile body (width threshold).
@@ -1156,10 +1127,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    // ------------------------------------------------------------------
-    // S6: collection-driven single roots (loops, null-safe, early return).
-    // ------------------------------------------------------------------
-
     /**
      * Covers EmojiDialog empty row vs chip wrap and both
      * SchematicIconPickerDialog glyph/content lists.
@@ -1365,10 +1332,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         assertEquals(1, newBox.getChildren().size);
         finish(oldBox, oldSide, newBox, newSide);
     }
-
-    // ------------------------------------------------------------------
-    // S7/S8: nested dynamics.
-    // ------------------------------------------------------------------
 
     /**
      * Covers ChatMessageListView message area: hasMessages list vs the nested
@@ -1620,7 +1583,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         SignalDispatcher.flush();
         assertParity("channel-banner", oldBox, oldSide.parentTable, newBox, newSide.parentTable);
 
-        // Banner collapses take no space on either side.
         oldBanner.set(false);
         newBanner.set(false);
         SignalDispatcher.flush();

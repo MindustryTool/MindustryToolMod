@@ -39,18 +39,17 @@ public class JoinDialogInjector {
 
     private void performInjection() {
         JoinDialog dialog = Vars.ui.join;
-        
+
         if (dialog == null) {
             return;
         }
 
         Table hosts = Reflect.get(dialog, "hosts");
-        
+
         if (hosts == null) {
             return;
         }
 
-        // 2. Add RoomBrowserView to hosts table if not present
         if (hosts.find(ROOT_NAME) == null) {
             if (browserView == null) {
                 browserView = new RoomBrowserView(feature);

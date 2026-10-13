@@ -48,7 +48,6 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
             Func<T, C> factory) {
         final Iterable<T> effectiveItems = items != null ? items : Collections.<T>emptyList();
 
-        // Phase 1: Extract and validate keys (detect duplicates, first wins)
         List<T> itemList = new ArrayList<>();
         List<K> keyList = new ArrayList<>();
         Set<K> seenKeys = new HashSet<>();
@@ -62,7 +61,6 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
             keyList.add(key);
         }
 
-        // Phase 2: Create / reuse components in isolated context
         Map<K, C> nextComponents = new LinkedHashMap<>();
         List<C> newlyCreated = new ArrayList<>();
 
@@ -83,7 +81,7 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
                 }
             }
         } catch (Throwable t) {
-            // Rollback: dispose only newly created components; preserve activeComponents
+
             for (C c : newlyCreated) {
                 try {
                     c.dispose();
@@ -94,7 +92,6 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
             throw t;
         }
 
-        // Phase 3: Commit next state
         Set<K> removedKeys = new LinkedHashSet<>(activeComponents.keySet());
         removedKeys.removeAll(nextComponents.keySet());
 
@@ -109,7 +106,6 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
         activeComponents.clear();
         activeComponents.putAll(nextComponents);
 
-        // Phase 4: Dispose removed components (after commit)
         for (C comp : toDispose) {
             try {
                 comp.dispose();

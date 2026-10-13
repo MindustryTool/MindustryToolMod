@@ -226,23 +226,20 @@ public final class Button
 
     public Button enabled(@Nullable Readable<Boolean> signal) {
         if (signal != null) {
-            own(Effect.of(() -> button.setDisabled(!Boolean.TRUE.equals(signal.get()))));        }
+            own(Effect.of(() -> button.setDisabled(!Boolean.TRUE.equals(signal.get()))));
+        }
         return this;
     }
 
     public Button checked(@Nullable Readable<Boolean> signal) {
         if (signal != null) {
-            own(Effect.of(() -> button.setChecked(Boolean.TRUE.equals(signal.get()))));            // Arc's Button toggles its internal checked flag on every click. For a
-            // reactive (signal-backed) binding, re-assert the signal's value after each
-            // click so the declarative binding wins over Arc's auto-toggle. Constant
-            // readables (Readable.of(...)) are intentionally left alone — they have no
-            // signal to re-read and rely on rebuild-on-toggle.
+            own(Effect.of(() -> button.setChecked(Boolean.TRUE.equals(signal.get()))));
+
             if (signal instanceof ReactiveSource) {
                 checkedBinding = signal;
                 ensureCheckedReassertListener();
             }
-            // Warn once if this button's style has no checked visual, so a bound
-            // selected state that silently fails to render is surfaced in development.
+
             ButtonStyle current = button.getStyle();
             if (current != null && current.checked == null) {
                 warnCheckedWithoutVisual();
@@ -252,10 +249,12 @@ public final class Button
     }
 
     /**
-     * Installs a click listener that re-asserts a reactive {@code checked} binding after
+     * Installs a click listener that re-asserts a reactive {@code checked} binding
+     * after
      * Arc's built-in auto-toggle has flipped the flag. Runs on every click for
      * signal-backed bindings only. Arc's public {@code setChecked} uses
-     * {@code programmaticChangeEvents == false} and fires no {@code ChangeEvent}, so this
+     * {@code programmaticChangeEvents == false} and fires no {@code ChangeEvent},
+     * so this
      * cannot loop.
      */
     private void ensureCheckedReassertListener() {
@@ -279,12 +278,14 @@ public final class Button
             return;
         }
         checkedWarningLogged = true;
-        Log.warn("[Solim] .checked(...) bound to a style with no checked visual — the selected state will not render. Use a style that declares a checked state; action-chip styles deliberately have none.");
+        Log.warn(
+                "[Solim] .checked(...) bound to a style with no checked visual — the selected state will not render. Use a style that declares a checked state; action-chip styles deliberately have none.");
     }
 
     public Button visible(@Nullable Readable<Boolean> signal) {
         if (signal != null) {
-            own(Effect.of(() -> button.visible = Boolean.TRUE.equals(signal.get())));        }
+            own(Effect.of(() -> button.visible = Boolean.TRUE.equals(signal.get())));
+        }
         return this;
     }
 
@@ -317,7 +318,8 @@ public final class Button
             applyResolvedStyle(builder.build());
         } else {
             applyResolvedStyle(builder.build());
-            own(Effect.of(() -> applyResolvedStyle(builder.build())));        }
+            own(Effect.of(() -> applyResolvedStyle(builder.build())));
+        }
         return this;
     }
 

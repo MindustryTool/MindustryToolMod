@@ -88,8 +88,6 @@ public final class UI {
         SignalDispatcher.register();
     }
 
-    // --- Layout ---
-
     public static Column column() {
         return new Column();
     }
@@ -202,8 +200,6 @@ public final class UI {
         return s;
     }
 
-    // --- Display ---
-
     public static SolimImage image() {
         return image((Drawable) null);
     }
@@ -295,8 +291,6 @@ public final class UI {
         return b;
     }
 
-    // --- Input ---
-
     public static Button button() {
         Button b = new Button();
         AttachmentStack.attachToParent(b.element());
@@ -363,8 +357,6 @@ public final class UI {
         return s;
     }
 
-    // --- Overlay ---
-
     public static SolimDialog dialog(String title) {
         return new SolimDialog(title);
     }
@@ -394,8 +386,6 @@ public final class UI {
         popup.children(provider);
         return popup;
     }
-
-    // --- Reactivity ---
 
     public static <T> Signal<T> signal() {
         return Signal.of(null);
@@ -472,8 +462,6 @@ public final class UI {
         return Mutation.of(mutator);
     }
 
-    // --- Structural & Dynamic ---
-
     public static <T> Dynamic<T> dynamic(Readable<T> source, Cons<T> factory) {
         Dynamic<T> d = Dynamic.of(source, factory);
         AttachmentStack.attachToParent(d.element());
@@ -537,8 +525,6 @@ public final class UI {
         return el;
     }
 
-    // --- Units ---
-
     public static float unit(float value) {
         return Units.unit(value);
     }
@@ -563,8 +549,6 @@ public final class UI {
         return Units.dvh(percentage);
     }
 
-    // --- Events & Components ---
-
     public static <T> Disposable listen(Class<T> type, Cons<T> listener) {
         return EventsUtil.listen(type, listener);
     }
@@ -574,8 +558,6 @@ public final class UI {
         AttachmentStack.attachToParent(t.element());
         return t;
     }
-
-    // --- Rounded & Border Styling ---
 
     public static RoundedDrawable rounded(int radius) {
         return new RoundedDrawable(radius);

@@ -27,7 +27,6 @@ import solim.test.SolimCoreEnv;
 
 class ForEachComponentTest extends SolimCoreEnv {
 
-
     static class TestComponent extends Component implements solim.modifier.CellConfig<TestComponent> {
         final String id;
         boolean wasDisposed = false;
@@ -94,7 +93,6 @@ class ForEachComponentTest extends SolimCoreEnv {
         TestComponent a = created.get("A");
         assertEquals("A", a.id);
 
-        // Update items to [B, C, D]
         items.set(Arrays.asList("B", "C", "D"));
         SignalDispatcher.flush();
         assertTrue(a.wasDisposed, "Removed item A must be disposed");
@@ -219,7 +217,6 @@ class ForEachComponentTest extends SolimCoreEnv {
         assertEquals(Align.center, fe.container().getAlign());
         assertEquals(Align.center, CellAccess.align(fe.container().getCells().first()));
 
-        // Update items
         items.set(Arrays.asList("1", "2", "3"));
         SignalDispatcher.flush();
         colTable.layout();
@@ -248,7 +245,6 @@ class ForEachComponentTest extends SolimCoreEnv {
 
         assertEquals(2, padTopSignal.observerCount(), "Both items should observe padTopSignal");
 
-        // Remove item B
         items.set(Collections.singletonList("A"));
         SignalDispatcher.flush();
 

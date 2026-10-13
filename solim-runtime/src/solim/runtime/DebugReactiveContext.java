@@ -62,9 +62,6 @@ public class DebugReactiveContext extends ReactiveContext {
 
     private int nextId = 1;
 
-    // --- per-node metric accumulators
-    // -------------------------------------------------------------
-
     private static final class SignalMetrics {
         final int id;
         int writeCount;
@@ -95,9 +92,6 @@ public class DebugReactiveContext extends ReactiveContext {
             this.id = id;
         }
     }
-
-    // --- lifecycle hooks
-    // ---------------------------------------------------------------------------
 
     @Override
     protected void onSignalCreated(@Nullable Object signal) {
@@ -185,9 +179,6 @@ public class DebugReactiveContext extends ReactiveContext {
         metrics.totalNs += metrics.lastNs;
     }
 
-    // --- creation ownership
-    // --------------------------------------------------------------------
-
     private void createdBy(Component component, Object node) {
         Set<Object> nodes = creationOwned.get(component);
         if (nodes == null) {
@@ -201,9 +192,6 @@ public class DebugReactiveContext extends ReactiveContext {
         Set<Object> nodes = component != null ? creationOwned.get(component) : null;
         return nodes != null ? nodes : Collections.<Object>emptySet();
     }
-
-    // --- registries
-    // ----------------------------------------------------------------------------
 
     private @Nullable SignalMetrics signalMetrics(@Nullable Object signal) {
         if (signal == null) {
@@ -262,9 +250,6 @@ public class DebugReactiveContext extends ReactiveContext {
     public void observeEffect(@Nullable Object effect) {
         effectMetrics(effect);
     }
-
-    // --- snapshots
-    // -----------------------------------------------------------------------------
 
     public List<SignalSnapshot> signalSnapshots() {
         List<SignalSnapshot> out = new ArrayList<>(signals.size());
@@ -336,9 +321,6 @@ public class DebugReactiveContext extends ReactiveContext {
         creationOwned.clear();
         nextId = 1;
     }
-
-    // --- reactive node access
-    // --------------------------------------------------------------------
 
     private static @Nullable DebugReactiveNode nodeOf(@Nullable Object node) {
         return node instanceof DebugReactiveNode ? (DebugReactiveNode) node : null;
@@ -422,7 +404,7 @@ public class DebugReactiveContext extends ReactiveContext {
                     return truncate(label);
                 }
             } catch (Throwable ignored) {
-                // fall through to the class name
+
             }
         }
         return node.getClass().getSimpleName();
@@ -468,9 +450,6 @@ public class DebugReactiveContext extends ReactiveContext {
     public static Set<Object> newIdentitySet() {
         return Collections.newSetFromMap(new IdentityHashMap<Object, Boolean>());
     }
-
-    // --- per-node snapshots, keyed by the node instance
-    // -------------------------------------------
 
     public @Nullable SignalSnapshot signalSnapshot(@Nullable Object signal) {
         SignalMetrics metrics = signal != null ? signals.get(signal) : null;

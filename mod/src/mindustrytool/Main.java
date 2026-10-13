@@ -70,8 +70,7 @@ public class Main extends Mod {
 
     @Override
     public void init() {
-        // Before any feature registration: Perf's debug context attributes signals to whichever
-        // component is building, so it must be installed before features construct their UI.
+
         Perf.init();
 
         self = Vars.mods.getMod(Main.class);
@@ -139,7 +138,7 @@ public class Main extends Mod {
                 Core.app.post(() -> {
                     boolean hasCrashed = new CrashReportService().checkForCrashes();
                     if (hasCrashed) {
-                        // Try to disable all feature — mirrors old Main.setup() crash handling
+
                         FeatureManager.disableAll();
                     }
                     FeatureManager.init();

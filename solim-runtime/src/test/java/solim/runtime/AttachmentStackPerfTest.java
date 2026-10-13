@@ -85,8 +85,7 @@ class AttachmentStackPerfTest {
         Table root = new Table();
         root.name = "test-parent";
         AttachmentStack.push(root);
-        // Constructing inside the open scope is all it takes: every component announces
-        // itself.
+
         elementComponent();
         elementComponent();
         AttachmentStack.pop();

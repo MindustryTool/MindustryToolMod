@@ -56,7 +56,6 @@ class ChatChannelListViewTest extends MindustryTestEnv {
         assertEquals(1, store.unread().get("ch2"));
         assertEquals(1, store.unread().total().get());
 
-        // Mute ch2
         store.notifications().setMuted("ch2", true);
         assertEquals(0, store.unread().total().get());
 

@@ -71,12 +71,12 @@ public final class Signal<T> implements Readable<T>, ReactiveSource, DebugReacti
         ReactiveContext.signalWriteStart(this, oldValue, newValue);
         this.value = newValue;
         try {
-            // notify listeners
+
             List<Cons<T>> copy = new ArrayList<>(listeners);
             for (Cons<T> c : copy) {
                 c.get(value);
             }
-            // notify observers (Computeds/Effects)
+
             Set<ReactiveObserver> obsCopy = new LinkedHashSet<>(observers);
             for (ReactiveObserver o : obsCopy) {
                 o.invalidate();
@@ -124,7 +124,6 @@ public final class Signal<T> implements Readable<T>, ReactiveSource, DebugReacti
         observers.remove(observer);
     }
 
-    // For testing: listener/observer counts
     public int listenerCount() {
         return listeners.size();
     }
@@ -132,9 +131,6 @@ public final class Signal<T> implements Readable<T>, ReactiveSource, DebugReacti
     public int observerCount() {
         return observers.size();
     }
-
-    // --- debug introspection (solim-runtime profiling)
-    // --------------------------------------------
 
     @Override
     public String debugLabel() {

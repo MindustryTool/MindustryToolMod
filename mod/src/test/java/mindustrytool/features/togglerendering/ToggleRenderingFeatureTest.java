@@ -65,29 +65,27 @@ class ToggleRenderingFeatureTest extends MindustryTestEnv {
             }
         };
 
-        UnitEntity ally = new UnitEntity() {};
+        UnitEntity ally = new UnitEntity() {
+        };
         ally.team = Team.sharded;
 
-        UnitEntity enemy = new UnitEntity() {};
+        UnitEntity enemy = new UnitEntity() {
+        };
         enemy.team = Team.crux;
 
-        // Both default to true -> do not hide
         assertFalse(feature.shouldHideUnit(ally));
         assertFalse(feature.shouldHideUnit(enemy));
 
-        // Hide allies only
         feature.drawUnitsAlliesConfig.set(false);
         feature.drawUnitsEnemiesConfig.set(true);
         assertTrue(feature.shouldHideUnit(ally));
         assertFalse(feature.shouldHideUnit(enemy));
 
-        // Hide enemies only
         feature.drawUnitsAlliesConfig.set(true);
         feature.drawUnitsEnemiesConfig.set(false);
         assertFalse(feature.shouldHideUnit(ally));
         assertTrue(feature.shouldHideUnit(enemy));
 
-        // Hide both
         feature.drawUnitsAlliesConfig.set(false);
         feature.drawUnitsEnemiesConfig.set(false);
         assertTrue(feature.shouldHideUnit(ally));

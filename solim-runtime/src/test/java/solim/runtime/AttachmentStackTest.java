@@ -284,7 +284,6 @@ class AttachmentStackTest {
         assertNotNull(inner);
         assertEquals(outer, AttachmentStack.current());
 
-        // Now finish outer
         AttachmentStack.pop();
 
         assertTrue(outerAttacherCalled[0]);

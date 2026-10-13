@@ -68,7 +68,7 @@ public class PathfindingSettingsView extends Component {
     private Component visualStylingCard() {
         return SettingCard.section(Icon.spray,
                 Core.bundle.get("feature.pathfinding.settings.visual-styling", "Visual Styling"), () -> {
-                    // Min Zoom Slider
+
                     SettingSlider.of(
                             Core.bundle.get("feature.pathfinding.settings.min-zoom", "Min Zoom"),
                             feature.zoomThresholdConfig.signal(),
@@ -82,7 +82,6 @@ public class PathfindingSettingsView extends Component {
                                         : String.format("%.1fx", zoom);
                             }));
 
-                    // Opacity Slider
                     SettingSlider.of(
                             Core.bundle.get("feature.pathfinding.settings.opacity", "Opacity"),
                             feature.opacityConfig.signal(),

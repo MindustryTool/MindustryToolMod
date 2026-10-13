@@ -37,8 +37,6 @@ public final class Github {
                 () -> githubApi.get("").sendAsync().thenApply(r -> r.body()));
     }
 
-    // ─── Mod metadata ──────────────────────────────────────────────
-
     public static CompletableFuture<String> getModHjson() {
         return QueryCache.getInstance().fetchCached(QueryKey.of("github", "mod.hjson"),
                 () -> rawApi.get(Config.MOD_HJSON_URL).sendAsync().thenApply(r -> r.body()));
@@ -54,8 +52,6 @@ public final class Github {
         return QueryCache.getInstance().fetchCached(QueryKey.of("github", "mod.hjson", tag),
                 () -> rawApi.get(url).sendAsync().thenApply(r -> r.body()));
     }
-
-    // ─── Releases ──────────────────────────────────────────────────
 
     /**
      * GitHub releases return a heterogeneous JSON array; callers parse via
@@ -74,8 +70,6 @@ public final class Github {
                         .sendAsync()
                         .thenApply(r -> r.body()));
     }
-
-    // ─── Project tasks ─────────────────────────────────────────────
 
     /**
      * Live on every call by contract: status-parameterized and freshness-sensitive.

@@ -53,11 +53,9 @@ class ActiveSelectionBarTest extends MindustryTestEnv {
 
         assertNotNull(bar.element());
 
-        // Setup units in selectedUnits
         UnitType typeA = new UnitType("unit-a");
         UnitType typeB = new UnitType("unit-b");
 
-        // Mock two unit-a and one unit-b
         UnitEntity u1 = new UnitEntity() {
             @Override
             public boolean isValid() {
@@ -89,7 +87,6 @@ class ActiveSelectionBarTest extends MindustryTestEnv {
         assertEquals(2, map.get(typeA, 0));
         assertEquals(1, map.get(typeB, 0));
 
-        // Deselect unit-a
         feature.deselectUnitType(typeA);
 
         assertEquals(1, mindustry.Vars.control.input.selectedUnits.size);
@@ -99,7 +96,6 @@ class ActiveSelectionBarTest extends MindustryTestEnv {
         assertEquals(0, mapAfter.get(typeA, 0));
         assertEquals(1, mapAfter.get(typeB, 0));
 
-        // Deselect all
         feature.deselectAll();
         assertEquals(0, mindustry.Vars.control.input.selectedUnits.size);
         assertEquals(0, feature.activeSelectionSignal().get().size);

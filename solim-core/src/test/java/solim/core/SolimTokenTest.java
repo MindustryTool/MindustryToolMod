@@ -78,7 +78,7 @@ class SolimTokenTest extends SolimEnv {
 
         SolimToken.setExpanding(el, true);
         assertTrue(SolimToken.isExpanding(el));
-        // Component reference must not be destroyed by expanding flag
+
         assertSame(comp, SolimToken.getComponent(el));
 
         SolimToken.setExpanding(el, false);

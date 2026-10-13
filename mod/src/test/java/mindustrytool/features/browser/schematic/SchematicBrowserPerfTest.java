@@ -101,8 +101,8 @@ class SchematicBrowserPerfTest extends MindustryTestEnv {
     @BeforeEach
     void setUp() {
         NetworkImage.clearCache();
-        NetworkImage.setImageLoader((url, radius, targetW, targetH, onSuccess, onError) ->
-                onError.get(new RuntimeException("fake-offline")));
+        NetworkImage.setImageLoader((url, radius, targetW, targetH, onSuccess, onError) -> onError
+                .get(new RuntimeException("fake-offline")));
         Perf.setEnabled(true);
         Perf.setThreshold(0f);
         Perf.reset();
@@ -241,7 +241,8 @@ class SchematicBrowserPerfTest extends MindustryTestEnv {
         pageOne.table().validate();
         long layoutMs = System.currentTimeMillis() - layoutT0;
         List<PerfSpan> pageOneSpans = Perf.snapshot(256);
-        System.out.printf("SchematicBrowserPerf [page-1 %d cards, fake images]: cards=%d cardMs=%.3f layoutMs=%d maxDepth=%d%n",
+        System.out.printf(
+                "SchematicBrowserPerf [page-1 %d cards, fake images]: cards=%d cardMs=%.3f layoutMs=%d maxDepth=%d%n",
                 PAGE_SIZE,
                 countCardSubtrees(pageOneSpans, "SchematicCard-"),
                 totalMs(pageOneSpans, "SchematicCard-"),
@@ -297,7 +298,8 @@ class SchematicBrowserPerfTest extends MindustryTestEnv {
         fullPage.table().validate();
         long layoutMs = System.currentTimeMillis() - layoutT0;
         List<PerfSpan> spans = Perf.snapshot(256);
-        System.out.printf("SchematicBrowserPerf [full-page 20 cards]: cards=%d cardMs=%.3f layoutMs=%d totalRecorded=%d%n",
+        System.out.printf(
+                "SchematicBrowserPerf [full-page 20 cards]: cards=%d cardMs=%.3f layoutMs=%d totalRecorded=%d%n",
                 countCardSubtrees(spans, "SchematicCard-"),
                 totalMs(spans, "SchematicCard-"),
                 layoutMs,
@@ -305,10 +307,7 @@ class SchematicBrowserPerfTest extends MindustryTestEnv {
         printBreakdown("full-page", spans, "SchematicCard-");
 
         assertEquals(20, fullPage.table().getChildren().size);
-        // Slow-span buffer is bounded (256 entries, newest-first); a 20-card
-        // page with threshold 0 saturates it, so only the most recent card
-        // subtrees are retained. Rendering is proven by the child count above;
-        // here just require that card spans were recorded.
+
         assertTrue(countCardSubtrees(spans, "SchematicCard-") >= 1);
         fullPage.dispose();
     }
@@ -343,15 +342,15 @@ class SchematicBrowserPerfTest extends MindustryTestEnv {
     void imageDecodeDoesNotSuppressStructuralSpans() {
         NetworkImage.setImageLoader((url, radius, targetW, targetH, onSuccess, onError) -> {
             Pixmap pixmap = new Pixmap(30, 30);
-                int opaqueWhite = Color.rgba8888(1f, 1f, 1f, 1f);
-                for (int y = 0; y < 30; y++) {
-                    for (int x = 0; x < 30; x++) {
-                        pixmap.set(x, y, opaqueWhite);
-                    }
+            int opaqueWhite = Color.rgba8888(1f, 1f, 1f, 1f);
+            for (int y = 0; y < 30; y++) {
+                for (int x = 0; x < 30; x++) {
+                    pixmap.set(x, y, opaqueWhite);
                 }
-                NetworkImage.applyRoundedMask(pixmap, 8);
-                pixmap.dispose();
-                onSuccess.get(new TextureRegion());
+            }
+            NetworkImage.applyRoundedMask(pixmap, 8);
+            pixmap.dispose();
+            onSuccess.get(new TextureRegion());
         });
 
         ReactiveGrid<SchematicData> withImages = grid(page("perf-img", PAGE_SIZE));

@@ -231,11 +231,6 @@ public final class ReactiveGrid<T> extends Component
     protected Element build() {
         table.top().left();
 
-        // Reconcile synchronously on every path, matching VirtualList. Branching on
-        // whether the
-        // table is already attached to a scene made the first render and later updates
-        // behave
-        // differently for no reason a caller could observe or rely on.
         Effect.of(() -> {
             Iterable<T> itemList = items.get();
             int cols = resolvedColumnCount.get();
@@ -254,8 +249,7 @@ public final class ReactiveGrid<T> extends Component
 
     private void updateItemsAndReflow(Iterable<T> itemList, int cols, Func2<T, GridItemContext, Component> factory) {
         if (isDisposed()) {
-            // Disposed between invalidation and execution: mount nothing and mutate
-            // nothing.
+
             return;
         }
         reconciler.reconcile(itemList, this::extractKey, item -> factory.get(item, context));

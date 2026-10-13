@@ -38,7 +38,7 @@ public class CameraZoomSettingsView extends Component {
 
     private Component zoomLimitsCard() {
         return SettingCard.section(Icon.zoom, Core.bundle.get("feature.camera-zoom.settings.limits"), () -> {
-            // Min Zoom Slider
+
             SettingSlider.of(
                     Core.bundle.get("feature.camera-zoom.settings.min-zoom"),
                     feature.minZoomConfig.signal(),
@@ -46,10 +46,8 @@ public class CameraZoomSettingsView extends Component {
                     CameraZoomFeature.MIN_SLIDER_MAX,
                     CameraZoomFeature.MIN_SLIDER_STEP,
                     feature.minZoomConfig.signal().map(v -> String.format(Locale.US, "%.1fx",
-                            v != null ? v : CameraZoomFeature.DEFAULT_MIN_ZOOM))
-            );
+                            v != null ? v : CameraZoomFeature.DEFAULT_MIN_ZOOM)));
 
-            // Max Zoom Slider
             SettingSlider.of(
                     Core.bundle.get("feature.camera-zoom.settings.max-zoom"),
                     feature.maxZoomConfig.signal(),
@@ -57,8 +55,7 @@ public class CameraZoomSettingsView extends Component {
                     CameraZoomFeature.MAX_SLIDER_MAX,
                     CameraZoomFeature.MAX_SLIDER_STEP,
                     feature.maxZoomConfig.signal().map(v -> String.format(Locale.US, "%.1fx",
-                            v != null ? v : CameraZoomFeature.DEFAULT_MAX_ZOOM))
-            );
+                            v != null ? v : CameraZoomFeature.DEFAULT_MAX_ZOOM)));
         });
     }
 

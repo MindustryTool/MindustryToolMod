@@ -98,7 +98,7 @@ public class TimeControlSettingsView extends Component {
     private Component appearanceCard() {
         return SettingCard.section(Icon.eye,
                 Core.bundle.get("team-resources.settings.section.appearance", "Appearance"), () -> {
-                    // Scale Slider
+
                     SettingSlider.of(
                             Core.bundle.get("feature.time-control.settings.scale"),
                             feature.scaleConfig.signal(),

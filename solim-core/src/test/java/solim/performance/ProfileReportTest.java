@@ -264,9 +264,6 @@ class ProfileReportTest extends SolimEnv {
                 "with debug services uninstalled there is nothing to record a session");
     }
 
-    // --- helpers
-    // -----------------------------------------------------------------------------------
-
     private static Element namedElement(String name) {
         Element element = new Element();
         element.name = name;
@@ -310,15 +307,6 @@ class ProfileReportTest extends SolimEnv {
         }
         return null;
     }
-
-    // --- test components
-    // ---------------------------------------------------------------------------
-    //
-    // Reactive nodes must be created inside build(), not a constructor: the ambient
-    // ownership
-    // context is only pushed while element() runs, so a node created in a
-    // constructor would be
-    // adopted by SessionRoot instead of the component under test.
 
     static class BuildSignalComponent extends Component {
         @Override

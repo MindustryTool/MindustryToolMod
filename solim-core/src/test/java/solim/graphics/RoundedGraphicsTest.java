@@ -38,29 +38,25 @@ class RoundedGraphicsTest extends SolimEnv {
         assertEquals(10f, RoundedGenerator.calculateL4Distance(10f, 0f), 0.001f);
         assertEquals(10f, RoundedGenerator.calculateL4Distance(0f, 10f), 0.001f);
 
-        // Symmetry
         float d1 = RoundedGenerator.calculateL4Distance(6f, 8f);
         float d2 = RoundedGenerator.calculateL4Distance(8f, 6f);
         assertEquals(d1, d2, 0.0001f);
 
-        // L4 distance should be strictly less than Euclidean sqrt(x^2 + y^2) for positive non-zero x, y
-        float euclidean = (float) Math.hypot(6.0, 8.0); // 10.0
+        float euclidean = (float) Math.hypot(6.0, 8.0);
         assertTrue(d1 < euclidean, "L4 superellipse distance should be flatter/closer than Euclidean distance");
     }
 
     @Test
     void computeAlphaProvidesSmoothBoundaryGradient() {
         int radius = 10;
-        // Deep inside corner
+
         assertEquals(1f, RoundedGenerator.computeAlpha(2f, 2f, radius), 0.001f);
-        // Fully outside corner
+
         assertEquals(0f, RoundedGenerator.computeAlpha(12f, 12f, radius), 0.001f);
 
-        // Exactly on the boundary (radius = 10), alpha should be near 0.5
         float boundaryAlpha = RoundedGenerator.computeAlpha(10f, 0f, radius);
         assertEquals(0.5f, boundaryAlpha, 0.05f);
 
-        // Sub-pixel gradient must be monotonically decreasing as distance increases
         float innerAlpha = RoundedGenerator.computeAlpha(9.8f, 0f, radius);
         float outerAlpha = RoundedGenerator.computeAlpha(10.2f, 0f, radius);
         assertTrue(innerAlpha > boundaryAlpha);
@@ -72,13 +68,10 @@ class RoundedGraphicsTest extends SolimEnv {
         int radius = 10;
         float stroke = 2f;
 
-        // Inside the hollow center (d < radius - stroke = 8)
         assertEquals(0f, RoundedGenerator.computeBorderAlpha(2f, 2f, radius, stroke), 0.001f);
 
-        // Center of the stroke (d ~ 9)
         assertEquals(1f, RoundedGenerator.computeBorderAlpha(9f, 0f, radius, stroke), 0.001f);
 
-        // Outside the outer edge (d > 10.5)
         assertEquals(0f, RoundedGenerator.computeBorderAlpha(12f, 0f, radius, stroke), 0.001f);
     }
 
@@ -125,7 +118,6 @@ class RoundedGraphicsTest extends SolimEnv {
         assertEquals(Color.darkGray, rd.getFillColor());
         assertEquals(Color.red, rd.getBorderColor());
 
-        // Update radius and border
         rd.radius(14);
         assertEquals(14, rd.getRadius());
 
@@ -146,14 +138,12 @@ class RoundedGraphicsTest extends SolimEnv {
         assertEquals(Color.red, rd.getFillColor());
         assertEquals(Color.white, rd.getBorderColor());
 
-        // Reactive update
         fillSignal.set(Color.green);
         borderSignal.set(Color.yellow);
         SignalDispatcher.flush();
         assertEquals(Color.green, rd.getFillColor());
         assertEquals(Color.yellow, rd.getBorderColor());
 
-        // Dispose stops updates
         rd.dispose();
         fillSignal.set(Color.black);
         borderSignal.set(Color.blue);
@@ -229,7 +219,8 @@ class RoundedGraphicsTest extends SolimEnv {
         assertTrue(colRounded.table().getBackground() instanceof RoundedDrawable);
         RoundedDrawable rdRound = (RoundedDrawable) colRounded.table().getBackground();
         assertEquals(6, rdRound.getRadius());
-        assertEquals(Color.clear, rdRound.getFillColor(), "Calling .rounded(radius) without color must default to transparent fillColor");
+        assertEquals(Color.clear, rdRound.getFillColor(),
+                "Calling .rounded(radius) without color must default to transparent fillColor");
     }
 
     @Test
@@ -259,8 +250,7 @@ class RoundedGraphicsTest extends SolimEnv {
     @Test
     void radiusClampedWhenOversized() {
         RoundedDrawable rd = new RoundedDrawable(40);
-        // radius=40 > min(100, 36)/2 = 18, so clamping should occur
-        // We verify the drawable is created without error; actual draw requires Graphics context
+
         assertNotNull(rd);
         assertEquals(40, rd.getRadius());
     }
@@ -268,7 +258,7 @@ class RoundedGraphicsTest extends SolimEnv {
     @Test
     void radiusNotClampedWhenSmallEnough() {
         RoundedDrawable rd = new RoundedDrawable(8);
-        // 8 <= min(100, 100)/2 = 50, so no clamping needed
+
         assertNotNull(rd);
         assertEquals(8, rd.getRadius(), "Radius should remain unchanged when small enough");
     }
@@ -278,7 +268,7 @@ class RoundedGraphicsTest extends SolimEnv {
         Column col = new Column();
         col.background(Styles.black6).border(1f, Color.gray);
         assertTrue(col.table().getBackground() instanceof RoundedDrawable,
-            "Background should be RoundedDrawable after border call");
+                "Background should be RoundedDrawable after border call");
         RoundedDrawable rd = (RoundedDrawable) col.table().getBackground();
         assertEquals(1f, rd.getStroke(), 0.001f, "Border stroke should be preserved");
         assertEquals(Color.gray, rd.getBorderColor(), "Border color should be preserved");
@@ -289,7 +279,7 @@ class RoundedGraphicsTest extends SolimEnv {
         Column col = new Column();
         col.border(1f, Color.gray).background(Styles.black6);
         assertTrue(col.table().getBackground() instanceof RoundedDrawable,
-            "Background should be RoundedDrawable after background call");
+                "Background should be RoundedDrawable after background call");
         RoundedDrawable rd = (RoundedDrawable) col.table().getBackground();
         assertEquals(1f, rd.getStroke(), 0.001f, "Border stroke should be preserved");
         assertEquals(Color.gray, rd.getBorderColor(), "Border color should be preserved");
@@ -300,7 +290,7 @@ class RoundedGraphicsTest extends SolimEnv {
         Column col = new Column();
         col.rounded(12, Color.darkGray).background(Styles.black6);
         assertTrue(col.table().getBackground() instanceof RoundedDrawable,
-            "Background should be RoundedDrawable after background call");
+                "Background should be RoundedDrawable after background call");
         RoundedDrawable rd = (RoundedDrawable) col.table().getBackground();
         assertEquals(12, rd.getRadius(), "Radius should be preserved");
         assertEquals(Color.darkGray, rd.getFillColor(), "Fill color should be preserved");
@@ -311,7 +301,7 @@ class RoundedGraphicsTest extends SolimEnv {
         Column col = new Column();
         col.background(Styles.black6).rounded(12, Color.darkGray);
         assertTrue(col.table().getBackground() instanceof RoundedDrawable,
-            "Background should be RoundedDrawable after rounded call");
+                "Background should be RoundedDrawable after rounded call");
         RoundedDrawable rd = (RoundedDrawable) col.table().getBackground();
         assertEquals(12, rd.getRadius(), "Radius should be preserved");
         assertEquals(Color.darkGray, rd.getFillColor(), "Fill color should be preserved");
@@ -319,7 +309,7 @@ class RoundedGraphicsTest extends SolimEnv {
 
     @Test
     void allThreeOrderIndependent() {
-        // Order 1: bg -> rounded -> border
+
         Column col1 = new Column();
         col1.background(Styles.black6).rounded(10, Color.darkGray).border(1.5f, Color.red);
         assertTrue(col1.table().getBackground() instanceof RoundedDrawable);
@@ -327,7 +317,6 @@ class RoundedGraphicsTest extends SolimEnv {
         assertEquals(10, rd1.getRadius());
         assertEquals(1.5f, rd1.getStroke(), 0.001f);
 
-        // Order 2: border -> bg -> rounded
         Column col2 = new Column();
         col2.border(1.5f, Color.red).background(Styles.black6).rounded(10, Color.darkGray);
         assertTrue(col2.table().getBackground() instanceof RoundedDrawable);
@@ -335,7 +324,6 @@ class RoundedGraphicsTest extends SolimEnv {
         assertEquals(10, rd2.getRadius());
         assertEquals(1.5f, rd2.getStroke(), 0.001f);
 
-        // Order 3: rounded -> border -> bg
         Column col3 = new Column();
         col3.rounded(10, Color.darkGray).border(1.5f, Color.red).background(Styles.black6);
         assertTrue(col3.table().getBackground() instanceof RoundedDrawable);

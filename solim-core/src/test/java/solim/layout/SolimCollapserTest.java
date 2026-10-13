@@ -90,7 +90,7 @@ class SolimCollapserTest extends SolimEnv {
 
         expanded.set(true);
         SignalDispatcher.flush();
-        // After disposal, the effect should not update the collapser
+
         assertTrue(collapser.isCollapsed());
     }
 }

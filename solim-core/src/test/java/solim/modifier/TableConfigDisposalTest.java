@@ -275,8 +275,6 @@ class TableConfigDisposalTest extends SolimEnv {
         assertMargins(built, 9f, "Host disposal must freeze build-scoped padding");
     }
 
-    // ---------- helpers ----------
-
     private static final class TableTarget extends Component implements TableConfig<TableTarget> {
 
         private final Table table;

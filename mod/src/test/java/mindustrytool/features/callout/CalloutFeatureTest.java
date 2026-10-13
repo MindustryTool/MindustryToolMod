@@ -52,17 +52,14 @@ class CalloutFeatureTest extends MindustryTestEnv {
     void testFormatMessage() {
         CalloutFeature feature = new CalloutFeature();
 
-        // Team chat formatting: prefixes with "/t " unless already prefixed
         assertEquals("/t Need Silicon", feature.formatMessage("Need Silicon", true));
         assertEquals("/t Need Silicon", feature.formatMessage("/t Need Silicon", true));
         assertEquals("/t Attack!", feature.formatMessage("  Attack!  ", true));
 
-        // Public / all chat formatting: no "/t " prefix
         assertEquals("Need Silicon", feature.formatMessage("Need Silicon", false));
         assertEquals("Attack!", feature.formatMessage("  Attack!  ", false));
         assertEquals("/t Defend core", feature.formatMessage("/t Defend core", false));
 
-        // Null and empty handling
         assertEquals("", feature.formatMessage(null, true));
         assertEquals("", feature.formatMessage(null, false));
         assertEquals("", feature.formatMessage("   ", true));
@@ -73,7 +70,6 @@ class CalloutFeatureTest extends MindustryTestEnv {
     void testSendCalloutSafelyHandlesNullAndEmpty() {
         CalloutFeature feature = new CalloutFeature();
 
-        // Should return early and not throw even without full UI/net runtime
         assertDoesNotThrow(() -> feature.sendCallout(null));
         assertDoesNotThrow(() -> feature.sendCallout(""));
         assertDoesNotThrow(() -> feature.sendCallout("   "));

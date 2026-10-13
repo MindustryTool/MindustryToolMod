@@ -24,9 +24,7 @@ public final class FeatureSettingsView extends Component {
 
     @Override
     protected Element build() {
-        // Derived values are declared here, not in a field initialiser: inside build() the
-        // component is the active ownership scope, so these live and die with the view instead
-        // of with whichever component happened to construct it.
+
         Computed<Float> contentWidth = dvw(90f).map(w -> w - unit(10));
         Computed<Integer> columnCount = contentWidth.map(w -> Math.max(1, (int) (w / 400f)));
 
@@ -64,8 +62,8 @@ public final class FeatureSettingsView extends Component {
 
         Computed<Boolean> hasFavorites = favoritedFeatures.map(seq -> seq != null && !seq.isEmpty());
         Computed<Boolean> hasStandardFeatures = standardFeatures.map(seq -> seq != null && !seq.isEmpty());
-        Computed<Boolean> hasFeatures = Signal.computed(() ->
-                Boolean.TRUE.equals(hasFavorites.get()) || Boolean.TRUE.equals(hasStandardFeatures.get()));
+        Computed<Boolean> hasFeatures = Signal.computed(
+                () -> Boolean.TRUE.equals(hasFavorites.get()) || Boolean.TRUE.equals(hasStandardFeatures.get()));
         Computed<Boolean> hasWebFeatures = filteredWebFeatures.map(seq -> seq != null && !seq.isEmpty());
 
         Computed<Boolean> isEmpty = Signal.computed(() -> {
@@ -78,7 +76,7 @@ public final class FeatureSettingsView extends Component {
             toolbar();
             scroll().grow().scrollX(false).children(() -> {
                 column().growX().gap(unit(3)).children(() -> {
-                    // Favorites Section
+
                     column().growX().gap(unit(2)).visible(hasFavorites).children(() -> {
                         row().growX().paddingTop(unit(1)).paddingBottom(unit(1)).children(() -> {
                             text(Core.bundle.get("feature.section.favorites", "Favorites"))
@@ -90,10 +88,9 @@ public final class FeatureSettingsView extends Component {
                                 .children(feature -> new FeatureCard(feature, reorderAllowed));
                     });
 
-                    divider().visible(Signal.computed(() ->
-                            Boolean.TRUE.equals(hasFavorites.get()) && Boolean.TRUE.equals(hasStandardFeatures.get())));
+                    divider().visible(Signal.computed(() -> Boolean.TRUE.equals(hasFavorites.get())
+                            && Boolean.TRUE.equals(hasStandardFeatures.get())));
 
-                    // Mod Features Section
                     column().growX().gap(unit(2)).visible(hasStandardFeatures).children(() -> {
                         row().growX().paddingTop(unit(1)).paddingBottom(unit(1)).children(() -> {
                             text(Core.bundle.get("feature.section.mod-features", "Mod Features"))
@@ -105,10 +102,9 @@ public final class FeatureSettingsView extends Component {
                                 .children(feature -> new FeatureCard(feature, reorderAllowed));
                     });
 
-                    divider().visible(Signal.computed(() ->
-                            Boolean.TRUE.equals(hasFeatures.get()) && Boolean.TRUE.equals(hasWebFeatures.get())));
+                    divider().visible(Signal.computed(
+                            () -> Boolean.TRUE.equals(hasFeatures.get()) && Boolean.TRUE.equals(hasWebFeatures.get())));
 
-                    // Web Tools Section
                     column().growX().gap(unit(2)).visible(hasWebFeatures).children(() -> {
                         row().growX().paddingTop(unit(3)).paddingBottom(unit(1)).children(() -> {
                             text(Core.bundle.get("web-feature.section.title", "Web Tools & Community"))
@@ -119,7 +115,6 @@ public final class FeatureSettingsView extends Component {
                                 .children(WebFeatureCard::new);
                     });
 
-                    // Empty state when no features or web features match search
                     row().growX().center().visible(isEmpty).children(() -> {
                         text(Core.bundle.get("feature.search.empty", "No features found"))
                                 .color(Color.gray)
@@ -150,8 +145,10 @@ public final class FeatureSettingsView extends Component {
                             text(Core.bundle.get("feature.button.re-enable"));
                         });
 
-                button(() -> Core.app.openURI(Config.PROJECT_SUGGESTION_URL)).style(WebStyles.secondary()).height(unit(11))
-                        .tooltip(Core.bundle.get("feature.button.create-suggestion.tooltip")).gap(unit(2)).children(() -> {
+                button(() -> Core.app.openURI(Config.PROJECT_SUGGESTION_URL)).style(WebStyles.secondary())
+                        .height(unit(11))
+                        .tooltip(Core.bundle.get("feature.button.create-suggestion.tooltip")).gap(unit(2))
+                        .children(() -> {
                             icon(Icon.link).size(unit(6));
                             text(Core.bundle.get("feature.button.create-suggestion"));
                         });
@@ -168,10 +165,12 @@ public final class FeatureSettingsView extends Component {
     }
 
     public static boolean matchesFilter(Feature feature, String query) {
-        return query == null || query.trim().isEmpty() || feature.getName().toLowerCase().contains(query.trim().toLowerCase());
+        return query == null || query.trim().isEmpty()
+                || feature.getName().toLowerCase().contains(query.trim().toLowerCase());
     }
 
     public static boolean matchesWebFilter(WebFeature webFeature, String query) {
-        return query == null || query.trim().isEmpty() || webFeature.getName().toLowerCase().contains(query.trim().toLowerCase());
+        return query == null || query.trim().isEmpty()
+                || webFeature.getName().toLowerCase().contains(query.trim().toLowerCase());
     }
 }

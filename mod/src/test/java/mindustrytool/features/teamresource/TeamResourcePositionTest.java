@@ -109,7 +109,8 @@ class TeamResourcePositionTest extends MindustryTestEnv {
         TextButtonStyle textBtnStyle = new TextButtonStyle();
         textBtnStyle.font = font;
         Core.scene.addStyle(TextButtonStyle.class, textBtnStyle);
-        Core.scene.addStyle(arc.scene.ui.ScrollPane.ScrollPaneStyle.class, new arc.scene.ui.ScrollPane.ScrollPaneStyle());
+        Core.scene.addStyle(arc.scene.ui.ScrollPane.ScrollPaneStyle.class,
+                new arc.scene.ui.ScrollPane.ScrollPaneStyle());
 
         Drawable emptyDrawable = new TextureRegionDrawable(new TextureRegion());
         Styles.outlineLabel = labelStyle;
@@ -122,8 +123,7 @@ class TeamResourcePositionTest extends MindustryTestEnv {
 
     @AfterEach
     void tearDown() {
-        // Drain pending reactive effects and undo Vars.ui allocation so it cannot
-        // leak into other test classes sharing this JVM.
+
         flushEffects();
         Vars.ui = null;
     }
@@ -147,8 +147,6 @@ class TeamResourcePositionTest extends MindustryTestEnv {
     void testDefaultPositionIsCentered() {
         TeamResourceFeature feature = new TeamResourceFeature();
 
-        // With screen width = 1000 and overlay-width = 0.28 (280px),
-        // centered X should be (1000 - 280) / 2 = 360px
         float expectedX = (1000f - 1000f * 0.28f) / 2f;
         assertEquals(expectedX, feature.x(), 1.0f, "Default position must be centered horizontally");
         assertEquals(400f, feature.y(), 1.0f, "Default Y should be screenHeight / 2");
@@ -199,7 +197,6 @@ class TeamResourcePositionTest extends MindustryTestEnv {
 
         float startX = root.x;
 
-        // Drag to the left by 150px
         InputEvent ev = new InputEvent();
         ev.stageX = 300f;
         ev.stageY = 300f;
@@ -213,7 +210,6 @@ class TeamResourcePositionTest extends MindustryTestEnv {
         float draggedX = feature.x();
         assertEquals(startX - 150f, draggedX, 1.0f);
 
-        // Now toggle off and on
         feature.onDisable();
         feature.onEnable();
 
@@ -230,7 +226,6 @@ class TeamResourcePositionTest extends MindustryTestEnv {
 
         float initialX = feature.x();
 
-        // Simulate teams existing
         Seq<Team> teams = new Seq<>();
         teams.add(Team.sharded);
         teams.add(Team.crux);
@@ -240,13 +235,11 @@ class TeamResourcePositionTest extends MindustryTestEnv {
         assertEquals(initialX, feature.x(), 1.0f, "Position must not change when teams are updated");
         assertEquals(initialX, root.x, 1.0f, "Root X must match feature X");
 
-        // Select team (previously reported as causing position change)
         state.setSelectedTeam(Team.crux);
         root.validate();
         assertEquals(initialX, feature.x(), 1.0f, "Position must not change when team is selected");
         assertEquals(initialX, root.x, 1.0f, "Root X must match feature X");
 
-        // Toggle feature off and on
         feature.onDisable();
         feature.onEnable();
         Element root2 = feature.getHudView().element();
@@ -268,7 +261,6 @@ class TeamResourcePositionTest extends MindustryTestEnv {
 
         float initialX = feature.x();
 
-        // Add 16 items
         Seq<Item> items = new Seq<>();
         try {
             Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
@@ -288,7 +280,6 @@ class TeamResourcePositionTest extends MindustryTestEnv {
         }
         state.usedItemsSignal.set(items);
 
-        // Add teams
         Seq<Team> teams = new Seq<>();
         teams.add(Team.sharded);
         teams.add(Team.crux);
@@ -299,7 +290,6 @@ class TeamResourcePositionTest extends MindustryTestEnv {
         assertEquals(initialX, feature.x(), 1.0f, "Feature X must remain stable with items");
         assertEquals(initialX, root.x, 1.0f, "Root X must remain stable with items");
 
-        // Toggle off and on
         feature.onDisable();
         feature.onEnable();
         Element root2 = feature.getHudView().element();
@@ -308,7 +298,6 @@ class TeamResourcePositionTest extends MindustryTestEnv {
         assertEquals(initialX, feature.x(), 1.0f, "Feature X must remain stable after toggle with items");
         assertEquals(initialX, root2.x, 1.0f, "Root2 X must remain stable after toggle with items");
 
-        // Select team
         state.setSelectedTeam(Team.crux);
         root2.validate();
 
@@ -329,11 +318,9 @@ class TeamResourcePositionTest extends MindustryTestEnv {
         assertEquals(100f, feature.x(), 1.0f);
         assertEquals(150f, feature.y(), 1.0f);
 
-        // Manually expand root width beyond screen boundary to simulate transient large layout
         root.setSize(1200f, 600f);
         root.validate();
 
-        // The signal must NOT be corrupted to sw - w (which would be 0 or clamped right-aligned)
         assertEquals(100f, feature.x(), 1.0f, "boundXSignal must not be overwritten during layout validation");
         assertEquals(150f, feature.y(), 1.0f, "boundYSignal must not be overwritten during layout validation");
     }
@@ -351,11 +338,9 @@ class TeamResourcePositionTest extends MindustryTestEnv {
 
         float initialX = feature.x();
 
-        // Enable power and stored power
         feature.showPowerConfig.set(true);
         feature.showStoredPowerConfig.set(true);
 
-        // Add a mock power graph with huge stored power
         PowerGraph graph = new PowerGraph();
         try {
             Field capField = PowerGraph.class.getDeclaredField("lastCapacity");

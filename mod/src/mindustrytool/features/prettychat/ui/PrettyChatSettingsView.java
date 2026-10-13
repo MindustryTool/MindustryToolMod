@@ -44,9 +44,7 @@ public class PrettyChatSettingsView extends Component {
 
     @Override
     protected Element build() {
-        // Declared here rather than in field initialisers: inside build() this
-        // component is the
-        // active ownership scope, so the derived values live and die with the view.
+
         Computed<String> resultComputed = new Computed<>(() -> {
             String input = previewSignal.get();
             List<String> enabled = feature.config().enabledIdsSignal.get();
@@ -93,7 +91,6 @@ public class PrettyChatSettingsView extends Component {
                     .wrap()
                     .growX();
 
-            // Preview Input Row
             row().growX().height(unit(10)).border(1.5f, WebStyles.Colors.BORDER)
                     .paddingX(unit(2)).rounded(unit(2)).children(() -> {
                         textField(previewSignal)
@@ -102,7 +99,6 @@ public class PrettyChatSettingsView extends Component {
                                 .style(WebStyles.clearInput());
                     });
 
-            // Simulated Chat Box
             column().growX().padding(unit(2)).rounded(6, WebStyles.Colors.SECONDARY).gap(unit(1)).left()
                     .children(() -> {
                         row().growX().center().children(() -> {
@@ -120,7 +116,6 @@ public class PrettyChatSettingsView extends Component {
                                 .left();
                     });
 
-            // Escape prefix hint
             text(escapeHint)
                     .color(WebStyles.Colors.GHOST_FG)
                     .left()
@@ -142,10 +137,8 @@ public class PrettyChatSettingsView extends Component {
                     .wrap()
                     .growX();
 
-            // Dynamic Active Pipeline List
             dynamic(feature.config().enabledIdsSignal, this::buildActivePipelineList).growX();
 
-            // Quick actions
             row().growX().gap(unit(2)).children(() -> {
                 button(clearText, () -> feature.config().setEnabledIds(new ArrayList<>()))
                         .style(WebStyles.outlineText())
@@ -232,7 +225,7 @@ public class PrettyChatSettingsView extends Component {
         String availableTitle = Core.bundle.get("feature.pretty-chat.settings.available-transformers");
 
         return SettingCard.section(Icon.settings, availableTitle, () -> {
-            // Category Filter Chips
+
             wrap().growX().gap(unit(1)).children(() -> {
                 for (String cat : CATEGORIES) {
                     String label = getCategoryName(cat);
@@ -265,7 +258,7 @@ public class PrettyChatSettingsView extends Component {
                 .background(WebStyles.Colors.SECONDARY)
                 .tooltip(t -> t.background(Styles.black6).margin(6f).add(p.description()).color(Color.lightGray))
                 .children(() -> {
-                    // Left Information Column: Name, Category tag, Description, Live preview
+
                     column().growX().gap(unit(1)).left().children(() -> {
                         wrap().growX().gap(unit(1.5f)).left().children(() -> {
                             text(enabledIndex.map(idx -> idx != null && idx >= 0 ? "#" + (idx + 1) : ""))
@@ -290,7 +283,6 @@ public class PrettyChatSettingsView extends Component {
                                 .growX()
                                 .left();
 
-                        // Live sample preview
                         Readable<String> previewTransformed = previewSignal.map(input -> {
                             String str = input != null ? input : "";
                             return p.transform(str);
@@ -302,7 +294,6 @@ public class PrettyChatSettingsView extends Component {
                                 .growX();
                     });
 
-                    // Right Action Controls
                     row().gap(unit(1)).right().center().children(() -> {
                         if (p.isEditable()) {
                             button(() -> {

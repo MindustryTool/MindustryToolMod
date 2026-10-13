@@ -45,7 +45,7 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
     @Override
     public T get() {
         if (disposed) {
-            // still return cached if available, but no tracking
+
             return cachedValue;
         }
         if (dirty || !hasValue) {
@@ -105,19 +105,12 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
         dirty = false;
         updateDependencies(newDeps);
         if (changed) {
-            // notify listeners
+
             List<Cons<T>> copy = new ArrayList<>(listeners);
             for (Cons<T> l : copy) {
                 l.get(cachedValue);
             }
-            // downstream already marked dirty via earlier invalidate, no need to
-            // re-propagate if value
-            // changed
-            // but if downstream was not previously dirty (e.g., no prior invalidate), we
-            // should propagate
-            // now
-            // However our invalidate propagation already ran before this recompute, so no
-            // action.
+
         }
     }
 
@@ -139,13 +132,13 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
      * {@code removeObserver}/{@code addObserver}.
      */
     private void updateDependencies(Set<ReactiveSource> newDeps) {
-        // remove old not in new
+
         for (ReactiveSource dep : dependencies) {
             if (!newDeps.contains(dep)) {
                 dep.removeObserver(this);
             }
         }
-        // add new not in old
+
         for (ReactiveSource dep : newDeps) {
             if (!dependencies.contains(dep)) {
                 dep.addObserver(this);
@@ -169,12 +162,12 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
         if (disposed || dirty)
             return;
         dirty = true;
-        // propagate to downstream
+
         Set<ReactiveObserver> copy = new LinkedHashSet<>(observers);
         for (ReactiveObserver o : copy) {
             o.invalidate();
         }
-        // eager recompute if has listeners
+
         if (!listeners.isEmpty() && !computing) {
             recompute();
         }
@@ -209,7 +202,7 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
         if (disposed)
             return;
         disposed = true;
-        // remove from dependencies
+
         for (ReactiveSource dep : new ArrayList<>(dependencies)) {
             dep.removeObserver(this);
         }
@@ -231,7 +224,6 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
         observers.remove(observer);
     }
 
-    // For tests
     int dependencyCount() {
         return dependencies.size();
     }
@@ -252,9 +244,6 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
     public boolean isDisposed() {
         return disposed;
     }
-
-    // --- debug introspection (solim-runtime profiling)
-    // --------------------------------------------
 
     @Override
     public String debugLabel() {

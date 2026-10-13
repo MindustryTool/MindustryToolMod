@@ -39,7 +39,7 @@ public class SmartDrillSettingsView extends Component {
 
     private Component settingsCard() {
         return SettingCard.section(Icon.settings, Core.bundle.get("feature.smart-drill.settings.title"), () -> {
-            // Auto-Disable After Placement row
+
             row().growX().gap(unit(2)).center().children(() -> {
                 column().growX().gap(unit(1.5f)).left().children(() -> {
                     text(Core.bundle.get("feature.smart-drill.settings.auto-disable"))
@@ -57,7 +57,6 @@ public class SmartDrillSettingsView extends Component {
 
             divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            // Max Ore Tiles slider with above-track label and clean readout
             SettingSlider.of(
                     Core.bundle.get("feature.smart-drill.settings.max-tiles"),
                     Core.bundle.get("feature.smart-drill.settings.max-tiles.desc"),

@@ -13,63 +13,61 @@ import arc.scene.ui.Label.LabelStyle;
 
 class ArcTestEnvBehaviorTest extends ArcTestEnv {
 
-	@Test
-	void arcStaticsWithinTestAreInitialized() {
-		assertNotNull(Core.app);
-		assertNotNull(Core.graphics);
-		assertNotNull(Core.gl);
-		assertNotNull(Core.gl20);
-	}
+    @Test
+    void arcStaticsWithinTestAreInitialized() {
+        assertNotNull(Core.app);
+        assertNotNull(Core.graphics);
+        assertNotNull(Core.gl);
+        assertNotNull(Core.gl20);
+    }
 
-	@Test
-	void sceneIsHeadlessNullByDefault() {
-		assertNull(Core.scene);
-	}
+    @Test
+    void sceneIsHeadlessNullByDefault() {
+        assertNull(Core.scene);
+    }
 
-	@Test
-	void newSceneIsStyledAndRestoredOnTeardown() {
-		Scene sentinel = newScene();
+    @Test
+    void newSceneIsStyledAndRestoredOnTeardown() {
+        Scene sentinel = newScene();
 
-		assertNotNull(Core.scene);
-		LabelStyle style = Core.scene.getStyle(LabelStyle.class);
-		assertNotNull(style.font);
+        assertNotNull(Core.scene);
+        LabelStyle style = Core.scene.getStyle(LabelStyle.class);
+        assertNotNull(style.font);
 
-		// Simulate end of test: manual teardown must restore pre-setup value
-		tearDownArcTestEnv();
+        tearDownArcTestEnv();
 
-		assertNull(Core.scene);
+        assertNull(Core.scene);
 
-		// A second newScene must be a different instance
-		Scene second = newScene();
-		assertNotEquals(sentinel, second);
-	}
+        Scene second = newScene();
+        assertNotEquals(sentinel, second);
+    }
 
-	@Test
-	void settingsAreFreshAndEmpty() {
-		assertNotNull(Core.settings);
-		assertNull(Core.settings.getString("arc.test.env.absent", null));
-	}
+    @Test
+    void settingsAreFreshAndEmpty() {
+        assertNotNull(Core.settings);
+        assertNull(Core.settings.getString("arc.test.env.absent", null));
+    }
 
-	@Test
-	void teardownRestoresPreTestSettings() {
-		// Manual cycle: the pre-test value for this cycle is null, so teardown must restore null.
-		Core.settings = null;
+    @Test
+    void teardownRestoresPreTestSettings() {
 
-		setUpArcTestEnv();
-		Core.settings = null;
+        Core.settings = null;
 
-		tearDownArcTestEnv();
+        setUpArcTestEnv();
+        Core.settings = null;
 
-		assertNull(Core.settings);
-	}
+        tearDownArcTestEnv();
 
-	@Test
-	void setupIsReRunnableAndCreatesFreshState() {
-		Settings first = Core.settings;
+        assertNull(Core.settings);
+    }
 
-		setUpArcTestEnv();
+    @Test
+    void setupIsReRunnableAndCreatesFreshState() {
+        Settings first = Core.settings;
 
-		assertNotNull(Core.settings);
-		assertNotEquals(first, Core.settings);
-	}
+        setUpArcTestEnv();
+
+        assertNotNull(Core.settings);
+        assertNotEquals(first, Core.settings);
+    }
 }

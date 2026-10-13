@@ -83,7 +83,7 @@ public class JoinRoomDialog extends SolimDialog {
                     .gap(unit(4))
                     .center()
                     .children(() -> {
-                        // Link input
+
                         column().growX().gap(unit(1.5f)).left().children(() -> {
                             text(Core.bundle.get("feature.player-connect.join-link", "Link:")).left();
                             row().growX().height(unit(11)).border(1.5f, Color.darkGray).paddingX(unit(2))
@@ -95,7 +95,6 @@ public class JoinRoomDialog extends SolimDialog {
                                     });
                         });
 
-                        // Password input
                         when(hasPassword)
                                 .growX()
                                 .thenDo(() -> {
@@ -111,11 +110,9 @@ public class JoinRoomDialog extends SolimDialog {
                                     });
                                 });
 
-                        // Validation text
                         text(statusMessage)
                                 .color(isValid.map(v -> v ? Color.green : Color.scarlet));
 
-                        // Join button
                         button(Core.bundle.get("join", "Join"), () -> join(linkSignal.peek(), passwordSignal.peek()))
                                 .style(WebStyles.primary())
                                 .height(unit(11))

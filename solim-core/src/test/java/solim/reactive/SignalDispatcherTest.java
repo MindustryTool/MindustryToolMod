@@ -15,284 +15,272 @@ import solim.test.SolimEnv;
 
 class SignalDispatcherTest extends SolimEnv {
 
-	@BeforeEach
-	void setUp() {
-		SignalDispatcher.resetForTests();
-	}
+    @BeforeEach
+    void setUp() {
+        SignalDispatcher.resetForTests();
+    }
 
-	@AfterEach
-	void tearDown() {
-		SignalDispatcher.resetForTests();
-	}
+    @AfterEach
+    void tearDown() {
+        SignalDispatcher.resetForTests();
+    }
 
-	@Test
-	void multipleChangesToSingleSignalExecutesEffectOnceOnFlush() {
-		// Test A: Multiple changes -> one execution
-		Signal<Integer> signal = Signal.of(0);
-		AtomicInteger runs = new AtomicInteger(0);
-		AtomicInteger lastValue = new AtomicInteger(-1);
+    @Test
+    void multipleChangesToSingleSignalExecutesEffectOnceOnFlush() {
 
-		Effect effect = Effect.of(() -> {
-			runs.incrementAndGet();
-			lastValue.set(signal.get());
-		});
+        Signal<Integer> signal = Signal.of(0);
+        AtomicInteger runs = new AtomicInteger(0);
+        AtomicInteger lastValue = new AtomicInteger(-1);
 
-		assertEquals(1, runs.get());
-		assertEquals(0, lastValue.get());
-		runs.set(0);
+        Effect effect = Effect.of(() -> {
+            runs.incrementAndGet();
+            lastValue.set(signal.get());
+        });
 
-		signal.set(1);
-		signal.set(2);
-		signal.set(3);
+        assertEquals(1, runs.get());
+        assertEquals(0, lastValue.get());
+        runs.set(0);
 
-		// Before flush: effect is queued and has not re-executed yet
-		assertEquals(0, runs.get());
-		assertEquals(1, SignalDispatcher.size());
+        signal.set(1);
+        signal.set(2);
+        signal.set(3);
 
-		SignalDispatcher.flush();
+        assertEquals(0, runs.get());
+        assertEquals(1, SignalDispatcher.size());
 
-		// After flush: executed exactly once with latest value
-		assertEquals(1, runs.get());
-		assertEquals(3, lastValue.get());
-		assertEquals(0, SignalDispatcher.size());
+        SignalDispatcher.flush();
 
-		effect.dispose();
-	}
+        assertEquals(1, runs.get());
+        assertEquals(3, lastValue.get());
+        assertEquals(0, SignalDispatcher.size());
 
-	@Test
-	void multipleDependenciesChangedInOneFrameExecutesEffectOnceOnFlush() {
-		// Test B: Multiple dependencies -> one execution
-		Signal<Integer> sigA = Signal.of(1);
-		Signal<Integer> sigB = Signal.of(2);
-		Signal<Integer> sigC = Signal.of(3);
-		AtomicInteger runs = new AtomicInteger(0);
+        effect.dispose();
+    }
 
-		Effect effect = Effect.of(() -> {
-			runs.incrementAndGet();
-			sigA.get();
-			sigB.get();
-			sigC.get();
-		});
+    @Test
+    void multipleDependenciesChangedInOneFrameExecutesEffectOnceOnFlush() {
 
-		assertEquals(1, runs.get());
-		runs.set(0);
+        Signal<Integer> sigA = Signal.of(1);
+        Signal<Integer> sigB = Signal.of(2);
+        Signal<Integer> sigC = Signal.of(3);
+        AtomicInteger runs = new AtomicInteger(0);
 
-		sigA.set(10);
-		sigB.set(20);
-		sigC.set(30);
+        Effect effect = Effect.of(() -> {
+            runs.incrementAndGet();
+            sigA.get();
+            sigB.get();
+            sigC.get();
+        });
 
-		assertEquals(0, runs.get());
-		assertEquals(1, SignalDispatcher.size());
+        assertEquals(1, runs.get());
+        runs.set(0);
 
-		SignalDispatcher.flush();
+        sigA.set(10);
+        sigB.set(20);
+        sigC.set(30);
 
-		assertEquals(1, runs.get());
-		assertEquals(0, SignalDispatcher.size());
+        assertEquals(0, runs.get());
+        assertEquals(1, SignalDispatcher.size());
 
-		effect.dispose();
-	}
+        SignalDispatcher.flush();
 
-	@Test
-	void signalChangesAcrossSeparateFramesExecutesEffectOncePerFrame() {
-		// Test C: Separate frames -> separate executions
-		Signal<Integer> signal = Signal.of(0);
-		AtomicInteger runs = new AtomicInteger(0);
+        assertEquals(1, runs.get());
+        assertEquals(0, SignalDispatcher.size());
 
-		Effect effect = Effect.of(() -> {
-			runs.incrementAndGet();
-			signal.get();
-		});
+        effect.dispose();
+    }
 
-		assertEquals(1, runs.get());
-		runs.set(0);
+    @Test
+    void signalChangesAcrossSeparateFramesExecutesEffectOncePerFrame() {
 
-		// Frame 1
-		signal.set(1);
-		assertEquals(0, runs.get());
-		SignalDispatcher.flush();
-		assertEquals(1, runs.get());
+        Signal<Integer> signal = Signal.of(0);
+        AtomicInteger runs = new AtomicInteger(0);
 
-		// Frame 2
-		signal.set(2);
-		assertEquals(1, runs.get());
-		SignalDispatcher.flush();
-		assertEquals(2, runs.get());
+        Effect effect = Effect.of(() -> {
+            runs.incrementAndGet();
+            signal.get();
+        });
 
-		effect.dispose();
-	}
+        assertEquals(1, runs.get());
+        runs.set(0);
 
-	@Test
-	void cascadingEffectDirtiedDuringFlushIsProcessedInSameFlush() {
-		// Test D: Effect scheduled during flush is not lost
-		Signal<Integer> sigA = Signal.of(0);
-		Signal<Integer> sigB = Signal.of(0);
-		AtomicInteger runsA = new AtomicInteger(0);
-		AtomicInteger runsB = new AtomicInteger(0);
+        signal.set(1);
+        assertEquals(0, runs.get());
+        SignalDispatcher.flush();
+        assertEquals(1, runs.get());
 
-		Effect effectA = Effect.of(() -> {
-			runsA.incrementAndGet();
-			int a = sigA.get();
-			if (a > 0) {
-				sigB.set(a * 10);
-			}
-		});
+        signal.set(2);
+        assertEquals(1, runs.get());
+        SignalDispatcher.flush();
+        assertEquals(2, runs.get());
 
-		Effect effectB = Effect.of(() -> {
-			runsB.incrementAndGet();
-			sigB.get();
-		});
+        effect.dispose();
+    }
 
-		assertEquals(1, runsA.get());
-		assertEquals(1, runsB.get());
-		runsA.set(0);
-		runsB.set(0);
+    @Test
+    void cascadingEffectDirtiedDuringFlushIsProcessedInSameFlush() {
 
-		sigA.set(5);
-		assertEquals(0, runsA.get());
-		assertEquals(0, runsB.get());
+        Signal<Integer> sigA = Signal.of(0);
+        Signal<Integer> sigB = Signal.of(0);
+        AtomicInteger runsA = new AtomicInteger(0);
+        AtomicInteger runsB = new AtomicInteger(0);
 
-		SignalDispatcher.flush();
+        Effect effectA = Effect.of(() -> {
+            runsA.incrementAndGet();
+            int a = sigA.get();
+            if (a > 0) {
+                sigB.set(a * 10);
+            }
+        });
 
-		assertEquals(1, runsA.get());
-		assertEquals(1, runsB.get());
-		assertEquals(50, sigB.get());
+        Effect effectB = Effect.of(() -> {
+            runsB.incrementAndGet();
+            sigB.get();
+        });
 
-		effectA.dispose();
-		effectB.dispose();
-	}
+        assertEquals(1, runsA.get());
+        assertEquals(1, runsB.get());
+        runsA.set(0);
+        runsB.set(0);
 
-	@Test
-	void disposedEffectDoesNotExecuteDuringFlush() {
-		// Test E: Disposed effect skipped
-		Signal<Integer> signal = Signal.of(0);
-		AtomicInteger runs = new AtomicInteger(0);
+        sigA.set(5);
+        assertEquals(0, runsA.get());
+        assertEquals(0, runsB.get());
 
-		Effect effect = Effect.of(() -> {
-			runs.incrementAndGet();
-			signal.get();
-		});
+        SignalDispatcher.flush();
 
-		assertEquals(1, runs.get());
-		runs.set(0);
+        assertEquals(1, runsA.get());
+        assertEquals(1, runsB.get());
+        assertEquals(50, sigB.get());
 
-		signal.set(100);
-		assertEquals(1, SignalDispatcher.size());
+        effectA.dispose();
+        effectB.dispose();
+    }
 
-		// Dispose while queued
-		effect.dispose();
+    @Test
+    void disposedEffectDoesNotExecuteDuringFlush() {
 
-		SignalDispatcher.flush();
+        Signal<Integer> signal = Signal.of(0);
+        AtomicInteger runs = new AtomicInteger(0);
 
-		assertEquals(0, runs.get(), "Disposed effect must not execute during flush");
-		assertEquals(0, SignalDispatcher.size());
-	}
+        Effect effect = Effect.of(() -> {
+            runs.incrementAndGet();
+            signal.get();
+        });
 
-	@Test
-	void frameLifecycleRegistrationIsIdempotent() {
-		// Test F: Registration idempotency
-		Signal<Integer> signal = Signal.of(0);
-		AtomicInteger runs = new AtomicInteger(0);
+        assertEquals(1, runs.get());
+        runs.set(0);
 
-		Effect effect = Effect.of(() -> {
-			runs.incrementAndGet();
-			signal.get();
-		});
+        signal.set(100);
+        assertEquals(1, SignalDispatcher.size());
 
-		runs.set(0);
+        effect.dispose();
 
-		// Register repeatedly
-		SignalDispatcher.register();
-		SignalDispatcher.register();
-		SignalDispatcher.ensureRegistered();
-		assertTrue(SignalDispatcher.isRegistered());
+        SignalDispatcher.flush();
 
-		signal.set(42);
-		assertEquals(0, runs.get());
+        assertEquals(0, runs.get(), "Disposed effect must not execute during flush");
+        assertEquals(0, SignalDispatcher.size());
+    }
 
-		// Firing Trigger.update triggers flush
-		Events.fire(Trigger.update);
-		assertEquals(1, runs.get());
+    @Test
+    void frameLifecycleRegistrationIsIdempotent() {
 
-		// Subsequent trigger should not fire extra times
-		signal.set(99);
-		Events.fire(Trigger.update);
-		assertEquals(2, runs.get());
+        Signal<Integer> signal = Signal.of(0);
+        AtomicInteger runs = new AtomicInteger(0);
 
-		effect.dispose();
-	}
+        Effect effect = Effect.of(() -> {
+            runs.incrementAndGet();
+            signal.get();
+        });
 
-	@Test
-	void computedValuesRemainStrictlyLazyAndAreNotScheduled() {
-		Signal<Integer> signal = Signal.of(10);
-		AtomicInteger computes = new AtomicInteger(0);
+        runs.set(0);
 
-		Computed<Integer> comp = signal.map(v -> {
-			computes.incrementAndGet();
-			return v * 2;
-		});
+        SignalDispatcher.register();
+        SignalDispatcher.register();
+        SignalDispatcher.ensureRegistered();
+        assertTrue(SignalDispatcher.isRegistered());
 
-		assertEquals(0, computes.get());
+        signal.set(42);
+        assertEquals(0, runs.get());
 
-		signal.set(20);
-		assertEquals(0, computes.get(), "Computed must not evaluate on signal change");
-		assertEquals(0, SignalDispatcher.size(), "Computed must not be queued in SignalDispatcher");
+        Events.fire(Trigger.update);
+        assertEquals(1, runs.get());
 
-		SignalDispatcher.flush();
-		assertEquals(0, computes.get(), "Flush must not evaluate unread computeds");
+        signal.set(99);
+        Events.fire(Trigger.update);
+        assertEquals(2, runs.get());
 
-		assertEquals(40, comp.get());
-		assertEquals(1, computes.get());
-	}
+        effect.dispose();
+    }
 
-	@Test
-	void largeBatchOfNonCyclicalEffectsExecutesCompletelyInSingleFlush() {
-		int effectCount = 200;
-		Signal<Integer> source = Signal.of(0);
-		AtomicInteger executedCount = new AtomicInteger(0);
-		List<Effect> effects = new ArrayList<>();
+    @Test
+    void computedValuesRemainStrictlyLazyAndAreNotScheduled() {
+        Signal<Integer> signal = Signal.of(10);
+        AtomicInteger computes = new AtomicInteger(0);
 
-		for (int i = 0; i < effectCount; i++) {
-			effects.add(Effect.of(() -> {
-				source.get();
-				executedCount.incrementAndGet();
-			}));
-		}
+        Computed<Integer> comp = signal.map(v -> {
+            computes.incrementAndGet();
+            return v * 2;
+        });
 
-		// Initial run on creation
-		assertEquals(effectCount, executedCount.get());
-		executedCount.set(0);
+        assertEquals(0, computes.get());
 
-		// Dirty all effects
-		source.set(1);
-		assertEquals(effectCount, SignalDispatcher.size());
-		assertEquals(0, executedCount.get());
+        signal.set(20);
+        assertEquals(0, computes.get(), "Computed must not evaluate on signal change");
+        assertEquals(0, SignalDispatcher.size(), "Computed must not be queued in SignalDispatcher");
 
-		// Flush should drain all 200 effects in a single pass without false infinite loop detection
-		SignalDispatcher.flush();
+        SignalDispatcher.flush();
+        assertEquals(0, computes.get(), "Flush must not evaluate unread computeds");
 
-		assertEquals(effectCount, executedCount.get());
-		assertEquals(0, SignalDispatcher.size());
+        assertEquals(40, comp.get());
+        assertEquals(1, computes.get());
+    }
 
-		for (Effect effect : effects) {
-			effect.dispose();
-		}
-	}
+    @Test
+    void largeBatchOfNonCyclicalEffectsExecutesCompletelyInSingleFlush() {
+        int effectCount = 200;
+        Signal<Integer> source = Signal.of(0);
+        AtomicInteger executedCount = new AtomicInteger(0);
+        List<Effect> effects = new ArrayList<>();
 
-	@Test
-	void cyclicEffectsTerminateSafelyWithoutHanging() {
-		Signal<Integer> loopSignal = Signal.of(0);
+        for (int i = 0; i < effectCount; i++) {
+            effects.add(Effect.of(() -> {
+                source.get();
+                executedCount.incrementAndGet();
+            }));
+        }
 
-		Effect effect = Effect.of(() -> {
-			int val = loopSignal.get();
-			if (val < 200) {
-				loopSignal.set(val + 1);
-			}
-		});
+        assertEquals(effectCount, executedCount.get());
+        executedCount.set(0);
 
-		// Flush should hit max iterations guard and break gracefully
-		assertDoesNotThrow(SignalDispatcher::flush);
-		assertEquals(0, SignalDispatcher.size());
+        source.set(1);
+        assertEquals(effectCount, SignalDispatcher.size());
+        assertEquals(0, executedCount.get());
 
-		effect.dispose();
-	}
+        SignalDispatcher.flush();
+
+        assertEquals(effectCount, executedCount.get());
+        assertEquals(0, SignalDispatcher.size());
+
+        for (Effect effect : effects) {
+            effect.dispose();
+        }
+    }
+
+    @Test
+    void cyclicEffectsTerminateSafelyWithoutHanging() {
+        Signal<Integer> loopSignal = Signal.of(0);
+
+        Effect effect = Effect.of(() -> {
+            int val = loopSignal.get();
+            if (val < 200) {
+                loopSignal.set(val + 1);
+            }
+        });
+
+        assertDoesNotThrow(SignalDispatcher::flush);
+        assertEquals(0, SignalDispatcher.size());
+
+        effect.dispose();
+    }
 }

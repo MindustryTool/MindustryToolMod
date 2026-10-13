@@ -84,7 +84,7 @@ public final class ObjectGraphScanner {
         ReactiveKind kind = kindOf(value);
         if (kind != null) {
             found.add(new ReactiveRef(value, kind, location, sourceElement, locationField(location)));
-            // still descend into reactive instances so nested sources are discovered
+
         }
 
         if (value instanceof Element) {

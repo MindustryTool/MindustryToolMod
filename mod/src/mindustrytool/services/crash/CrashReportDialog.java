@@ -47,8 +47,6 @@ public class CrashReportDialog extends SolimDialog {
             });
         });
 
-        // Send only on dialog hide if user still consents; captures sender/data via
-        // closure.
         hidden(() -> {
             if (!Core.settings.getBool(KEY_SEND, true))
                 return;

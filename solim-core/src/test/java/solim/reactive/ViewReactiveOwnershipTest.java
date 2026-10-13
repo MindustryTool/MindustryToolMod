@@ -54,7 +54,6 @@ class ViewReactiveOwnershipTest extends SolimCoreEnv {
         assertFalse(derived.isDisposed());
         assertEquals(1, built[0].source.observerCount());
 
-        // Closing the view alone must take its derived value with it.
         built[0].dispose();
         assertTrue(derived.isDisposed(), "A view's derived values die with the view");
         assertEquals(0, built[0].source.observerCount(), "A disposed Computed detaches from its sources");
@@ -71,7 +70,7 @@ class ViewReactiveOwnershipTest extends SolimCoreEnv {
             Component dialog = new Component() {
                 @Override
                 protected Element build() {
-                    // A derived value sourced from a signal that lives for the whole session.
+
                     Computed<String> derived = Signal.computed(() -> "gen" + sessionSignal.get());
                     derived.get();
                     return new Element();

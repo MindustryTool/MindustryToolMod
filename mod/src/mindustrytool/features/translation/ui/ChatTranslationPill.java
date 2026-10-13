@@ -21,7 +21,8 @@ import solim.reactive.Signal;
 
 /**
  * Compact in-chat HUD pill attached above Mindustry's chat field.
- * Allows quick 1-tap toggle of outgoing translation and target language switching in-game.
+ * Allows quick 1-tap toggle of outgoing translation and target language
+ * switching in-game.
  */
 public class ChatTranslationPill extends Component {
 
@@ -52,24 +53,23 @@ public class ChatTranslationPill extends Component {
             return clean.substring(0, Math.min(2, clean.length())).toUpperCase();
         });
 
-        Readable<Color> statusColor = outgoingEnabled.map(enabled ->
-                Boolean.TRUE.equals(enabled) ? Color.valueOf("#82c341") : Color.gray);
+        Readable<Color> statusColor = outgoingEnabled
+                .map(enabled -> Boolean.TRUE.equals(enabled) ? Color.valueOf("#82c341") : Color.gray);
 
-        Readable<Boolean> shouldShowPill = Signal.computed(() ->
-                feature.isEnabled()
-                        && Boolean.TRUE.equals(feature.showPillConfig.get())
-                        && Boolean.TRUE.equals(isChatShown.get()));
+        Readable<Boolean> shouldShowPill = Signal.computed(() -> feature.isEnabled()
+                && Boolean.TRUE.equals(feature.showPillConfig.get())
+                && Boolean.TRUE.equals(isChatShown.get()));
 
         hud = hud(() -> row().gap(unit(1)).padding(unit(1)).children(() -> {
             card().padding(unit(1), unit(2), unit(1), unit(2)).children(() -> row().gap(unit(1)).children(() -> {
-                // Toggle translation on/off button
-                button(() -> feature.outgoingEnabledConfig.set(!Boolean.TRUE.equals(feature.outgoingEnabledConfig.get())))
+
+                button(() -> feature.outgoingEnabledConfig
+                        .set(!Boolean.TRUE.equals(feature.outgoingEnabledConfig.get())))
                         .style(WebStyles.ghost())
                         .size(unit(9), unit(8))
                         .tooltip(Core.bundle.get("feature.translation.outgoing.enable"))
                         .children(() -> icon(FileIcon.of("translate.png")).size(unit(5)).color(statusColor));
 
-                // Language selection chip button
                 button(targetLangCode, feature::showLanguageDialog)
                         .style(WebStyles.secondaryText())
                         .height(unit(8))

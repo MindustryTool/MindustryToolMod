@@ -23,7 +23,6 @@ import solim.test.SolimEnv;
 
 class CardTest extends SolimEnv {
 
-
     @Test
     void createsWithDefaultNames() {
         Card c = new Card();
@@ -444,7 +443,6 @@ class CardTest extends SolimEnv {
         assertEquals(120f, CellAccess.minWidth(cell), 0.01f);
         assertEquals(60f, CellAccess.maxHeight(cell), 0.01f);
 
-        // Changing maxHeight must not disturb the minWidth binding's own effect.
         maxHeightSig.set(90f);
         SignalDispatcher.flush();
 
@@ -598,9 +596,7 @@ class CardTest extends SolimEnv {
 
         Cell<?> cell = parent.table().getCell(card.table());
         assertNotNull(cell);
-        // Arc Cell.height() pins min==max with Scl scaling, so the parent cell
-        // holds scaled pixels. In-game inspect showing Scl.scl(70) (e.g. 49 at
-        // 0.7 UI scale) instead of raw 70 means propagation worked, not broke.
+
         assertEquals(Scl.scl(70f), CellAccess.minHeight(cell), 0.01f);
         assertEquals(Scl.scl(70f), CellAccess.maxHeight(cell), 0.01f);
         card.dispose();

@@ -74,26 +74,20 @@ class ReactiveGridTest extends SolimEnv {
         grid.children((item, ctx) -> new ItemComp(item));
         grid.element();
 
-        // Set table width and trigger layout
         grid.table().setWidth(400f);
         grid.table().layout();
         SignalDispatcher.flush();
 
-        // Expected width: (400 - (4 - 1) * 10) / 4 = 370 / 4 = 92.5
         assertEquals(92.5f, grid.context().itemWidth().get(), 0.1f);
 
-        // Change column count to 2
         cols.set(2);
         SignalDispatcher.flush();
 
-        // Expected width: (400 - (2 - 1) * 10) / 2 = 390 / 2 = 195
         assertEquals(195f, grid.context().itemWidth().get(), 0.1f);
 
-        // Change gap to 20
         grid.gap(20f);
         SignalDispatcher.flush();
 
-        // Expected width: (400 - (2 - 1) * 20) / 2 = 380 / 2 = 190
         assertEquals(190f, grid.context().itemWidth().get(), 0.1f);
     }
 
@@ -150,12 +144,9 @@ class ReactiveGridTest extends SolimEnv {
         SignalDispatcher.flush();
 
         float calculatedWidth = grid.context().itemWidth().get();
-        // Formula: (tw - (cols - 1) * gap) / cols = (300 - 2 * 10) / 3 = 280 / 3 =
-        // 93.33
+
         assertEquals(93.33f, calculatedWidth, 0.1f);
 
-        // Direct children with growX() in a grid with no table padding match calculated
-        // itemWidth
         for (Element child : childElementsGrowX) {
             assertEquals(calculatedWidth, child.getWidth(), 1.0f,
                     "Direct child width in cell must match calculated itemWidth");
@@ -201,7 +192,7 @@ class ReactiveGridTest extends SolimEnv {
             return col;
         });
         grid.element();
-        grid.table().margin(20f); // Table has 20px outer margin (padLeft=20, padRight=20)
+        grid.table().margin(20f);
         grid.table().setSize(300f, 300f);
         grid.table().layout();
         SignalDispatcher.flush();
@@ -209,8 +200,6 @@ class ReactiveGridTest extends SolimEnv {
         float calculatedWidth = grid.context().itemWidth().get();
         float actualChildWidth = childElements.get(0).getWidth();
 
-        // Actual available width = 300 - 40 = 260 -> (260 - 2 * 10) / 3 = 240 / 3 =
-        // 80.0
         assertEquals(80.0f, calculatedWidth, 0.5f,
                 "Calculated itemWidth must deduct table margins");
         assertEquals(actualChildWidth, calculatedWidth, 1.0f,
@@ -285,7 +274,6 @@ class ReactiveGridTest extends SolimEnv {
         grid.element();
         assertTrue(countFilled(grid.table()) > 0, "Grid must mount before disposal to make this meaningful");
 
-        // Disposed after invalidation, before the flush that would reconcile it.
         items.set(new ArrayList<>(Arrays.asList("a", "b", "c")));
         grid.dispose();
         SignalDispatcher.flush();
@@ -393,7 +381,6 @@ class ReactiveGridTest extends SolimEnv {
         });
         grid.element();
 
-        // Transition to populated
         items.set(Arrays.asList("First", "Second"));
         SignalDispatcher.flush();
 

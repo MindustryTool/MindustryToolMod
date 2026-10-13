@@ -41,7 +41,6 @@ public final class UpdateService {
         int[] currentVersion = VersionUtils.parseVersion(currentVersionString);
         String currentVerStr = VersionUtils.format(currentVersion);
 
-        // fire-and-forget ping
         try {
             MindustryTool.ping("mod-v8").exceptionally(e -> null);
         } catch (Exception e) {
@@ -152,7 +151,8 @@ public final class UpdateService {
                             }
 
                             Log.info(Core.bundle.format("update.status.require-update", safeCurrentStr, latestTag));
-                            ChangelogFormatter.PartitionedReleases partitioned = ChangelogFormatter.partition(body, latestTag, true);
+                            ChangelogFormatter.PartitionedReleases partitioned = ChangelogFormatter.partition(body,
+                                    latestTag, true);
                             try {
                                 Core.app.post(() -> new UpdateDialog(safeCurrentStr, latestTag, partitioned, null,
                                         latestTag, finalDone).show());
@@ -193,7 +193,8 @@ public final class UpdateService {
             }
             try {
                 boolean includePrereleases = Boolean.TRUE.equals(ModSettings.betaParticipate.get());
-                ChangelogFormatter.PartitionedReleases partitioned = ChangelogFormatter.partition(body, latestVer, includePrereleases);
+                ChangelogFormatter.PartitionedReleases partitioned = ChangelogFormatter.partition(body, latestVer,
+                        includePrereleases);
                 Core.app.post(() -> new UpdateDialog(currentVer, latestVer, partitioned, null, null, done).show());
             } catch (Exception e) {
                 Log.err("Failed to parse releases", e);

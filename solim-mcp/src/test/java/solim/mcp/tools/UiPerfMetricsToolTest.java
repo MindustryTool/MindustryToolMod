@@ -38,7 +38,6 @@ class UiPerfMetricsToolTest {
         args.put("frames", 10);
         args.put("enabled", true);
 
-        // Simulate frame execution
         UiProfiler.setEnabled(true);
         child.act(0.016f);
         child.validate();

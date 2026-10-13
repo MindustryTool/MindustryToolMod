@@ -156,8 +156,6 @@ class ModInputTest extends MindustryTestEnv {
         assertDoesNotThrow(input::cancelPanDelay);
     }
 
-
-
     @Test
     void modDesktopInput_updateMovement_ignoresKeyboardWhenFreeCamActive() {
         FreeCameraFeature feature = new FreeCameraFeature();
@@ -239,7 +237,6 @@ class ModInputTest extends MindustryTestEnv {
 
         input.updateMovement(unit);
 
-        // Movement is zero during Free Camera and autoplay is active, so movePref should not be called
         assertFalse(movePrefCalled[0]);
     }
 
@@ -332,7 +329,6 @@ class ModInputTest extends MindustryTestEnv {
 
         input.updateMovement(unit);
 
-        // Stock vanilla behavior: unit moves toward the detached camera
         assertTrue(input.movement.x > 0f);
         assertTrue(input.movement.y > 0f);
         assertEquals(2f, input.movement.len(), 0.01f);
@@ -376,7 +372,6 @@ class ModInputTest extends MindustryTestEnv {
 
         input.updateMovement(unit);
 
-        // Mod flag takes precedence: unit stays frozen while mod free camera is on
         assertEquals(0f, input.movement.x, 0.001f);
         assertEquals(0f, input.movement.y, 0.001f);
     }
@@ -420,7 +415,6 @@ class ModInputTest extends MindustryTestEnv {
 
         input.updateMovement(unit);
 
-        // targetPos should stay at player position, not chase camera (500, 500)
         assertEquals(100f, input.targetPos.x, 0.001f);
         assertEquals(100f, input.targetPos.y, 0.001f);
         assertEquals(0f, input.movement.x, 0.001f);
@@ -466,7 +460,6 @@ class ModInputTest extends MindustryTestEnv {
 
         input.updateMovement(unit);
 
-        // Vanilla behavior: targetPos moves towards camera position
         assertEquals(500f, input.targetPos.x, 0.001f);
         assertEquals(500f, input.targetPos.y, 0.001f);
         assertTrue(input.movement.x > 0f);
@@ -521,7 +514,6 @@ class ModInputTest extends MindustryTestEnv {
 
         input.updateMovement(unit);
 
-        // Autoplay is active and joystick is not held, so ModMobileInput must yield and not call movePref
         assertFalse(movePrefCalled[0]);
     }
 
@@ -575,7 +567,6 @@ class ModInputTest extends MindustryTestEnv {
 
         input.updateMovement(unit);
 
-        // Active joystick dragging overrides autoplay movement
         assertTrue(capturedMovePref.x > 0f);
     }
 
@@ -602,7 +593,8 @@ class ModInputTest extends MindustryTestEnv {
         ModMobileInput input = new ModMobileInput();
 
         UnitType type = new UnitType("test-mobile-cam-no-joystick");
-        UnitEntity playerUnit = new UnitEntity() {};
+        UnitEntity playerUnit = new UnitEntity() {
+        };
         playerUnit.type = type;
         playerUnit.x = 100f;
         playerUnit.y = 100f;
@@ -632,7 +624,6 @@ class ModInputTest extends MindustryTestEnv {
 
         input.updateCamera();
 
-        // Strict vanilla behavior: camera must remain at (500, 500) and NOT lerp to player
         assertEquals(500f, Core.camera.position.x, 0.001f);
         assertEquals(500f, Core.camera.position.y, 0.001f);
     }
@@ -651,7 +642,8 @@ class ModInputTest extends MindustryTestEnv {
         ModMobileInput input = new ModMobileInput();
 
         UnitType type = new UnitType("test-mobile-cam-joystick");
-        UnitEntity playerUnit = new UnitEntity() {};
+        UnitEntity playerUnit = new UnitEntity() {
+        };
         playerUnit.type = type;
         playerUnit.x = 100f;
         playerUnit.y = 100f;
@@ -681,7 +673,6 @@ class ModInputTest extends MindustryTestEnv {
 
         input.updateCamera();
 
-        // Camera lerps towards player unit (100, 100)
         assertTrue(Core.camera.position.x < 500f);
         assertTrue(Core.camera.position.y < 500f);
     }
@@ -700,7 +691,8 @@ class ModInputTest extends MindustryTestEnv {
         ModMobileInput input = new ModMobileInput();
 
         UnitType type = new UnitType("test-mobile-cam-linemode");
-        UnitEntity playerUnit = new UnitEntity() {};
+        UnitEntity playerUnit = new UnitEntity() {
+        };
         playerUnit.type = type;
         playerUnit.x = 100f;
         playerUnit.y = 100f;
@@ -728,20 +720,17 @@ class ModInputTest extends MindustryTestEnv {
         input.pinchPanning = false;
         input.lastPanTime = 0;
 
-        // When in lineMode, camera must NOT lerp
         input.lineMode = true;
         input.updateCamera();
         assertEquals(500f, Core.camera.position.x, 0.001f);
         assertEquals(500f, Core.camera.position.y, 0.001f);
 
-        // When selecting, camera must NOT lerp
         input.lineMode = false;
         input.selecting = true;
         input.updateCamera();
         assertEquals(500f, Core.camera.position.x, 0.001f);
         assertEquals(500f, Core.camera.position.y, 0.001f);
 
-        // When mode != PlaceMode.none, camera must NOT lerp
         input.selecting = false;
         input.mode = PlaceMode.placing;
         input.updateCamera();
@@ -763,7 +752,8 @@ class ModInputTest extends MindustryTestEnv {
         ModMobileInput input = new ModMobileInput();
 
         UnitType type = new UnitType("test-mobile-cam-freecam");
-        UnitEntity playerUnit = new UnitEntity() {};
+        UnitEntity playerUnit = new UnitEntity() {
+        };
         playerUnit.type = type;
         playerUnit.x = 100f;
         playerUnit.y = 100f;

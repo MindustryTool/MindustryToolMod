@@ -168,7 +168,6 @@ class PendingCellConfigDependencyScopeTest extends SolimCoreEnv {
 
         PendingCellConfig config = new PendingCellConfig();
         config.padTop = padTop;
-        // padLeft stays null.
 
         config.applyPadLeft(attach());
 

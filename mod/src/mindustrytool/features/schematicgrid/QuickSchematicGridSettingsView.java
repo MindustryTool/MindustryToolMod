@@ -43,7 +43,7 @@ public class QuickSchematicGridSettingsView extends Component {
     private Component layoutCard() {
         return SettingCard.section(Icon.settings, Core.bundle.get("team-resources.settings.section.layout", "Layout"),
                 () -> {
-                    // Display Mode (HUD vs Popup)
+
                     row().growX().gap(unit(2)).center().children(() -> {
                         text(Core.bundle.get("feature.quick-schematic-grid.settings.display-mode"))
                                 .color(Color.white)
@@ -71,7 +71,6 @@ public class QuickSchematicGridSettingsView extends Component {
 
                     divider().color(WebStyles.Colors.SECTION_BORDER);
 
-                    // Rows Slider
                     SettingSlider.of(
                             Core.bundle.get("feature.quick-schematic-grid.settings.rows"),
                             feature.rowsConfig.signal(),
@@ -80,7 +79,6 @@ public class QuickSchematicGridSettingsView extends Component {
                             1,
                             feature.rowsConfig.signal().map(String::valueOf));
 
-                    // Columns Slider
                     SettingSlider.of(
                             Core.bundle.get("feature.quick-schematic-grid.settings.cols"),
                             feature.colsConfig.signal(),
@@ -89,7 +87,6 @@ public class QuickSchematicGridSettingsView extends Component {
                             1,
                             feature.colsConfig.signal().map(String::valueOf));
 
-                    // Button Size Slider
                     SettingSlider.of(
                             Core.bundle.get("feature.quick-schematic-grid.settings.button-size"),
                             feature.buttonSizeConfig.signal(),
@@ -99,7 +96,6 @@ public class QuickSchematicGridSettingsView extends Component {
                             feature.buttonSizeConfig.signal()
                                     .map(v -> String.valueOf(Math.round(v != null ? v : 48f))));
 
-                    // Button Gap Slider
                     SettingSlider.of(
                             Core.bundle.get("feature.quick-schematic-grid.settings.button-gap"),
                             feature.buttonGapConfig.signal(),
@@ -108,7 +104,6 @@ public class QuickSchematicGridSettingsView extends Component {
                             1f,
                             feature.buttonGapConfig.signal().map(v -> String.valueOf(Math.round(v != null ? v : 4f))));
 
-                    // Button Opacity Slider
                     SettingSlider.of(
                             Core.bundle.get("feature.quick-schematic-grid.settings.button-opacity"),
                             feature.buttonOpacityConfig.signal(),
@@ -120,7 +115,6 @@ public class QuickSchematicGridSettingsView extends Component {
 
                     divider().color(WebStyles.Colors.SECTION_BORDER);
 
-                    // Page Position (Left, Right, Top, Bottom)
                     column().growX().gap(unit(1.5f)).left().children(() -> {
                         text(Core.bundle.get("feature.quick-schematic-grid.settings.page-position"))
                                 .color(Color.white)
@@ -222,7 +216,6 @@ public class QuickSchematicGridSettingsView extends Component {
 
             divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            // Active Page Icon Configuration Row
             row().growX().gap(unit(2)).center().children(() -> {
                 text(Core.bundle.get("feature.quick-schematic-grid.settings.page-icon"))
                         .left()

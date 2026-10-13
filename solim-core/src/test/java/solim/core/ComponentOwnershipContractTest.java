@@ -195,7 +195,7 @@ class ComponentOwnershipContractTest extends SolimCoreEnv {
 
     @Test
     void pushingAnOwnerAllocatesNoCallback() {
-        // The stack holds the owner itself, so registering one wraps nothing.
+
         Lazy owner = new Lazy();
         OwnershipContext.push(owner);
         assertSame(owner, OwnershipContext.current(), "The pushed owner is stored as-is");
@@ -215,7 +215,7 @@ class ComponentOwnershipContractTest extends SolimCoreEnv {
         Component root = new Lazy() {
             @Override
             protected Element build() {
-                // Adopted first, then given its own child while it is the ambient owner.
+
                 own(child[0] = new Lazy());
                 child[0].element();
                 child[0].own(grandchild[0] = new Lazy());
@@ -237,9 +237,7 @@ class ComponentOwnershipContractTest extends SolimCoreEnv {
 
     @Test
     void aReactiveGridFactoryReturningAButtonKeepsItsIconBinding() {
-        // The reported regression: a keyed factory returning a Button used to orphan
-        // the icon's
-        // reactive binding, so the icon kept the drawable from its first and only run.
+
         Drawable first = new TextureRegionDrawable(new TextureRegion());
         Drawable second = new TextureRegionDrawable(new TextureRegion());
         Signal<Drawable> icon = Signal.of(first);

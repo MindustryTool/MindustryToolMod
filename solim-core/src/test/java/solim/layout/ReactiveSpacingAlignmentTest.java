@@ -87,12 +87,10 @@ public class ReactiveSpacingAlignmentTest extends SolimEnv {
         Cell<?> c2 = col.table().getCell(b2.element());
         Cell<?> c3 = col.table().getCell(b3.element());
 
-        // Initial: first element has 0 gap, subsequent have 10
         assertEquals(0f, CellAccess.padTop(c1), 0.01f);
         assertEquals(10f, CellAccess.padTop(c2), 0.01f);
         assertEquals(10f, CellAccess.padTop(c3), 0.01f);
 
-        // Update gap reactively
         gapSignal.set(25f);
         SignalDispatcher.flush();
 
@@ -117,10 +115,8 @@ public class ReactiveSpacingAlignmentTest extends SolimEnv {
         Cell<?> c2 = col.table().getCell(b2.element());
         assertEquals(12f, CellAccess.padTop(c2), 0.01f);
 
-        // Dispose column
         col.dispose();
 
-        // Updating signal should no longer update padding
         gapSignal.set(30f);
         SignalDispatcher.flush();
 

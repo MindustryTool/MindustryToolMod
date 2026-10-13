@@ -54,7 +54,7 @@ public final class ReflectAccess {
                 found = f;
                 break;
             } catch (NoSuchFieldException ignored) {
-                // continue up the hierarchy
+
             }
         }
         if (found != null) {
@@ -82,7 +82,7 @@ public final class ReflectAccess {
                 found = m;
                 break;
             } catch (NoSuchMethodException ignored) {
-                // continue up the hierarchy
+
             }
         }
         if (found != null) {

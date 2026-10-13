@@ -42,7 +42,6 @@ class TranslationFeatureTest extends MindustryTestEnv {
         feature.getProviders().add(mock);
         feature.providerConfig.set("mock-provider");
 
-        // Network-only by contract: every invocation hits the provider, nothing retained
         CompletableFuture<String> f1 = feature.translate("Hello", "Vietnamese");
         CompletableFuture<String> f2 = feature.translate("Hello", "Vietnamese");
 
@@ -125,7 +124,6 @@ class TranslationFeatureTest extends MindustryTestEnv {
 
         assertEquals("Rate limit 429", feature.lastError.get());
     }
-
 
     static class MockTranslationProvider implements TranslationProvider {
         private final String id;

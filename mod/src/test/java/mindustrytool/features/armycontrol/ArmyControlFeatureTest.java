@@ -37,7 +37,6 @@ class ArmyControlFeatureTest extends MindustryTestEnv {
         assertEquals(2, group.size());
         assertFalse(group.isEmpty());
 
-        // When no units exist in Groups.unit, pruning dead units clears them
         int remaining = group.pruneDeadUnits();
         assertEquals(0, remaining);
         assertTrue(group.isEmpty());

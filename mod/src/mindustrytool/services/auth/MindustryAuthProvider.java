@@ -85,8 +85,6 @@ public class MindustryAuthProvider implements AuthProvider {
         return api;
     }
 
-    // ─── Token storage ──────────────────────────────
-
     @Override
     public String getAccessToken() {
         return Core.settings.getString(KEY_ACCESS_TOKEN, null);
@@ -216,8 +214,6 @@ public class MindustryAuthProvider implements AuthProvider {
         return Core.settings.has(KEY_ACCESS_TOKEN) && Core.settings.has(KEY_REFRESH_TOKEN);
     }
 
-    // ─── Session ──────────────────────────────
-
     public Readable<UserSession> session() {
         return session;
     }
@@ -263,8 +259,6 @@ public class MindustryAuthProvider implements AuthProvider {
             return fetched;
         });
     }
-
-    // ─── Login ──────────────────────────────
 
     public synchronized CompletableFuture<Void> login() {
         if (loginFuture != null && !loginFuture.isDone()) {
@@ -428,8 +422,6 @@ public class MindustryAuthProvider implements AuthProvider {
         return false;
     }
 
-    // ─── Logout ──────────────────────────────
-
     public void logout() {
         String accessToken = Core.settings.getString(KEY_ACCESS_TOKEN, "");
         String refreshToken = Core.settings.getString(KEY_REFRESH_TOKEN, "");
@@ -456,8 +448,6 @@ public class MindustryAuthProvider implements AuthProvider {
 
         Log.info("Logged out");
     }
-
-    // ─── Init ──────────────────────────────
 
     public void init() {
         fetchSession();

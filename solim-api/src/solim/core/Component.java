@@ -353,7 +353,7 @@ public abstract class Component implements DisposableOwner {
             return;
         }
         disposed = true;
-        // The hook runs first so it still sees a live tree, as subclasses expect.
+
         onDispose();
         detachFromParent();
         Throwable firstFailure = null;

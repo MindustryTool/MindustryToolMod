@@ -140,18 +140,17 @@ public class MiningTask implements AutoplayTask {
     }
 
     public static boolean isValidOreTile(@Nullable Tile tile, Item item) {
-        return tile != null && (
-                (tile.drop() == item && (tile.block() == Blocks.air || tile.block() == null))
+        return tile != null && ((tile.drop() == item && (tile.block() == Blocks.air || tile.block() == null))
                 || tile.wallDrop() == item
-                || (tile.block() != null && tile.block().itemDrop == item)
-        );
+                || (tile.block() != null && tile.block().itemDrop == item));
     }
 
     private static @Nullable Tile findNearbyUncoveredOre(Tile center, Item item, int radius) {
         for (int r = 1; r <= radius; r++) {
             for (int dx = -r; dx <= r; dx++) {
                 for (int dy = -r; dy <= r; dy++) {
-                    if (Math.abs(dx) != r && Math.abs(dy) != r) continue;
+                    if (Math.abs(dx) != r && Math.abs(dy) != r)
+                        continue;
                     Tile neighbor = Vars.world.tile(center.x + dx, center.y + dy);
                     if (isValidOreTile(neighbor, item)) {
                         return neighbor;
@@ -186,29 +185,24 @@ public class MiningTask implements AutoplayTask {
         Tile bestTile = null;
         boolean allFull = false;
 
-        // If unit is carrying items, enforce inventory continuity:
-        // A Mindustry unit can only carry one item type. It must finish mining the carried item
-        // or deposit it at the core before mining any other resource.
         if (unit.stack.amount > 0 && unit.stack.item != null) {
             Item held = unit.stack.item;
 
-            // Inventory transfers are coordinated exclusively by MinerAI to prevent packet spam.
             boolean canContinueMining = isSelected(held)
                     && unit.canMine(held)
                     && core.acceptStack(held, 1, unit) > 0;
 
             Tile heldOre = canContinueMining
                     ? ((ai.targetItem == held && ai.ore != null && isValidOreTile(ai.ore, held))
-                        ? ai.ore
-                        : findOreTile(unit, core, held))
+                            ? ai.ore
+                            : findOreTile(unit, core, held))
                     : null;
 
             if (canContinueMining && heldOre != null) {
                 bestItem = held;
                 bestTile = heldOre;
             } else {
-                // Cannot continue mining held item (core full, unmineable, or no ore).
-                // Must deposit immediately to empty inventory.
+
                 ai.mining = false;
                 unit.mineTile = null;
                 ai.targetItem = held;
@@ -252,9 +246,6 @@ public class MiningTask implements AutoplayTask {
                 }
             }
 
-            // If the current target item is still valid, only switch away if another
-            // selected candidate has fewer items in the core by at least the hysteresis threshold.
-            // This avoids 1-item ping-pong near the core and batches trips far from the core.
             if (currentTargetValid) {
                 int currentTargetAmount = core.items.get(ai.targetItem);
                 int threshold = Math.max(unit.type.itemCapacity * 2, 60);
@@ -321,7 +312,8 @@ public class MiningTask implements AutoplayTask {
             return Core.bundle.get("feature.autoplay.settings.mining.unit-cannot-mine");
         }
         if (unit.type.mineTier < item.hardness) {
-            return Core.bundle.format("feature.autoplay.settings.mining.tier-too-low", item.hardness, unit.type.mineTier);
+            return Core.bundle.format("feature.autoplay.settings.mining.tier-too-low", item.hardness,
+                    unit.type.mineTier);
         }
         boolean hasFloor = Vars.indexer.hasOre(item);
         boolean hasWall = Vars.indexer.hasWallOre(item);
@@ -473,7 +465,8 @@ public class MiningTask implements AutoplayTask {
                     }
 
                     if (ore != null) {
-                        boolean canMineOre = targetItem != null && (unit.stack.amount == 0 || unit.stack.item == targetItem);
+                        boolean canMineOre = targetItem != null
+                                && (unit.stack.amount == 0 || unit.stack.item == targetItem);
                         moveTo(ore, unit.type.mineRange / 2f, 20f);
                         if (canMineOre && unit.within(ore, unit.type.mineRange) && unit.validMine(ore)) {
                             unit.mineTile = ore;

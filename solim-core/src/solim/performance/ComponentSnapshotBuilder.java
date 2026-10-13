@@ -114,11 +114,6 @@ public final class ComponentSnapshotBuilder {
         NodeReactive result = new NodeReactive();
         DebugReactiveContext debug = debugContext();
 
-        // Ordered, identity-deduplicated attribution: nodes created directly in this
-        // component's
-        // build scope first, then everything transitively reachable through the
-        // reactive nodes the
-        // component owns. Ordering keeps report output stable between runs.
         List<Object> attributed = new ArrayList<>();
         Set<Object> seen = DebugReactiveContext.newIdentitySet();
         if (debug != null) {

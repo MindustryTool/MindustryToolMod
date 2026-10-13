@@ -43,7 +43,7 @@ public class ToggleRenderingSettingsView extends Component {
 
     private Component layersCard() {
         return SettingCard.section(Icon.eye, Core.bundle.get("feature.toggle-rendering.settings.layers"), () -> {
-            // Draw Allied Units row
+
             row().growX().gap(unit(2)).center().children(() -> {
                 column().growX().gap(unit(1.5f)).left().children(() -> {
                     text(Core.bundle.get("feature.toggle-rendering.settings.draw-units-allies"))
@@ -61,7 +61,6 @@ public class ToggleRenderingSettingsView extends Component {
 
             divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            // Draw Enemy Units row
             row().growX().gap(unit(2)).center().children(() -> {
                 column().growX().gap(unit(1.5f)).left().children(() -> {
                     text(Core.bundle.get("feature.toggle-rendering.settings.draw-units-enemies"))
@@ -79,7 +78,6 @@ public class ToggleRenderingSettingsView extends Component {
 
             divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            // Draw Blocks & Buildings row
             row().growX().gap(unit(2)).center().children(() -> {
                 column().growX().gap(unit(1.5f)).left().children(() -> {
                     text(Core.bundle.get("feature.toggle-rendering.settings.draw-blocks"))

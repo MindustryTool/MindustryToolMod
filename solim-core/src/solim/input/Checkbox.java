@@ -44,7 +44,7 @@ public final class Checkbox extends Component implements ElementConfig<Checkbox>
                 checkBox::setChecked,
                 onChange -> {
                     checkBox.changed(onChange::run);
-                    // Arc CheckBox.changed() does not return a cleanup handle; cannot unregister
+
                     return DisposableAction.empty();
                 }));
     }

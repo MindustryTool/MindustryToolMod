@@ -311,8 +311,6 @@ public final class PendingCellConfig {
         }
     }
 
-    // ---------- private helpers ----------
-
     /**
      * Applies one size constraint read from {@code source}, then invalidates the
      * parent

@@ -18,7 +18,8 @@ import mindustrytool.features.joystick.JoystickFeature;
 /**
  * Unified desktop input handler for MindustryTool.
  * Pans the camera via WASD when FreeCameraFeature is active,
- * blends virtual joystick input with keyboard axis when JoystickFeature is active,
+ * blends virtual joystick input with keyboard axis when JoystickFeature is
+ * active,
  * yields unit control to AutoplayFeature when autonomous gameplay is enabled,
  * and falls back to vanilla DesktopInput behavior when features are inactive.
  */
@@ -66,8 +67,7 @@ public class ModDesktopInput extends DesktopInput {
         Vec2 joystick = (jf != null && jf.isEnabled()) ? jf.moveVector : Vec2.ZERO;
 
         if (vanillaDetached) {
-            // Stock vanilla detach-camera behavior (DesktopInput.updateMovement):
-            // the camera leads and the unit follows it.
+
             movement.set(Core.camera.position).sub(Vars.player).limit(speed);
             if (Vars.player.within(Core.camera.position, 15f)) {
                 movement.setZero();
@@ -83,7 +83,8 @@ public class ModDesktopInput extends DesktopInput {
         } else if (!freeCam && Core.input.keyDown(Binding.mouseMove)) {
             movement.set(xa, ya).nor().scl(speed);
             float mousePull = 1f / 25f * speed;
-            movement.add((Core.input.mouseWorldX() - Vars.player.x) * mousePull, (Core.input.mouseWorldY() - Vars.player.y) * mousePull)
+            movement.add((Core.input.mouseWorldX() - Vars.player.x) * mousePull,
+                    (Core.input.mouseWorldY() - Vars.player.y) * mousePull)
                     .limit(speed);
         } else {
             movement.set(xa, ya).nor().scl(speed);
@@ -91,7 +92,8 @@ public class ModDesktopInput extends DesktopInput {
 
         if (!autoplaying) {
             float mouseAngle = Angles.mouseAngle(unit.x, unit.y);
-            boolean aimCursor = omni && Vars.player.shooting && unit.type.hasWeapons() && unit.type.faceTarget && !boosted;
+            boolean aimCursor = omni && Vars.player.shooting && unit.type.hasWeapons() && unit.type.faceTarget
+                    && !boosted;
 
             if (aimCursor) {
                 unit.lookAt(mouseAngle);

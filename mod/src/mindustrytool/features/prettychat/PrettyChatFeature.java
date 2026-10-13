@@ -137,7 +137,6 @@ public class PrettyChatFeature extends Feature {
                 return;
             }
 
-            // Escape prefix: //message sends message directly without transformation
             if (text.startsWith("//")) {
                 String unescaped = text.substring(2);
                 lastTransformed = unescaped;
@@ -147,10 +146,6 @@ public class PrettyChatFeature extends Feature {
                 return;
             }
 
-            // If TranslationFeature will handle outgoing translation, let it translate the
-            // clean text.
-            // PrettyChat styling will be applied by TranslationFeature when delivering the
-            // message.
             TranslationFeature translation = FeatureManager.getFeature(TranslationFeature.class);
             if (translation != null && translation.isEnabled() && translation.shouldTranslateOutgoing(text)) {
                 return;
@@ -189,7 +184,6 @@ public class PrettyChatFeature extends Feature {
             int subIndex = spaceIndex == -1 ? message.length() : spaceIndex;
             cmd = message.substring(0, subIndex);
 
-            // Only /t (team chat) and /a (admin chat) allow text decoration
             if (!cmd.equals("/t") && !cmd.equals("/a")) {
                 return message;
             }
@@ -230,11 +224,11 @@ public class PrettyChatFeature extends Feature {
         String cut = text.substring(0, maxLength);
         int lastOpenBracket = cut.lastIndexOf('[');
         int lastCloseBracket = cut.lastIndexOf(']');
-        // If an open bracket has no matching close bracket in the cut string, strip it
+
         if (lastOpenBracket > lastCloseBracket) {
             cut = cut.substring(0, lastOpenBracket);
         }
-        // If the original text had color tags, ensure color tags close cleanly
+
         if (cut.contains("[") && !cut.endsWith("[]")) {
             if (cut.length() + 2 > maxLength && maxLength >= 2) {
                 cut = cut.substring(0, maxLength - 2);

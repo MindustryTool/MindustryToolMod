@@ -13,7 +13,8 @@ import mindustrytool.components.WebStyles;
 import solim.core.Component;
 
 /**
- * Modern declarative Solim settings view for Chat overlay layout and appearance.
+ * Modern declarative Solim settings view for Chat overlay layout and
+ * appearance.
  */
 public class ChatSettingsView extends Component {
 
@@ -42,37 +43,36 @@ public class ChatSettingsView extends Component {
     }
 
     private Component layoutCard() {
-        return SettingCard.section(Icon.layers, Core.bundle.get("feature.chat.settings.overlay-layout", "Overlay Layout"), () -> {
-            // Opacity Slider
-            SettingSlider.of(
-                    Core.bundle.get("feature.chat.settings.opacity", "Opacity"),
-                    feature.opacityConfig.signal(),
-                    0.2f,
-                    1.0f,
-                    0.05f,
-                    feature.opacityConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100))
-            );
+        return SettingCard.section(Icon.layers,
+                Core.bundle.get("feature.chat.settings.overlay-layout", "Overlay Layout"), () -> {
 
-            // Width Ratio Slider
-            SettingSlider.of(
-                    Core.bundle.get("feature.chat.settings.width", "Width"),
-                    feature.widthRatioConfig.signal(),
-                    0.4f,
-                    1.0f,
-                    0.05f,
-                    feature.widthRatioConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 0.6f) * 100))
-            );
+                    SettingSlider.of(
+                            Core.bundle.get("feature.chat.settings.opacity", "Opacity"),
+                            feature.opacityConfig.signal(),
+                            0.2f,
+                            1.0f,
+                            0.05f,
+                            feature.opacityConfig.signal()
+                                    .map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100)));
 
-            // Height Ratio Slider
-            SettingSlider.of(
-                    Core.bundle.get("feature.chat.settings.height", "Height"),
-                    feature.heightRatioConfig.signal(),
-                    0.4f,
-                    1.0f,
-                    0.05f,
-                    feature.heightRatioConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 0.6f) * 100))
-            );
-        });
+                    SettingSlider.of(
+                            Core.bundle.get("feature.chat.settings.width", "Width"),
+                            feature.widthRatioConfig.signal(),
+                            0.4f,
+                            1.0f,
+                            0.05f,
+                            feature.widthRatioConfig.signal()
+                                    .map(v -> String.format("%.0f%%", (v != null ? v : 0.6f) * 100)));
+
+                    SettingSlider.of(
+                            Core.bundle.get("feature.chat.settings.height", "Height"),
+                            feature.heightRatioConfig.signal(),
+                            0.4f,
+                            1.0f,
+                            0.05f,
+                            feature.heightRatioConfig.signal()
+                                    .map(v -> String.format("%.0f%%", (v != null ? v : 0.6f) * 100)));
+                });
     }
 
     private Component actionsCard() {

@@ -81,7 +81,6 @@ class QueryTest extends SolimEnv {
         assertEquals("Page 1", query.data().get());
         assertEquals(1, callCount.get());
 
-        // Mutating page should invalidate the query's effect
         page.set(2);
         SignalDispatcher.flush();
 
@@ -105,7 +104,6 @@ class QueryTest extends SolimEnv {
         cache.getOrCreateEntry(key).clear();
         query.refetch();
 
-        // Previous data is retained!
         assertEquals("v1", query.data().get(), "Data should be retained during refetch");
         assertFalse(query.loading().get(), "loading() should remain false during refetch");
         assertTrue(query.fetching().get(), "fetching() should be true during refetch");
@@ -126,13 +124,11 @@ class QueryTest extends SolimEnv {
             return count.incrementAndGet() == 1 ? slow : fast;
         });
 
-        // Trigger second fetch while first is in-flight
         cache.getOrCreateEntry(key).clear();
         query.refetch();
 
         assertEquals("fast", query.data().get());
 
-        // Now slow completes - it must be discarded!
         slow.complete("slow");
         assertEquals("fast", query.data().get(), "Slow stale response should not overwrite fast response");
     }
@@ -151,14 +147,12 @@ class QueryTest extends SolimEnv {
         assertEquals(0, fetchCount.get(), "Disabled query must not fetch");
         assertNull(query.data().get());
 
-        // Enable
         enabled.set(true);
         SignalDispatcher.flush();
 
         assertEquals(1, fetchCount.get(), "Enabling query should trigger fetch");
         assertEquals("data", query.data().get());
 
-        // Disable again: data is retained
         enabled.set(false);
         SignalDispatcher.flush();
         assertEquals("data", query.data().get(), "Data should be retained when disabled");
@@ -177,7 +171,6 @@ class QueryTest extends SolimEnv {
         assertTrue(query.isDisposed());
         assertEquals(0, cache.observerCount(key));
 
-        // In-flight completing after disposal must be ignored
         inFlight.complete("ignored");
         assertNull(query.data().get());
     }
@@ -254,7 +247,6 @@ class QueryTest extends SolimEnv {
         futures.get(0).complete("page0");
         assertEquals("page0", query.data().get());
 
-        // Rapid navigation: request page 1 then page 2 while both are in flight
         page.set(1);
         SignalDispatcher.flush();
         page.set(2);
@@ -264,7 +256,6 @@ class QueryTest extends SolimEnv {
         futures.get(2).complete("page2");
         assertEquals("page2", query.data().get(), "Final navigation target must win");
 
-        // Late page-1 response must not overwrite page 2
         futures.get(1).complete("page1");
         assertEquals("page2", query.data().get(), "Stale response for a different parameter state must be discarded");
         assertEquals(3, callCount.get(), "Each distinct parameter state must invoke the fetcher once");
@@ -285,7 +276,6 @@ class QueryTest extends SolimEnv {
                 })
                 .build();
 
-        // Page 0 request in flight, navigate away and back
         page.set(1);
         SignalDispatcher.flush();
         page.set(0);
@@ -296,16 +286,13 @@ class QueryTest extends SolimEnv {
         futures.get(0).complete("page0");
         assertEquals("page0", query.data().get());
 
-        // The abandoned page-1 response must be discarded
         futures.get(1).complete("page1");
         assertEquals("page0", query.data().get(), "Late response for superseded parameters must not win");
     }
 
     @Test
     void dynamicKeyReactivitySurvivesInFlightJoin() {
-        // Regression: joining an in-flight request used to skip reading the
-        // parameter signals, severing effect tracking so later changes stopped
-        // triggering fetches.
+
         Signal<Integer> page = Signal.of(0);
         AtomicInteger callCount = new AtomicInteger(0);
         Map<Integer, CompletableFuture<String>> futures = new HashMap<>();
@@ -322,7 +309,7 @@ class QueryTest extends SolimEnv {
         page.set(1);
         SignalDispatcher.flush();
         page.set(0);
-        SignalDispatcher.flush(); // joins in-flight page-0 request
+        SignalDispatcher.flush();
 
         page.set(2);
         SignalDispatcher.flush();
@@ -344,17 +331,14 @@ class QueryTest extends SolimEnv {
         assertFalse(query.isStale());
         assertFalse(query.isError());
 
-        // Fresh query should not refetch on ensureFresh
         query.ensureFresh();
         assertEquals(1, fetchCount.get());
 
-        // When cache entry is invalidated or becomes stale
         cache.getOrCreateEntry(key).clear();
         assertTrue(query.isStale());
         query.ensureFresh();
         assertEquals(2, fetchCount.get());
 
-        // When query is in error state
         AtomicInteger errFetchCount = new AtomicInteger(0);
         AtomicReference<CompletableFuture<String>> futureRef = new AtomicReference<>(new CompletableFuture<>());
         Query<String> retryQuery = Query.<String>builder()
@@ -390,8 +374,7 @@ class QueryTest extends SolimEnv {
 
     @Test
     void builderAllOptionsEffectiveBeforeFirstFetch() {
-        // Retry exhausted immediately (no retries) and no stale-time grace:
-        // options must be in effect for the very first fetch, not applied late.
+
         QueryKey key = QueryKey.of("builder-options");
         cache.getOrCreateEntry(key).clear();
 

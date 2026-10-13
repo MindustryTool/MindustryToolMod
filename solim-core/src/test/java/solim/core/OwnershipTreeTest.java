@@ -158,13 +158,12 @@ class OwnershipTreeTest extends SolimCoreEnv {
 
                     @Override
                     protected void onDispose() {
-                        // Observable proof the child went first.
+
                         log.add("child-disposed");
                     }
                 };
                 child.element();
 
-                // A reactive leaf that reads something tied to the child.
                 Computed<Boolean> derived = Signal.computed(() -> {
                     log.add("recompute:" + childAlive.get());
                     return childAlive.get();
@@ -230,7 +229,6 @@ class OwnershipTreeTest extends SolimCoreEnv {
         assertEquals(1, Collections.frequency(log, "dynamic-child"),
                 "The fragment is disposed exactly once");
 
-        // Disposing again must be a no-op, not a double dispose of the fragment.
         dynamic.dispose();
         assertEquals(1, Collections.frequency(log, "dynamic-child"));
     }

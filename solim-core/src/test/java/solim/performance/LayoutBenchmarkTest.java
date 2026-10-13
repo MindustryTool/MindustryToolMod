@@ -13,7 +13,6 @@ import solim.test.SolimEnv;
 
 public class LayoutBenchmarkTest extends SolimEnv {
 
-
     private Table buildList(int count) {
         Column col = new Column();
         col.children(() -> {
@@ -31,13 +30,12 @@ public class LayoutBenchmarkTest extends SolimEnv {
 
     @Test
     void benchmark100ItemsLayoutUnder5ms() {
-        // Warmup JIT
+
         for (int w = 0; w < 10; w++) {
             Table t = buildList(100);
             t.validate();
         }
 
-        // Measure
         long totalNanos = 0;
         int iterations = 20;
         for (int i = 0; i < iterations; i++) {
@@ -54,7 +52,7 @@ public class LayoutBenchmarkTest extends SolimEnv {
 
     @Test
     void benchmarkScale500And1000Items() {
-        // Warmup
+
         Table t500Warm = buildList(500);
         t500Warm.validate();
 

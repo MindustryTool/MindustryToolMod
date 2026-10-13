@@ -17,111 +17,110 @@ import solim.runtime.AttachmentStack;
 import solim.test.SolimEnv;
 
 /**
- * The eager-component contract: an element that already exists, a deferred attachment to the open
+ * The eager-component contract: an element that already exists, a deferred
+ * attachment to the open
  * parent, and disposal of whatever the component handed itself.
  */
 class EagerComponentTest extends SolimEnv {
 
-	@AfterEach
-	void tearDown() {
-		AttachmentStack.clear();
-		OwnershipContext.clear();
-	}
+    @AfterEach
+    void tearDown() {
+        AttachmentStack.clear();
+        OwnershipContext.clear();
+    }
 
-	@Test
-	void bindsSolimTokenAutomatically() {
-		Element el = new Element();
-		SolimImage leaf = new SolimImage();
-		assertNotNull(SolimToken.get(leaf.element()));
-		assertSame(leaf, SolimToken.getComponent(leaf.element()));
-		assertSame(leaf.cellConfig(), SolimToken.get(leaf.element()).cellConfig);
-		assertNotNull(el);
-	}
+    @Test
+    void bindsSolimTokenAutomatically() {
+        Element el = new Element();
+        SolimImage leaf = new SolimImage();
+        assertNotNull(SolimToken.get(leaf.element()));
+        assertSame(leaf, SolimToken.getComponent(leaf.element()));
+        assertSame(leaf.cellConfig(), SolimToken.get(leaf.element()).cellConfig);
+        assertNotNull(el);
+    }
 
-	@Test
-	void autoRegistersPendingAttachmentWithAttachmentStack() {
-		Table root = new Table();
-		AttachmentStack.push(root);
+    @Test
+    void autoRegistersPendingAttachmentWithAttachmentStack() {
+        Table root = new Table();
+        AttachmentStack.push(root);
 
-		SolimImage leaf = new SolimImage();
-		assertEquals(0, root.getChildren().size, "Should not attach immediately before pop");
+        SolimImage leaf = new SolimImage();
+        assertEquals(0, root.getChildren().size, "Should not attach immediately before pop");
 
-		AttachmentStack.pop();
-		assertEquals(1, root.getChildren().size, "Should attach upon parent pop");
-		assertSame(leaf.element(), root.getChildren().first());
-	}
+        AttachmentStack.pop();
+        assertEquals(1, root.getChildren().size, "Should attach upon parent pop");
+        assertSame(leaf.element(), root.getChildren().first());
+    }
 
-	@Test
-	void appliesCellConstraintsDirectlyOnAttachmentStackAttach() {
-		Table root = new Table();
-		AttachmentStack.push(root);
+    @Test
+    void appliesCellConstraintsDirectlyOnAttachmentStackAttach() {
+        Table root = new Table();
+        AttachmentStack.push(root);
 
-		SolimImage leaf = new SolimImage();
-		leaf.minWidth(80f).growX();
+        SolimImage leaf = new SolimImage();
+        leaf.minWidth(80f).growX();
 
-		AttachmentStack.pop();
+        AttachmentStack.pop();
 
-		Cell<?> cell = root.getCell(leaf.element());
-		assertNotNull(cell);
-		assertEquals(80f, CellAccess.minWidth(cell), 0.01f);
-		assertEquals(1, CellAccess.expandX(cell));
-		assertEquals(1f, CellAccess.fillX(cell), 0.01f);
-	}
+        Cell<?> cell = root.getCell(leaf.element());
+        assertNotNull(cell);
+        assertEquals(80f, CellAccess.minWidth(cell), 0.01f);
+        assertEquals(1, CellAccess.expandX(cell));
+        assertEquals(1f, CellAccess.fillX(cell), 0.01f);
+    }
 
-	@Test
-	void registersChildWithActiveOwnershipContext() {
-		CollectingOwner registered = new CollectingOwner();
-		OwnershipContext.push(registered);
+    @Test
+    void registersChildWithActiveOwnershipContext() {
+        CollectingOwner registered = new CollectingOwner();
+        OwnershipContext.push(registered);
 
-		SolimImage leaf = new SolimImage();
-		OwnershipContext.pop();
+        SolimImage leaf = new SolimImage();
+        OwnershipContext.pop();
 
-		assertTrue(registered.collected().contains(leaf),
-				"An eager component must register with the active OwnershipContext");
-	}
+        assertTrue(registered.collected().contains(leaf),
+                "An eager component must register with the active OwnershipContext");
+    }
 
-	@Test
-	void managesDisposablesInLifoOrder() {
-		SolimImage leaf = new SolimImage();
-		List<Integer> order = new ArrayList<>();
+    @Test
+    void managesDisposablesInLifoOrder() {
+        SolimImage leaf = new SolimImage();
+        List<Integer> order = new ArrayList<>();
 
-		leaf.own(DisposableAction.of(() -> order.add(1)));
-		leaf.own(DisposableAction.of(() -> order.add(2)));
-		leaf.own(DisposableAction.of(() -> order.add(3)));
+        leaf.own(DisposableAction.of(() -> order.add(1)));
+        leaf.own(DisposableAction.of(() -> order.add(2)));
+        leaf.own(DisposableAction.of(() -> order.add(3)));
 
-		assertFalse(leaf.isDisposed());
-		leaf.dispose();
+        assertFalse(leaf.isDisposed());
+        leaf.dispose();
 
-		assertTrue(leaf.isDisposed());
-		assertEquals(3, order.size());
-		assertEquals(3, order.get(0).intValue());
-		assertEquals(2, order.get(1).intValue());
-		assertEquals(1, order.get(2).intValue());
-	}
+        assertTrue(leaf.isDisposed());
+        assertEquals(3, order.size());
+        assertEquals(3, order.get(0).intValue());
+        assertEquals(2, order.get(1).intValue());
+        assertEquals(1, order.get(2).intValue());
+    }
 
-	@Test
-	void disposalIsIdempotentAndForbidsElementAccess() {
-		SolimImage leaf = new SolimImage();
-		AtomicBoolean disposed = new AtomicBoolean(false);
-		leaf.own(DisposableAction.of(() -> disposed.set(true)));
+    @Test
+    void disposalIsIdempotentAndForbidsElementAccess() {
+        SolimImage leaf = new SolimImage();
+        AtomicBoolean disposed = new AtomicBoolean(false);
+        leaf.own(DisposableAction.of(() -> disposed.set(true)));
 
-		leaf.dispose();
-		assertTrue(leaf.isDisposed());
-		assertTrue(disposed.get());
+        leaf.dispose();
+        assertTrue(leaf.isDisposed());
+        assertTrue(disposed.get());
 
-		// Repeated dispose must not throw
-		assertDoesNotThrow(leaf::dispose);
+        assertDoesNotThrow(leaf::dispose);
 
-		// Accessing element after disposal throws IllegalStateException
-		assertThrows(IllegalStateException.class, leaf::element);
-	}
+        assertThrows(IllegalStateException.class, leaf::element);
+    }
 
-	@Test
-	void nameConfigurationUpdatesBothModelAndElement() {
-		SolimImage leaf = new SolimImage();
-		Element el = leaf.element();
+    @Test
+    void nameConfigurationUpdatesBothModelAndElement() {
+        SolimImage leaf = new SolimImage();
+        Element el = leaf.element();
 
-		assertTrue(leaf.name().startsWith("solim-solimimage-image"));
-		assertEquals(leaf.name(), el.name);
-	}
+        assertTrue(leaf.name().startsWith("solim-solimimage-image"));
+        assertEquals(leaf.name(), el.name);
+    }
 }

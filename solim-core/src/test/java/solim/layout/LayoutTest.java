@@ -306,7 +306,7 @@ class LayoutTest extends SolimEnv {
 
     @Test
     void childrenDoNotGrowByDefault() {
-        // Column
+
         Column col = new Column().children(() -> {
             new Row().children(() -> {
             });
@@ -315,7 +315,6 @@ class LayoutTest extends SolimEnv {
         assertEquals(0, CellAccess.expandX(colCell), "Column child must not growX by default");
         assertEquals(0, CellAccess.expandY(colCell), "Column child must not growY by default");
 
-        // Row
         Row row = new Row().children(() -> {
             new Row().children(() -> {
             });
@@ -328,7 +327,6 @@ class LayoutTest extends SolimEnv {
         assertEquals(0, CellAccess.expandX(rowElementCell), "Row element must not growX by default");
         assertEquals(0, CellAccess.expandY(rowElementCell), "Row element must not growY by default");
 
-        // Card
         Card card = new Card().children(() -> {
             new Row().children(() -> {
             });
@@ -338,7 +336,6 @@ class LayoutTest extends SolimEnv {
         assertEquals(0, CellAccess.expandY(cardCell), "Card child must not growY by default");
         card.dispose();
 
-        // Scroll
         Scroll scroll = new Scroll();
         scroll.children(() -> {
             new Row().children(() -> {
@@ -376,13 +373,13 @@ class LayoutTest extends SolimEnv {
     @Test
     void chainedGrowAfterAttachment() {
         Column col = new Column().children(() -> {
-            // SizedImage with growX() chained
+
             new SolimImage().growX();
-            // Button with growX() chained
+
             Button chainedButton = new Button();
             AttachmentStack.attachToParent(chainedButton.element());
             chainedButton.growX();
-            // Row with growX() chained AFTER children()
+
             new Row().children(() -> {
             }).growX();
         });
@@ -438,11 +435,6 @@ class LayoutTest extends SolimEnv {
         assertSame(gridTable, content.getCells().first().get(),
                 "First and only cell in scroll content must be the grid table");
 
-        // The same reconciliation must happen identically once the tree is attached to
-        // a scene:
-        // previously the attached path deferred to a posted callback, so the cells only
-        // appeared
-        // after the posted runnable drained.
         Scene scene = newScene();
         Table attachedRoot = new Table();
         scene.add(attachedRoot);
@@ -646,8 +638,7 @@ class LayoutTest extends SolimEnv {
         root.setSize(1000, 800);
 
         Column parentCol = new Column().grow().children(() -> {
-            // Column children default to top-left: centering a constrained card
-            // requires explicit self-alignment via its cell config.
+
             Card card = new Card()
                     .growX()
                     .center()

@@ -42,7 +42,6 @@ class MusicDisabledPersistenceTest extends MindustryTestEnv {
                 .value("disabled", new Seq<>(), persister);
         disabled.set(Seq.with("AMBIENT_o:song1", "DARK_c:boss-theme"));
 
-        // Simulate a fresh application start: a new ConfigValue reading the same key
         ConfigValue<Seq<String>> reloaded = ConfigGroup.of(groupNamespace)
                 .value("disabled", new Seq<>(), persister);
 
@@ -79,7 +78,6 @@ class MusicDisabledPersistenceTest extends MindustryTestEnv {
         Signal<Music> current = Signal.of((Music) null);
         TrackState state = new TrackState(music, MusicType.AMBIENT, "song", true, disabled, current);
 
-        //bind once and reuse, as the UI does, to prove the derived readable is reactive
         Readable<Boolean> isDisabled = state.isDisabled();
         Readable<Boolean> isPlaying = state.isPlaying();
 

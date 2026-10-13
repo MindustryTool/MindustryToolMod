@@ -62,7 +62,8 @@ class QuickAccessClickDelegationTest extends MindustryTestEnv {
 
     static class CustomClickFeature extends Feature {
         boolean clicked = false;
-        @Nullable Element receivedAnchor;
+        @Nullable
+        Element receivedAnchor;
 
         CustomClickFeature() {
             super(FeatureMetadata.builder()
@@ -84,8 +85,10 @@ class QuickAccessClickDelegationTest extends MindustryTestEnv {
         final TextureRegionDrawable iconDrawable;
         boolean clicked;
         boolean longClicked;
-        @Nullable Element clickAnchor;
-        @Nullable Element longClickAnchor;
+        @Nullable
+        Element clickAnchor;
+        @Nullable
+        Element longClickAnchor;
 
         AnchorRecordingFeature(TextureRegionDrawable iconDrawable) {
             super(FeatureMetadata.builder()
@@ -247,8 +250,7 @@ class QuickAccessClickDelegationTest extends MindustryTestEnv {
             chat.onQuickAccessClick(null);
             assertFalse(chat.collapsedConfig.get(), "Second click expands chat");
         } finally {
-            // ChatFeature spawns a ChatStore + ChatService owning ambient
-            // effects: dispose so later tests see an empty dispatcher.
+
             chat.getService().dispose();
             chat.getStore().dispose();
             flushEffects();
@@ -282,7 +284,8 @@ class QuickAccessClickDelegationTest extends MindustryTestEnv {
         assertNotNull(feature.getMainDialog());
         assertNotNull(feature.getMainDialog().get(), "Dialog must be created and available");
 
-        assertTrue(feature.quickAccessHighlight().peek(), "Schematic browser quick access icon must always be highlighted");
+        assertTrue(feature.quickAccessHighlight().peek(),
+                "Schematic browser quick access icon must always be highlighted");
     }
 
     @Test

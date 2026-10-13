@@ -393,12 +393,11 @@ public class ChatMessageListView extends Component {
                     .gap(ChatMessageHeightCalculator.AVATAR_GAP)
                     .padding(ChatMessageHeightCalculator.UNIT_1)
                     .children(() -> {
-                        // Shared group avatar on the left, pinned to the top
+
                         new ChatAvatar(authorName, avatarUrl, authorId, ChatMessageHeightCalculator.AVATAR_SIZE);
 
-                        // Right column: header followed by stacked messages
                         column().growX().top().left().children(() -> {
-                            // Author and timestamp header + action button
+
                             row().growX().top().left()
                                     .gap(unit(2))
                                     .height(ChatMessageHeightCalculator.HEADER_HEIGHT
@@ -418,7 +417,6 @@ public class ChatMessageListView extends Component {
 
                                         spacer();
 
-                                        // Action ellipsis / menu button
                                         Button actionsButton = button(() -> {
                                         });
                                         actionsButton
@@ -429,7 +427,6 @@ public class ChatMessageListView extends Component {
                                                         .size(unit(6), unit(6)));
                                     });
 
-                            // Stacked message rows
                             column().growX().top().left().children(() -> {
                                 List<ParsedChatMessage> messages = group.getMessages();
                                 for (int i = 0; i < messages.size(); i++) {
@@ -645,7 +642,6 @@ public class ChatMessageListView extends Component {
                 return;
             }
 
-            // Fallback
             String fallback = parsed.getContent() != null ? parsed.getContent() : "";
             text(fallback)
                     .color(bodyColor)
@@ -737,7 +733,7 @@ public class ChatMessageListView extends Component {
                     .left()
                     .grow()
                     .children(() -> {
-                        // Fixed Row 1: Header row (Title + spacer)
+
                         row().growX().height(unit(6)).gap(unit(2)).children(() -> {
                             text(Core.bundle.get("feature.chat.ui.room-invite", "Room Invite"))
                                     .style(Styles.outlineLabel)
@@ -748,7 +744,6 @@ public class ChatMessageListView extends Component {
                             spacer();
                         });
 
-                        // Fixed Row 2: Status
                         row().growX().height(unit(4.5f)).children(() -> {
                             text(Core.bundle.get("feature.chat.ui.unlisted-offline", "Unlisted or offline"))
                                     .color(Color.scarlet)
@@ -758,7 +753,6 @@ public class ChatMessageListView extends Component {
                                     .left();
                         });
 
-                        // Fixed Row 3: Link address
                         row().growX().height(unit(4.5f)).children(() -> {
                             text(link.replace(PlayerConnectFeature.PLAYER_CONNECT_PROTOCOL, ""))
                                     .color(Color.lightGray)
@@ -768,7 +762,6 @@ public class ChatMessageListView extends Component {
                                     .left();
                         });
 
-                        // Fixed Row 4: Protocol note or empty slot
                         row().growX().height(unit(4.5f)).children(() -> {
                             text(Core.bundle.get("feature.player-connect.title", "Player Connect"))
                                     .color(Color.gray)
@@ -778,10 +771,8 @@ public class ChatMessageListView extends Component {
                                     .left();
                         });
 
-                        // Fixed Row 5: Action buttons row
                         row().gap(unit(1)).growX().height(unit(11)).children(() -> {
-                            // The feature is optional: its absence means Player Connect is not
-                            // installed, which is the "enable it" case, not an error.
+
                             PlayerConnectFeature connect = FeatureManager.getFeature(PlayerConnectFeature.class);
                             Readable<Boolean> connectEnabled = connect != null
                                     ? connect.enabled()
@@ -850,7 +841,7 @@ public class ChatMessageListView extends Component {
         private void buildSchematicCard(Schematic schematic) {
             card().top().left().height(ChatMessageHeightCalculator.SCHEMATIC_CARD_HEIGHT).children(() -> {
                 column().grow().top().left().gap(unit(1)).children(() -> {
-                    // Header: just the name
+
                     row().growX().height(unit(6)).top().left().gap(unit(1)).children(() -> {
                         text(schematic.name())
                                 .color(Pal.accent)
@@ -862,7 +853,6 @@ public class ChatMessageListView extends Component {
                         spacer();
                     });
 
-                    // Preview image button
                     float ratio = schematic.height > 0 ? (float) schematic.width / (float) schematic.height : 1f;
                     float width = Math.max(unit(10), ratio * unit(35));
 
@@ -878,7 +868,6 @@ public class ChatMessageListView extends Component {
                                 }
                             });
 
-                    // Action buttons row below preview
                     row().growX().height(unit(7)).top().left().gap(unit(1)).children(() -> {
                         button(() -> Vars.ui.schematics.showInfo(schematic))
                                 .style(Styles.clearNonei)
@@ -975,7 +964,6 @@ public class ChatMessageListView extends Component {
                 return text(messageText).color(bodyColor).fontScale(1.0f).left().wrap().growX();
             }
 
-            // Bare link fast path: the whole message is one clickable link.
             if (urls.size() == 1 && messageText.trim().equals(urls.get(0))) {
                 final String onlyUrl = urls.get(0);
                 Text linkText = text(onlyUrl)
@@ -1002,8 +990,6 @@ public class ChatMessageListView extends Component {
             return column().growX().top().left().children(() -> {
                 text(highlighted).color(bodyColor).fontScale(1.0f).left().wrap().growX();
 
-                // Clickable link chips below the text; the inline label itself is not
-                // clickable.
                 row().growX().top().left().gap(unit(1)).children(() -> {
                     for (String linkUrl : linkUrls) {
                         final String chipUrl = linkUrl;

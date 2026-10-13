@@ -25,7 +25,8 @@ import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
 
 /**
- * Tactical visualizer that draws lines from units controlled by a logic processor block
+ * Tactical visualizer that draws lines from units controlled by a logic
+ * processor block
  * to that logic processor. Integrated into DisplayGroup for direct toggling.
  */
 public class LogicVisualizerFeature extends Feature {
@@ -40,7 +41,6 @@ public class LogicVisualizerFeature extends Feature {
     private final Cons<Unit> unitDrawer = this::drawUnitLine;
     private @Nullable LogicVisualizerSettingsDialog settingsDialog;
 
-    // Scratch fields per draw tick to avoid repeated allocations and player/team lookups
     private @Nullable Team framePlayerTeam;
     private boolean frameShowAlly;
     private boolean frameShowEnemy;
@@ -136,7 +136,6 @@ public class LogicVisualizerFeature extends Feature {
             return;
         }
 
-        // Team filter check
         boolean isAlly = framePlayerTeam == null || unit.team == framePlayerTeam;
         if (isAlly ? !frameShowAlly : !frameShowEnemy) {
             return;

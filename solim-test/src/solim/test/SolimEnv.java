@@ -27,60 +27,59 @@ import solim.runtime.SignalDispatcher;
  */
 public class SolimEnv extends ArcTestEnv {
 
-	@BeforeEach
-	public void setUpSolimEnv() {
-		resetAmbientState();
-		resetModuleState();
-	}
+    @BeforeEach
+    public void setUpSolimEnv() {
+        resetAmbientState();
+        resetModuleState();
+    }
 
-	@AfterEach
-	public void verifyAndTearDownSolimEnv() {
-		int parentStackSize = AttachmentStack.size();
-		int componentContextSize = OwnershipContext.size();
-		int reactiveContextSize = ReactiveContext.size();
-		int pendingEffects = SignalDispatcher.size();
-		boolean isFlushing = SignalDispatcher.isFlushing();
+    @AfterEach
+    public void verifyAndTearDownSolimEnv() {
+        int parentStackSize = AttachmentStack.size();
+        int componentContextSize = OwnershipContext.size();
+        int reactiveContextSize = ReactiveContext.size();
+        int pendingEffects = SignalDispatcher.size();
+        boolean isFlushing = SignalDispatcher.isFlushing();
 
-		// Clean up immediately so subsequent tests are not contaminated even on failure
-		resetAmbientState();
-		resetModuleState();
+        resetAmbientState();
+        resetModuleState();
 
-		assertEquals(0, parentStackSize, "AttachmentStack must be empty at teardown");
-		assertNull(AttachmentStack.current(), "AttachmentStack.current() must be null at teardown");
+        assertEquals(0, parentStackSize, "AttachmentStack must be empty at teardown");
+        assertNull(AttachmentStack.current(), "AttachmentStack.current() must be null at teardown");
 
-		assertEquals(0, componentContextSize, "OwnershipContext must be empty at teardown");
-		assertNull(OwnershipContext.current(), "OwnershipContext.current() must be null at teardown");
+        assertEquals(0, componentContextSize, "OwnershipContext must be empty at teardown");
+        assertNull(OwnershipContext.current(), "OwnershipContext.current() must be null at teardown");
 
-		assertEquals(0, reactiveContextSize, "ReactiveContext must be empty at teardown");
-		assertNull(ReactiveContext.current(), "ReactiveContext.current() must be null at teardown");
+        assertEquals(0, reactiveContextSize, "ReactiveContext must be empty at teardown");
+        assertNull(ReactiveContext.current(), "ReactiveContext.current() must be null at teardown");
 
-		assertFalse(isFlushing, "SignalDispatcher must not be mid-flush at teardown");
-		assertEquals(0, pendingEffects, "SignalDispatcher must have no pending effects at teardown");
-	}
+        assertFalse(isFlushing, "SignalDispatcher must not be mid-flush at teardown");
+        assertEquals(0, pendingEffects, "SignalDispatcher must have no pending effects at teardown");
+    }
 
-	/**
-	 * Hook for module layers above the runtime to restore their own defaults
-	 * (e.g. solim-core reinstalling the default cell configurator). Called
-	 * after the static ambient reset in both setup and teardown. No-op here.
-	 */
-	protected void resetModuleState() {
-	}
+    /**
+     * Hook for module layers above the runtime to restore their own defaults
+     * (e.g. solim-core reinstalling the default cell configurator). Called
+     * after the static ambient reset in both setup and teardown. No-op here.
+     */
+    protected void resetModuleState() {
+    }
 
-	/**
-	 * Pumps all pending reactive effects. Test environments have no frame
-	 * loop, so tests call this where production code relies on the frame
-	 * lifecycle. Facade keeps runtime types invisible to test consumers.
-	 */
-	public static void flushEffects() {
-		SignalDispatcher.flush();
-	}
+    /**
+     * Pumps all pending reactive effects. Test environments have no frame
+     * loop, so tests call this where production code relies on the frame
+     * lifecycle. Facade keeps runtime types invisible to test consumers.
+     */
+    public static void flushEffects() {
+        SignalDispatcher.flush();
+    }
 
-	public static void resetAmbientState() {
-		AttachmentStack.clear();
-		OwnershipContext.clear();
-		ReactiveContext.clear();
-		SignalDispatcher.resetForTests();
-		solim.core.SessionRoot.get().clear();
-		solim.core.SolimAssert.setMainThread(null);
-	}
+    public static void resetAmbientState() {
+        AttachmentStack.clear();
+        OwnershipContext.clear();
+        ReactiveContext.clear();
+        SignalDispatcher.resetForTests();
+        solim.core.SessionRoot.get().clear();
+        solim.core.SolimAssert.setMainThread(null);
+    }
 }

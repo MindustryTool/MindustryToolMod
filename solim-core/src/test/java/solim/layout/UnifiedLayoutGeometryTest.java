@@ -24,7 +24,6 @@ public class UnifiedLayoutGeometryTest extends SolimEnv {
         Table root = new Table();
         root.setSize(200f, 200f);
 
-        // Child element 50x50 centered
         Element child = new Element();
         child.setSize(50f, 50f);
 
@@ -48,7 +47,6 @@ public class UnifiedLayoutGeometryTest extends SolimEnv {
         Element bottomLeft = new Element();
         Element bottomRight = new Element();
 
-        // 4 cells in a 2x2 layout with expand() so cells span the entire 200x200 table
         root.add(topLeft).size(40f).expand().top().left();
         root.add(topRight).size(40f).expand().top().right();
         root.row();
@@ -58,19 +56,15 @@ public class UnifiedLayoutGeometryTest extends SolimEnv {
         root.validate();
         root.layout();
 
-        // topLeft sits at x=0, and top of row 0 (y = 200 - 40 = 160)
         assertEquals(0f, topLeft.x, 0.01f);
         assertEquals(160f, topLeft.y, 0.01f);
 
-        // topRight sits at right cell border (x = 200 - 40 = 160) and top (y = 160)
         assertEquals(160f, topRight.x, 0.01f);
         assertEquals(160f, topRight.y, 0.01f);
 
-        // bottomLeft sits at bottom row (y=0) and left (x=0)
         assertEquals(0f, bottomLeft.x, 0.01f);
         assertEquals(0f, bottomLeft.y, 0.01f);
 
-        // bottomRight sits at bottom row (y=0) and right (x=160)
         assertEquals(160f, bottomRight.x, 0.01f);
         assertEquals(0f, bottomRight.y, 0.01f);
     }
@@ -86,23 +80,20 @@ public class UnifiedLayoutGeometryTest extends SolimEnv {
         root.validate();
         root.layout();
 
-        // x is centered: (200 - 60) / 2 = 70
-        // y is top: 200 - 40 = 160
         assertEquals(70f, topCenter.x, 0.01f);
         assertEquals(160f, topCenter.y, 0.01f);
     }
 
     @Test
     void testCombinedInsetsPaddingMarginAndGapGeometry() {
-        // Outer table has 10px inner padding on all sides
+
         Table container = new Table();
         container.setSize(200f, 200f);
-        container.margin(10f); // 10px padding on all sides
+        container.margin(10f);
 
         Button btn1 = new Button().height(30f).width(100f).marginTop(4f);
         Button btn2 = new Button().height(30f).width(100f).marginTop(4f);
 
-        // Column inside with gap(8f)
         Column col = new Column().gap(8f);
         col.children(() -> {
             col.table().add(btn1.element()).size(100f, 30f);
@@ -114,25 +105,20 @@ public class UnifiedLayoutGeometryTest extends SolimEnv {
         container.validate();
         container.layout();
 
-        // container available area inside padding: x from 10 to 190, y from 10 to 190
         assertEquals(10f, col.table().x, 0.01f);
         assertEquals(10f, col.table().y, 0.01f);
         assertEquals(180f, col.table().getWidth(), 0.01f);
         assertEquals(180f, col.table().getHeight(), 0.01f);
 
-        // Check Cell padding values computed by GapContainer:
-        // btn1 has padTop = 4 (marginTop)
         assertEquals(4f, CellAccess.padTop(col.table().getCell(btn1.element())), 0.01f);
-        // btn2 has padTop = 4 + 8 = 12 (marginTop + gap)
+
         assertEquals(12f, CellAccess.padTop(col.table().getCell(btn2.element())), 0.01f);
 
-        // Check button heights and widths
         assertEquals(100f, btn1.element().getWidth(), 0.01f);
         assertEquals(30f, btn1.element().getHeight(), 0.01f);
         assertEquals(100f, btn2.element().getWidth(), 0.01f);
         assertEquals(30f, btn2.element().getHeight(), 0.01f);
 
-        // Verify button relative vertical spacing: btn1 is above btn2 by exactly (height 30 + gap 8 + marginTop 4) = 42
         assertEquals(42f, btn1.element().y - btn2.element().y, 0.01f);
     }
 }

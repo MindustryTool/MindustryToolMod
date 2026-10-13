@@ -28,7 +28,6 @@ class ChatMessageDeliveryTest extends SolimEnv {
         assertFalse(delivery.isFailed("temp_1").get());
         assertTrue(delivery.isPendingDirect("temp_1"));
 
-        // Other message remains unaffected
         assertNull(delivery.status("temp_2").get());
         assertFalse(delivery.isPending("temp_2").get());
     }

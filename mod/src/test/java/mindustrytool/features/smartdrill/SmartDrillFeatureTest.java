@@ -58,14 +58,13 @@ class SmartDrillFeatureTest extends MindustryTestEnv {
 
     @Test
     void testGridPatterns() {
-        // isBridgeTile is true whenever x % 3 == 0 and y % 3 == 0
+
         Tile bridgeTile = new Tile(0, 0);
         assertTrue(feature.isBridgeTile(bridgeTile));
 
         Tile nonBridgeTile = new Tile(1, 1);
         assertFalse(feature.isBridgeTile(nonBridgeTile));
 
-        // isDrillTile checks 2x2 drill placement math
         Tile drillTile1 = new Tile(0, 1);
         assertTrue(feature.isDrillTile(drillTile1));
 

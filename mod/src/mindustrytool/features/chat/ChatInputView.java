@@ -53,7 +53,7 @@ public class ChatInputView extends Component {
         });
 
         return column().growX().gap(unit(1)).padding(unit(2)).children(() -> {
-            // Login banner when not logged in
+
             when(isNotLoggedIn)
                     .thenDo(() -> row().growX().padding(unit(1)).children(() -> {
                         button(Core.bundle.get("auth.login", "Login"), () -> AuthOverlay.getInstance().startLoginUI())
@@ -61,66 +61,70 @@ public class ChatInputView extends Component {
                                 .growX()
                                 .height(unit(8));
                     }))
-                .elseDo(() -> {
-                    // Composer area when logged in
-                    column().growX().gap(unit(1)).children(() -> {
-                    dynamic(store.ui().replyTarget(), target -> {
-                        if (target != null) {
-                            String authorId = target.getCreatedBy();
-                        UserData cachedUser = authorId != null ? store.users().getDirect(authorId) : null;
-                        String targetName = (cachedUser != null && cachedUser.getName() != null)
-                                ? cachedUser.getName()
-                                : (authorId != null ? authorId : "message");
+                    .elseDo(() -> {
 
-                        row().growX().padding(unit(1)).height(unit(12)).gap(unit(1)).children(() -> {
-                            text(Core.bundle.format("feature.chat.ui.replying", targetName)).color(Color.lightGray)
-                                    .fontScale(0.85f).left();
-                            spacer();
-                            button(() -> store.ui().setReplyTarget(null))
-                                    .style(Styles.clearNonei)
-                                    .size(unit(6), unit(6))
-                                    .children(() -> icon(Icon.cancel).size(unit(4), unit(4)));
-                        });
-                        }
-                    }).growX();
+                        column().growX().gap(unit(1)).children(() -> {
+                            dynamic(store.ui().replyTarget(), target -> {
+                                if (target != null) {
+                                    String authorId = target.getCreatedBy();
+                                    UserData cachedUser = authorId != null ? store.users().getDirect(authorId) : null;
+                                    String targetName = (cachedUser != null && cachedUser.getName() != null)
+                                            ? cachedUser.getName()
+                                            : (authorId != null ? authorId : "message");
 
-                    row().growX().gap(unit(1)).children(() -> {
-                        card(Styles.black5).growX().children(() -> {
-                            row().growX().gap(unit(1))
-                                    .paddingLeft(unit(3))
-                                    .paddingRight(unit(2))
-                                    .paddingTop(unit(1))
-                                    .paddingBottom(unit(1))
-                                    .rounded(unit(3), Color.clear)
-                                    .border(1.5f, Color.darkGray)
-                                    .center()
-                                    .children(() -> {
-                                        chatInput = textField(messageText)
-                                                .style(WebStyles.clearInput())
-                                                .placeholder(
-                                                        Core.bundle.get("feature.chat.ui.placeholder", "Message..."))
-                                                .validator(this::isValidInput)
-                                                .onEnter(this::onSend)
-                                                .disabled(isSending)
-                                                .growX();
-
-                                        button(() -> new AttachContentDialog(this::handleAttachContent).show())
-                                                .style(WebStyles.ghost())
-                                                .size(unit(10))
-                                                .children(
-                                                        () -> image(FileIcon.of("upload.png")).size(unit(6), unit(6)));
-
-                                        button(this::onSend)
-                                                .style(WebStyles.ghost())
-                                                .enabled(canSend)
-                                                .size(unit(10))
-                                                .children(() -> image(FileIcon.of("send.png")).size(unit(6), unit(6))
-                                                        .color(Pal.accent));
+                                    row().growX().padding(unit(1)).height(unit(12)).gap(unit(1)).children(() -> {
+                                        text(Core.bundle.format("feature.chat.ui.replying", targetName))
+                                                .color(Color.lightGray)
+                                                .fontScale(0.85f).left();
+                                        spacer();
+                                        button(() -> store.ui().setReplyTarget(null))
+                                                .style(Styles.clearNonei)
+                                                .size(unit(6), unit(6))
+                                                .children(() -> icon(Icon.cancel).size(unit(4), unit(4)));
                                     });
+                                }
+                            }).growX();
+
+                            row().growX().gap(unit(1)).children(() -> {
+                                card(Styles.black5).growX().children(() -> {
+                                    row().growX().gap(unit(1))
+                                            .paddingLeft(unit(3))
+                                            .paddingRight(unit(2))
+                                            .paddingTop(unit(1))
+                                            .paddingBottom(unit(1))
+                                            .rounded(unit(3), Color.clear)
+                                            .border(1.5f, Color.darkGray)
+                                            .center()
+                                            .children(() -> {
+                                                chatInput = textField(messageText)
+                                                        .style(WebStyles.clearInput())
+                                                        .placeholder(
+                                                                Core.bundle.get("feature.chat.ui.placeholder",
+                                                                        "Message..."))
+                                                        .validator(this::isValidInput)
+                                                        .onEnter(this::onSend)
+                                                        .disabled(isSending)
+                                                        .growX();
+
+                                                button(() -> new AttachContentDialog(this::handleAttachContent).show())
+                                                        .style(WebStyles.ghost())
+                                                        .size(unit(10))
+                                                        .children(
+                                                                () -> image(FileIcon.of("upload.png")).size(unit(6),
+                                                                        unit(6)));
+
+                                                button(this::onSend)
+                                                        .style(WebStyles.ghost())
+                                                        .enabled(canSend)
+                                                        .size(unit(10))
+                                                        .children(() -> image(FileIcon.of("send.png"))
+                                                                .size(unit(6), unit(6))
+                                                                .color(Pal.accent));
+                                            });
+                                });
+                            });
                         });
-                    });
-                    });
-                }).grow();
+                    }).grow();
         }).element();
     }
 

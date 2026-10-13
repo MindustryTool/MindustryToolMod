@@ -78,7 +78,6 @@ public class VisualizerSettingsView extends Component {
 
                     divider().color(WebStyles.Colors.SECTION_BORDER);
 
-                    // Bridge Opacity Slider
                     SettingSlider.of(
                             Core.bundle.get("feature.visualizer.settings.bridge-opacity", "Bridge Opacity"),
                             feature.bridgeOpacityConfig.signal(),
@@ -88,7 +87,6 @@ public class VisualizerSettingsView extends Component {
                             feature.bridgeOpacityConfig.signal()
                                     .map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
 
-                    // Bridge Item Scale Slider
                     SettingSlider.of(
                             Core.bundle.get("feature.visualizer.settings.bridge-item-scale", "Bridge Item Scale"),
                             feature.bridgeItemScaleConfig.signal(),
@@ -98,7 +96,6 @@ public class VisualizerSettingsView extends Component {
                             feature.bridgeItemScaleConfig.signal()
                                     .map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
 
-                    // Bridge Flow Rate Scale Slider
                     SettingSlider.of(
                             Core.bundle.get("feature.visualizer.settings.bridge-flow-rate-scale",
                                     "Bridge Flow Rate Scale"),
@@ -133,7 +130,6 @@ public class VisualizerSettingsView extends Component {
 
                     divider().color(WebStyles.Colors.SECTION_BORDER);
 
-                    // Target Line Opacity Slider
                     SettingSlider.of(
                             Core.bundle.get("feature.visualizer.settings.target-line-opacity", "Target Line Opacity"),
                             feature.targetLineOpacityConfig.signal(),
@@ -143,7 +139,6 @@ public class VisualizerSettingsView extends Component {
                             feature.targetLineOpacityConfig.signal()
                                     .map(v -> Math.round((v != null ? v : 0.6f) * 100) + "%"));
 
-                    // Turret Badge Scale Slider
                     SettingSlider.of(
                             Core.bundle.get("feature.visualizer.settings.turret-badge-scale", "Turret Badge Scale"),
                             feature.turretBadgeScaleConfig.signal(),

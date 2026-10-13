@@ -93,8 +93,7 @@ public final class OwnershipScope implements DisposableOwner {
         Iterator<Disposable> iterator = collected.iterator();
         while (iterator.hasNext()) {
             Disposable disposable = iterator.next();
-            // The owner manages itself; removing it here keeps it out of the
-            // destroy-on-close pass.
+
             iterator.remove();
             if (disposable != owner) {
                 owner.adopt(disposable);

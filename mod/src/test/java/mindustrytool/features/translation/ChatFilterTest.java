@@ -35,7 +35,6 @@ class ChatFilterTest extends MindustryTestEnv {
         assertFalse(ChatFilter.shouldTranslateIncoming("[Discord] <Gamer>: hi all"));
         assertFalse(ChatFilter.shouldTranslateIncoming("[Admin] Notice to players"));
 
-        // System event phrases
         assertFalse(ChatFilter.shouldTranslateIncoming("Player1 has connected."));
         assertFalse(ChatFilter.shouldTranslateIncoming("Player2 has disconnected."));
         assertFalse(ChatFilter.shouldTranslateIncoming("Game Over - Core Destroyed"));
@@ -108,26 +107,22 @@ class ChatFilterTest extends MindustryTestEnv {
 
     @Test
     void testOutgoingMessageFiltering() {
-        // Escape prefix
+
         assertFalse(ChatFilter.shouldTranslateOutgoing("//Hello"));
         assertFalse(ChatFilter.shouldTranslateOutgoing("// /vote kick"));
 
-        // Commands
         assertFalse(ChatFilter.shouldTranslateOutgoing("/vote kick 1"));
         assertFalse(ChatFilter.shouldTranslateOutgoing("/help"));
         assertFalse(ChatFilter.shouldTranslateOutgoing("/sync"));
 
-        // Fast translation commands
         assertTrue(ChatFilter.shouldTranslateOutgoing("/tr Hello"));
         assertTrue(ChatFilter.shouldTranslateOutgoing("/dich Xin chao"));
         assertFalse(ChatFilter.shouldTranslateOutgoing("/tr "));
 
-        // Team and admin chat
         assertTrue(ChatFilter.shouldTranslateOutgoing("/t need defense here"));
         assertTrue(ChatFilter.shouldTranslateOutgoing("/a server lag check"));
         assertFalse(ChatFilter.shouldTranslateOutgoing("/t :)"));
 
-        // Normal text
         assertTrue(ChatFilter.shouldTranslateOutgoing("We need to rebuild the reactors"));
         assertFalse(ChatFilter.shouldTranslateOutgoing("12345"));
         assertFalse(ChatFilter.shouldTranslateOutgoing(":)"));

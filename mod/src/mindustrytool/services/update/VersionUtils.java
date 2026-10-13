@@ -49,12 +49,11 @@ public final class VersionUtils {
             return new int[0];
         }
         try {
-            // Remove leading v/V
+
             if (version.startsWith("v") || version.startsWith("V")) {
                 version = version.substring(1);
             } else {
-                // also handle embedded "v" like "v8-136" after trim already handled;
-                // legacy code searched for 'v' anywhere, we keep leading-only semantics
+
                 int vIndex = version.indexOf('v');
                 int VIndex = version.indexOf('V');
                 int idx = vIndex >= 0 ? vIndex : VIndex;
@@ -63,7 +62,6 @@ public final class VersionUtils {
                 }
             }
 
-            // Strip suffix after '-' or '+'
             int dash = version.indexOf('-');
             int plus = version.indexOf('+');
             int cut = -1;
@@ -82,8 +80,7 @@ public final class VersionUtils {
             if (clean.isEmpty()) {
                 return new int[0];
             }
-            // Handle leading/trailing dots and consecutive dots
-            // e.g. "1..2" → split gives ["1","","2"]; we filter empties
+
             String[] parts = clean.split("\\.");
             List<Integer> numbers = new ArrayList<>();
             for (String part : parts) {

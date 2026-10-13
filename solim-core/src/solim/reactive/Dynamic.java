@@ -191,9 +191,7 @@ public final class Dynamic<T> extends Component
     }
 
     private void mount(T value) {
-        // Capture and eager-build inside untracked so signals read during the void
-        // factory
-        // (including inside captured root builds) never re-trigger this Dynamic effect.
+
         Fragment fragment = ReactiveContext.untracked(() -> {
             Fragment f = Fragment.capture(() -> factory.get(value));
             AttachmentStack.isolate(() -> {

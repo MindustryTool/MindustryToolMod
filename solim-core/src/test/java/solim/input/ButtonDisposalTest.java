@@ -212,8 +212,6 @@ class ButtonDisposalTest extends SolimEnv {
         assertTrue(button.button().isChecked(), "Host disposal must freeze the checked binding");
     }
 
-    // ---------- helpers ----------
-
     private void assertDisposed(Button button, Signal<?> signal) {
         assertTrue(button.isDisposed(), "The button must report itself disposed");
         assertEquals(0, signal.observerCount(), "Disposal must drain the bound signal's observers");
