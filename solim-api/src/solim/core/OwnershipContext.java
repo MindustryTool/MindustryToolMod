@@ -1,6 +1,7 @@
 package solim.core;
 
 import arc.util.Nullable;
+
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -53,11 +54,12 @@ public final class OwnershipContext {
         return disposable;
     }
 
-    public static <T extends Component> T registerChild(@Nullable T child) {
+    public static <T extends Component> T registerChild(T child) {
         SolimAssert.checkMainThread();
         if (child == null) {
-            return null;
+            throw new IllegalArgumentException("Child can not be null");
         }
+
         DisposableOwner current = stack.peek();
         if (current != null) {
             current.adopt(child);

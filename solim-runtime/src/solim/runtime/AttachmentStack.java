@@ -53,8 +53,7 @@ public final class AttachmentStack {
     }
 
     private static final Deque<Entry> stack = new ArrayDeque<>();
-    private static final ThreadLocal<Deque<List<Component>>> capturedListPool = ThreadLocal
-            .withInitial(ArrayDeque::new);
+    private static final Deque<List<Component>> pool = new ArrayDeque<>();
 
     private static int suspendFloor = 0;
 
@@ -64,7 +63,6 @@ public final class AttachmentStack {
     }
 
     static List<Component> takeCaptureList() {
-        Deque<List<Component>> pool = capturedListPool.get();
         List<Component> list = pool.pollFirst();
         return list != null ? list : new ArrayList<>();
     }
@@ -72,7 +70,7 @@ public final class AttachmentStack {
     static void releaseCaptureList(List<Component> list) {
         if (list != null) {
             list.clear();
-            capturedListPool.get().push(list);
+            pool.push(list);
         }
     }
 
