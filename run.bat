@@ -167,7 +167,7 @@ if /I "%APP_TO_RUN:~-4%"==".jar" (
 
     powershell -NoProfile -ExecutionPolicy Bypass -Command ^
         "$parentPid = (Get-CimInstance Win32_Process -Filter ('ProcessId=' + $PID)).ParentProcessId; " ^
-        "$mindustry = Start-Process -FilePath 'javaw.exe' -ArgumentList '-Dsolim.mcp.enabled=true','-jar','%APP_TO_RUN%' -WorkingDirectory '%DEFAULT_DIR%' -PassThru; " ^
+        "$mindustry = Start-Process -FilePath 'javaw.exe' -ArgumentList '-Dsolim.mcp.enabled=true','-Dsolim.debug.enabled=true','-jar','%APP_TO_RUN%' -WorkingDirectory '%DEFAULT_DIR%' -PassThru; " ^
         "Write-Host ('Mindustry started with PID ' + $mindustry.Id); " ^
         "while (-not $mindustry.HasExited) { " ^
         "    Start-Sleep -Milliseconds 500; " ^
@@ -180,9 +180,23 @@ if /I "%APP_TO_RUN:~-4%"==".jar" (
 
 ) else (
 
+    :: Mindustry.exe is a launcher stub, so -D flags cannot be appended to it. The bundled
+    :: JRE beside it can, so prefer launching that directly: it is the only way the
+    :: solim.debug.enabled flag reaches the JVM, and java.exe keeps a console attached so
+    :: the "[Solim] ... enabled via system property" line is actually visible. Falls back
+    :: to the plain executable when the distribution has no bundled jre\desktop.jar.
     powershell -NoProfile -ExecutionPolicy Bypass -Command ^
         "$parentPid = (Get-CimInstance Win32_Process -Filter ('ProcessId=' + $PID)).ParentProcessId; " ^
-        "$mindustry = Start-Process -FilePath '%APP_TO_RUN%' -WorkingDirectory '%DEFAULT_DIR%' -PassThru; " ^
+        "$dir = '%DEFAULT_DIR%'; " ^
+        "$jreJava = Join-Path $dir 'jre\bin\java.exe'; " ^
+        "$jreJar = Join-Path $dir 'jre\desktop.jar'; " ^
+        "if ((Test-Path $jreJava) -and (Test-Path $jreJar)) { " ^
+        "    Write-Host 'Launching bundled JRE with Solim debug flags...'; " ^
+        "    $mindustry = Start-Process -FilePath $jreJava -ArgumentList '-Dsolim.mcp.enabled=true','-Dsolim.debug.enabled=true','-jar',$jreJar -WorkingDirectory $dir -PassThru; " ^
+        "} else { " ^
+        "    Write-Host 'Bundled JRE not found - launching Mindustry.exe WITHOUT Solim debug flags.'; " ^
+        "    $mindustry = Start-Process -FilePath '%APP_TO_RUN%' -WorkingDirectory $dir -PassThru; " ^
+        "} " ^
         "Write-Host ('Mindustry started with PID ' + $mindustry.Id); " ^
         "while (-not $mindustry.HasExited) { " ^
         "    Start-Sleep -Milliseconds 500; " ^

@@ -43,14 +43,25 @@ public class DebugAttachmentStack extends AttachmentStack {
         final int depth;
         final long startNs;
         final String pushName;
+        /** Phase to record on close; {@code "build"} for table push/pop spans. */
+        final String phase;
+        /** Whether this span was opened by an explicit {@code beginSpan} rather than a table push. */
+        final boolean explicit;
         int childCount;
 
         OpenSpan(int spanId, int parentId, int depth, long startNs, String pushName) {
+            this(spanId, parentId, depth, startNs, pushName, "build", false);
+        }
+
+        OpenSpan(int spanId, int parentId, int depth, long startNs, String pushName,
+                String phase, boolean explicit) {
             this.spanId = spanId;
             this.parentId = parentId;
             this.depth = depth;
             this.startNs = startNs;
             this.pushName = pushName;
+            this.phase = phase;
+            this.explicit = explicit;
             this.childCount = 0;
         }
     }
@@ -115,7 +126,7 @@ public class DebugAttachmentStack extends AttachmentStack {
             long endNs = System.nanoTime();
             String name = popped.name != null ? popped.name
                     : open.pushName != null ? open.pushName : "table";
-            recordTrace(new TraceSpan(traceId, open.spanId, open.parentId, name, "build",
+            recordTrace(new TraceSpan(traceId, open.spanId, open.parentId, name, open.phase,
                     open.startNs, endNs, open.depth, open.childCount));
             OpenSpan parent = openStack.peekFirst();
             if (parent != null) {
@@ -301,6 +312,40 @@ public class DebugAttachmentStack extends AttachmentStack {
         }
         if (depth + 1 > traceMaxDepth) {
             traceMaxDepth = depth + 1;
+        }
+    }
+
+    @Override
+    protected void doBeginSpan(@Nullable String name, @Nullable String phase) {
+        if (!tracingEnabled) {
+            return;
+        }
+        int parentId = openStack.isEmpty() ? -1 : openStack.peekFirst().spanId;
+        String safeName = name != null && !name.trim().isEmpty() ? name : "span";
+        String safePhase = phase != null && !phase.trim().isEmpty() ? phase : "build";
+        int depth = openStack.size();
+        openStack.push(new OpenSpan(nextSpanId++, parentId, depth, System.nanoTime(), safeName,
+                safePhase, true));
+        if (depth + 1 > traceMaxDepth) {
+            traceMaxDepth = depth + 1;
+        }
+    }
+
+    @Override
+    protected void doEndSpan() {
+        if (!tracingEnabled || openStack.isEmpty()) {
+            return;
+        }
+        OpenSpan open = openStack.peekFirst();
+        if (!open.explicit) {
+            return;
+        }
+        openStack.pollFirst();
+        recordTrace(new TraceSpan(traceId, open.spanId, open.parentId, open.pushName, open.phase,
+                open.startNs, System.nanoTime(), open.depth, open.childCount));
+        OpenSpan parent = openStack.peekFirst();
+        if (parent != null) {
+            parent.childCount++;
         }
     }
 

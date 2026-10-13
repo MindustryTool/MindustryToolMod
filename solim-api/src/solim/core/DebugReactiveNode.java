@@ -1,0 +1,36 @@
+package solim.core;
+
+import java.util.List;
+
+/**
+ * Read-only introspection seam implemented by the reactive primitives ({@code Signal},
+ * {@code Computed}, {@code Effect}) so the runtime module can inspect them without depending on the
+ * module that declares them.
+ *
+ * <p>Normal application code never implements or calls this. It exists for the profiling runtime in
+ * {@code solim-runtime}, which must be able to walk dependency graphs and render value summaries
+ * while the debug services are installed.
+ */
+public interface DebugReactiveNode {
+
+    /** Returns a short label identifying this node in a profile report. */
+    String debugLabel();
+
+    /**
+     * Returns a truncated, human-readable summary of this node's current value. Implementations
+     * must guard against exceptions from {@code toString()} and must never return the live object.
+     */
+    String debugValue();
+
+    /** Returns the reactive sources this node currently reads, as an unmodifiable snapshot. */
+    List<ReactiveSource> debugDependencies();
+
+    /** Returns the observers currently attached to this node, as an unmodifiable snapshot. */
+    List<ReactiveObserver> debugObservers();
+
+    /** Returns the number of direct listeners subscribed to this node's value changes. */
+    int debugListenerCount();
+
+    /** Returns whether this node's cached value is stale. Always {@code false} for sources. */
+    boolean debugDirty();
+}

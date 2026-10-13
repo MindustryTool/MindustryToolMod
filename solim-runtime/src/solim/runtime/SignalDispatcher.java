@@ -12,18 +12,33 @@ import solim.core.SolimAssert;
 /**
  * Internal single-threaded dispatcher that batches and deduplicates reactive effect
  * invalidations to run at most once per Mindustry frame.
+ *
+ * <p>All static entry points delegate to a singleton instance, so {@code Perf} can install a
+ * profiling-enabled subclass without the base class carrying flush instrumentation.
  */
-public final class SignalDispatcher {
-	private static final int MAX_CASCADE_DEPTH = 100;
-	private static final Queue<SchedulableEffect> queue = new ArrayDeque<>();
-	private static boolean registered = false;
-	private static boolean flushing = false;
+public class SignalDispatcher {
 
-	static {
-		register();
+	private static volatile SignalDispatcher INSTANCE = new SignalDispatcher();
+
+	protected static final int MAX_CASCADE_DEPTH = 100;
+
+	/** Registered on first use so loading this class alone does not touch the event bus. */
+	protected static boolean registered = false;
+
+	protected final Queue<SchedulableEffect> queue = new ArrayDeque<>();
+	protected boolean flushing = false;
+
+	protected SignalDispatcher() {}
+
+	/** Returns the active singleton instance. */
+	public static SignalDispatcher instance() {
+		return INSTANCE;
 	}
 
-	private SignalDispatcher() {}
+	/** Installs the active singleton instance, falling back to a fresh base instance for {@code null}. */
+	public static void install(@Nullable SignalDispatcher dispatcher) {
+		INSTANCE = dispatcher != null ? dispatcher : new SignalDispatcher();
+	}
 
 	/**
 	 * Registers the frame flush callback with Mindustry's {@link Trigger#update} event.
@@ -34,7 +49,9 @@ public final class SignalDispatcher {
 		if (SolimAssert.getMainThread() == null) {
 			SolimAssert.setMainThread(Thread.currentThread());
 		}
-		Events.run(Trigger.update, SignalDispatcher::flush);
+		// Resolves INSTANCE at call time rather than capturing it, so swapping the singleton via
+		// install(...) takes effect on the next frame without re-registering the event listener.
+		Events.run(Trigger.update, (Runnable)() -> flush());
 	}
 
 	/**
@@ -52,13 +69,43 @@ public final class SignalDispatcher {
 	public static void enqueue(@Nullable SchedulableEffect effect) {
 		if (effect == null || effect.isDisposed()) return;
 		ensureRegistered();
-		queue.add(effect);
+		INSTANCE.doEnqueue(effect);
 	}
 
 	/**
 	 * Flushes and executes all pending effects in FIFO order on the caller's thread.
 	 */
 	public static void flush() {
+		INSTANCE.doFlush();
+	}
+
+	/** Returns the number of currently pending effects in the queue. */
+	public static int size() {
+		return INSTANCE.queue.size();
+	}
+
+	/** Returns true if the dispatcher is currently executing a flush cycle. */
+	public static boolean isFlushing() {
+		return INSTANCE.flushing;
+	}
+
+	/** Returns whether the frame callback has been registered. */
+	public static boolean isRegistered() {
+		return registered;
+	}
+
+	/**
+	 * Resets dispatcher state for isolated test execution.
+	 */
+	public static void resetForTests() {
+		INSTANCE.doResetForTests();
+	}
+
+	protected void doEnqueue(SchedulableEffect effect) {
+		queue.add(effect);
+	}
+
+	protected void doFlush() {
 		SolimAssert.checkMainThread();
 		if (flushing) return;
 		flushing = true;
@@ -93,25 +140,7 @@ public final class SignalDispatcher {
 		}
 	}
 
-	/** Returns the number of currently pending effects in the queue. */
-	public static int size() {
-		return queue.size();
-	}
-
-	/** Returns true if the dispatcher is currently executing a flush cycle. */
-	public static boolean isFlushing() {
-		return flushing;
-	}
-
-	/** Returns whether the frame callback has been registered. */
-	public static boolean isRegistered() {
-		return registered;
-	}
-
-	/**
-	 * Resets dispatcher state for isolated test execution.
-	 */
-	public static void resetForTests() {
+	protected void doResetForTests() {
 		for (SchedulableEffect remaining : queue) {
 			remaining.clearPending();
 		}

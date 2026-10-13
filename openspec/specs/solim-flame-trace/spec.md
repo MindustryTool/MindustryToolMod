@@ -37,7 +37,7 @@ The runtime SHALL provide a profiling-enabled trace stack variant owning all fla
 - **THEN** the variant's open-span state SHALL be saved and restored in lockstep so no span is attributed to the wrong parent.
 
 ### Requirement: Full container and leaf capture
-The system SHALL record a span for every container subtree bracketed by stack push/pop and for every leaf `BaseComponent.element()` build while tracing is enabled, with no duration threshold applied at record time.
+The system SHALL record a span for every container subtree bracketed by stack push/pop, for every leaf `Component.element()` build, and for every bracketed reactive execution (`Signal.set()`, `Computed` recomputation, `Effect` run, and `SignalDispatcher.flush()`) while tracing is enabled, with no duration threshold applied at record time.
 
 #### Scenario: Container subtree recorded
 - **WHEN** tracing is enabled and a container is popped
@@ -47,9 +47,13 @@ The system SHALL record a span for every container subtree bracketed by stack pu
 - **WHEN** tracing is enabled and a leaf component builds its element
 - **THEN** a span SHALL be recorded carrying the component name and nested under the enclosing container span.
 
+#### Scenario: Reactive operations recorded in unified hierarchy
+- **WHEN** tracing is enabled and a `Signal` write, `Computed` evaluation, `Effect` run, or `SignalDispatcher.flush()` executes (including nested component builds triggered inside an effect)
+- **THEN** each operation SHALL record a `TraceSpan` with its corresponding phase (`signal`, `computed`, `effect`, `flush`, or `build`) and parent-child linkage in the shared trace timeline.
+
 #### Scenario: Disabled tracing records nothing
 - **WHEN** tracing is disabled
-- **THEN** no spans SHALL be allocated and push/pop/build SHALL incur no tracing overhead.
+- **THEN** no spans SHALL be allocated and push/pop/build/reactive operations SHALL incur no tracing overhead.
 
 ### Requirement: Bounded rolling buffer and snapshots
 The system SHALL retain trace spans in a bounded ring buffer with capacity 4096, evicting oldest spans on overflow, and SHALL expose document-order snapshots plus overflow accounting.

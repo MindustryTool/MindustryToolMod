@@ -1,6 +1,8 @@
 package solim.reactive;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -8,14 +10,17 @@ import java.util.Set;
 import arc.func.Cons;
 import arc.func.Func;
 import arc.func.Prov;
+import solim.core.DebugReactiveNode;
 import solim.core.Disposable;
 import solim.core.ReactiveObserver;
 import solim.core.ReactiveSource;
 import solim.core.OwnershipContext;
+import solim.runtime.DebugReactiveContext;
 import solim.runtime.ReactiveContext;
 
 /** Lazy computed value with dynamic dependency tracking. */
-public final class Computed<T> implements Disposable, ReactiveObserver, Readable<T>, ReactiveSource {
+public final class Computed<T> implements Disposable, ReactiveObserver, Readable<T>, ReactiveSource,
+		DebugReactiveNode {
 	private final Prov<T> Prov;
 	private T cachedValue;
 	private boolean hasValue = false;
@@ -33,6 +38,9 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 	public Computed(Prov<T> Prov) {
 		this.Prov = Prov;
 		OwnershipContext.register(this);
+		if (ReactiveContext.instance() instanceof DebugReactiveContext) {
+			((DebugReactiveContext) ReactiveContext.instance()).observeComputed(this);
+		}
 	}
 
 	@Override
@@ -65,6 +73,8 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 		newDeps.clear();
 		collecting = newDeps;
 		ReactiveContext.push(this);
+		ReactiveContext.computedStart(this);
+		long startNs = System.nanoTime();
 		T newValue = null;
 		Throwable error = null;
 		try {
@@ -72,9 +82,12 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 		} catch (Throwable e) {
 			error = e;
 		} finally {
+			long durationNs = System.nanoTime() - startNs;
+			ReactiveContext.computedEnd(this, !hasValue || !Objects.equals(cachedValue, newValue));
 			ReactiveContext.pop();
 			collecting = null;
 			computing = false;
+			recordDebugRun(durationNs);
 		}
 		if (error != null) {
 			updateDependencies(newDeps);
@@ -102,6 +115,14 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 			// but if downstream was not previously dirty (e.g., no prior invalidate), we should propagate
 			// now
 			// However our invalidate propagation already ran before this recompute, so no action.
+		}
+	}
+
+	/** Feeds the measured duration to the installed debug context, if any. */
+	private void recordDebugRun(long durationNs) {
+		ReactiveContext context = ReactiveContext.instance();
+		if (context instanceof DebugReactiveContext) {
+			((DebugReactiveContext) context).recordComputedRun(this, durationNs);
 		}
 	}
 
@@ -221,5 +242,43 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 	@Override
 	public boolean isDisposed() {
 		return disposed;
+	}
+
+	// --- debug introspection (solim-runtime profiling) --------------------------------------------
+
+	@Override
+	public String debugLabel() {
+		return "Computed";
+	}
+
+	@Override
+	public String debugValue() {
+		if (!hasValue || cachedValue == null) {
+			return hasValue ? "null" : "<unevaluated>";
+		}
+		if (cachedValue instanceof Collection) {
+			return "Collection(size=" + ((Collection<?>) cachedValue).size() + ")";
+		}
+		return String.valueOf(cachedValue);
+	}
+
+	@Override
+	public List<ReactiveSource> debugDependencies() {
+		return Collections.unmodifiableList(new ArrayList<>(dependencies));
+	}
+
+	@Override
+	public List<ReactiveObserver> debugObservers() {
+		return Collections.unmodifiableList(new ArrayList<>(observers));
+	}
+
+	@Override
+	public int debugListenerCount() {
+		return listeners.size();
+	}
+
+	@Override
+	public boolean debugDirty() {
+		return dirty;
 	}
 }

@@ -2,17 +2,20 @@ package solim.reactive;
 
 import arc.util.Log;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import arc.func.Cons;
 import arc.func.Prov;
+import solim.core.DebugReactiveNode;
 import solim.core.Disposable;
 import solim.core.DisposableOwner;
 import solim.core.ReactiveObserver;
 import solim.core.ReactiveSource;
 import solim.core.SchedulableEffect;
 import solim.core.OwnershipContext;
+import solim.runtime.DebugReactiveContext;
 import solim.runtime.OwnershipScope;
 import solim.runtime.ReactiveContext;
 import solim.runtime.SignalDispatcher;
@@ -23,7 +26,8 @@ import solim.runtime.SignalDispatcher;
  * It propagates to whoever triggered the run (the caller of {@code Effect.of}, or the
  * dispatcher flush) so a broken binding fails loudly instead of silently going dead.
  */
-public final class Effect implements ReactiveObserver, DisposableOwner, SchedulableEffect {
+public final class Effect implements ReactiveObserver, DisposableOwner, SchedulableEffect,
+		DebugReactiveNode {
 
 	public interface Cleanup {
 		void add(Runnable runnable);
@@ -95,6 +99,10 @@ public final class Effect implements ReactiveObserver, DisposableOwner, Schedula
 	private static Effect create(Runnable runnable, Prov<Runnable> Prov, Cons<Cleanup> cleanupConsumer) {
 		Effect effect = new Effect(runnable, Prov, cleanupConsumer);
 		OwnershipContext.register(effect);
+		ReactiveContext context = ReactiveContext.instance();
+		if (context instanceof DebugReactiveContext) {
+			((DebugReactiveContext) context).observeEffect(effect);
+		}
 		effect.runEffect();
 		return effect;
 	}
@@ -112,6 +120,8 @@ public final class Effect implements ReactiveObserver, DisposableOwner, Schedula
 		newDeps.clear();
 		collecting = newDeps;
 		ReactiveContext.push(this);
+		ReactiveContext.effectStart(this);
+		long startNs = System.nanoTime();
 		// The effect body runs at flush time when no component owns it, so resources it
 		// creates would otherwise leak. The scope adopts them into this effect; they are
 		// released with the effect, not before the next run — a re-running effect may own
@@ -129,10 +139,13 @@ public final class Effect implements ReactiveObserver, DisposableOwner, Schedula
 			}
 			scope.adoptInto(this);
 		} finally {
+			long durationNs = System.nanoTime() - startNs;
+			ReactiveContext.effectEnd(this);
 			ReactiveContext.pop();
 			collecting = null;
 			running = false;
 			scope.close();
+			recordDebugRun(durationNs);
 		}
 		if (returned != null) {
 			cleanups.add(returned);
@@ -168,6 +181,14 @@ public final class Effect implements ReactiveObserver, DisposableOwner, Schedula
 			} catch (Throwable e) {
 				Log.err("[Effect] cleanup error", e);
 			}
+		}
+	}
+
+	/** Feeds the measured body duration to the installed debug context, if any. */
+	private void recordDebugRun(long durationNs) {
+		ReactiveContext context = ReactiveContext.instance();
+		if (context instanceof DebugReactiveContext) {
+			((DebugReactiveContext) context).recordEffectRun(this, durationNs);
 		}
 	}
 
@@ -246,6 +267,39 @@ public final class Effect implements ReactiveObserver, DisposableOwner, Schedula
 	// For tests
 	int dependencyCount() {
 		return dependencies.size();
+	}
+
+	// --- debug introspection (solim-runtime profiling) --------------------------------------------
+
+	@Override
+	public String debugLabel() {
+		return "Effect";
+	}
+
+	@Override
+	public String debugValue() {
+		return "deps=" + dependencies.size();
+	}
+
+	@Override
+	public List<ReactiveSource> debugDependencies() {
+		return Collections.unmodifiableList(new ArrayList<>(dependencies));
+	}
+
+	/** An effect is a leaf sink, so nothing observes it. */
+	@Override
+	public List<ReactiveObserver> debugObservers() {
+		return Collections.emptyList();
+	}
+
+	@Override
+	public int debugListenerCount() {
+		return 0;
+	}
+
+	@Override
+	public boolean debugDirty() {
+		return pending;
 	}
 
 	private class CleanupImpl implements Cleanup {

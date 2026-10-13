@@ -258,6 +258,25 @@ public class AttachmentStack {
 		INSTANCE.doSetTracingEnabled(enabled);
 	}
 
+	/**
+	 * Opens a named span on the shared trace timeline, nested under whatever span is currently
+	 * open. Used by reactive operations ({@code signal}, {@code computed}, {@code effect},
+	 * {@code flush}) so they interleave with component {@code build} spans in one hierarchy.
+	 *
+	 * <p>A no-op on the base stack, and a no-op even on the debug stack while tracing is disabled.
+	 */
+	public static void beginSpan(@Nullable String name, @Nullable String phase) {
+		INSTANCE.doBeginSpan(name, phase);
+	}
+
+	/**
+	 * Closes the innermost span opened by {@link #beginSpan(String, String)}. Callers must pair
+	 * every begin with exactly one end, including on exceptional paths.
+	 */
+	public static void endSpan() {
+		INSTANCE.doEndSpan();
+	}
+
 	protected void doSetCellConfigurator(@Nullable CellConfigurator configurator) {
 		this.cellConfigurator = configurator;
 	}
@@ -485,5 +504,11 @@ public class AttachmentStack {
 	}
 
 	protected void doSetTracingEnabled(boolean enabled) {
+	}
+
+	protected void doBeginSpan(@Nullable String name, @Nullable String phase) {
+	}
+
+	protected void doEndSpan() {
 	}
 }

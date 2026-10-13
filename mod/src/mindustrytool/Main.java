@@ -57,6 +57,7 @@ import mindustrytool.services.auth.MindustryAuthProvider;
 import mindustrytool.services.crash.CrashReportService;
 import mindustrytool.services.update.UpdateService;
 import solim.display.video.SolimVideo;
+import solim.performance.Perf;
 
 public class Main extends Mod {
     public static LoadedMod self;
@@ -69,6 +70,10 @@ public class Main extends Mod {
 
     @Override
     public void init() {
+        // Before any feature registration: Perf's debug context attributes signals to whichever
+        // component is building, so it must be installed before features construct their UI.
+        Perf.init();
+
         self = Vars.mods.getMod(Main.class);
 
         if (self == null) {

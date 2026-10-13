@@ -143,6 +143,30 @@ public abstract class Component implements DisposableOwner {
     }
 
     /**
+     * Returns this component's non-component resources — reactive nodes ({@code Computed},
+     * {@code Effect}, {@code Binding}), listeners, and other {@link Disposable} leaves — in
+     * registration order. Child components are excluded because they are exposed by
+     * {@link #children()}.
+     *
+     * <p>Debug introspection uses this to discover which reactive nodes a component owns so the
+     * profiler can walk their dependency graphs.
+     */
+    public List<Disposable> disposables() {
+        return Collections.unmodifiableList(disposables);
+    }
+
+    /**
+     * Returns the underlying Arc element only if {@link #element()} has already built it, or
+     * {@code null} for a lazy component that has not been built yet.
+     *
+     * <p>Unlike {@link #element()}, this never triggers a build. Debug introspection uses it to
+     * report layout bounds without mutating the tree it is observing.
+     */
+    public @Nullable Element peekElement() {
+        return cached;
+    }
+
+    /**
      * Applies the inherited naming rules to an element this component just gained.
      */
     private void applyDefaultName(Element element) {
