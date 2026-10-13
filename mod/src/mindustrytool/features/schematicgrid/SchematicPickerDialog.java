@@ -15,8 +15,6 @@ import mindustry.game.Schematic;
 import mindustry.gen.Icon;
 import mindustrytool.components.WebStyles;
 import solim.core.Component;
-import solim.core.Component;
-import solim.core.Disposable;
 import solim.layout.Scroll;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
@@ -24,7 +22,8 @@ import solim.reactive.Readable;
 import solim.reactive.Signal;
 
 /**
- * Solim picker for local schematics with search, tag filtering, and preview cards.
+ * Solim picker for local schematics with search, tag filtering, and preview
+ * cards.
  */
 public class SchematicPickerDialog extends SolimDialog {
 
@@ -58,8 +57,8 @@ public class SchematicPickerDialog extends SolimDialog {
             return Math.max(0, total - shownCount);
         });
 
-        Disposable searchSub = registerDisposable(searchQuery.subscribe(query -> resetBatch()));
-        Disposable tagSub = registerDisposable(selectedTag.subscribe(tag -> resetBatch()));
+        registerDisposable(searchQuery.subscribe(query -> resetBatch()));
+        registerDisposable(selectedTag.subscribe(tag -> resetBatch()));
 
         Computed<Float> viewportWidth = dvw(100f);
         Readable<Boolean> portrait = isPortrait();
@@ -258,8 +257,10 @@ public class SchematicPickerDialog extends SolimDialog {
     }
 
     /**
-     * Schematic card showing preview thumbnail, title, dimensions, and selection callback.
-     * Shows a lightweight placeholder while the preview texture is generated through
+     * Schematic card showing preview thumbnail, title, dimensions, and selection
+     * callback.
+     * Shows a lightweight placeholder while the preview texture is generated
+     * through
      * a throttled queue (at most 2 FrameBuffers per frame) to keep 60 FPS.
      */
     public static class SchematicPickerCard extends Component {
@@ -305,20 +306,20 @@ public class SchematicPickerDialog extends SolimDialog {
                                                     schematic, Readable.of(unit(42f)), unit(42f));
                                         }))
                                 .elseDo(() -> card(WebStyles.previewCardBackground())
-                                    .growX()
-                                    .height(unit(42f))
-                                    .onClick(onClick)
-                                    .tooltip(title)
-                                    .children(() -> {
-                                        column().grow().center().gap(unit(1f)).children(() -> {
-                                            icon(Icon.image).size(unit(6f)).color(Color.lightGray);
-                                            text(Core.bundle.get(
-                                                    "feature.quick-schematic-grid.picker.preview-generating"))
-                                                    .color(Color.lightGray)
-                                                    .fontScale(0.8f)
-                                                    .center();
-                                        });
-                                    }));
+                                        .growX()
+                                        .height(unit(42f))
+                                        .onClick(onClick)
+                                        .tooltip(title)
+                                        .children(() -> {
+                                            column().grow().center().gap(unit(1f)).children(() -> {
+                                                icon(Icon.image).size(unit(6f)).color(Color.lightGray);
+                                                text(Core.bundle.get(
+                                                        "feature.quick-schematic-grid.picker.preview-generating"))
+                                                        .color(Color.lightGray)
+                                                        .fontScale(0.8f)
+                                                        .center();
+                                            });
+                                        }));
 
                         text(title)
                                 .growX()

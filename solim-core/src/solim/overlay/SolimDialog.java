@@ -3,7 +3,6 @@ package solim.overlay;
 import arc.graphics.Color;
 import arc.Core;
 import solim.reactive.Readable;
-import arc.Events;
 import arc.func.Cons;
 import arc.func.Func;
 import arc.scene.Element;
@@ -11,17 +10,12 @@ import arc.scene.Scene;
 import arc.scene.style.Drawable;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
-import arc.util.Log;
 import arc.util.Nullable;
 import mindustry.ui.dialogs.BaseDialog;
 
-import java.util.ArrayList;
-import java.util.List;
 import arc.func.Prov;
 import solim.core.Component;
-import solim.core.Component;
 import solim.core.Disposable;
-import solim.core.DisposableAction;
 import solim.graphics.RoundedDrawable;
 import solim.modifier.RoundedHelper;
 import solim.runtime.AttachmentStack;
@@ -141,8 +135,11 @@ public class SolimDialog extends Component {
     /**
      * Registers a resource with this dialog's lifecycle.
      *
-     * <p>The dialog inherits ownership from {@link Component}; this stays as the public entry
-     * point because application code is not permitted to call {@code own(...)} directly, and a
+     * <p>
+     * The dialog inherits ownership from {@link Component}; this stays as the
+     * public entry
+     * point because application code is not permitted to call {@code own(...)}
+     * directly, and a
      * subscription a dialog created is the dialog's to dispose.
      */
     public <T extends Disposable> T registerDisposable(T disposable) {
@@ -208,7 +205,6 @@ public class SolimDialog extends Component {
     public Table buttons() {
         return wrapped.buttons;
     }
-
 
     public SolimDialog name(String name) {
         this.name = name;
@@ -282,7 +278,6 @@ public class SolimDialog extends Component {
         }
         return isShown;
     }
-
 
     public SolimDialog rounded(int radius) {
         RoundedHelper.getOrCreateRounded(wrapped.cont, radius);

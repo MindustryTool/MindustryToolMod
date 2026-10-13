@@ -10,7 +10,6 @@ import mindustrytool.components.SettingKeybindCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.WebStyles;
 import solim.core.Component;
-import solim.core.Component;
 
 /**
  * Settings view for Map Rules feature.

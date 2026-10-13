@@ -27,7 +27,6 @@ import mindustrytool.models.response.SchematicDetailData;
 import mindustrytool.models.response.SchematicDetailData.SchematicRequirement;
 import mindustrytool.services.MindustryTool;
 import solim.core.Component;
-import solim.core.Component;
 import solim.overlay.SolimDialog;
 import solim.reactive.Query;
 import solim.reactive.QueryKey;

@@ -16,7 +16,6 @@ import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.autoplay.tasks.AutoplayTask;
 import solim.core.Component;
-import solim.core.Component;
 import solim.layout.Direction;
 import solim.reactive.Readable;
 import solim.reactive.Signal;

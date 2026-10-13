@@ -3,7 +3,6 @@ import solim.modifier.CellConfig;
 
 import arc.Core;
 import arc.graphics.Color;
-import arc.scene.Element;
 import arc.scene.style.Drawable;
 import arc.scene.ui.Image;
 import arc.util.Nullable;
@@ -13,7 +12,6 @@ import solim.display.SolimImage;
 import solim.modifier.ElementConfig;
 import solim.reactive.Readable;
 import solim.modifier.PendingCellConfig;
-import solim.core.OwnershipContext;
 
 /**
  * Divider line supporting horizontal (X) and vertical (Y) directions. Uses an

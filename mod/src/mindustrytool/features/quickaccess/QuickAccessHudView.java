@@ -17,7 +17,6 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.settings.FeatureSettingDialog;
 import solim.core.Component;
-import solim.core.Component;
 import solim.layout.Direction;
 import solim.overlay.Hud;
 import solim.overlay.SolimDialog;

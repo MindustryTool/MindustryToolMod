@@ -16,8 +16,6 @@ import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import arc.util.Scaling;
 import arc.util.Time;
-import java.util.ArrayList;
-import java.util.List;
 import mindustry.gen.Icon;
 import solim.core.Component;
 import solim.core.Disposable;

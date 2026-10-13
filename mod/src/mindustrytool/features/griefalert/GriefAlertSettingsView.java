@@ -17,7 +17,6 @@ import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import solim.core.Component;
-import solim.core.Component;
 
 public class GriefAlertSettingsView extends Component {
     private final GriefAlertFeature feature;
@@ -45,51 +44,56 @@ public class GriefAlertSettingsView extends Component {
     }
 
     private Component generalCard() {
-        return SettingCard.section(Icon.settings, Core.bundle.get("feature.grief-alert.settings.section.general"), () -> {
-            SettingSlider.of(
-                    Core.bundle.get("feature.grief-alert.settings.radius"),
-                    feature.radiusConfig.signal(),
-                    1f,
-                    30f,
-                    1f,
-                    feature.radiusConfig.signal().map(v -> String.format("%.0f tiles", v != null ? v : GriefAlertFeature.DEFAULT_RADIUS))
-            );
+        return SettingCard.section(Icon.settings, Core.bundle.get("feature.grief-alert.settings.section.general"),
+                () -> {
+                    SettingSlider.of(
+                            Core.bundle.get("feature.grief-alert.settings.radius"),
+                            feature.radiusConfig.signal(),
+                            1f,
+                            30f,
+                            1f,
+                            feature.radiusConfig.signal().map(v -> String.format("%.0f tiles",
+                                    v != null ? v : GriefAlertFeature.DEFAULT_RADIUS)));
 
-            SettingSlider.of(
-                    Core.bundle.get("feature.grief-alert.settings.duration"),
-                    feature.durationConfig.signal(),
-                    5f,
-                    30f,
-                    1f,
-                    feature.durationConfig.signal().map(v -> Core.bundle.format("feature.grief-alert.settings.seconds", Math.round(v != null ? v : GriefAlertFeature.DEFAULT_DURATION)))
-            );
-        });
+                    SettingSlider.of(
+                            Core.bundle.get("feature.grief-alert.settings.duration"),
+                            feature.durationConfig.signal(),
+                            5f,
+                            30f,
+                            1f,
+                            feature.durationConfig.signal()
+                                    .map(v -> Core.bundle.format("feature.grief-alert.settings.seconds",
+                                            Math.round(v != null ? v : GriefAlertFeature.DEFAULT_DURATION))));
+                });
     }
 
     private Component monitoredBlocksCard() {
-        return SettingCard.section(Icon.warning, Core.bundle.get("feature.grief-alert.settings.monitored-blocks"), () -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                text(Core.bundle.get("feature.grief-alert.settings.monitored-blocks")).left();
-                spacer();
-                row().gap(unit(1)).children(() -> {
-                    button(Core.bundle.get("feature.grief-alert.settings.all"), () -> feature.setAllBlocksEnabled(true))
-                            .style(WebStyles.outlineText())
-                            .height(unit(8))
-                            .padding(unit(1), unit(2.5f), unit(1), unit(2.5f));
+        return SettingCard.section(Icon.warning, Core.bundle.get("feature.grief-alert.settings.monitored-blocks"),
+                () -> {
+                    row().growX().gap(unit(2)).center().children(() -> {
+                        text(Core.bundle.get("feature.grief-alert.settings.monitored-blocks")).left();
+                        spacer();
+                        row().gap(unit(1)).children(() -> {
+                            button(Core.bundle.get("feature.grief-alert.settings.all"),
+                                    () -> feature.setAllBlocksEnabled(true))
+                                    .style(WebStyles.outlineText())
+                                    .height(unit(8))
+                                    .padding(unit(1), unit(2.5f), unit(1), unit(2.5f));
 
-                    button(Core.bundle.get("feature.grief-alert.settings.none"), () -> feature.setAllBlocksEnabled(false))
-                            .style(WebStyles.ghostText())
-                            .height(unit(8))
-                            .padding(unit(1), unit(2.5f), unit(1), unit(2.5f));
+                            button(Core.bundle.get("feature.grief-alert.settings.none"),
+                                    () -> feature.setAllBlocksEnabled(false))
+                                    .style(WebStyles.ghostText())
+                                    .height(unit(8))
+                                    .padding(unit(1), unit(2.5f), unit(1), unit(2.5f));
+                        });
+                    });
+
+                    divider().color(WebStyles.Colors.SECTION_BORDER);
+
+                    for (Block block : feature.explosiveBlocks()) {
+                        blockRow(block);
+                    }
                 });
-            });
-
-            divider().color(WebStyles.Colors.SECTION_BORDER);
-
-            for (Block block : feature.explosiveBlocks()) {
-                blockRow(block);
-            }
-        });
     }
 
     private void blockRow(Block block) {

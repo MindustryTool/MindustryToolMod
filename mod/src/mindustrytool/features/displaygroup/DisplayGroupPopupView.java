@@ -11,7 +11,6 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import solim.core.Component;
-import solim.core.Component;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 

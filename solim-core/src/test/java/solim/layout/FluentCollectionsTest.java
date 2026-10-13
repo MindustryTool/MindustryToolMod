@@ -21,7 +21,6 @@ import arc.func.Func2;
 import arc.func.Prov;
 import arc.scene.Element;
 import solim.core.Component;
-import solim.core.Component;
 import solim.reactive.ForEach;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -614,4 +613,3 @@ class FluentCollectionsTest extends SolimEnv {
         fe.dispose();
     }
 }
-

@@ -15,7 +15,6 @@ import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import solim.core.Component;
-import solim.core.Component;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
@@ -42,133 +41,131 @@ public class QuickSchematicGridSettingsView extends Component {
     }
 
     private Component layoutCard() {
-        return SettingCard.section(Icon.settings, Core.bundle.get("team-resources.settings.section.layout", "Layout"), () -> {
-            // Display Mode (HUD vs Popup)
-            row().growX().gap(unit(2)).center().children(() -> {
-                text(Core.bundle.get("feature.quick-schematic-grid.settings.display-mode"))
-                        .color(Color.white)
-                        .left();
+        return SettingCard.section(Icon.settings, Core.bundle.get("team-resources.settings.section.layout", "Layout"),
+                () -> {
+                    // Display Mode (HUD vs Popup)
+                    row().growX().gap(unit(2)).center().children(() -> {
+                        text(Core.bundle.get("feature.quick-schematic-grid.settings.display-mode"))
+                                .color(Color.white)
+                                .left();
 
-                spacer();
-                row().gap(unit(1.5f)).children(() -> {
-                    button(Core.bundle.get("feature.quick-schematic-grid.settings.display-mode.hud"),
-                            () -> feature.displayModeConfig.set(QuickSchematicGridFeature.DISPLAY_HUD))
-                            .style(WebStyles.filterChipText())
-                            .checked(feature.displayModeConfig.signal()
-                                    .map(QuickSchematicGridFeature.DISPLAY_HUD::equals))
-                            .height(unit(8))
-                            .paddingX(unit(2.5f));
+                        spacer();
+                        row().gap(unit(1.5f)).children(() -> {
+                            button(Core.bundle.get("feature.quick-schematic-grid.settings.display-mode.hud"),
+                                    () -> feature.displayModeConfig.set(QuickSchematicGridFeature.DISPLAY_HUD))
+                                    .style(WebStyles.filterChipText())
+                                    .checked(feature.displayModeConfig.signal()
+                                            .map(QuickSchematicGridFeature.DISPLAY_HUD::equals))
+                                    .height(unit(8))
+                                    .paddingX(unit(2.5f));
 
-                    button(Core.bundle.get("feature.quick-schematic-grid.settings.display-mode.popup"),
-                            () -> feature.displayModeConfig.set(QuickSchematicGridFeature.DISPLAY_POPUP))
-                            .style(WebStyles.filterChipText())
-                            .checked(feature.displayModeConfig.signal()
-                                    .map(QuickSchematicGridFeature.DISPLAY_POPUP::equals))
-                            .height(unit(8))
-                            .paddingX(unit(2.5f));
+                            button(Core.bundle.get("feature.quick-schematic-grid.settings.display-mode.popup"),
+                                    () -> feature.displayModeConfig.set(QuickSchematicGridFeature.DISPLAY_POPUP))
+                                    .style(WebStyles.filterChipText())
+                                    .checked(feature.displayModeConfig.signal()
+                                            .map(QuickSchematicGridFeature.DISPLAY_POPUP::equals))
+                                    .height(unit(8))
+                                    .paddingX(unit(2.5f));
+                        });
+                    });
+
+                    divider().color(WebStyles.Colors.SECTION_BORDER);
+
+                    // Rows Slider
+                    SettingSlider.of(
+                            Core.bundle.get("feature.quick-schematic-grid.settings.rows"),
+                            feature.rowsConfig.signal(),
+                            QuickSchematicGridFeature.MIN_ROWS,
+                            QuickSchematicGridFeature.MAX_ROWS,
+                            1,
+                            feature.rowsConfig.signal().map(String::valueOf));
+
+                    // Columns Slider
+                    SettingSlider.of(
+                            Core.bundle.get("feature.quick-schematic-grid.settings.cols"),
+                            feature.colsConfig.signal(),
+                            QuickSchematicGridFeature.MIN_COLS,
+                            QuickSchematicGridFeature.MAX_COLS,
+                            1,
+                            feature.colsConfig.signal().map(String::valueOf));
+
+                    // Button Size Slider
+                    SettingSlider.of(
+                            Core.bundle.get("feature.quick-schematic-grid.settings.button-size"),
+                            feature.buttonSizeConfig.signal(),
+                            32f,
+                            72f,
+                            4f,
+                            feature.buttonSizeConfig.signal()
+                                    .map(v -> String.valueOf(Math.round(v != null ? v : 48f))));
+
+                    // Button Gap Slider
+                    SettingSlider.of(
+                            Core.bundle.get("feature.quick-schematic-grid.settings.button-gap"),
+                            feature.buttonGapConfig.signal(),
+                            QuickSchematicGridFeature.MIN_GAP,
+                            QuickSchematicGridFeature.MAX_GAP,
+                            1f,
+                            feature.buttonGapConfig.signal().map(v -> String.valueOf(Math.round(v != null ? v : 4f))));
+
+                    // Button Opacity Slider
+                    SettingSlider.of(
+                            Core.bundle.get("feature.quick-schematic-grid.settings.button-opacity"),
+                            feature.buttonOpacityConfig.signal(),
+                            QuickSchematicGridFeature.MIN_BUTTON_OPACITY,
+                            QuickSchematicGridFeature.MAX_BUTTON_OPACITY,
+                            0.05f,
+                            feature.buttonOpacityConfig.signal()
+                                    .map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100)));
+
+                    divider().color(WebStyles.Colors.SECTION_BORDER);
+
+                    // Page Position (Left, Right, Top, Bottom)
+                    column().growX().gap(unit(1.5f)).left().children(() -> {
+                        text(Core.bundle.get("feature.quick-schematic-grid.settings.page-position"))
+                                .color(Color.white)
+                                .left();
+
+                        row().gap(unit(1.5f)).children(() -> {
+                            button(Core.bundle.get("feature.quick-schematic-grid.settings.page-position.left"),
+                                    () -> feature.pagePositionConfig.set(QuickSchematicGridFeature.PAGE_LEFT))
+                                    .style(WebStyles.filterChipText())
+                                    .checked(feature.pagePositionConfig.signal()
+                                            .map(QuickSchematicGridFeature.PAGE_LEFT::equals))
+                                    .height(unit(8))
+                                    .paddingX(unit(2f));
+
+                            button(Core.bundle.get("feature.quick-schematic-grid.settings.page-position.right"),
+                                    () -> feature.pagePositionConfig.set(QuickSchematicGridFeature.PAGE_RIGHT))
+                                    .style(WebStyles.filterChipText())
+                                    .checked(feature.pagePositionConfig.signal()
+                                            .map(QuickSchematicGridFeature.PAGE_RIGHT::equals))
+                                    .height(unit(8))
+                                    .paddingX(unit(2f));
+
+                            button(Core.bundle.get("feature.quick-schematic-grid.settings.page-position.top"),
+                                    () -> feature.pagePositionConfig.set(QuickSchematicGridFeature.PAGE_TOP))
+                                    .style(WebStyles.filterChipText())
+                                    .checked(feature.pagePositionConfig.signal()
+                                            .map(QuickSchematicGridFeature.PAGE_TOP::equals))
+                                    .height(unit(8))
+                                    .paddingX(unit(2f));
+
+                            button(Core.bundle.get("feature.quick-schematic-grid.settings.page-position.bottom"),
+                                    () -> feature.pagePositionConfig.set(QuickSchematicGridFeature.PAGE_BOTTOM))
+                                    .style(WebStyles.filterChipText())
+                                    .checked(feature.pagePositionConfig.signal()
+                                            .map(QuickSchematicGridFeature.PAGE_BOTTOM::equals))
+                                    .height(unit(8))
+                                    .paddingX(unit(2f));
+                        });
+                    });
+
+                    divider().color(WebStyles.Colors.SECTION_BORDER);
+
+                    checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle"),
+                            feature.hideDragHandleConfig.signal()).growX();
                 });
-            });
-
-            divider().color(WebStyles.Colors.SECTION_BORDER);
-
-            // Rows Slider
-            SettingSlider.of(
-                    Core.bundle.get("feature.quick-schematic-grid.settings.rows"),
-                    feature.rowsConfig.signal(),
-                    QuickSchematicGridFeature.MIN_ROWS,
-                    QuickSchematicGridFeature.MAX_ROWS,
-                    1,
-                    feature.rowsConfig.signal().map(String::valueOf)
-            );
-
-            // Columns Slider
-            SettingSlider.of(
-                    Core.bundle.get("feature.quick-schematic-grid.settings.cols"),
-                    feature.colsConfig.signal(),
-                    QuickSchematicGridFeature.MIN_COLS,
-                    QuickSchematicGridFeature.MAX_COLS,
-                    1,
-                    feature.colsConfig.signal().map(String::valueOf)
-            );
-
-            // Button Size Slider
-            SettingSlider.of(
-                    Core.bundle.get("feature.quick-schematic-grid.settings.button-size"),
-                    feature.buttonSizeConfig.signal(),
-                    32f,
-                    72f,
-                    4f,
-                    feature.buttonSizeConfig.signal().map(v -> String.valueOf(Math.round(v != null ? v : 48f)))
-            );
-
-            // Button Gap Slider
-            SettingSlider.of(
-                    Core.bundle.get("feature.quick-schematic-grid.settings.button-gap"),
-                    feature.buttonGapConfig.signal(),
-                    QuickSchematicGridFeature.MIN_GAP,
-                    QuickSchematicGridFeature.MAX_GAP,
-                    1f,
-                    feature.buttonGapConfig.signal().map(v -> String.valueOf(Math.round(v != null ? v : 4f)))
-            );
-
-            // Button Opacity Slider
-            SettingSlider.of(
-                    Core.bundle.get("feature.quick-schematic-grid.settings.button-opacity"),
-                    feature.buttonOpacityConfig.signal(),
-                    QuickSchematicGridFeature.MIN_BUTTON_OPACITY,
-                    QuickSchematicGridFeature.MAX_BUTTON_OPACITY,
-                    0.05f,
-                    feature.buttonOpacityConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100))
-            );
-
-            divider().color(WebStyles.Colors.SECTION_BORDER);
-
-            // Page Position (Left, Right, Top, Bottom)
-            column().growX().gap(unit(1.5f)).left().children(() -> {
-                text(Core.bundle.get("feature.quick-schematic-grid.settings.page-position"))
-                        .color(Color.white)
-                        .left();
-
-                row().gap(unit(1.5f)).children(() -> {
-                    button(Core.bundle.get("feature.quick-schematic-grid.settings.page-position.left"),
-                            () -> feature.pagePositionConfig.set(QuickSchematicGridFeature.PAGE_LEFT))
-                            .style(WebStyles.filterChipText())
-                            .checked(feature.pagePositionConfig.signal()
-                                    .map(QuickSchematicGridFeature.PAGE_LEFT::equals))
-                            .height(unit(8))
-                            .paddingX(unit(2f));
-
-                    button(Core.bundle.get("feature.quick-schematic-grid.settings.page-position.right"),
-                            () -> feature.pagePositionConfig.set(QuickSchematicGridFeature.PAGE_RIGHT))
-                            .style(WebStyles.filterChipText())
-                            .checked(feature.pagePositionConfig.signal()
-                                    .map(QuickSchematicGridFeature.PAGE_RIGHT::equals))
-                            .height(unit(8))
-                            .paddingX(unit(2f));
-
-                    button(Core.bundle.get("feature.quick-schematic-grid.settings.page-position.top"),
-                            () -> feature.pagePositionConfig.set(QuickSchematicGridFeature.PAGE_TOP))
-                            .style(WebStyles.filterChipText())
-                            .checked(feature.pagePositionConfig.signal()
-                                    .map(QuickSchematicGridFeature.PAGE_TOP::equals))
-                            .height(unit(8))
-                            .paddingX(unit(2f));
-
-                    button(Core.bundle.get("feature.quick-schematic-grid.settings.page-position.bottom"),
-                            () -> feature.pagePositionConfig.set(QuickSchematicGridFeature.PAGE_BOTTOM))
-                            .style(WebStyles.filterChipText())
-                            .checked(feature.pagePositionConfig.signal()
-                                    .map(QuickSchematicGridFeature.PAGE_BOTTOM::equals))
-                            .height(unit(8))
-                            .paddingX(unit(2f));
-                });
-            });
-
-            divider().color(WebStyles.Colors.SECTION_BORDER);
-
-            checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle"),
-                    feature.hideDragHandleConfig.signal()).growX();
-        });
     }
 
     private Component pagesCard() {

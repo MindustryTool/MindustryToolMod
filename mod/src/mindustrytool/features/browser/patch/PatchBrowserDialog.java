@@ -22,7 +22,6 @@ import mindustrytool.features.browser.common.BrowserState;
 import mindustrytool.models.response.ContentPatchData;
 import mindustrytool.services.MindustryTool;
 import solim.core.Component;
-import solim.core.Component;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
 import solim.reactive.Signal;

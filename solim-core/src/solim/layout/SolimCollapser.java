@@ -1,14 +1,10 @@
 package solim.layout;
 
-import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Collapser;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
-import java.util.ArrayList;
-import java.util.List;
 import solim.core.Component;
-import solim.core.Disposable;
 import solim.core.SolimToken;
 import solim.modifier.CellConfig;
 import solim.modifier.ElementConfig;

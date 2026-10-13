@@ -9,7 +9,6 @@ import arc.scene.ui.Tooltip;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
-import solim.core.Component;
 import solim.overlay.Hud;
 import solim.reactive.Effect;
 import solim.reactive.Readable;

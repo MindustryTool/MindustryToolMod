@@ -17,7 +17,6 @@ import mindustry.ui.Styles;
 import mindustrytool.components.WebStyles;
 import mindustrytool.components.FileIcon;
 import solim.core.Component;
-import solim.core.Component;
 import solim.layout.Direction;
 import solim.overlay.Hud;
 import solim.overlay.SolimDialog;

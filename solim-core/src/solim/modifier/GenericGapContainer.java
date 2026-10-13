@@ -1,6 +1,5 @@
 package solim.modifier;
 
-import arc.scene.Element;
 import arc.scene.ui.layout.Table;
 import solim.core.Component;
 import solim.core.SolimToken;

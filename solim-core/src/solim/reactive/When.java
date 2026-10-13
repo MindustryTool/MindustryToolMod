@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import solim.core.Component;
-import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.SolimToken;
 import solim.layout.GapContainer;
@@ -24,15 +23,20 @@ import solim.runtime.ReactiveContext;
  * Structural reactive component for boolean conditional rendering with a
  * fluent chaining API.
  *
- * <p>Declare branches with {@link #thenDo(Runnable)} and {@link #elseDo(Runnable)}.
+ * <p>
+ * Declare branches with {@link #thenDo(Runnable)} and
+ * {@link #elseDo(Runnable)}.
  * Both accept void runnables that create components declaratively without
  * returning a value. When the condition is {@code true} the then-branch mounts;
  * otherwise the else-branch mounts. A branch that creates nothing collapses,
- * exactly like {@link Dynamic} with an empty void factory.</p>
+ * exactly like {@link Dynamic} with an empty void factory.
+ * </p>
  *
- * <p>Branch actions should be chained before the first mount for efficiency,
+ * <p>
+ * Branch actions should be chained before the first mount for efficiency,
  * but may also be updated after mounting: a post-mount update remounts the
- * current condition value immediately.</p>
+ * current condition value immediately.
+ * </p>
  */
 public final class When extends Component
         implements CellConfig<When>, TableConfig<When>, ElementConfig<When> {

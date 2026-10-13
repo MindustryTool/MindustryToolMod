@@ -32,7 +32,6 @@ import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import solim.config.ConfigValue;
 import solim.core.Component;
-import solim.core.Component;
 import solim.reactive.Computed;
 import solim.reactive.Readable;
 import solim.reactive.Signal;

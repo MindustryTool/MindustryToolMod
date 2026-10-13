@@ -12,7 +12,6 @@ import mindustry.ui.FileChooser;
 import mindustrytool.components.SettingCard;
 import mindustrytool.components.WebStyles;
 import solim.core.Component;
-import solim.core.Component;
 import solim.reactive.Readable;
 
 /**
@@ -33,7 +32,8 @@ public class MusicSettingsView extends Component {
                 ? Core.bundle.get("feature.music.now-playing.none")
                 : Core.bundle.format("feature.music.now-playing", music.file.nameWithoutExtension()));
 
-        // Granted wider-viewport exception (unify-remaining-settings-ui): dense track grids need up to 750f.
+        // Granted wider-viewport exception (unify-remaining-settings-ui): dense track
+        // grids need up to 750f.
         return column().grow().top().center().maxWidth(750f).children(() -> {
             scroll().grow().scrollX(false).children(() -> {
                 column().growX().top().center().gap(unit(3)).padding(unit(2)).children(() -> {
@@ -65,7 +65,7 @@ public class MusicSettingsView extends Component {
                         .onClick(() -> openPicker(type))
                         .children(() -> icon(Icon.add).size(unit(6)));
 
-                //slot types (menu/editor) have no original rotation to disable
+                // slot types (menu/editor) have no original rotation to disable
                 if (!type.isSlot()) {
                     button()
                             .style(WebStyles.ghost())
@@ -135,9 +135,9 @@ public class MusicSettingsView extends Component {
                                     .thenDo(() -> stack().growX()
                                             .layer(() -> divider().color(Color.white).growX().height(4))
                                             .layer(parent -> divider().color(Color.green).height(4).update(div -> {
-                                                    div.setWidth(state.music.getPosition() / state.music.getLength()
-                                                            * parent.getWidth());
-                                                })))
+                                                div.setWidth(state.music.getPosition() / state.music.getLength()
+                                                        * parent.getWidth());
+                                            })))
                                     .growX();
                         });
 

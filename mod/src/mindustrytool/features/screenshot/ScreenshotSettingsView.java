@@ -14,7 +14,6 @@ import mindustrytool.components.SettingKeybindCard;
 import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.WebStyles;
 import solim.core.Component;
-import solim.core.Component;
 
 /**
  * Modern declarative Solim settings view for screenshot capture options.
@@ -46,16 +45,17 @@ public class ScreenshotSettingsView extends Component {
     }
 
     private Component optionsCard() {
-        return SettingCard.section(Icon.settings, Core.bundle.get("feature.screenshot.settings.section.options"), () -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                text(Core.bundle.get("feature.screenshot.settings.include-ui"))
-                        .color(Color.white)
-                        .growX()
-                        .left();
-                spacer();
-                checkbox("", feature.includeUiConfig.signal());
-            });
-        });
+        return SettingCard.section(Icon.settings, Core.bundle.get("feature.screenshot.settings.section.options"),
+                () -> {
+                    row().growX().gap(unit(2)).center().children(() -> {
+                        text(Core.bundle.get("feature.screenshot.settings.include-ui"))
+                                .color(Color.white)
+                                .growX()
+                                .left();
+                        spacer();
+                        checkbox("", feature.includeUiConfig.signal());
+                    });
+                });
     }
 
     private Component actionsCard() {

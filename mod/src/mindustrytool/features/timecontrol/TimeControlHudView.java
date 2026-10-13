@@ -14,7 +14,6 @@ import mindustry.graphics.Pal;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.settings.ModSettings;
 import solim.core.Component;
-import solim.core.Component;
 import solim.input.Button;
 import solim.input.SolimSlider;
 import solim.overlay.Hud;
@@ -151,29 +150,31 @@ public class TimeControlHudView extends Component {
                     // Slider binds to the intermediate u-space position signal (single-directional:
                     // u -> speed).
 
-                    row().rounded(unit(2), WebStyles.Colors.SECONDARY_BG).border(1f, WebStyles.Colors.BORDER).height(buttonSize).center().children(() -> {
-                        SolimSlider slider = slider(feature.sliderPositionSignal(),
-                                TimeControlFeature.SLIDER_MIN_U,
-                                TimeControlFeature.SLIDER_MAX_U,
-                                TimeControlFeature.SLIDER_STEP_U);
+                    row().rounded(unit(2), WebStyles.Colors.SECONDARY_BG).border(1f, WebStyles.Colors.BORDER)
+                            .height(buttonSize).center().children(() -> {
+                                SolimSlider slider = slider(feature.sliderPositionSignal(),
+                                        TimeControlFeature.SLIDER_MIN_U,
+                                        TimeControlFeature.SLIDER_MAX_U,
+                                        TimeControlFeature.SLIDER_STEP_U);
 
-                        effect(() -> {
-                            if (canEdit != null) {
-                                Boolean editable = canEdit.get();
-                                slider.slider().setDisabled(!Boolean.TRUE.equals(editable));
-                            }
-                            Float sliderWidthValue = sliderWidth.get();
-                            slider.slider().setWidth(
-                                    sliderWidthValue != null ? sliderWidthValue : unit(70));
-                            Float sliderHeightValue = sliderHeight.get();
-                            slider.slider().setHeight(
-                                    sliderHeightValue != null ? sliderHeightValue : unit(9));
-                        });
-                    });
+                                effect(() -> {
+                                    if (canEdit != null) {
+                                        Boolean editable = canEdit.get();
+                                        slider.slider().setDisabled(!Boolean.TRUE.equals(editable));
+                                    }
+                                    Float sliderWidthValue = sliderWidth.get();
+                                    slider.slider().setWidth(
+                                            sliderWidthValue != null ? sliderWidthValue : unit(70));
+                                    Float sliderHeightValue = sliderHeight.get();
+                                    slider.slider().setHeight(
+                                            sliderHeightValue != null ? sliderHeightValue : unit(9));
+                                });
+                            });
 
-                    row().rounded(unit(2), WebStyles.Colors.SECONDARY_BG).border(1f, WebStyles.Colors.BORDER).center().height(buttonSize).width(labelWidth).children(() -> {
-                        text(label).center().fontScale(fontScale);
-                    });
+                    row().rounded(unit(2), WebStyles.Colors.SECONDARY_BG).border(1f, WebStyles.Colors.BORDER).center()
+                            .height(buttonSize).width(labelWidth).children(() -> {
+                                text(label).center().fontScale(fontScale);
+                            });
 
                     // Reset button: zeroes slider position so widget and speed land exactly on 1x.
                     Button resetBtn = button()

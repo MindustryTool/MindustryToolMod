@@ -11,7 +11,6 @@ import mindustry.ui.Styles;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import mindustrytool.features.playerconnect.models.JoinRequest;
 import solim.core.Component;
-import solim.core.Component;
 import solim.overlay.Hud;
 import solim.core.Units;
 

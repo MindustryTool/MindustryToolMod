@@ -24,7 +24,6 @@ import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.rangedisplay.RangeDisplayFeature;
 import solim.core.Component;
-import solim.core.Component;
 import solim.reactive.Signal;
 
 /**
@@ -63,130 +62,131 @@ public class RangeDisplaySettingsView extends Component {
     }
 
     private Component visualStylingCard() {
-        return SettingCard.section(Icon.image, Core.bundle.get("feature.range-display.settings.section.visual", "Visual Styling"), () -> {
-            // Opacity Slider
-            SettingSlider.of(
-                    Core.bundle.get("feature.range-display.settings.opacity"),
-                    feature.opacityConfig.signal(),
-                    0.1f,
-                    1.0f,
-                    0.05f,
-                    feature.opacityConfig.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%")
-            );
+        return SettingCard.section(Icon.image,
+                Core.bundle.get("feature.range-display.settings.section.visual", "Visual Styling"), () -> {
+                    // Opacity Slider
+                    SettingSlider.of(
+                            Core.bundle.get("feature.range-display.settings.opacity"),
+                            feature.opacityConfig.signal(),
+                            0.1f,
+                            1.0f,
+                            0.05f,
+                            feature.opacityConfig.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
 
-            // Stroke Width Slider
-            SettingSlider.of(
-                    Core.bundle.get("feature.range-display.settings.stroke-width"),
-                    feature.strokeWidthConfig.signal(),
-                    1.0f,
-                    3.0f,
-                    0.5f,
-                    feature.strokeWidthConfig.signal().map(v -> String.format(Locale.US, "%.1fx", v != null ? v : 1f))
-            );
+                    // Stroke Width Slider
+                    SettingSlider.of(
+                            Core.bundle.get("feature.range-display.settings.stroke-width"),
+                            feature.strokeWidthConfig.signal(),
+                            1.0f,
+                            3.0f,
+                            0.5f,
+                            feature.strokeWidthConfig.signal()
+                                    .map(v -> String.format(Locale.US, "%.1fx", v != null ? v : 1f)));
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            // Min Zoom Slider
-            SettingSlider.of(
-                    Core.bundle.get("feature.range-display.settings.min-zoom"),
-                    feature.zoomThresholdConfig.signal(),
-                    0.0f,
-                    5.0f,
-                    0.1f,
-                    feature.zoomThresholdConfig.signal().map(v -> {
-                        float zoom = v != null ? v : 0.5f;
-                        return zoom <= 0.01f
-                                ? Core.bundle.get("feature.range-display.settings.off", "Off")
-                                : String.format(Locale.US, "%.1fx", zoom);
-                    })
-            );
+                    // Min Zoom Slider
+                    SettingSlider.of(
+                            Core.bundle.get("feature.range-display.settings.min-zoom"),
+                            feature.zoomThresholdConfig.signal(),
+                            0.0f,
+                            5.0f,
+                            0.1f,
+                            feature.zoomThresholdConfig.signal().map(v -> {
+                                float zoom = v != null ? v : 0.5f;
+                                return zoom <= 0.01f
+                                        ? Core.bundle.get("feature.range-display.settings.off", "Off")
+                                        : String.format(Locale.US, "%.1fx", zoom);
+                            }));
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            checkbox(Core.bundle.get("feature.range-display.settings.hover-only"),
-                    feature.hoverOnlyConfig.signal()).growX();
+                    checkbox(Core.bundle.get("feature.range-display.settings.hover-only"),
+                            feature.hoverOnlyConfig.signal()).growX();
 
-            checkbox(Core.bundle.get("feature.range-display.settings.dashed"),
-                    feature.dashedConfig.signal()).growX();
-        });
+                    checkbox(Core.bundle.get("feature.range-display.settings.dashed"),
+                            feature.dashedConfig.signal()).growX();
+                });
     }
 
     private Component proximityAndFiltersCard() {
-        return SettingCard.section(Icon.filter, Core.bundle.get("feature.range-display.settings.section.filters", "Filters"), () -> {
-            checkbox(Core.bundle.get("feature.range-display.settings.proximity-filter"),
-                    feature.proximityFilterConfig.signal()).growX();
+        return SettingCard.section(Icon.filter,
+                Core.bundle.get("feature.range-display.settings.section.filters", "Filters"), () -> {
+                    checkbox(Core.bundle.get("feature.range-display.settings.proximity-filter"),
+                            feature.proximityFilterConfig.signal()).growX();
 
-            // Proximity Radius Slider
-            SettingSlider.of(
-                    Core.bundle.get("feature.range-display.settings.proximity-radius"),
-                    feature.proximityRadiusConfig.signal(),
-                    10f,
-                    60f,
-                    5f,
-                    feature.proximityRadiusConfig.signal().map(v -> Math.round(v != null ? v : 30f) + " tiles")
-            );
+                    // Proximity Radius Slider
+                    SettingSlider.of(
+                            Core.bundle.get("feature.range-display.settings.proximity-radius"),
+                            feature.proximityRadiusConfig.signal(),
+                            10f,
+                            60f,
+                            5f,
+                            feature.proximityRadiusConfig.signal()
+                                    .map(v -> Math.round(v != null ? v : 30f) + " tiles"));
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            checkbox(Core.bundle.get("feature.range-display.settings.filter-target-air"),
-                    feature.filterTargetAirConfig.signal()).growX();
+                    checkbox(Core.bundle.get("feature.range-display.settings.filter-target-air"),
+                            feature.filterTargetAirConfig.signal()).growX();
 
-            checkbox(Core.bundle.get("feature.range-display.settings.filter-target-ground"),
-                    feature.filterTargetGroundConfig.signal()).growX();
+                    checkbox(Core.bundle.get("feature.range-display.settings.filter-target-ground"),
+                            feature.filterTargetGroundConfig.signal()).growX();
 
-            checkbox(Core.bundle.get("feature.range-display.settings.only-with-ammo"),
-                    feature.onlyWithAmmoConfig.signal()).growX();
-        });
+                    checkbox(Core.bundle.get("feature.range-display.settings.only-with-ammo"),
+                            feature.onlyWithAmmoConfig.signal()).growX();
+                });
     }
 
     private Component rangeTypesCard() {
-        return SettingCard.section(Icon.layers, Core.bundle.get("feature.range-display.settings.section.types", "Range Types"), () -> {
-            checkbox(Core.bundle.get("feature.range-display.settings.draw-player-unit"),
-                    feature.drawUnitRangePlayerConfig.signal()).growX();
+        return SettingCard.section(Icon.layers,
+                Core.bundle.get("feature.range-display.settings.section.types", "Range Types"), () -> {
+                    checkbox(Core.bundle.get("feature.range-display.settings.draw-player-unit"),
+                            feature.drawUnitRangePlayerConfig.signal()).growX();
 
-            checkbox(Core.bundle.get("feature.range-display.settings.draw-ally-turrets"),
-                    feature.drawTurretRangeAllyConfig.signal()).growX();
+                    checkbox(Core.bundle.get("feature.range-display.settings.draw-ally-turrets"),
+                            feature.drawTurretRangeAllyConfig.signal()).growX();
 
-            checkbox(Core.bundle.get("feature.range-display.settings.draw-enemy-turrets"),
-                    feature.drawTurretRangeEnemyConfig.signal()).growX();
+                    checkbox(Core.bundle.get("feature.range-display.settings.draw-enemy-turrets"),
+                            feature.drawTurretRangeEnemyConfig.signal()).growX();
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            checkbox(Core.bundle.get("feature.range-display.settings.draw-ally-units"),
-                    feature.drawUnitRangeAllyConfig.signal()).growX();
+                    checkbox(Core.bundle.get("feature.range-display.settings.draw-ally-units"),
+                            feature.drawUnitRangeAllyConfig.signal()).growX();
 
-            checkbox(Core.bundle.get("feature.range-display.settings.draw-enemy-units"),
-                    feature.drawUnitRangeEnemyConfig.signal()).growX();
+                    checkbox(Core.bundle.get("feature.range-display.settings.draw-enemy-units"),
+                            feature.drawUnitRangeEnemyConfig.signal()).growX();
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            checkbox(Core.bundle.get("feature.range-display.settings.draw-ally-blocks"),
-                    feature.drawBlockRangeAllyConfig.signal()).growX();
+                    checkbox(Core.bundle.get("feature.range-display.settings.draw-ally-blocks"),
+                            feature.drawBlockRangeAllyConfig.signal()).growX();
 
-            checkbox(Core.bundle.get("feature.range-display.settings.draw-enemy-blocks"),
-                    feature.drawBlockRangeEnemyConfig.signal()).growX();
+                    checkbox(Core.bundle.get("feature.range-display.settings.draw-enemy-blocks"),
+                            feature.drawBlockRangeEnemyConfig.signal()).growX();
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            checkbox(Core.bundle.get("feature.range-display.settings.draw-spawners"),
-                    feature.drawSpawnerRangeConfig.signal()).growX();
+                    checkbox(Core.bundle.get("feature.range-display.settings.draw-spawners"),
+                            feature.drawSpawnerRangeConfig.signal()).growX();
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            checkbox(Core.bundle.get("feature.range-display.settings.draw-overdrive-range"),
-                    feature.drawOverdriveRangeConfig.signal()).growX();
+                    checkbox(Core.bundle.get("feature.range-display.settings.draw-overdrive-range"),
+                            feature.drawOverdriveRangeConfig.signal()).growX();
 
-            checkbox(Core.bundle.get("feature.range-display.settings.draw-mender-range"),
-                    feature.drawMenderRangeConfig.signal()).growX();
+                    checkbox(Core.bundle.get("feature.range-display.settings.draw-mender-range"),
+                            feature.drawMenderRangeConfig.signal()).growX();
 
-            checkbox(Core.bundle.get("feature.range-display.settings.draw-point-defense-range"),
-                    feature.drawPointDefenseRangeConfig.signal()).growX();
+                    checkbox(Core.bundle.get("feature.range-display.settings.draw-point-defense-range"),
+                            feature.drawPointDefenseRangeConfig.signal()).growX();
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            checkbox(Core.bundle.get("feature.range-display.settings.use-team-color-for-special"),
-                    feature.useTeamColorForSpecialConfig.signal()).growX();
-        });
+                    checkbox(Core.bundle.get("feature.range-display.settings.use-team-color-for-special"),
+                            feature.useTeamColorForSpecialConfig.signal()).growX();
+                });
     }
 
     private Component turretsFilterCard() {
@@ -361,9 +361,8 @@ public class RangeDisplaySettingsView extends Component {
                 .children(() -> {
                     icon(drawable)
                             .size(unit(6))
-                            .color(signal.map(enabled ->
-                                    Boolean.TRUE.equals(enabled) ? Color.white : new Color(1f, 1f, 1f, 0.35f)
-                            ));
+                            .color(signal.map(enabled -> Boolean.TRUE.equals(enabled) ? Color.white
+                                    : new Color(1f, 1f, 1f, 0.35f)));
                 });
     }
 }

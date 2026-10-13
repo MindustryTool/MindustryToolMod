@@ -10,7 +10,6 @@ import mindustry.gen.Icon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.settings.ModSettings;
 import solim.core.Component;
-import solim.core.Component;
 import solim.overlay.Hud;
 import solim.reactive.Readable;
 
@@ -155,4 +154,3 @@ public class GodModeHudView extends Component {
         }
     }
 }
-

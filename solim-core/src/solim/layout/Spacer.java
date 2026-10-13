@@ -1,10 +1,8 @@
 package solim.layout;
 
-import arc.scene.Element;
 import arc.scene.ui.layout.Table;
 import solim.core.Component;
 import solim.core.SolimToken;
-import solim.core.OwnershipContext;
 
 /** Spacer that consumes remaining space in a row/column. */
 public final class Spacer extends Component {

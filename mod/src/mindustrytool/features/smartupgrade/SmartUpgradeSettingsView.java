@@ -12,7 +12,6 @@ import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import solim.core.Component;
-import solim.core.Component;
 
 /**
  * Modern declarative Solim settings view for Smart Upgrade.
@@ -126,8 +125,7 @@ public class SmartUpgradeSettingsView extends Component {
                     50,
                     2000,
                     50,
-                    feature.maxUpdatesConfig.signal().map(v -> String.valueOf(v != null ? v : 500))
-            );
+                    feature.maxUpdatesConfig.signal().map(v -> String.valueOf(v != null ? v : 500)));
         });
     }
 

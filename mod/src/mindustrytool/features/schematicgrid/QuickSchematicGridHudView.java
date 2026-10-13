@@ -13,7 +13,6 @@ import mindustry.game.Schematic;
 import mindustry.gen.Icon;
 import mindustrytool.components.WebStyles;
 import solim.core.Component;
-import solim.core.Component;
 import solim.overlay.Hud;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -22,7 +21,7 @@ import solim.reactive.Signal;
  * Floating frameless draggable HUD rendering the configured schematic grid with
  * a dedicated page tab column, subtle empty slot tiles, and screen clamping.
  */
- //TODO Fix background
+// TODO Fix background
 public class QuickSchematicGridHudView extends Component {
     // TODO: Right click to open edit UI
     // TODO: Hover over button show a shadow of schematic
@@ -45,7 +44,8 @@ public class QuickSchematicGridHudView extends Component {
             String schematicName = entry != null ? normalize(entry.schematicName) : "";
             String schematicFile = entry != null ? normalize(entry.schematicFile) : "";
             String label = entry != null ? normalize(entry.customLabel) : "";
-            return page + "\u001F" + row + "\u001F" + col + "\u001F" + id + "\u001F" + icon + "\u001F" + schematicName + "\u001F"
+            return page + "\u001F" + row + "\u001F" + col + "\u001F" + id + "\u001F" + icon + "\u001F" + schematicName
+                    + "\u001F"
                     + schematicFile + "\u001F" + label;
         }
 
@@ -146,15 +146,15 @@ public class QuickSchematicGridHudView extends Component {
             } else {
                 boolean tabsOnLeft = QuickSchematicGridFeature.PAGE_LEFT.equals(position);
                 row().gap(gap).top().children(() -> {
-                if (tabsOnLeft) {
-                    buildTabsColumn(feature, buttonSize, dragIconSize, gap, buttonOpacity, pagesList,
-                            includeDragHandle);
-                }
-                buildGrid(feature, onBeforeActivate);
-                if (!tabsOnLeft) {
-                    buildTabsColumn(feature, buttonSize, dragIconSize, gap, buttonOpacity, pagesList,
-                            includeDragHandle);
-                }
+                    if (tabsOnLeft) {
+                        buildTabsColumn(feature, buttonSize, dragIconSize, gap, buttonOpacity, pagesList,
+                                includeDragHandle);
+                    }
+                    buildGrid(feature, onBeforeActivate);
+                    if (!tabsOnLeft) {
+                        buildTabsColumn(feature, buttonSize, dragIconSize, gap, buttonOpacity, pagesList,
+                                includeDragHandle);
+                    }
                 });
 
             }
@@ -333,7 +333,7 @@ public class QuickSchematicGridHudView extends Component {
                     .size(buttonSize)
                     .opacity(buttonOpacity)
                     .tooltip(Core.bundle.format("feature.quick-schematic-grid.tooltip.missing",
-                             missingLabel != null ? missingLabel : ""))
+                            missingLabel != null ? missingLabel : ""))
                     .children(() -> icon(Icon.warning).size(buttonSize.map(s -> (s != null ? s : 48f) * 0.5f))
                             .color(Color.scarlet));
         }
@@ -385,4 +385,3 @@ public class QuickSchematicGridHudView extends Component {
         }
     }
 }
-

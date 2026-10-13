@@ -12,7 +12,6 @@ import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.callout.CalloutFeature;
 import solim.core.Component;
-import solim.core.Component;
 
 /**
  * Modern declarative Solim settings view for Tactical Callouts.

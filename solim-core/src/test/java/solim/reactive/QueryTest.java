@@ -2,16 +2,13 @@ package solim.reactive;
 
 import solim.test.CollectingOwner;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import solim.core.Disposable;
 import solim.core.OwnershipContext;
 import solim.runtime.SignalDispatcher;
 

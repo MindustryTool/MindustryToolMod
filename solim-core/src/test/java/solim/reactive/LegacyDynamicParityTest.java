@@ -17,7 +17,6 @@ import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Nullable;
 import solim.core.Component;
-import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.SolimToken;
 import solim.layout.Column;
@@ -37,13 +36,15 @@ import solim.test.SolimCoreEnv;
  * (single-root factory, {@code null} collapses) and the migrated void-factory
  * {@link Dynamic} / {@link When}.
  *
- * <p>Every {@code dynamic(...)} call site that existed in {@code mod/} before
+ * <p>
+ * Every {@code dynamic(...)} call site that existed in {@code mod/} before
  * the migration is mapped to exactly one test below (see the covered-sites
  * note on each test). Each test drives the old shape and the migrated shape
  * through the same signal values and requires identical results in every way:
  * container visibility, container child count, recursive child structure and
  * the laid-out parent size/cell state (i.e. collapsed branches take no space
- * on both sides).</p>
+ * on both sides).
+ * </p>
  */
 class LegacyDynamicParityTest extends SolimCoreEnv {
 
@@ -1143,7 +1144,7 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
 
         Table oldBox = (Table) oldSide.parentTable.getChildren().first();
         Table newBox = (Table) newSide.parentTable.getChildren().first();
-        String[] states = {"loading", "error", "logged-out", "user"};
+        String[] states = { "loading", "error", "logged-out", "user" };
         for (String state : states) {
             oldSignal.set(state);
             newSignal.set(state);
@@ -1423,7 +1424,7 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         Table newBox = (Table) newSide.parentTable.getChildren().first();
         assertParity("list", oldBox, oldSide.parentTable, newBox, newSide.parentTable);
 
-        for (String inner : new String[]{"loading", "error", "empty"}) {
+        for (String inner : new String[] { "loading", "error", "empty" }) {
             oldMode.set("other");
             newMode.set("other");
             oldInner.set(inner);

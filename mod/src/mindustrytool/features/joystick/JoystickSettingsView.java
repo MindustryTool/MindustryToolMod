@@ -12,7 +12,6 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.freecamera.FreeCameraFeature;
 import solim.core.Component;
-import solim.core.Component;
 
 /**
  * Modern declarative Solim settings view for the Virtual Joystick feature.
@@ -44,39 +43,40 @@ public class JoystickSettingsView extends Component {
     }
 
     private Component sizingCard() {
-        return SettingCard.section(Icon.spray, Core.bundle.get("feature.joystick.settings.sizing", "Sizing & Appearance"), () -> {
-            // Size Slider
-            SettingSlider.of(
-                    Core.bundle.get("feature.joystick.settings.size", "Joystick Size"),
-                    feature.sizeConfig.signal(),
-                    0.5f,
-                    2.5f,
-                    0.1f,
-                    feature.sizeConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100))
-            );
+        return SettingCard.section(Icon.spray,
+                Core.bundle.get("feature.joystick.settings.sizing", "Sizing & Appearance"), () -> {
+                    // Size Slider
+                    SettingSlider.of(
+                            Core.bundle.get("feature.joystick.settings.size", "Joystick Size"),
+                            feature.sizeConfig.signal(),
+                            0.5f,
+                            2.5f,
+                            0.1f,
+                            feature.sizeConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100)));
 
-            // Opacity Slider
-            SettingSlider.of(
-                    Core.bundle.get("feature.joystick.settings.opacity", "Opacity"),
-                    feature.opacityConfig.signal(),
-                    0.2f,
-                    1.0f,
-                    0.05f,
-                    feature.opacityConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 0.8f) * 100))
-            );
+                    // Opacity Slider
+                    SettingSlider.of(
+                            Core.bundle.get("feature.joystick.settings.opacity", "Opacity"),
+                            feature.opacityConfig.signal(),
+                            0.2f,
+                            1.0f,
+                            0.05f,
+                            feature.opacityConfig.signal()
+                                    .map(v -> String.format("%.0f%%", (v != null ? v : 0.8f) * 100)));
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            checkbox(Core.bundle.get("feature.joystick.settings.show-handle", "Show Reposition Handle"),
-                    feature.showHandleConfig.signal()).growX();
-        });
+                    checkbox(Core.bundle.get("feature.joystick.settings.show-handle", "Show Reposition Handle"),
+                            feature.showHandleConfig.signal()).growX();
+                });
     }
 
     private Component cameraCard(FreeCameraFeature freeCam) {
-        return SettingCard.section(Icon.eye, Core.bundle.get("feature.joystick.settings.camera", "Camera Controls"), () -> {
-            checkbox(Core.bundle.get("feature.free-camera.name", "Free Camera"),
-                    freeCam.enabled()).growX();
-        });
+        return SettingCard.section(Icon.eye, Core.bundle.get("feature.joystick.settings.camera", "Camera Controls"),
+                () -> {
+                    checkbox(Core.bundle.get("feature.free-camera.name", "Free Camera"),
+                            freeCam.enabled()).growX();
+                });
     }
 
     private Component actionsCard() {

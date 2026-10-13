@@ -12,7 +12,6 @@ import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.smartdrill.SmartDrillFeature;
 import solim.core.Component;
-import solim.core.Component;
 
 /**
  * Modern declarative Solim settings view for Smart Drill.
@@ -66,8 +65,7 @@ public class SmartDrillSettingsView extends Component {
                     20,
                     300,
                     10,
-                    feature.maxTilesConfig.signal().map(v -> String.valueOf(v != null ? v : 100))
-            );
+                    feature.maxTilesConfig.signal().map(v -> String.valueOf(v != null ? v : 100)));
         });
     }
 

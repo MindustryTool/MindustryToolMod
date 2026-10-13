@@ -13,7 +13,6 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.features.autoplay.tasks.AutoplayTask;
 import mindustrytool.features.settings.ModSettings;
 import solim.core.Component;
-import solim.core.Component;
 import solim.input.Button;
 import solim.layout.Direction;
 import solim.overlay.Hud;

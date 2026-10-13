@@ -140,7 +140,6 @@ class ComponentOwnershipContractTest extends SolimCoreEnv {
 
 	@Test
 	void aKeyedFactoryReceivesTheResourcesCreatedAroundTheComponent() {
-		Signal<Integer> radius = Signal.of(4);
 		List<Button> buttons = new ArrayList<>();
 
 		Column grid = new Column();

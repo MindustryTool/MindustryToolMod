@@ -12,7 +12,6 @@ import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import solim.core.Component;
-import solim.core.Component;
 
 public class TimeControlSettingsView extends Component {
 
@@ -66,7 +65,8 @@ public class TimeControlSettingsView extends Component {
                 });
             });
 
-            text(Core.bundle.get("feature.time-control.settings.mode.hint")).left().wrap().color(WebStyles.Colors.GHOST_FG);
+            text(Core.bundle.get("feature.time-control.settings.mode.hint")).left().wrap()
+                    .color(WebStyles.Colors.GHOST_FG);
 
             divider().color(WebStyles.Colors.SECTION_BORDER);
 
@@ -96,27 +96,27 @@ public class TimeControlSettingsView extends Component {
     }
 
     private Component appearanceCard() {
-        return SettingCard.section(Icon.eye, Core.bundle.get("team-resources.settings.section.appearance", "Appearance"), () -> {
-            // Scale Slider
-            SettingSlider.of(
-                    Core.bundle.get("feature.time-control.settings.scale"),
-                    feature.scaleConfig.signal(),
-                    0.5f,
-                    1.5f,
-                    0.1f,
-                    feature.scaleConfig.signal().map(v -> (int) ((v != null ? v : 1f) * 100) + "%")
-            );
+        return SettingCard.section(Icon.eye,
+                Core.bundle.get("team-resources.settings.section.appearance", "Appearance"), () -> {
+                    // Scale Slider
+                    SettingSlider.of(
+                            Core.bundle.get("feature.time-control.settings.scale"),
+                            feature.scaleConfig.signal(),
+                            0.5f,
+                            1.5f,
+                            0.1f,
+                            feature.scaleConfig.signal().map(v -> (int) ((v != null ? v : 1f) * 100) + "%"));
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle"),
-                    feature.hideDragHandleConfig.signal()).growX();
+                    checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle"),
+                            feature.hideDragHandleConfig.signal()).growX();
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            text(Core.bundle.get("feature.time-control.settings.safety")).left().wrap().growX()
-                    .color(WebStyles.Colors.GHOST_FG);
-        });
+                    text(Core.bundle.get("feature.time-control.settings.safety")).left().wrap().growX()
+                            .color(WebStyles.Colors.GHOST_FG);
+                });
     }
 
     private Component actionsCard() {

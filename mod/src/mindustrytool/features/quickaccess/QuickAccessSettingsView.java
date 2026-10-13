@@ -12,7 +12,6 @@ import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.Feature;
 import solim.core.Component;
-import solim.core.Component;
 import solim.reactive.Readable;
 
 public class QuickAccessSettingsView extends Component {
@@ -25,7 +24,8 @@ public class QuickAccessSettingsView extends Component {
 
     @Override
     protected Element build() {
-        // Granted wider-viewport exception (unify-remaining-settings-ui): dense reorderable grid needs up to 750f.
+        // Granted wider-viewport exception (unify-remaining-settings-ui): dense
+        // reorderable grid needs up to 750f.
         return column().grow().top().center().maxWidth(750f).children(() -> {
             scroll().grow().scrollX(false).children(() -> {
                 column().growX().top().center().gap(unit(3)).padding(unit(2)).children(() -> {
@@ -85,9 +85,9 @@ public class QuickAccessSettingsView extends Component {
         return SettingCard.card().children(() -> {
             button(Core.bundle.get("feature.quick-access.settings.reset-position"),
                     feature::resetPosition)
-                            .style(WebStyles.outlineText())
-                            .height(unit(11))
-                            .growX();
+                    .style(WebStyles.outlineText())
+                    .height(unit(11))
+                    .growX();
         });
     }
 
@@ -109,7 +109,7 @@ public class QuickAccessSettingsView extends Component {
             return row().growX().gap(unit(2)).children(() -> {
                 checkbox(f.getName(), feature.isFeatureVisible(id),
                         visible -> feature.setFeatureVisible(id, visible))
-                                .growX();
+                        .growX();
 
                 button(() -> feature.moveUp(id))
                         .style(WebStyles.ghost())

@@ -2,7 +2,6 @@ package solim.input;
 
 import arc.scene.Element;
 import arc.scene.event.ChangeListener;
-import arc.scene.event.ChangeListener.ChangeEvent;
 import arc.scene.ui.TextButton;
 import arc.util.Nullable;
 import java.util.List;

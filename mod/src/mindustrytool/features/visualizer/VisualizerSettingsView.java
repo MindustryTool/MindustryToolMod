@@ -22,7 +22,6 @@ import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import solim.core.Component;
-import solim.core.Component;
 import solim.reactive.Signal;
 
 /**
@@ -58,95 +57,102 @@ public class VisualizerSettingsView extends Component {
     }
 
     private Component bridgesCard() {
-        return SettingCard.section(Icon.waves, Core.bundle.get("feature.visualizer.settings.section.bridges", "Bridges"), () -> {
-            checkbox(Core.bundle.get("feature.visualizer.settings.show-item-bridges", "Show Item Bridges"),
-                    feature.showItemBridgesConfig.signal()).growX();
+        return SettingCard.section(Icon.waves,
+                Core.bundle.get("feature.visualizer.settings.section.bridges", "Bridges"), () -> {
+                    checkbox(Core.bundle.get("feature.visualizer.settings.show-item-bridges", "Show Item Bridges"),
+                            feature.showItemBridgesConfig.signal()).growX();
 
-            checkbox(Core.bundle.get("feature.visualizer.settings.show-duct-bridges", "Show Duct Bridges"),
-                    feature.showDuctBridgesConfig.signal()).growX();
+                    checkbox(Core.bundle.get("feature.visualizer.settings.show-duct-bridges", "Show Duct Bridges"),
+                            feature.showDuctBridgesConfig.signal()).growX();
 
-            checkbox(Core.bundle.get("feature.visualizer.settings.show-liquid-bridges", "Show Liquid Bridges"),
-                    feature.showLiquidBridgesConfig.signal()).growX();
+                    checkbox(Core.bundle.get("feature.visualizer.settings.show-liquid-bridges", "Show Liquid Bridges"),
+                            feature.showLiquidBridgesConfig.signal()).growX();
 
-            checkbox(Core.bundle.get("feature.visualizer.settings.show-bridge-flow-rate", "Show Bridge Flow Rate"),
-                    feature.showBridgeFlowRateConfig.signal()).growX();
+                    checkbox(
+                            Core.bundle.get("feature.visualizer.settings.show-bridge-flow-rate",
+                                    "Show Bridge Flow Rate"),
+                            feature.showBridgeFlowRateConfig.signal()).growX();
 
-            checkbox(Core.bundle.get("feature.visualizer.settings.hide-idle-bridge-flow", "Hide When Idle"),
-                    feature.hideIdleBridgeFlowConfig.signal()).growX();
+                    checkbox(Core.bundle.get("feature.visualizer.settings.hide-idle-bridge-flow", "Hide When Idle"),
+                            feature.hideIdleBridgeFlowConfig.signal()).growX();
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            // Bridge Opacity Slider
-            SettingSlider.of(
-                    Core.bundle.get("feature.visualizer.settings.bridge-opacity", "Bridge Opacity"),
-                    feature.bridgeOpacityConfig.signal(),
-                    0.2f,
-                    1.0f,
-                    0.05f,
-                    feature.bridgeOpacityConfig.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%")
-            );
+                    // Bridge Opacity Slider
+                    SettingSlider.of(
+                            Core.bundle.get("feature.visualizer.settings.bridge-opacity", "Bridge Opacity"),
+                            feature.bridgeOpacityConfig.signal(),
+                            0.2f,
+                            1.0f,
+                            0.05f,
+                            feature.bridgeOpacityConfig.signal()
+                                    .map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
 
-            // Bridge Item Scale Slider
-            SettingSlider.of(
-                    Core.bundle.get("feature.visualizer.settings.bridge-item-scale", "Bridge Item Scale"),
-                    feature.bridgeItemScaleConfig.signal(),
-                    0.3f,
-                    2.0f,
-                    0.05f,
-                    feature.bridgeItemScaleConfig.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%")
-            );
+                    // Bridge Item Scale Slider
+                    SettingSlider.of(
+                            Core.bundle.get("feature.visualizer.settings.bridge-item-scale", "Bridge Item Scale"),
+                            feature.bridgeItemScaleConfig.signal(),
+                            0.3f,
+                            2.0f,
+                            0.05f,
+                            feature.bridgeItemScaleConfig.signal()
+                                    .map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
 
-            // Bridge Flow Rate Scale Slider
-            SettingSlider.of(
-                    Core.bundle.get("feature.visualizer.settings.bridge-flow-rate-scale", "Bridge Flow Rate Scale"),
-                    feature.bridgeFlowRateScaleConfig.signal(),
-                    0.5f,
-                    2.0f,
-                    0.05f,
-                    feature.bridgeFlowRateScaleConfig.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%")
-            );
-        });
+                    // Bridge Flow Rate Scale Slider
+                    SettingSlider.of(
+                            Core.bundle.get("feature.visualizer.settings.bridge-flow-rate-scale",
+                                    "Bridge Flow Rate Scale"),
+                            feature.bridgeFlowRateScaleConfig.signal(),
+                            0.5f,
+                            2.0f,
+                            0.05f,
+                            feature.bridgeFlowRateScaleConfig.signal()
+                                    .map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
+                });
     }
 
     private Component turretsCard() {
-        return SettingCard.section(Icon.turret, Core.bundle.get("feature.visualizer.settings.section.turrets", "Turrets"), () -> {
-            checkbox(Core.bundle.get("feature.visualizer.settings.show-ammo-badge", "Show Ammo Badge"),
-                    feature.showAmmoBadgeConfig.signal()).growX();
+        return SettingCard.section(Icon.turret,
+                Core.bundle.get("feature.visualizer.settings.section.turrets", "Turrets"), () -> {
+                    checkbox(Core.bundle.get("feature.visualizer.settings.show-ammo-badge", "Show Ammo Badge"),
+                            feature.showAmmoBadgeConfig.signal()).growX();
 
-            checkbox(Core.bundle.get("feature.visualizer.settings.show-target-line", "Show Target Line"),
-                    feature.showTargetLineConfig.signal()).growX();
+                    checkbox(Core.bundle.get("feature.visualizer.settings.show-target-line", "Show Target Line"),
+                            feature.showTargetLineConfig.signal()).growX();
 
-            checkbox(Core.bundle.get("feature.visualizer.settings.target-line-ally", "Show Allied Turret Lines"),
-                    feature.targetLineAllyConfig.signal()).growX();
+                    checkbox(
+                            Core.bundle.get("feature.visualizer.settings.target-line-ally", "Show Allied Turret Lines"),
+                            feature.targetLineAllyConfig.signal()).growX();
 
-            checkbox(Core.bundle.get("feature.visualizer.settings.target-line-enemy", "Show Enemy Turret Lines"),
-                    feature.targetLineEnemyConfig.signal()).growX();
+                    checkbox(
+                            Core.bundle.get("feature.visualizer.settings.target-line-enemy", "Show Enemy Turret Lines"),
+                            feature.targetLineEnemyConfig.signal()).growX();
 
-            checkbox(Core.bundle.get("feature.visualizer.settings.only-when-shooting", "Only When Shooting"),
-                    feature.onlyWhenShootingConfig.signal()).growX();
+                    checkbox(Core.bundle.get("feature.visualizer.settings.only-when-shooting", "Only When Shooting"),
+                            feature.onlyWhenShootingConfig.signal()).growX();
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            // Target Line Opacity Slider
-            SettingSlider.of(
-                    Core.bundle.get("feature.visualizer.settings.target-line-opacity", "Target Line Opacity"),
-                    feature.targetLineOpacityConfig.signal(),
-                    0.1f,
-                    1.0f,
-                    0.05f,
-                    feature.targetLineOpacityConfig.signal().map(v -> Math.round((v != null ? v : 0.6f) * 100) + "%")
-            );
+                    // Target Line Opacity Slider
+                    SettingSlider.of(
+                            Core.bundle.get("feature.visualizer.settings.target-line-opacity", "Target Line Opacity"),
+                            feature.targetLineOpacityConfig.signal(),
+                            0.1f,
+                            1.0f,
+                            0.05f,
+                            feature.targetLineOpacityConfig.signal()
+                                    .map(v -> Math.round((v != null ? v : 0.6f) * 100) + "%"));
 
-            // Turret Badge Scale Slider
-            SettingSlider.of(
-                    Core.bundle.get("feature.visualizer.settings.turret-badge-scale", "Turret Badge Scale"),
-                    feature.turretBadgeScaleConfig.signal(),
-                    0.2f,
-                    2.0f,
-                    0.05f,
-                    feature.turretBadgeScaleConfig.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%")
-            );
-        });
+                    // Turret Badge Scale Slider
+                    SettingSlider.of(
+                            Core.bundle.get("feature.visualizer.settings.turret-badge-scale", "Turret Badge Scale"),
+                            feature.turretBadgeScaleConfig.signal(),
+                            0.2f,
+                            2.0f,
+                            0.05f,
+                            feature.turretBadgeScaleConfig.signal()
+                                    .map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
+                });
     }
 
     private Component turretFilterCard() {
@@ -260,9 +266,8 @@ public class VisualizerSettingsView extends Component {
                 .children(() -> {
                     icon(drawable)
                             .size(unit(6))
-                            .color(signal.map(enabled ->
-                                    Boolean.TRUE.equals(enabled) ? Color.white : new Color(1f, 1f, 1f, 0.35f)
-                            ));
+                            .color(signal.map(enabled -> Boolean.TRUE.equals(enabled) ? Color.white
+                                    : new Color(1f, 1f, 1f, 0.35f)));
                 });
     }
 }

@@ -16,7 +16,6 @@ import mindustry.type.Item;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.callout.CalloutFeature;
 import solim.core.Component;
-import solim.core.Component;
 import solim.layout.Card;
 import solim.overlay.SolimDialog;
 import solim.reactive.Readable;

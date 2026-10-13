@@ -1,4 +1,5 @@
 package solim.layout;
+
 import solim.modifier.CellConfig;
 
 import arc.Core;
@@ -13,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import arc.func.Cons;
 import arc.func.Func;
-import solim.core.Component;
 import solim.core.Component;
 import solim.core.SolimToken;
 import solim.reactive.Effect;

@@ -14,7 +14,6 @@ import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import mindustrytool.features.playerconnect.net.PlayerConnectClient;
 import mindustrytool.models.response.PlayerConnectProvider;
 import solim.core.Component;
-import solim.core.Component;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
 import solim.reactive.Signal;

@@ -21,7 +21,6 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import mindustrytool.models.response.PlayerConnectRoom;
 import solim.core.Component;
-import solim.core.Component;
 import solim.reactive.Computed;
 import solim.reactive.Signal;
 

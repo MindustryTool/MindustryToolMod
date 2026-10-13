@@ -19,7 +19,6 @@ import mindustrytool.features.browser.common.BrowserStatsBadge;
 import mindustrytool.models.response.MapDetailData;
 import mindustrytool.services.MindustryTool;
 import solim.core.Component;
-import solim.core.Component;
 import solim.overlay.SolimDialog;
 import solim.reactive.Query;
 import solim.reactive.QueryKey;

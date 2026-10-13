@@ -13,7 +13,6 @@ import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import solim.core.Component;
-import solim.core.Component;
 import solim.reactive.Signal;
 
 /**
@@ -90,8 +89,7 @@ public class HealthBarSettingsView extends Component {
                         return val <= 0.01f
                                 ? Core.bundle.get("feature.health-bar.settings.off")
                                 : String.format(Locale.US, "%.1fx", val);
-                    })
-            );
+                    }));
 
             // Opacity Slider
             SettingSlider.of(
@@ -100,9 +98,8 @@ public class HealthBarSettingsView extends Component {
                     0f,
                     1f,
                     0.05f,
-                    feature.opacityConfig.signal().map(v ->
-                            String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100))
-            );
+                    feature.opacityConfig.signal()
+                            .map(v -> String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100)));
 
             // Scale Slider
             SettingSlider.of(
@@ -111,9 +108,8 @@ public class HealthBarSettingsView extends Component {
                     0.5f,
                     1.5f,
                     0.1f,
-                    feature.scaleConfig.signal().map(v ->
-                            String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100))
-            );
+                    feature.scaleConfig.signal()
+                            .map(v -> String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100)));
 
             // Width Slider
             SettingSlider.of(
@@ -122,9 +118,8 @@ public class HealthBarSettingsView extends Component {
                     0.5f,
                     2f,
                     0.1f,
-                    feature.widthConfig.signal().map(v ->
-                            String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100))
-            );
+                    feature.widthConfig.signal()
+                            .map(v -> String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100)));
         });
     }
 

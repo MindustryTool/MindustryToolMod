@@ -4,7 +4,6 @@ import arc.graphics.Color;
 import arc.scene.style.Drawable;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
-import solim.core.Component;
 import solim.graphics.RoundedDrawable;
 import solim.layout.GapContainer;
 import solim.reactive.Effect;

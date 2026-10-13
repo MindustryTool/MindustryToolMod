@@ -48,7 +48,6 @@ import mindustrytool.models.response.PlayerConnectRoom;
 import mindustrytool.models.response.UserData;
 import mindustrytool.models.response.ChatUser.SimpleRole;
 import solim.core.Component;
-import solim.core.Component;
 import solim.layout.Card;
 import solim.layout.Direction;
 import solim.layout.VirtualList;

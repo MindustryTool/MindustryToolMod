@@ -21,10 +21,10 @@ import mindustrytool.features.FeatureKeybind;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.services.crash.CrashTimestampParser;
 import solim.core.Component;
-import solim.core.Component;
 
 /**
- * Modern declarative Solim settings view for mod-wide preferences and diagnostics.
+ * Modern declarative Solim settings view for mod-wide preferences and
+ * diagnostics.
  * Includes toggles for beta updates and game presence sharing,
  * as well as one-tap buttons to copy recent logs and crash reports.
  */
@@ -99,8 +99,7 @@ public class GeneralSettingsView extends Component {
                     Core.bundle.get("setting.universal-scale"),
                     ModSettings.universalScale.signal(),
                     0.5f, 1.5f, 0.05f,
-                    ModSettings.universalScale.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%")
-            );
+                    ModSettings.universalScale.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
         });
     }
 
@@ -162,7 +161,8 @@ public class GeneralSettingsView extends Component {
 
             String content = latest.readString();
             Core.app.setClipboardText(content);
-            Vars.ui.showInfoFade(Core.bundle.format("setting.crash.copied", latest.name()) + latest.name() + ") copied to clipboard.");
+            Vars.ui.showInfoFade(Core.bundle.format("setting.crash.copied", latest.name()) + latest.name()
+                    + ") copied to clipboard.");
         } catch (Exception e) {
             Log.err("Failed to read latest crash report", e);
             Vars.ui.showException(e);
@@ -171,7 +171,8 @@ public class GeneralSettingsView extends Component {
 
     private @Nullable Fi findLatestCrash(Fi crashesDir) {
         Fi[] files = crashesDir.list();
-        if (files == null || files.length == 0) return null;
+        if (files == null || files.length == 0)
+            return null;
 
         Fi latest = null;
         long latestTime = -1;

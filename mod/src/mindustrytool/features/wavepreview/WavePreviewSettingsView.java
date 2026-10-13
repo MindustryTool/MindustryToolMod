@@ -12,7 +12,6 @@ import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import solim.core.Component;
-import solim.core.Component;
 
 /**
  * Modern declarative Solim settings view for Wave Preview feature.
@@ -44,40 +43,38 @@ public class WavePreviewSettingsView extends Component {
     }
 
     private Component settingsCard() {
-        return SettingCard.section(Icon.settings, Core.bundle.get("feature.wave-preview.settings.section.settings"), () -> {
-            // Opacity Slider
-            SettingSlider.of(
-                    Core.bundle.get("feature.wave-preview.settings.opacity"),
-                    feature.opacityConfig.signal(),
-                    0.1f,
-                    1.0f,
-                    0.05f,
-                    feature.opacityConfig.signal().map(v ->
-                            String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100))
-            );
+        return SettingCard.section(Icon.settings, Core.bundle.get("feature.wave-preview.settings.section.settings"),
+                () -> {
+                    // Opacity Slider
+                    SettingSlider.of(
+                            Core.bundle.get("feature.wave-preview.settings.opacity"),
+                            feature.opacityConfig.signal(),
+                            0.1f,
+                            1.0f,
+                            0.05f,
+                            feature.opacityConfig.signal()
+                                    .map(v -> String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100)));
 
-            // Scale Slider
-            SettingSlider.of(
-                    Core.bundle.get("feature.wave-preview.settings.scale"),
-                    feature.scaleConfig.signal(),
-                    0.5f,
-                    2.0f,
-                    0.1f,
-                    feature.scaleConfig.signal().map(v ->
-                            String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100))
-            );
+                    // Scale Slider
+                    SettingSlider.of(
+                            Core.bundle.get("feature.wave-preview.settings.scale"),
+                            feature.scaleConfig.signal(),
+                            0.5f,
+                            2.0f,
+                            0.1f,
+                            feature.scaleConfig.signal()
+                                    .map(v -> String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100)));
 
-            // Lookahead depth Slider
-            SettingSlider.of(
-                    Core.bundle.get("feature.wave-preview.settings.depth"),
-                    feature.depthConfig.signal(),
-                    WavePreviewFeature.MIN_DEPTH,
-                    WavePreviewFeature.MAX_DEPTH,
-                    1,
-                    feature.depthConfig.signal().map(v ->
-                            String.valueOf(v != null ? v : WavePreviewFeature.DEFAULT_DEPTH))
-            );
-        });
+                    // Lookahead depth Slider
+                    SettingSlider.of(
+                            Core.bundle.get("feature.wave-preview.settings.depth"),
+                            feature.depthConfig.signal(),
+                            WavePreviewFeature.MIN_DEPTH,
+                            WavePreviewFeature.MAX_DEPTH,
+                            1,
+                            feature.depthConfig.signal()
+                                    .map(v -> String.valueOf(v != null ? v : WavePreviewFeature.DEFAULT_DEPTH)));
+                });
     }
 
     private Component actionsCard() {
