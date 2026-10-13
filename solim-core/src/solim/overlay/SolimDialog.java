@@ -189,19 +189,16 @@ public class SolimDialog extends Component {
         return signal;
     }
 
-    /** Returns the wrapped Mindustry dialog, building deferred content first. */
     public BaseDialog dialog() {
         ensureContentBuilt();
         return wrapped;
     }
 
-    /** Returns the wrapped dialog's content table. */
     public Table cont() {
         ensureContentBuilt();
         return wrapped.cont;
     }
 
-    /** Returns the wrapped dialog's button row table. */
     public Table buttons() {
         return wrapped.buttons;
     }

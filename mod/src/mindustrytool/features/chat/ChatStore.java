@@ -34,12 +34,12 @@ public final class ChatStore {
                 new ChatNotifications());
     }
 
-    /** Package-private constructor for unit tests. */
     ChatStore(Signal<String> activeChannelSignal, Signal<Boolean> channelsCollapsed, Signal<Boolean> usersCollapsed) {
         this(activeChannelSignal, channelsCollapsed, usersCollapsed, new ChatNotifications());
     }
 
-    ChatStore(Signal<String> activeChannelSignal, Signal<Boolean> channelsCollapsed, Signal<Boolean> usersCollapsed, ChatNotifications notifications) {
+    ChatStore(Signal<String> activeChannelSignal, Signal<Boolean> channelsCollapsed, Signal<Boolean> usersCollapsed,
+            ChatNotifications notifications) {
         this.notifications = notifications;
         this.unread = new ChatUnread(notifications.mutedChannelIds());
         this.channels = new ChatChannels(activeChannelSignal);

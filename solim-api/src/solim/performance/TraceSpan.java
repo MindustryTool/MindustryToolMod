@@ -30,13 +30,11 @@ public final class TraceSpan {
         this.childCount = childCount < 0 ? 0 : childCount;
     }
 
-    /** Duration in nanoseconds, derived as {@code endNs - startNs}. */
     public long durationNs() {
         long duration = endNs - startNs;
         return duration >= 0 ? duration : 0;
     }
 
-    /** Duration in milliseconds as a float. */
     public float durationMs() {
         return durationNs() / 1000000f;
     }

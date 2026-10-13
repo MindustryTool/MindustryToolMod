@@ -1,4 +1,5 @@
 package solim.layout;
+
 import solim.modifier.CellConfig;
 
 import arc.func.Cons;
@@ -17,7 +18,6 @@ import solim.reactive.Readable;
 import solim.modifier.PendingCellConfig;
 import solim.core.OwnershipContext;
 
-/** Column layout — vertical Table wrapper. */
 public final class Column
         extends Component implements CellConfig<Column>, ElementConfig<Column>, TableConfig<Column>, GapContainer {
 
@@ -56,7 +56,6 @@ public final class Column
         return table;
     }
 
-
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
@@ -84,7 +83,7 @@ public final class Column
 
     public Column gap(@Nullable Readable<Float> gapSignal) {
         if (gapSignal != null) {
-        own(Effect.of(() -> {
+            own(Effect.of(() -> {
                 Float g = gapSignal.get();
                 if (g != null) {
                     gap(g);
@@ -189,15 +188,15 @@ public final class Column
 
     public Column align(Align a) {
         switch (a) {
-        case START:
-        case STRETCH:
-            return top();
-        case CENTER:
-            return center();
-        case END:
-            return bottom();
-        default:
-            break;
+            case START:
+            case STRETCH:
+                return top();
+            case CENTER:
+                return center();
+            case END:
+                return bottom();
+            default:
+                break;
         }
         return this;
     }
@@ -217,7 +216,7 @@ public final class Column
         respace();
         return this;
     }
-  
+
     public Column children(@Nullable Cons<Element> r) {
         OwnershipContext.push(this);
         AttachmentStack.push(table, ATTACHER);
@@ -246,8 +245,6 @@ public final class Column
         respace();
         return cell;
     }
-
-
 
     @Override
     public Column name(@Nullable String name) {

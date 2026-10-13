@@ -4,19 +4,19 @@ import arc.scene.Element;
 import solim.core.Component;
 import solim.core.OwnershipContext;
 
-/** Resolves children that may be Element or Component. */
 public final class ElementResolver {
-	private ElementResolver() {}
+    private ElementResolver() {
+    }
 
-	public static Element resolve(Object child) {
-		if (child instanceof Element) {
-			return (Element) child;
-		}
-		if (child instanceof Component) {
-			Component c = (Component) child;
-			OwnershipContext.registerChild(c);
-			return AttachmentStack.isolate(c::element);
-		}
-		throw new IllegalArgumentException("Cannot resolve child to Element: " + child);
-	}
+    public static Element resolve(Object child) {
+        if (child instanceof Element) {
+            return (Element) child;
+        }
+        if (child instanceof Component) {
+            Component c = (Component) child;
+            OwnershipContext.registerChild(c);
+            return AttachmentStack.isolate(c::element);
+        }
+        throw new IllegalArgumentException("Cannot resolve child to Element: " + child);
+    }
 }

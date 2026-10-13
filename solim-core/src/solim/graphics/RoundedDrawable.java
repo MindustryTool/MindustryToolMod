@@ -13,7 +13,8 @@ import solim.reactive.Effect;
 import solim.reactive.Readable;
 
 /**
- * Composite continuous-curvature rounded drawable supporting independent background fill
+ * Composite continuous-curvature rounded drawable supporting independent
+ * background fill
  * and border strokes with zero extra draw calls.
  */
 public class RoundedDrawable implements Drawable, Disposable {
@@ -37,15 +38,18 @@ public class RoundedDrawable implements Drawable, Disposable {
     private boolean disposed = false;
 
     /**
-     * Reactive bindings this drawable installed, kept so {@link #dispose()} can stop them.
+     * Reactive bindings this drawable installed, kept so {@link #dispose()} can
+     * stop them.
      *
-     * <p>A drawable is not a component and has no ownership tree of its own, so it cannot inherit
-     * one. {@link OwnershipContext} already hands each binding to whatever component is building;
+     * <p>
+     * A drawable is not a component and has no ownership tree of its own, so it
+     * cannot inherit
+     * one. {@link OwnershipContext} already hands each binding to whatever
+     * component is building;
      * this list is the fallback for a drawable configured outside any build scope.
      */
     private final List<Disposable> bindings = new ArrayList<>();
 
-    /** Installs a binding and keeps it until this drawable is disposed. */
     private <T extends Disposable> T own(T binding) {
         if (binding != null && !disposed) {
             bindings.add(binding);
@@ -240,7 +244,8 @@ public class RoundedDrawable implements Drawable, Disposable {
     }
 
     @Override
-    public void draw(float x, float y, float originX, float originY, float width, float height, float scaleX, float scaleY, float rotation) {
+    public void draw(float x, float y, float originX, float originY, float width, float height, float scaleX,
+            float scaleY, float rotation) {
         Color current = Draw.getColor();
         float r = current.r;
         float g = current.g;
@@ -265,7 +270,8 @@ public class RoundedDrawable implements Drawable, Disposable {
         if (borderPatch != null && stroke > 0f && borderColor.a > 0.001f) {
             Draw.color(r * borderColor.r, g * borderColor.g, b * borderColor.b, a * borderColor.a);
             if (effective != radius) {
-                RoundedCache.getBorder(effective, stroke).draw(x, y, originX, originY, width, height, scaleX, scaleY, rotation);
+                RoundedCache.getBorder(effective, stroke).draw(x, y, originX, originY, width, height, scaleX, scaleY,
+                        rotation);
             } else {
                 borderPatch.draw(x, y, originX, originY, width, height, scaleX, scaleY, rotation);
             }

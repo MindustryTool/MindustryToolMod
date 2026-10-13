@@ -24,8 +24,10 @@ import solim.test.SolimEnv;
 import solim.test.TestDisposable;
 
 /**
- * Verifies that the component tree snapshot attributes creation-owned and dependency-discovered
- * reactive nodes to the right component, and that the exported report embeds all three interactive
+ * Verifies that the component tree snapshot attributes creation-owned and
+ * dependency-discovered
+ * reactive nodes to the right component, and that the exported report embeds
+ * all three interactive
  * views together with their payloads.
  */
 class ProfileReportTest extends SolimEnv {
@@ -203,7 +205,7 @@ class ProfileReportTest extends SolimEnv {
     @Test
     void payloadEscapesValuesThatCouldBreakOutOfTheScriptBlock() {
         ComponentNodeSnapshot hostile = new ComponentNodeSnapshot(1, "Row", "</script><img>",
-                "Table", new float[]{0f, 0f, 0f, 0f}, true, false,
+                "Table", new float[] { 0f, 0f, 0f, 0f }, true, false,
                 Collections.<ComponentNodeSnapshot>emptyList(),
                 Collections.singletonList(new SignalSnapshot(1, "</script>", 0, 0, 0)),
                 Collections.<ComputedSnapshot>emptyList(),
@@ -262,9 +264,9 @@ class ProfileReportTest extends SolimEnv {
                 "with debug services uninstalled there is nothing to record a session");
     }
 
-    // --- helpers -----------------------------------------------------------------------------------
+    // --- helpers
+    // -----------------------------------------------------------------------------------
 
-    /** An eager component whose element carries the given debug name. */
     private static Element namedElement(String name) {
         Element element = new Element();
         element.name = name;
@@ -273,7 +275,7 @@ class ProfileReportTest extends SolimEnv {
 
     private static ComponentNodeSnapshot sampleComponentNode() {
         return new ComponentNodeSnapshot(1, "Column", "Panel", "Table",
-                new float[]{10f, 20f, 100f, 50f}, true, false,
+                new float[] { 10f, 20f, 100f, 50f }, true, false,
                 Collections.<ComponentNodeSnapshot>emptyList(),
                 Collections.singletonList(new SignalSnapshot(1, "42", 7, 2, 1)),
                 Collections.singletonList(new ComputedSnapshot(2, "84", 4, 4000L, 1000L, false,
@@ -309,13 +311,15 @@ class ProfileReportTest extends SolimEnv {
         return null;
     }
 
-    // --- test components ---------------------------------------------------------------------------
+    // --- test components
+    // ---------------------------------------------------------------------------
     //
-    // Reactive nodes must be created inside build(), not a constructor: the ambient ownership
-    // context is only pushed while element() runs, so a node created in a constructor would be
+    // Reactive nodes must be created inside build(), not a constructor: the ambient
+    // ownership
+    // context is only pushed while element() runs, so a node created in a
+    // constructor would be
     // adopted by SessionRoot instead of the component under test.
 
-    /** Creates a signal during {@code build()} so creation-time ownership can be verified. */
     static class BuildSignalComponent extends Component {
         @Override
         protected Element build() {
@@ -324,7 +328,6 @@ class ProfileReportTest extends SolimEnv {
         }
     }
 
-    /** Owns an effect that reads a signal created outside the component. */
     static class EffectReadingComponent extends Component {
         private final Signal<Integer> external;
 
@@ -342,7 +345,6 @@ class ProfileReportTest extends SolimEnv {
         }
     }
 
-    /** Owns a computed derived from an external signal. */
     static class ComputedHostComponent extends Component {
         private final Signal<Integer> source;
 
@@ -357,7 +359,6 @@ class ProfileReportTest extends SolimEnv {
         }
     }
 
-    /** Owns a non-reactive disposable so it must surface under otherDisposables. */
     static class DisposableHostComponent extends Component {
         @Override
         protected Element build() {

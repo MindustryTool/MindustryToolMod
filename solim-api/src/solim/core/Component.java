@@ -62,7 +62,6 @@ public abstract class Component implements DisposableOwner {
      */
     private final List<Disposable> disposables = new ArrayList<>();
 
-    /** Child nodes in adoption order; disposed LIFO before {@link #disposables}. */
     private final List<Component> children = new ArrayList<>();
 
     private @Nullable Component parent;
@@ -76,7 +75,6 @@ public abstract class Component implements DisposableOwner {
         joinAmbientScope();
     }
 
-    /** Eager flavour: {@code prebuilt} is the element, available immediately. */
     protected Component(Element prebuilt) {
         this.cached = prebuilt;
         applyDefaultName(prebuilt);
@@ -119,7 +117,6 @@ public abstract class Component implements DisposableOwner {
                 getClass().getSimpleName() + " was constructed lazily but does not implement build()");
     }
 
-    /** Returns whether this component is {@code other} or an ancestor of it. */
     public boolean isAncestorOf(@Nullable Component other) {
         for (Component node = other; node != null; node = node.parent) {
             if (node == this) {
@@ -137,18 +134,21 @@ public abstract class Component implements DisposableOwner {
         return parent;
     }
 
-    /** Returns this component's direct children, in adoption order. */
     public List<Component> children() {
         return Collections.unmodifiableList(children);
     }
 
     /**
-     * Returns this component's non-component resources — reactive nodes ({@code Computed},
-     * {@code Effect}, {@code Binding}), listeners, and other {@link Disposable} leaves — in
+     * Returns this component's non-component resources — reactive nodes
+     * ({@code Computed},
+     * {@code Effect}, {@code Binding}), listeners, and other {@link Disposable}
+     * leaves — in
      * registration order. Child components are excluded because they are exposed by
      * {@link #children()}.
      *
-     * <p>Debug introspection uses this to discover which reactive nodes a component owns so the
+     * <p>
+     * Debug introspection uses this to discover which reactive nodes a component
+     * owns so the
      * profiler can walk their dependency graphs.
      */
     public List<Disposable> disposables() {
@@ -156,10 +156,13 @@ public abstract class Component implements DisposableOwner {
     }
 
     /**
-     * Returns the underlying Arc element only if {@link #element()} has already built it, or
+     * Returns the underlying Arc element only if {@link #element()} has already
+     * built it, or
      * {@code null} for a lazy component that has not been built yet.
      *
-     * <p>Unlike {@link #element()}, this never triggers a build. Debug introspection uses it to
+     * <p>
+     * Unlike {@link #element()}, this never triggers a build. Debug introspection
+     * uses it to
      * report layout bounds without mutating the tree it is observing.
      */
     public @Nullable Element peekElement() {
@@ -228,7 +231,6 @@ public abstract class Component implements DisposableOwner {
         }
     }
 
-    /** This component's explicit debug name, or the element's, or {@code null}. */
     public @Nullable String name() {
         return componentName != null ? componentName : cached != null ? cached.name : null;
     }
@@ -243,7 +245,6 @@ public abstract class Component implements DisposableOwner {
         return this;
     }
 
-    /** Sets the explicit debug name without the fluent return type. */
     protected final void setName(@Nullable String name) {
         this.componentName = name;
         if (cached != null && name != null) {

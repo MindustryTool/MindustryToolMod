@@ -13,11 +13,16 @@ import solim.core.DisposableOwner;
 import solim.core.OwnershipContext;
 
 /**
- * Collects every {@link Disposable} registered through {@link OwnershipContext} while the scope
- * is open, regardless of its type, and either transfers them to an owner or destroys them.
+ * Collects every {@link Disposable} registered through {@link OwnershipContext}
+ * while the scope
+ * is open, regardless of its type, and either transfers them to an owner or
+ * destroys them.
  *
- * <p>This replaces clearing the {@code OwnershipContext} stack to "suspend" ownership. Clearing
- * the stack discarded whatever a factory registered; a scope keeps it and decides what happens to
+ * <p>
+ * This replaces clearing the {@code OwnershipContext} stack to "suspend"
+ * ownership. Clearing
+ * the stack discarded whatever a factory registered; a scope keeps it and
+ * decides what happens to
  * it. Usage is always the same shape:
  *
  * <pre>{@code
@@ -30,117 +35,122 @@ import solim.core.OwnershipContext;
  * }
  * }</pre>
  *
- * <p>{@code close()} is strict: anything collected and not adopted is disposed. A block that
+ * <p>
+ * {@code close()} is strict: anything collected and not adopted is disposed. A
+ * block that
  * throws therefore never leaves live resources behind.
  *
- * <p>Instances are pooled and the collection list is allocated lazily, so opening a scope on a
+ * <p>
+ * Instances are pooled and the collection list is allocated lazily, so opening
+ * a scope on a
  * hot path (an effect body) allocates nothing once the pool is warm.
  */
 public final class OwnershipScope implements DisposableOwner {
 
-	private static final Deque<OwnershipScope> pool = new ArrayDeque<>();
+    private static final Deque<OwnershipScope> pool = new ArrayDeque<>();
 
-	private @Nullable List<Disposable> collected;
-	private boolean closed = false;
+    private @Nullable List<Disposable> collected;
+    private boolean closed = false;
 
-	private OwnershipScope() {}
+    private OwnershipScope() {
+    }
 
-	/** Opens a scope and installs it as the active {@link OwnershipContext} owner. */
-	public static OwnershipScope open() {
-		OwnershipScope scope = pool.pollFirst();
-		if (scope == null) {
-			scope = new OwnershipScope();
-		}
-		scope.closed = false;
-		OwnershipContext.push(scope);
-		return scope;
-	}
+    public static OwnershipScope open() {
+        OwnershipScope scope = pool.pollFirst();
+        if (scope == null) {
+            scope = new OwnershipScope();
+        }
+        scope.closed = false;
+        OwnershipContext.push(scope);
+        return scope;
+    }
 
-	/** Registers a resource with this scope. Called by {@link OwnershipContext}. */
-	@Override
-	public void adopt(Disposable disposable) {
-		if (disposable == null || closed) {
-			return;
-		}
-		List<Disposable> collected = this.collected;
-		if (collected == null) {
-			collected = new ArrayList<>();
-			this.collected = collected;
-		}
-		collected.add(disposable);
-	}
+    @Override
+    public void adopt(Disposable disposable) {
+        if (disposable == null || closed) {
+            return;
+        }
+        List<Disposable> collected = this.collected;
+        if (collected == null) {
+            collected = new ArrayList<>();
+            this.collected = collected;
+        }
+        collected.add(disposable);
+    }
 
-	/**
-	 * Transfers everything collected so far to {@code owner}.
-	 *
-	 * <p>The owner is never transferred into itself. Resources are left unadopted when
-	 * {@code owner} is {@code null}, which means {@link #close()} destroys them.
-	 */
-	public void adoptInto(@Nullable DisposableOwner owner) {
-		List<Disposable> collected = this.collected;
-		if (collected == null || owner == null) {
-			return;
-		}
-		Iterator<Disposable> iterator = collected.iterator();
-		while (iterator.hasNext()) {
-			Disposable disposable = iterator.next();
-			// The owner manages itself; removing it here keeps it out of the destroy-on-close pass.
-			iterator.remove();
-			if (disposable != owner) {
-				owner.adopt(disposable);
-			}
-		}
-	}
+    /**
+     * Transfers everything collected so far to {@code owner}.
+     *
+     * <p>
+     * The owner is never transferred into itself. Resources are left unadopted when
+     * {@code owner} is {@code null}, which means {@link #close()} destroys them.
+     */
+    public void adoptInto(@Nullable DisposableOwner owner) {
+        List<Disposable> collected = this.collected;
+        if (collected == null || owner == null) {
+            return;
+        }
+        Iterator<Disposable> iterator = collected.iterator();
+        while (iterator.hasNext()) {
+            Disposable disposable = iterator.next();
+            // The owner manages itself; removing it here keeps it out of the
+            // destroy-on-close pass.
+            iterator.remove();
+            if (disposable != owner) {
+                owner.adopt(disposable);
+            }
+        }
+    }
 
-	/** Moves the collected components into {@code roots}, leaving other resources collected. */
-	public void extractComponents(List<Component> roots) {
-		List<Disposable> collected = this.collected;
-		if (collected == null) {
-			return;
-		}
-		Iterator<Disposable> iterator = collected.iterator();
-		while (iterator.hasNext()) {
-			Disposable disposable = iterator.next();
-			if (disposable instanceof Component) {
-				roots.add((Component) disposable);
-				iterator.remove();
-			}
-		}
-	}
+    public void extractComponents(List<Component> roots) {
+        List<Disposable> collected = this.collected;
+        if (collected == null) {
+            return;
+        }
+        Iterator<Disposable> iterator = collected.iterator();
+        while (iterator.hasNext()) {
+            Disposable disposable = iterator.next();
+            if (disposable instanceof Component) {
+                roots.add((Component) disposable);
+                iterator.remove();
+            }
+        }
+    }
 
-	/**
-	 * Closes the scope: restores the previous registrar and disposes every collected resource
-	 * that was not adopted. Idempotent, and always safe to call from a {@code finally} block.
-	 */
-	public void close() {
-		if (closed) {
-			return;
-		}
-		closed = true;
-		OwnershipContext.pop();
-		List<Disposable> collected = this.collected;
-		this.collected = null;
-		if (collected != null) {
-			for (int i = collected.size() - 1; i >= 0; i--) {
-				try {
-					collected.get(i).dispose();
-				} catch (Throwable t) {
-					Log.err("Error disposing unadopted resource from ownership scope", t);
-				}
-			}
-			collected.clear();
-		}
-		pool.push(this);
-	}
+    /**
+     * Closes the scope: restores the previous registrar and disposes every
+     * collected resource
+     * that was not adopted. Idempotent, and always safe to call from a
+     * {@code finally} block.
+     */
+    public void close() {
+        if (closed) {
+            return;
+        }
+        closed = true;
+        OwnershipContext.pop();
+        List<Disposable> collected = this.collected;
+        this.collected = null;
+        if (collected != null) {
+            for (int i = collected.size() - 1; i >= 0; i--) {
+                try {
+                    collected.get(i).dispose();
+                } catch (Throwable t) {
+                    Log.err("Error disposing unadopted resource from ownership scope", t);
+                }
+            }
+            collected.clear();
+        }
+        pool.push(this);
+    }
 
-	/** A scope is an owner for exactly as long as it is open, so closing it is disposing it. */
-	@Override
-	public void dispose() {
-		close();
-	}
+    @Override
+    public void dispose() {
+        close();
+    }
 
-	@Override
-	public boolean isDisposed() {
-		return closed;
-	}
+    @Override
+    public boolean isDisposed() {
+        return closed;
+    }
 }

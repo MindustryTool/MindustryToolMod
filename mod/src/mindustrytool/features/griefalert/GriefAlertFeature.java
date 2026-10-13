@@ -41,8 +41,10 @@ import solim.reactive.Signal;
 
 /**
  * Warns when another player starts building an explosive reactor near a core.
- * Alerts are surfaced as an interactive Solim HUD banner instead of chat messages or
- * vanilla toasts: clicking it jumps the camera onto the offending tile and paints a
+ * Alerts are surfaced as an interactive Solim HUD banner instead of chat
+ * messages or
+ * vanilla toasts: clicking it jumps the camera onto the offending tile and
+ * paints a
  * temporary pulsing world marker there.
  */
 public class GriefAlertFeature extends Feature {
@@ -172,17 +174,14 @@ public class GriefAlertFeature extends Feature {
         }
     }
 
-    /** Reactive alert currently surfaced by the HUD banner, or {@code null} when none is showing. */
     public Signal<GriefAlertInfo> activeAlertSignal() {
         return activeAlert;
     }
 
-    /** Non-reactive read of the active alert, for event handlers and render loops. */
     public @Nullable GriefAlertInfo activeAlert() {
         return activeAlert.peek();
     }
 
-    /** Whether an alert banner is currently showing. */
     public boolean hasActiveAlert() {
         return activeAlert.peek() != null;
     }
@@ -202,14 +201,14 @@ public class GriefAlertFeature extends Feature {
         alertExpireMillis = Time.millis() + durationMillis;
     }
 
-    /** Clears the alert banner without touching the camera. */
     public void dismissAlert() {
         activeAlert.set(null);
         alertExpireMillis = 0L;
     }
 
     /**
-     * Centers the camera onto the offending placement, keeps it detached from the player so it
+     * Centers the camera onto the offending placement, keeps it detached from the
+     * player so it
      * does not snap back, starts the world highlight marker and clears the banner.
      */
     public void jumpToAlert(@Nullable GriefAlertInfo alert) {
@@ -223,7 +222,6 @@ public class GriefAlertFeature extends Feature {
         dismissAlert();
     }
 
-    /** Whether the world highlight marker is still being drawn. */
     public boolean hasActiveHighlight() {
         return Time.millis() < highlightExpireMillis;
     }
@@ -240,7 +238,8 @@ public class GriefAlertFeature extends Feature {
     }
 
     /**
-     * Auto-dismisses the banner once its window elapsed. The current time is injected so the
+     * Auto-dismisses the banner once its window elapsed. The current time is
+     * injected so the
      * deadline can be exercised deterministically.
      */
     void tick(long now) {
@@ -279,7 +278,6 @@ public class GriefAlertFeature extends Feature {
         });
     }
 
-    /** Drops any pending banner and world highlight, e.g. on disable or world reload. */
     private void clearTransientState() {
         dismissAlert();
         highlightExpireMillis = 0L;
@@ -333,7 +331,7 @@ public class GriefAlertFeature extends Feature {
 
         Player builder = event.unit != null ? event.unit.getPlayer() : null;
         // if (builder != null && builder == Vars.player) {
-        //     return;
+        // return;
         // }
 
         String builderName = builder != null ? builder.name : event.team.coloredName();
@@ -392,7 +390,8 @@ public class GriefAlertFeature extends Feature {
     }
 
     /**
-     * Draws a temporary pulsing ring at the tile the camera was last jumped to, so the player can
+     * Draws a temporary pulsing ring at the tile the camera was last jumped to, so
+     * the player can
      * immediately tell which placement triggered the alert.
      */
     private void drawHighlight() {
@@ -415,7 +414,7 @@ public class GriefAlertFeature extends Feature {
             return;
         }
 
-        float progress = Mathf.clamp(1f - remaining / (float)HIGHLIGHT_DURATION_MILLIS);
+        float progress = Mathf.clamp(1f - remaining / (float) HIGHLIGHT_DURATION_MILLIS);
         float fade = 1f - progress;
         float pulse = Mathf.sin(progress * Mathf.PI * HIGHLIGHT_PULSE_CYCLES);
 

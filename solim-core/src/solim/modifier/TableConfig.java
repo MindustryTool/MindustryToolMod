@@ -30,12 +30,10 @@ import solim.reactive.Readable;
  */
 public interface TableConfig<SELF extends TableConfig<SELF>> {
 
-    /** Returns the underlying Arc Table for this component. */
     Table table();
 
     // ---------- alignment ----------
 
-    /** Sets the table's content alignment. */
     default SELF align(int align) {
         Table t = table();
         if (t != null)
@@ -43,7 +41,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Aligns table content to the top. */
     default SELF top() {
         Table t = table();
         if (t != null)
@@ -51,7 +48,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Aligns table content to the bottom. */
     default SELF bottom() {
         Table t = table();
         if (t != null)
@@ -59,7 +55,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Aligns table content to the left. */
     default SELF left() {
         Table t = table();
         if (t != null)
@@ -67,7 +62,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Aligns table content to the right. */
     default SELF right() {
         Table t = table();
         if (t != null)
@@ -75,7 +69,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Centers table content. */
     default SELF center() {
         Table t = table();
         if (t != null)
@@ -85,7 +78,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
 
     // ---------- padding (inner insets on Table) ----------
 
-    /** Sets inner padding equally on all four sides. */
     default SELF padding(float padding) {
         Table t = table();
         if (t != null)
@@ -93,7 +85,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Sets inner padding on all four sides individually. */
     default SELF padding(float top, float left, float bottom, float right) {
         Table t = table();
         if (t != null)
@@ -101,7 +92,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Sets top inner padding. */
     default SELF paddingTop(float top) {
         Table t = table();
         if (t != null)
@@ -109,7 +99,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Sets bottom inner padding. */
     default SELF paddingBottom(float bottom) {
         Table t = table();
         if (t != null)
@@ -117,7 +106,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Sets left inner padding. */
     default SELF paddingLeft(float left) {
         Table t = table();
         if (t != null)
@@ -125,7 +113,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Sets right inner padding. */
     default SELF paddingRight(float right) {
         Table t = table();
         if (t != null)
@@ -133,7 +120,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Sets horizontal inner padding. */
     default SELF paddingX(float x) {
         Table t = table();
         if (t != null) {
@@ -143,7 +129,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Sets vertical inner padding. */
     default SELF paddingY(float y) {
         Table t = table();
         if (t != null) {
@@ -155,7 +140,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
 
     // ---------- padding (reactive) ----------
 
-    /** Sets inner padding equally on all four sides reactively. */
     default SELF padding(@Nullable Readable<Float> padding) {
         if (padding == null)
             return self();
@@ -168,7 +152,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Sets inner padding on all four sides individually reactively. */
     default SELF padding(
             @Nullable Readable<Float> top,
             @Nullable Readable<Float> left,
@@ -188,7 +171,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Sets top inner padding reactively. */
     default SELF paddingTop(@Nullable Readable<Float> top) {
         if (top == null)
             return self();
@@ -201,7 +183,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Sets bottom inner padding reactively. */
     default SELF paddingBottom(@Nullable Readable<Float> bottom) {
         if (bottom == null)
             return self();
@@ -214,7 +195,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Sets left inner padding reactively. */
     default SELF paddingLeft(@Nullable Readable<Float> left) {
         if (left == null)
             return self();
@@ -227,7 +207,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Sets right inner padding reactively. */
     default SELF paddingRight(@Nullable Readable<Float> right) {
         if (right == null)
             return self();
@@ -240,7 +219,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Sets horizontal inner padding reactively. */
     default SELF paddingX(@Nullable Readable<Float> x) {
         if (x == null)
             return self();
@@ -253,7 +231,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Sets vertical inner padding reactively. */
     default SELF paddingY(@Nullable Readable<Float> y) {
         if (y == null)
             return self();
@@ -268,13 +245,11 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
 
     // ---------- gap ----------
 
-    /** Sets gap spacing between children. */
     default SELF gap(float gap) {
         GenericGapContainer.setGap(table(), gap);
         return self();
     }
 
-    /** Sets gap reactively. */
     default SELF gap(@Nullable Readable<Float> gap) {
         if (gap == null)
             return self();
@@ -287,24 +262,20 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Re-evaluates spacing across all children. */
     default void respace() {
         GapContainer.respace(table());
     }
 
     // ---------- rounded ----------
 
-    /** Gets or creates a {@link RoundedDrawable} on this table. */
     default RoundedDrawable getOrCreateRounded(int defaultRadius) {
         return RoundedHelper.getOrCreateRounded(table(), defaultRadius);
     }
 
-    /** Sets rounded corners with a fixed radius. */
     default SELF rounded(int radius) {
         return rounded(radius, (Color) null);
     }
 
-    /** Sets rounded corners with a fixed radius and color. */
     default SELF rounded(int radius, @Nullable Color color) {
         Table t = table();
         if (t == null)
@@ -317,7 +288,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Sets rounded corners with a reactive color. */
     default SELF rounded(int radius, @Nullable Readable<Color> color) {
         Table t = table();
         if (t == null)
@@ -337,7 +307,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
 
     // ---------- border ----------
 
-    /** Sets a border with fixed stroke and color. */
     default SELF border(float stroke, @Nullable Color color) {
         Table t = table();
         if (t == null)
@@ -347,7 +316,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Sets a border with reactive color. */
     default SELF border(float stroke, @Nullable Readable<Color> color) {
         Table t = table();
         if (t == null)
@@ -367,7 +335,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
 
     // ---------- background ----------
 
-    /** Sets the table's background drawable. */
     default SELF background(@Nullable Drawable bg) {
         Table t = table();
         if (t == null)
@@ -380,7 +347,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Sets the table's background drawable reactively. */
     default SELF background(@Nullable Readable<Drawable> bg) {
         if (bg == null)
             return self();
@@ -395,7 +361,6 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Sets the table's background color. */
     default SELF background(@Nullable Color color) {
         Table t = table();
         if (t == null)
@@ -405,12 +370,10 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
         return self();
     }
 
-    /** Sets the table's background color. */
     default SELF backgroundColor(@Nullable Color color) {
         return background(color);
     }
 
-    /** Sets the table's background color reactively. */
     default SELF backgroundColor(@Nullable Readable<Color> color) {
         if (color == null)
             return self();
@@ -424,5 +387,5 @@ public interface TableConfig<SELF extends TableConfig<SELF>> {
 
     // ---------- internal ----------
 
-     SELF self();
+    SELF self();
 }

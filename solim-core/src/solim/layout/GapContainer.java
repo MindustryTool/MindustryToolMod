@@ -15,16 +15,12 @@ import solim.modifier.PendingCellConfig;
  */
 public interface GapContainer {
 
-    /** Primary direction of the container. */
     Direction direction();
 
-    /** Current gap spacing in pixels. */
     float gap();
 
-    /** Re-evaluates and applies directional spacing across all children. */
     void respace();
 
-    /** Resolves the GapContainer instance associated with the table, if any. */
     static @Nullable GapContainer find(@Nullable Table table) {
         if (table == null)
             return null;
@@ -32,12 +28,10 @@ public interface GapContainer {
         return comp instanceof GapContainer ? (GapContainer) comp : null;
     }
 
-    /** Returns whether the given table belongs to a GapContainer. */
     static boolean isGapContainer(@Nullable Table table) {
         return find(table) != null;
     }
 
-    /** Re-evaluates spacing on the given table if it belongs to a GapContainer. */
     static void respace(@Nullable Table table) {
         GapContainer gc = find(table);
         if (gc != null) {

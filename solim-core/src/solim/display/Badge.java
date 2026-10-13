@@ -81,7 +81,6 @@ public final class Badge extends Component implements CellConfig<Badge>, TableCo
         return hideOnZero(true);
     }
 
-    /** Rebuilds the visibility effect. The superseded one is disposed here; disposal is idempotent. */
     private void updateVisibilityBinding() {
         if (visibilityEffect != null) {
             visibilityEffect.dispose();

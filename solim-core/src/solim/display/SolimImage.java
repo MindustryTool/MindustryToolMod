@@ -17,8 +17,8 @@ import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/** Display widget for drawable content. */
-public final class SolimImage extends Component implements SpacingAware, CellConfig<SolimImage>, ElementConfig<SolimImage> {
+public final class SolimImage extends Component
+        implements SpacingAware, CellConfig<SolimImage>, ElementConfig<SolimImage> {
 
     private final Image element;
     private final PendingCellConfig constraints = new PendingCellConfig();

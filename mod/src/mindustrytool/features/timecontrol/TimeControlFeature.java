@@ -158,7 +158,6 @@ public class TimeControlFeature extends Feature {
                 : -Mathf.sqrt((1f / value - 1f) / (1f / SLIDER_MIN_SPEED - 1f));
     }
 
-    /** Short display form such as 8x or 0.25x. */
     public static String formatSpeed(float value) {
         float rounded = Math.round(value * 100f) / 100f;
         return rounded == (int) rounded ? String.valueOf((int) rounded) : String.valueOf(rounded);

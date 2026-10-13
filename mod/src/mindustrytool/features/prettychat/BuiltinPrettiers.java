@@ -36,7 +36,6 @@ public final class BuiltinPrettiers {
         return list;
     }
 
-    /** Rainbow color tags across words with adaptive clustering to respect message length limits. */
     public static class RainbowPrettier implements Prettier {
         private static final String[] COLORS = {
                 "[red]", "[gold]", "[lime]", "[cyan]", "[sky]", "[pink]"
@@ -153,7 +152,6 @@ public final class BuiltinPrettiers {
         }
     }
 
-    /** Smooth color gradient text transformer with customizable palettes. */
     public static class GradientPrettier implements Prettier {
         public static final String DEFAULT_PALETTE = "#ff5e36,#9b51e0";
         private static final String SETTING_KEY = "mindustrytool.pretty-chat.script.gradient";
@@ -309,11 +307,16 @@ public final class BuiltinPrettiers {
                 if (clean.startsWith("#")) {
                     clean = clean.substring(1);
                 }
-                if ("sunset".equalsIgnoreCase(clean)) return Color.valueOf("ff5e36");
-                if ("cyberpunk".equalsIgnoreCase(clean)) return Color.valueOf("00f0ff");
-                if ("ocean".equalsIgnoreCase(clean)) return Color.valueOf("0072ff");
-                if ("fire".equalsIgnoreCase(clean)) return Color.valueOf("ffe259");
-                if ("neon".equalsIgnoreCase(clean)) return Color.valueOf("a8ff78");
+                if ("sunset".equalsIgnoreCase(clean))
+                    return Color.valueOf("ff5e36");
+                if ("cyberpunk".equalsIgnoreCase(clean))
+                    return Color.valueOf("00f0ff");
+                if ("ocean".equalsIgnoreCase(clean))
+                    return Color.valueOf("0072ff");
+                if ("fire".equalsIgnoreCase(clean))
+                    return Color.valueOf("ffe259");
+                if ("neon".equalsIgnoreCase(clean))
+                    return Color.valueOf("a8ff78");
                 return Color.valueOf(clean);
             } catch (Exception e) {
                 return fallback;
@@ -328,7 +331,6 @@ public final class BuiltinPrettiers {
         }
     }
 
-    /** UwUifier replaces r/l with w and adds cute particles. */
     public static class UwuPrettier implements Prettier {
         @Override
         public String id() {
@@ -381,7 +383,6 @@ public final class BuiltinPrettiers {
         }
     }
 
-    /** Alternating caps mocking SpongeBob style. */
     public static class MockingPrettier implements Prettier {
         @Override
         public String id() {
@@ -435,7 +436,6 @@ public final class BuiltinPrettiers {
         }
     }
 
-    /** Converts text to UPPERCASE. */
     public static class CapsPrettier implements Prettier {
         @Override
         public String id() {
@@ -473,7 +473,6 @@ public final class BuiltinPrettiers {
         }
     }
 
-    /** Converts text to lowercase. */
     public static class LowercasePrettier implements Prettier {
         @Override
         public String id() {
@@ -511,7 +510,6 @@ public final class BuiltinPrettiers {
         }
     }
 
-    /** Reverses character order. */
     public static class ReversePrettier implements Prettier {
         @Override
         public String id() {
@@ -549,7 +547,6 @@ public final class BuiltinPrettiers {
         }
     }
 
-    /** Converts letters to unicode small capitals. */
     public static class SmallCapsPrettier implements Prettier {
         private static final String NORMAL = "abcdefghijklmnopqrstuvwxyz";
         private static final String SMALL = "ᴀʙᴄᴅᴇғɢʜɪᴊᴋʟᴍɴᴏᴘǫʀsᴛᴜᴠᴡxʏᴢ";
@@ -606,7 +603,6 @@ public final class BuiltinPrettiers {
         }
     }
 
-    /** Converts letters and digits to circled / bubble unicode characters. */
     public static class BubblePrettier implements Prettier {
         @Override
         public String id() {
@@ -664,7 +660,6 @@ public final class BuiltinPrettiers {
         }
     }
 
-    /** Fullwidth monospace text transformer. */
     public static class MonoPrettier implements Prettier {
         @Override
         public String id() {
@@ -716,7 +711,6 @@ public final class BuiltinPrettiers {
         }
     }
 
-    /** Strikethrough text transformer using Unicode combining stroke. */
     public static class StrikethroughPrettier implements Prettier {
         @Override
         public String id() {
@@ -778,7 +772,6 @@ public final class BuiltinPrettiers {
         }
     }
 
-    /** Underline text transformer using Unicode combining low line. */
     public static class UnderlinePrettier implements Prettier {
         @Override
         public String id() {
@@ -840,7 +833,6 @@ public final class BuiltinPrettiers {
         }
     }
 
-    /** Decorative brackets text transformer. */
     public static class FancyBracketsPrettier implements Prettier {
         public static final String DEFAULT_TEMPLATE = "\u3010 <message> \u3011";
         private static final String SETTING_KEY = "mindustrytool.pretty-chat.script.fancybrackets";
@@ -932,7 +924,6 @@ public final class BuiltinPrettiers {
         }
     }
 
-    /** Customizable prettier with user-defined template or JavaScript execution. */
     public static class CustomPrettier implements Prettier {
         public static final String DEFAULT_TEMPLATE = "<message>";
         private static final String SETTING_KEY = "mindustrytool.pretty-chat.script.custom";
@@ -1036,7 +1027,8 @@ public final class BuiltinPrettiers {
     }
 
     /**
-     * Applies a mapping function only to text segments outside of square brackets [...].
+     * Applies a mapping function only to text segments outside of square brackets
+     * [...].
      * Preserves color tags and icon codes untouched.
      */
     public static String mapTextOutsideTags(String input, TextMapper mapper) {

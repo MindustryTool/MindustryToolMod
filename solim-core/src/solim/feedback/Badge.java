@@ -7,43 +7,43 @@ import solim.core.Disposable;
 import solim.reactive.Computed;
 import solim.reactive.Effect;
 
-/** Badge - lightweight label for counts/status. */
 public final class Badge implements Disposable {
-	private final Table table = new Table();
-	private final Label label = new Label("");
-	private Effect binding;
-	private boolean disposed = false;
+    private final Table table = new Table();
+    private final Label label = new Label("");
+    private Effect binding;
+    private boolean disposed = false;
 
-	public Badge() {
-		table.add(label);
-	}
+    public Badge() {
+        table.add(label);
+    }
 
-	public Badge(Computed<String> text) {
-		table.add(label);
-		this.binding = Effect.of((Cons<Effect.Cleanup>) cleanup -> {
-			label.setText(text.get());
-		});
-	}
+    public Badge(Computed<String> text) {
+        table.add(label);
+        this.binding = Effect.of((Cons<Effect.Cleanup>) cleanup -> {
+            label.setText(text.get());
+        });
+    }
 
-	public static Badge of(Computed<String> text) {
-		return new Badge(text);
-	}
+    public static Badge of(Computed<String> text) {
+        return new Badge(text);
+    }
 
-	public Table table() {
-		return table;
-	}
+    public Table table() {
+        return table;
+    }
 
-	@Override
-	public void dispose() {
-		if (disposed) {
-			return;
-		}
-		disposed = true;
-		if (binding != null) binding.dispose();
-	}
+    @Override
+    public void dispose() {
+        if (disposed) {
+            return;
+        }
+        disposed = true;
+        if (binding != null)
+            binding.dispose();
+    }
 
-	@Override
-	public boolean isDisposed() {
-		return disposed;
-	}
+    @Override
+    public boolean isDisposed() {
+        return disposed;
+    }
 }

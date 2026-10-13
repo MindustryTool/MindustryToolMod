@@ -91,17 +91,14 @@ public final class Signals {
         return netClient;
     }
 
-    /** Whether no multiplayer session is active (menu counts as single-player). */
     public static Signal<Boolean> singlePlayer() {
         return singlePlayer;
     }
 
-    /** Whether the local server is up, even before world play begins. */
     public static Signal<Boolean> localHosting() {
         return localHosting;
     }
 
-    /** Whether connected as a client while in-world. */
     public static Signal<Boolean> clientPlaying() {
         return clientPlaying;
     }

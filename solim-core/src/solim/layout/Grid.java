@@ -1,4 +1,5 @@
 package solim.layout;
+
 import solim.modifier.CellConfig;
 
 import arc.scene.Element;
@@ -17,8 +18,8 @@ import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.modifier.PendingCellConfig;
 
-/** Simple grid with fixed or reactive column count and customizable gap. */
-public final class Grid extends Component implements CellConfig<Grid>, GapContainer, ElementConfig<Grid>, TableConfig<Grid> {
+public final class Grid extends Component
+        implements CellConfig<Grid>, GapContainer, ElementConfig<Grid>, TableConfig<Grid> {
 
     private final Table table;
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -50,7 +51,6 @@ public final class Grid extends Component implements CellConfig<Grid>, GapContai
         return table;
     }
 
-
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
@@ -64,7 +64,7 @@ public final class Grid extends Component implements CellConfig<Grid>, GapContai
 
     public Grid columns(@Nullable Readable<Integer> c) {
         if (c != null) {
-        own(Effect.of(() -> {
+            own(Effect.of(() -> {
                 Integer cols = c.get();
                 if (cols != null) {
                     this.columns = Math.max(1, cols);
@@ -83,7 +83,7 @@ public final class Grid extends Component implements CellConfig<Grid>, GapContai
 
     public Grid gap(@Nullable Readable<Float> gapSignal) {
         if (gapSignal != null) {
-        own(Effect.of(() -> {
+            own(Effect.of(() -> {
                 Float g = gapSignal.get();
                 if (g != null) {
                     gap(g);
@@ -170,7 +170,6 @@ public final class Grid extends Component implements CellConfig<Grid>, GapContai
         table.invalidateHierarchy();
     }
 
-    /** Add a child element to the grid; wraps to next row when columns exceeded. */
     public Grid add(Element child) {
         Cell<?> cell = table.add(child);
         cell.top().left();
@@ -186,8 +185,6 @@ public final class Grid extends Component implements CellConfig<Grid>, GapContai
         respace();
         return this;
     }
-
-
 
     @Override
     public Grid align(int align) {

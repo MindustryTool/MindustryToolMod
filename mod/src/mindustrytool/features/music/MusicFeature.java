@@ -31,7 +31,8 @@ import solim.reactive.Signal;
 /**
  * Custom music loader. Backs up the game's ambient/dark/boss music lists and
  * rebuilds them in place with custom tracks and user-disabled entries removed.
- * Menu and editor music slots are replaced by reassigning {@link Musics} fields.
+ * Menu and editor music slots are replaced by reassigning {@link Musics}
+ * fields.
  * Playback is driven by the game's SoundControl so state stays authoritative.
  */
 public class MusicFeature extends Feature {
@@ -45,7 +46,7 @@ public class MusicFeature extends Feature {
     public final ConfigValue<Seq<String>> bossPaths;
     public final ConfigValue<Seq<String>> menuPaths;
     public final ConfigValue<Seq<String>> editorPaths;
-    /** Persisted list of disabled track keys, formatted by {@link TrackState#disabledKey}. */
+
     public final ConfigValue<Seq<String>> disabledTracks;
 
     private final ObjectMap<MusicType, Seq<Music>> originalMusic = new ObjectMap<>();
@@ -83,7 +84,8 @@ public class MusicFeature extends Feature {
             trackSignals.put(type, Signal.of(new Seq<>()));
         }
 
-        //keep the UI in sync with the game's actual playback and re-roll slot music on entry
+        // keep the UI in sync with the game's actual playback and re-roll slot music on
+        // entry
         Events.run(Trigger.update, () -> {
             currentMusic.set(Vars.control.sound.getCurrent());
 
@@ -107,7 +109,7 @@ public class MusicFeature extends Feature {
             }
         }));
 
-        //SoundControl.reload() reassigns the music lists, so re-apply afterwards
+        // SoundControl.reload() reassigns the music lists, so re-apply afterwards
         Events.on(MusicRegisterEvent.class, e -> Core.app.post(() -> {
             if (isEnabled()) {
                 recaptureOriginalMusic();
@@ -126,17 +128,17 @@ public class MusicFeature extends Feature {
 
     public ConfigValue<Seq<String>> pathsConfig(MusicType type) {
         switch (type) {
-        case AMBIENT:
-            return ambientPaths;
-        case DARK:
-            return darkPaths;
-        case BOSS:
-            return bossPaths;
-        case MENU:
-            return menuPaths;
-        case EDITOR:
-        default:
-            return editorPaths;
+            case AMBIENT:
+                return ambientPaths;
+            case DARK:
+                return darkPaths;
+            case BOSS:
+                return bossPaths;
+            case MENU:
+                return menuPaths;
+            case EDITOR:
+            default:
+                return editorPaths;
         }
     }
 
@@ -148,7 +150,6 @@ public class MusicFeature extends Feature {
         return trackSignals.get(type);
     }
 
-    /** Reactive view of the track the game's player currently owns. */
     public Readable<Music> currentMusic() {
         return currentMusic;
     }
@@ -168,7 +169,6 @@ public class MusicFeature extends Feature {
         restoreOriginalMusic();
     }
 
-    /** Backs up the game's music lists and slots the first time they are available. */
     public void captureOriginalMusic() {
         if (captured) {
             return;
@@ -187,9 +187,9 @@ public class MusicFeature extends Feature {
         captured = !originalMusic.isEmpty();
     }
 
-    /** Discards the captured backup and captures the freshly reloaded original music. */
     private void recaptureOriginalMusic() {
-        //restore slots before capturing so a custom track is never captured as an original
+        // restore slots before capturing so a custom track is never captured as an
+        // original
         if (originalMenu != null) {
             Musics.menu = originalMenu;
         }
@@ -201,7 +201,6 @@ public class MusicFeature extends Feature {
         captureOriginalMusic();
     }
 
-    /** Restores the backed-up original music lists and slots, removing all custom tracks. */
     public void restoreOriginalMusic() {
         if (originalMenu != null) {
             Musics.menu = originalMenu;
@@ -221,7 +220,7 @@ public class MusicFeature extends Feature {
             }
         }
 
-        //stop whatever the game player is currently previewing
+        // stop whatever the game player is currently previewing
         Vars.control.sound.stop();
     }
 
@@ -236,7 +235,8 @@ public class MusicFeature extends Feature {
     }
 
     /**
-     * Rebuilds the game's music for a type: originals plus valid custom files, minus
+     * Rebuilds the game's music for a type: originals plus valid custom files,
+     * minus
      * disabled tracks. Also prunes disabled entries for missing custom files.
      */
     public void loadMusicType(MusicType type) {
@@ -302,7 +302,8 @@ public class MusicFeature extends Feature {
     }
 
     /**
-     * Loads a single-slot type (menu/editor): only custom tracks exist, and the slot
+     * Loads a single-slot type (menu/editor): only custom tracks exist, and the
+     * slot
      * is assigned a random enabled track or restored to vanilla.
      */
     private void loadSlot(MusicType type) {
@@ -343,7 +344,6 @@ public class MusicFeature extends Feature {
         assignSlot(type, states);
     }
 
-    /** Assigns a random enabled custom track to the slot, or restores the vanilla track. */
     private void assignSlot(MusicType type, Seq<TrackState> states) {
         Seq<Music> playable = new Seq<>();
         for (TrackState state : states) {
@@ -354,7 +354,6 @@ public class MusicFeature extends Feature {
         setSlotMusic(type, pickSlotMusic(playable, originalSlot(type), slotMusic(type)));
     }
 
-    /** Re-rolls the slot track when the player enters the menu/editor. */
     private void rerollSlot(MusicType type) {
         if (!isEnabled()) {
             return;
@@ -363,7 +362,8 @@ public class MusicFeature extends Feature {
     }
 
     /**
-     * Picks a random playable track, avoiding the one already assigned when possible.
+     * Picks a random playable track, avoiding the one already assigned when
+     * possible.
      * Falls back to the vanilla track when nothing is playable.
      */
     static Music pickSlotMusic(Seq<Music> playable, Music fallback, Music current) {
@@ -384,7 +384,8 @@ public class MusicFeature extends Feature {
     }
 
     /**
-     * Removes disabled entries of the given type that refer to custom tracks which no
+     * Removes disabled entries of the given type that refer to custom tracks which
+     * no
      * longer exist. Original-track entries and entries of other types are kept.
      */
     static Seq<String> pruneDisabled(Seq<String> disabled, MusicType type, Seq<String> validCustomKeys) {
@@ -399,7 +400,6 @@ public class MusicFeature extends Feature {
         return result;
     }
 
-    /** Prunes stale disabled entries for a type, persisting only when something changed. */
     private void pruneDisabled(MusicType type, Seq<String> validCustomKeys) {
         Seq<String> disabled = disabledTracks.get();
         if (disabled == null) {
@@ -417,7 +417,8 @@ public class MusicFeature extends Feature {
 
     /**
      * Checks if a file exists or is readable. On Android (SAF), {@link Fi#exists()}
-     * returns false because content URIs are not filesystem paths, but {@link Fi#read()}
+     * returns false because content URIs are not filesystem paths, but
+     * {@link Fi#read()}
      * can successfully open an InputStream.
      */
     static boolean isReadable(@Nullable Fi file) {
@@ -435,7 +436,8 @@ public class MusicFeature extends Feature {
     }
 
     /**
-     * Queries Android ContentResolver for the document's DISPLAY_NAME via reflection.
+     * Queries Android ContentResolver for the document's DISPLAY_NAME via
+     * reflection.
      */
     @Nullable
     static String getAndroidDisplayName(Fi file) {
@@ -473,7 +475,7 @@ public class MusicFeature extends Feature {
                 return null;
             }
 
-            String[] projection = new String[]{"_display_name"};
+            String[] projection = new String[] { "_display_name" };
             Object cursor = queryMethod.invoke(resolver, uriObj, projection, null, null, null);
             if (cursor == null) {
                 return null;
@@ -501,13 +503,11 @@ public class MusicFeature extends Feature {
         return null;
     }
 
-    /** Returns the lower-case file extension without dot, or empty string if none. */
     static String extensionOf(String name) {
         int dot = name.lastIndexOf('.');
         return dot >= 0 ? name.substring(dot + 1).toLowerCase() : "";
     }
 
-    /** Sanitizes a filename by replacing illegal filesystem characters with underscores. */
     static String sanitizeFileName(String name) {
         String sanitized = name.replaceAll("[\\\\/:*?\"<>|]+", "_").trim();
         while (sanitized.startsWith("_")) {
@@ -666,7 +666,6 @@ public class MusicFeature extends Feature {
         return target;
     }
 
-    /** Removes a custom track from a music type, disposing its audio resource. */
     public void removeTrack(MusicType type, TrackState state) {
         Fi file = state.music.file;
         if (file == null || !state.isCustom) {
@@ -690,7 +689,7 @@ public class MusicFeature extends Feature {
         trackStates.remove(state.disabledKey());
 
         setPaths(type, remaining);
-        //also drops the disabled entry through pruning
+        // also drops the disabled entry through pruning
         loadMusicType(type);
     }
 
@@ -751,7 +750,6 @@ public class MusicFeature extends Feature {
         }
     }
 
-    /** Plays or stops the track through the game's player, keeping state authoritative. */
     public void togglePlay(TrackState state) {
         if (Vars.control.sound.getCurrent() == state.music) {
             Vars.control.sound.stop();
@@ -793,7 +791,6 @@ public class MusicFeature extends Feature {
         }
     }
 
-    /** Returns a new sequence without the given value, preserving order. */
     private static Seq<String> without(Seq<String> source, String value) {
         Seq<String> result = new Seq<>();
         for (String entry : source) {
@@ -817,16 +814,16 @@ public class MusicFeature extends Feature {
 
     private @Nullable Seq<Music> getTargetList(MusicType type) {
         switch (type) {
-        case AMBIENT:
-            return Vars.control.sound.ambientMusic;
-        case DARK:
-            return Vars.control.sound.darkMusic;
-        case BOSS:
-            return Vars.control.sound.bossMusic;
-        case MENU:
-        case EDITOR:
-        default:
-            return null;
+            case AMBIENT:
+                return Vars.control.sound.ambientMusic;
+            case DARK:
+                return Vars.control.sound.darkMusic;
+            case BOSS:
+                return Vars.control.sound.bossMusic;
+            case MENU:
+            case EDITOR:
+            default:
+                return null;
         }
     }
 

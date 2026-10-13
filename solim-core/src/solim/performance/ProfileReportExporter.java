@@ -12,20 +12,32 @@ import java.util.List;
 /**
  * Writes the self-contained 3-tab interactive profile report.
  *
- * <p>The report is a single HTML file with no external network dependencies: all CSS and JavaScript
- * are inlined and the whole profile is embedded as one JSON payload. Three views are provided:
+ * <p>
+ * The report is a single HTML file with no external network dependencies: all
+ * CSS and JavaScript
+ * are inlined and the whole profile is embedded as one JSON payload. Three
+ * views are provided:
  * <ol>
- * <li><b>Flame Graph</b> — the unified {@code build} / {@code signal} / {@code computed} /
- * {@code effect} / {@code flush} timeline, zoomable and pannable, with search filtering and a
- * click-to-inspect details panel. The Chrome Trace and Speedscope payloads remain embedded so the
+ * <li><b>Flame Graph</b> — the unified {@code build} / {@code signal} /
+ * {@code computed} /
+ * {@code effect} / {@code flush} timeline, zoomable and pannable, with search
+ * filtering and a
+ * click-to-inspect details panel. The Chrome Trace and Speedscope payloads
+ * remain embedded so the
  * session can still be opened in external tools.</li>
- * <li><b>Component Tree</b> — the live hierarchy from {@link SessionRoot} with an expandable tree on
- * the left and a reactive inspector for the selected component on the right.</li>
- * <li><b>Reactive Hotspots</b> — sortable tables ranking signals, computeds, and effects.</li>
+ * <li><b>Component Tree</b> — the live hierarchy from {@link SessionRoot} with
+ * an expandable tree on
+ * the left and a reactive inspector for the selected component on the
+ * right.</li>
+ * <li><b>Reactive Hotspots</b> — sortable tables ranking signals, computeds,
+ * and effects.</li>
  * </ol>
  *
- * <p>All payload strings are escaped before being embedded, so component names, signal values, and
- * dependency labels containing quotes or angle brackets cannot break out of the JSON script block.
+ * <p>
+ * All payload strings are escaped before being embedded, so component names,
+ * signal values, and
+ * dependency labels containing quotes or angle brackets cannot break out of the
+ * JSON script block.
  */
 public final class ProfileReportExporter {
 
@@ -35,10 +47,10 @@ public final class ProfileReportExporter {
     /**
      * Renders the report as an HTML document.
      *
-     * @param spans recorded trace spans for the session
+     * @param spans        recorded trace spans for the session
      * @param droppedCount number of spans evicted by the ring buffer
-     * @param traceId the trace generation id
-     * @param components live component tree snapshot
+     * @param traceId      the trace generation id
+     * @param components   live component tree snapshot
      */
     public static String render(@Nullable List<TraceSpan> spans, int droppedCount, long traceId,
             @Nullable List<ComponentNodeSnapshot> components) {
@@ -80,7 +92,9 @@ public final class ProfileReportExporter {
     /**
      * Builds the single JSON payload consumed by the report's three views.
      *
-     * <p>Exposed separately from {@link #render} so tests can assert on the embedded data without
+     * <p>
+     * Exposed separately from {@link #render} so tests can assert on the embedded
+     * data without
      * parsing the surrounding HTML.
      */
     public static String payload(@Nullable List<TraceSpan> spans, int droppedCount, long traceId,
@@ -203,7 +217,6 @@ public final class ProfileReportExporter {
         sb.append(']');
     }
 
-    /** Writes the rendered report to {@code file}, creating parent directories as needed. */
     public static void writeFile(@Nullable List<TraceSpan> spans, int droppedCount, long traceId,
             @Nullable List<ComponentNodeSnapshot> components, @Nullable File file) throws IOException {
         if (file == null) {
@@ -222,12 +235,14 @@ public final class ProfileReportExporter {
             try {
                 writer.close();
             } catch (IOException ignored) {
-                // The write either succeeded or already failed; closing adds no new failure mode.
+                // The write either succeeded or already failed; closing adds no new failure
+                // mode.
             }
         }
     }
 
-    // --- static document fragments -------------------------------------------------------------
+    // --- static document fragments
+    // -------------------------------------------------------------
 
     private static String header(int spanCount, int droppedCount, long traceId) {
         return "<header class=\"bar\"><h1>Solim Profile Report</h1><div class=\"meta\">"
@@ -576,7 +591,6 @@ public final class ProfileReportExporter {
                 "})();");
     }
 
-    /** Minimal JSON string escaping shared by the payload builder. */
     static final class Json {
         private Json() {
         }

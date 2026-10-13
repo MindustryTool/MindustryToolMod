@@ -24,7 +24,6 @@ import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.modifier.PendingCellConfig;
 
-/** Scroll container wrapping a Table in a ScrollPane. */
 public final class Scroll extends Component implements CellConfig<Scroll>, ElementConfig<Scroll>, TableConfig<Scroll> {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
@@ -328,7 +327,6 @@ public final class Scroll extends Component implements CellConfig<Scroll>, Eleme
         }
         return this;
     }
-
 
     @Override
     public Table table() {

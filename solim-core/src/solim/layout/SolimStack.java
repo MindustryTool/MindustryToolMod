@@ -1,4 +1,5 @@
 package solim.layout;
+
 import solim.modifier.CellConfig;
 
 import arc.scene.Element;
@@ -16,7 +17,6 @@ import solim.runtime.ReactiveContext;
 import arc.func.Func;
 import arc.func.Prov;
 
-/** Stack container: overlays children on top of each other. */
 public final class SolimStack extends Component implements CellConfig<SolimStack>, ElementConfig<SolimStack> {
     private final Stack stack;
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -63,7 +63,8 @@ public final class SolimStack extends Component implements CellConfig<SolimStack
         if (isDisposed() || Prov == null) {
             return this;
         }
-        @Nullable Component component = ReactiveContext.untracked(() -> {
+        @Nullable
+        Component component = ReactiveContext.untracked(() -> {
             OwnershipScope scope = OwnershipScope.open();
             try {
                 Component created = AttachmentStack.isolate(Prov);
@@ -83,7 +84,8 @@ public final class SolimStack extends Component implements CellConfig<SolimStack
         if (isDisposed() || factory == null) {
             return this;
         }
-        @Nullable Component component = ReactiveContext.untracked(() -> {
+        @Nullable
+        Component component = ReactiveContext.untracked(() -> {
             OwnershipScope scope = OwnershipScope.open();
             try {
                 Component created = AttachmentStack.isolate(() -> factory.get(stack));
@@ -100,8 +102,10 @@ public final class SolimStack extends Component implements CellConfig<SolimStack
     }
 
     /**
-     * Mounts a layer and hands it to this component. A layer that mounts but turns out to be
-     * unusable is disposed here rather than adopted, so ownership only ever holds what is live.
+     * Mounts a layer and hands it to this component. A layer that mounts but turns
+     * out to be
+     * unusable is disposed here rather than adopted, so ownership only ever holds
+     * what is live.
      */
     private void attachLayer(@Nullable Component component) {
         if (component == null) {

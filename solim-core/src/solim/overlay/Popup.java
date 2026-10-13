@@ -54,13 +54,12 @@ import solim.reactive.Readable;
  * usable.
  */
 public final class Popup<T> extends Component implements TableConfig<Popup<T>> {
-    /** Opt-in edge kept fixed when content size drifts. Null (default) keeps legacy fixed-corner behavior. */
+
     public enum Edge {
         TOP,
         BOTTOM
     }
 
-    /** Drift below this height delta is ignored, mirroring Hud size reconciliation. */
     private static final float PIN_EPSILON = 1.0f;
 
     private final Table table = new PopupTable();

@@ -25,7 +25,8 @@ import solim.reactive.Signal;
 import solim.reactive.When;
 
 /**
- * Fixture utilities and component supplier providers for unified layout testing.
+ * Fixture utilities and component supplier providers for unified layout
+ * testing.
  */
 public final class LayoutTestFixtures {
 
@@ -74,7 +75,6 @@ public final class LayoutTestFixtures {
         }
     }
 
-    /** Returns representative containers implementing TableConfig & GapContainer. */
     public static List<ComponentAdapter> containers() {
         return Arrays.asList(
                 new ComponentAdapter("Column", Column::new),
@@ -83,11 +83,9 @@ public final class LayoutTestFixtures {
                 new ComponentAdapter("Grid", () -> new Grid(2)),
                 new ComponentAdapter("Wrap", Wrap::new),
                 new ComponentAdapter("SolimCollapser", SolimCollapser::new),
-                new ComponentAdapter("Scroll", Scroll::new)
-        );
+                new ComponentAdapter("Scroll", Scroll::new));
     }
 
-    /** Returns reactive containers. */
     public static List<ComponentAdapter> reactiveContainers() {
         return Arrays.asList(
                 new ComponentAdapter("When", () -> When.of(Signal.of(true)).thenDo(() -> new Element())),
@@ -97,21 +95,19 @@ public final class LayoutTestFixtures {
                     fe.children(item -> new FixedComponent());
                     return fe;
                 }),
-                new ComponentAdapter("QueryView", () -> QueryView.of(solim.reactive.Query.noKey(() -> CompletableFuture.completedFuture("data"))).data(data -> new FixedComponent()))
-        );
+                new ComponentAdapter("QueryView",
+                        () -> QueryView.of(solim.reactive.Query.noKey(() -> CompletableFuture.completedFuture("data")))
+                                .data(data -> new FixedComponent())));
     }
 
-    /** Returns interactive controls and display primitives. */
     public static List<ComponentAdapter> controlsAndPrimitives() {
         return Arrays.asList(
                 new ComponentAdapter("Button", Button::new),
                 new ComponentAdapter("Text", () -> new Text("hello")),
                 new ComponentAdapter("SolimImage", SolimImage::new),
-                new ComponentAdapter("NetworkImage", () -> new NetworkImage("http://localhost/test.png"))
-        );
+                new ComponentAdapter("NetworkImage", () -> new NetworkImage("http://localhost/test.png")));
     }
 
-    /** Returns all components that support direct top/bottom/left/right/center chaining. */
     public static List<ComponentAdapter> allAlignableComponents() {
         List<ComponentAdapter> all = new ArrayList<>();
         all.addAll(containers());

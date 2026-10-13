@@ -22,13 +22,11 @@ import solim.overlay.Popup;
  */
 public final class ChatActionPopup {
 
-    /** The single shared menu instance, installed by the chat overlay. */
     public static @Nullable Popup<ParsedChatMessage> menu;
 
     private ChatActionPopup() {
     }
 
-    /** Hosts the shared menu. Call once from the overlay build. */
     public static void install(ChatStore store) {
         menu = popup();
         menu.children(request -> menuRows(store, request)).rounded(2);
@@ -44,7 +42,6 @@ public final class ChatActionPopup {
         }
     }
 
-    /** Dismisses the shared menu if it is open. */
     public static void dismiss() {
         if (menu != null) {
             menu.hide();

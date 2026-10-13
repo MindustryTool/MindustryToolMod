@@ -18,7 +18,6 @@ class ElementClickBinding extends ClickListener {
 
     boolean stop = false;
 
-    /** Finds an existing binding among the element's listeners, if any. */
     static @Nullable ElementClickBinding find(@Nullable Element element) {
         if (element == null) {
             return null;

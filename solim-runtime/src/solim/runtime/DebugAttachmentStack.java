@@ -16,11 +16,15 @@ import solim.performance.PerfSpan;
 import solim.performance.TraceSpan;
 
 /**
- * Profiling-enabled {@link AttachmentStack} variant. Records threshold-gated slow spans
- * and, when tracing is enabled, full hierarchical flame spans with no threshold.
+ * Profiling-enabled {@link AttachmentStack} variant. Records threshold-gated
+ * slow spans
+ * and, when tracing is enabled, full hierarchical flame spans with no
+ * threshold.
  *
- * <p>Push timestamps and open flame spans are kept in parallel deques so the base
- * class carries no profiling state. Every mutator that bypasses {@link #doPush} /
+ * <p>
+ * Push timestamps and open flame spans are kept in parallel deques so the base
+ * class carries no profiling state. Every mutator that bypasses {@link #doPush}
+ * /
  * {@link #doPop} ({@link #doIsolate}, {@link #doCapture}, {@link #doClear}) is
  * overridden to keep both deques in lockstep with the stack.
  */
@@ -43,9 +47,9 @@ public class DebugAttachmentStack extends AttachmentStack {
         final int depth;
         final long startNs;
         final String pushName;
-        /** Phase to record on close; {@code "build"} for table push/pop spans. */
+
         final String phase;
-        /** Whether this span was opened by an explicit {@code beginSpan} rather than a table push. */
+
         final boolean explicit;
         int childCount;
 

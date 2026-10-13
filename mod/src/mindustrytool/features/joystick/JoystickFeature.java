@@ -16,17 +16,16 @@ import solim.overlay.SolimDialog;
 
 /**
  * On-screen virtual joystick that decouples unit movement from camera panning.
- * Feeds movement vectors directly into the unified mod input handlers while enabled.
+ * Feeds movement vectors directly into the unified mod input handlers while
+ * enabled.
  */
 public class JoystickFeature extends Feature {
 
     public static final float DEFAULT_POS_X = 25f;
     public static final float DEFAULT_POS_Y = 140f;
 
-    /** Normalized movement vector (-1..1 per axis) driven by the joystick knob; zero when idle. */
     public final Vec2 moveVector = new Vec2();
 
-    /** Pointer ID currently touching the joystick knob, or -1 when idle. */
     public int activePointer = -1;
 
     public final ConfigGroup config;
@@ -106,7 +105,6 @@ public class JoystickFeature extends Feature {
         });
     }
 
-    /** Restores the joystick position back to the default bottom-left offset. */
     public void resetPosition() {
         posXConfig.reset();
         posYConfig.reset();

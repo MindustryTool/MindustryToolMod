@@ -23,7 +23,6 @@ public final class FlameExporter {
     private FlameExporter() {
     }
 
-    /** Returns a copy ordered by start time, then depth, then span id. */
     public static List<TraceSpan> ordered(@Nullable List<TraceSpan> spans) {
         List<TraceSpan> out = new ArrayList<>();
         if (spans != null) {
@@ -127,7 +126,6 @@ public final class FlameExporter {
         return self;
     }
 
-    /** Prefers an explicit name, falling back to a non-blank generic label. */
     public static String label(@Nullable TraceSpan span) {
         if (span == null) {
             return "Component-element";
@@ -136,7 +134,6 @@ public final class FlameExporter {
         return name != null && !name.trim().isEmpty() ? name : "Component-element";
     }
 
-    /** Chrome Trace Events payload with X phases and ns-to-us conversion. */
     public static String chromePayload(@Nullable List<TraceSpan> spans, double minMs,
             int droppedCount, long traceId) {
         List<TraceSpan> kept = pruned(ordered(spans), minMs);
@@ -175,7 +172,6 @@ public final class FlameExporter {
         return sb.toString();
     }
 
-    /** Speedscope-native evented profile derived from the same span list. */
     public static String speedscopePayload(@Nullable List<TraceSpan> spans, double minMs,
             int droppedCount, long traceId) {
         List<TraceSpan> kept = pruned(ordered(spans), minMs);
@@ -266,7 +262,6 @@ public final class FlameExporter {
         return sb.toString();
     }
 
-    /** Self-contained HTML embedding both payloads and a simple flame render. */
     public static String exportHtml(@Nullable List<TraceSpan> spans, double minMs,
             int droppedCount, long traceId) {
         List<TraceSpan> kept = pruned(ordered(spans), minMs);
@@ -354,12 +349,10 @@ public final class FlameExporter {
         return sb.toString();
     }
 
-    /** Convenience overload defaulting dropped count and trace id. */
     public static String exportHtml(@Nullable List<TraceSpan> spans, double minMs) {
         return exportHtml(spans, minMs, 0, -1L);
     }
 
-    /** Writes the HTML export to a file using Java 8 compatible I/O. */
     public static void writeHtmlFile(@Nullable List<TraceSpan> spans, double minMs,
             int droppedCount, long traceId, File file) throws IOException {
         if (file == null) {

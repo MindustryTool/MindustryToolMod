@@ -49,7 +49,6 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
 
     // ---------- minimum size ----------
 
-    /** Sets the minimum width to a static value. */
     default SELF minWidth(float v) {
         cellConfig().minWidth = Readable.of(v);
         if (this instanceof Component) {
@@ -58,7 +57,6 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return self();
     }
 
-    /** Sets the minimum width to a reactive value. */
     default SELF minWidth(Readable<Float> v) {
         cellConfig().minWidth = v;
         if (this instanceof Component) {
@@ -72,7 +70,6 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return self();
     }
 
-    /** Sets the minimum height to a static value. */
     default SELF minHeight(float v) {
         cellConfig().minHeight = Readable.of(v);
         if (this instanceof Component) {
@@ -81,7 +78,6 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return self();
     }
 
-    /** Sets the minimum height to a reactive value. */
     default SELF minHeight(Readable<Float> v) {
         cellConfig().minHeight = v;
         if (this instanceof Component) {
@@ -97,7 +93,6 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
 
     // ---------- maximum size ----------
 
-    /** Sets the maximum width to a static value. */
     default SELF maxWidth(float v) {
         cellConfig().maxWidth = Readable.of(v);
         if (this instanceof Component) {
@@ -106,7 +101,6 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return self();
     }
 
-    /** Sets the maximum width to a reactive value. */
     default SELF maxWidth(Readable<Float> v) {
         cellConfig().maxWidth = v;
         if (this instanceof Component) {
@@ -120,7 +114,6 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return self();
     }
 
-    /** Sets the maximum height to a static value. */
     default SELF maxHeight(float v) {
         cellConfig().maxHeight = Readable.of(v);
         if (this instanceof Component) {
@@ -129,7 +122,6 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return self();
     }
 
-    /** Sets the maximum height to a reactive value. */
     default SELF maxHeight(Readable<Float> v) {
         cellConfig().maxHeight = v;
         if (this instanceof Component) {
@@ -177,7 +169,6 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return self();
     }
 
-    /** Marks this component as wanting to grow on both axes. */
     default SELF grow() {
         return growX().growY();
     }

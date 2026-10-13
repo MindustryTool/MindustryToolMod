@@ -46,7 +46,7 @@ public class Hud extends Component implements CellConfig<Hud>, ElementConfig<Hud
     private @Nullable Signal<Float> boundYSignal;
 
     public static class HudRootTable extends Table {
-        /** Assigned by the owning {@link Hud} once it is constructed; validation cannot need it earlier. */
+
         private @Nullable Hud hud;
 
         @Override
@@ -87,14 +87,13 @@ public class Hud extends Component implements CellConfig<Hud>, ElementConfig<Hud
         this.root.add(container).pad(0).margin(0);
 
         Cons<ResizeEvent> resizeListener = e -> {
-            keepInScreen(); 
+            keepInScreen();
             Core.app.post(this::keepInScreenIfLive);
         };
         Events.on(ResizeEvent.class, resizeListener);
         own(DisposableAction.of(() -> Events.remove(ResizeEvent.class, resizeListener)));
     }
 
-    /** Keeps the HUD inside the viewport, unless it has been disposed in the meantime. */
     private void keepInScreenIfLive() {
         if (!isDisposed()) {
             keepInScreen();
@@ -186,7 +185,7 @@ public class Hud extends Component implements CellConfig<Hud>, ElementConfig<Hud
 
     public Hud background(@Nullable Readable<Drawable> bg) {
         if (bg != null) {
-        own(Effect.of(() -> container.background(bg.get())));
+            own(Effect.of(() -> container.background(bg.get())));
         }
         return this;
     }
@@ -257,7 +256,7 @@ public class Hud extends Component implements CellConfig<Hud>, ElementConfig<Hud
 
     public Hud scale(Readable<Float> s) {
         if (s != null) {
-        own(Effect.of(() -> {
+            own(Effect.of(() -> {
                 Float v = s.get();
                 if (v != null) {
                     container.setScale(v);

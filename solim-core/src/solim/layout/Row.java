@@ -1,4 +1,5 @@
 package solim.layout;
+
 import solim.modifier.CellConfig;
 
 import arc.scene.Element;
@@ -16,8 +17,8 @@ import solim.modifier.PendingCellConfig;
 import solim.core.OwnershipContext;
 import solim.reactive.Effect;
 
-/** Row layout — horizontal Table wrapper. */
-public final class Row extends Component implements CellConfig<Row>, ElementConfig<Row>, TableConfig<Row>, GapContainer {
+public final class Row extends Component
+        implements CellConfig<Row>, ElementConfig<Row>, TableConfig<Row>, GapContainer {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -53,7 +54,6 @@ public final class Row extends Component implements CellConfig<Row>, ElementConf
         return table;
     }
 
-
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
@@ -81,7 +81,7 @@ public final class Row extends Component implements CellConfig<Row>, ElementConf
 
     public Row gap(@Nullable Readable<Float> gapSignal) {
         if (gapSignal != null) {
-        own(Effect.of(() -> {
+            own(Effect.of(() -> {
                 Float g = gapSignal.get();
                 if (g != null) {
                     gap(g);
@@ -186,15 +186,15 @@ public final class Row extends Component implements CellConfig<Row>, ElementConf
 
     public Row align(Align a) {
         switch (a) {
-        case START:
-        case STRETCH:
-            return top();
-        case CENTER:
-            return center();
-        case END:
-            return bottom();
-        default:
-            break;
+            case START:
+            case STRETCH:
+                return top();
+            case CENTER:
+                return center();
+            case END:
+                return bottom();
+            default:
+                break;
         }
         return this;
     }
@@ -227,8 +227,6 @@ public final class Row extends Component implements CellConfig<Row>, ElementConf
         respace();
         return cell;
     }
-
-
 
     @Override
     public Row name(@Nullable String name) {

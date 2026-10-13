@@ -19,7 +19,6 @@ import solim.modifier.PendingCellConfig;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 
-/** Display widget for text content. */
 public final class Text extends Component implements SpacingAware, ElementConfig<Text>, CellConfig<Text> {
 
     private final Label label;

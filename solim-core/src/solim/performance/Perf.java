@@ -16,28 +16,42 @@ import solim.runtime.ReactiveContext;
 import solim.runtime.SignalDispatcher;
 
 /**
- * Public profiling facade for Solim UI. Delegates to the active runtime service singletons so that
- * profiling can be enabled and queried without exposing the runtime module to callers.
+ * Public profiling facade for Solim UI. Delegates to the active runtime service
+ * singletons so that
+ * profiling can be enabled and queried without exposing the runtime module to
+ * callers.
  *
- * <p>{@link #setEnabled(boolean)} swaps all three runtime services — {@link AttachmentStack},
- * {@link ReactiveContext}, and {@link SignalDispatcher} — between their normal base implementations
- * and their debug subclasses as one operation, so debug state is always installed and released
+ * <p>
+ * {@link #setEnabled(boolean)} swaps all three runtime services —
+ * {@link AttachmentStack},
+ * {@link ReactiveContext}, and {@link SignalDispatcher} — between their normal
+ * base implementations
+ * and their debug subclasses as one operation, so debug state is always
+ * installed and released
  * together.
  *
- * <p>While enabled, {@code DebugSignalDispatcher} polls {@code Ctrl + D} each frame to toggle a
- * profiling session. Starting enables unified flame tracing and clears session counters; stopping
+ * <p>
+ * While enabled, {@code DebugSignalDispatcher} polls {@code Ctrl + D} each
+ * frame to toggle a
+ * profiling session. Starting enables unified flame tracing and clears session
+ * counters; stopping
  * writes the interactive HTML report and opens it in the system browser.
  *
- * <p>Debug mode can also be entered without a programmatic call by setting the
- * {@code solim.debug.enabled} JVM system property, mirroring how {@code McpConfig} reads its own
- * {@code solim.mcp.*} properties. The property defaults to {@code "false"}, so the only way into the
- * debug path is to set it explicitly — which is what keeps published builds at zero cost. The
+ * <p>
+ * Debug mode can also be entered without a programmatic call by setting the
+ * {@code solim.debug.enabled} JVM system property, mirroring how
+ * {@code McpConfig} reads its own
+ * {@code solim.mcp.*} properties. The property defaults to {@code "false"}, so
+ * the only way into the
+ * debug path is to set it explicitly — which is what keeps published builds at
+ * zero cost. The
  * property is read by {@link #init()}, which the host calls during bootstrap.
  */
 public final class Perf {
 
     /**
-     * System property enabling the debug runtime services at class load. Mirrors the
+     * System property enabling the debug runtime services at class load. Mirrors
+     * the
      * {@code solim.mcp.*} naming convention.
      */
     public static final String debugProperty = "solim.debug.enabled";
@@ -48,14 +62,21 @@ public final class Perf {
     private static boolean profiling = false;
 
     /**
-     * Enters debug mode if {@link #debugProperty} opts this runtime into it, otherwise does nothing.
+     * Enters debug mode if {@link #debugProperty} opts this runtime into it,
+     * otherwise does nothing.
      *
-     * <p>Called explicitly from the host's bootstrap. This is deliberately <b>not</b> a static
-     * initializer: nothing else in a shipped build references {@code Perf}, so a class-load-time
-     * block would never run and the property would be inert. An explicit call gives the enablement
+     * <p>
+     * Called explicitly from the host's bootstrap. This is deliberately <b>not</b>
+     * a static
+     * initializer: nothing else in a shipped build references {@code Perf}, so a
+     * class-load-time
+     * block would never run and the property would be inert. An explicit call gives
+     * the enablement
      * a trigger that is visible in the source of the thing being bootstrapped.
      *
-     * <p>Invoking this more than once is harmless — {@link #setEnabled(boolean)} is idempotent for
+     * <p>
+     * Invoking this more than once is harmless — {@link #setEnabled(boolean)} is
+     * idempotent for
      * the debug stack and wholesale-replaces the other two services.
      */
     public static void init() {
@@ -71,7 +92,8 @@ public final class Perf {
     /**
      * Returns whether {@link #debugProperty} opts this runtime into debug mode.
      *
-     * <p>Public so tests can assert the property's contract independently of whether
+     * <p>
+     * Public so tests can assert the property's contract independently of whether
      * {@link #init()} has been called.
      */
     public static boolean debugEnabledByProperty() {
@@ -82,11 +104,15 @@ public final class Perf {
     }
 
     /**
-     * Enables or disables profiling. Enabling installs fresh debug instances of all three runtime
-     * services; disabling reverts every one of them to its base implementation and discards all
+     * Enables or disables profiling. Enabling installs fresh debug instances of all
+     * three runtime
+     * services; disabling reverts every one of them to its base implementation and
+     * discards all
      * recorded spans, reactive metrics, and creation-ownership state.
      *
-     * <p>Explicit tracing via {@link #setTracingEnabled(boolean)} keeps the debug stack installed
+     * <p>
+     * Explicit tracing via {@link #setTracingEnabled(boolean)} keeps the debug
+     * stack installed
      * independently of this flag.
      */
     public static void setEnabled(boolean state) {
@@ -105,7 +131,8 @@ public final class Perf {
     }
 
     /**
-     * Installs the debug triple. All three are swapped together so a caller can never observe a
+     * Installs the debug triple. All three are swapped together so a caller can
+     * never observe a
      * partially-instrumented runtime.
      */
     private static void installDebugServices() {
@@ -120,9 +147,9 @@ public final class Perf {
         SignalDispatcher.install(dispatcher);
     }
 
-    /** Reverts every runtime service to its base implementation, releasing all debug state. */
     private static void uninstallDebugServices() {
-        // Clear the outgoing debug instances rather than only dropping the reference, so nothing
+        // Clear the outgoing debug instances rather than only dropping the reference,
+        // so nothing
         // is retained by a caller that still holds the previous instance.
         ReactiveContext context = ReactiveContext.instance();
         if (context instanceof DebugReactiveContext) {
@@ -144,13 +171,11 @@ public final class Perf {
                 && SignalDispatcher.instance() instanceof DebugSignalDispatcher;
     }
 
-    /** Sets the slow threshold in milliseconds applied to all structural spans. */
     public static void setThreshold(float ms) {
         thresholdMs = ms < 0f ? 0f : ms;
         AttachmentStack.setThreshold(thresholdMs);
     }
 
-    /** Returns recent spans in recency order, up to the buffer bound. */
     public static List<PerfSpan> snapshot(int max) {
         return AttachmentStack.snapshot(max);
     }
@@ -159,7 +184,6 @@ public final class Perf {
         return AttachmentStack.totalRecorded();
     }
 
-    /** Clears recorded spans, the maximum observed depth, and all reactive session metrics. */
     public static void reset() {
         AttachmentStack.reset();
         ReactiveContext context = ReactiveContext.instance();
@@ -173,8 +197,10 @@ public final class Perf {
     }
 
     /**
-     * Enables or disables hierarchical flame tracing. Enabling starts a fresh trace generation
-     * on the debug variant, preserving slow spans; disabling clears traces and reverts to
+     * Enables or disables hierarchical flame tracing. Enabling starts a fresh trace
+     * generation
+     * on the debug variant, preserving slow spans; disabling clears traces and
+     * reverts to
      * profiling or base.
      */
     public static void setTracingEnabled(boolean state) {
@@ -199,48 +225,46 @@ public final class Perf {
         return AttachmentStack.isTracing();
     }
 
-    /** Returns trace spans in document order, up to the buffer bound. */
     public static List<TraceSpan> traceSnapshot(int max) {
         return AttachmentStack.traceSnapshot(max);
     }
 
-    /** Clears recorded trace spans and overflow counters, preserving enablement. */
     public static void traceReset() {
         AttachmentStack.traceReset();
     }
 
-    /** Returns the bounded ring capacity (4096). */
     public static int traceCapacity() {
         return DebugAttachmentStack.TRACE_CAPACITY;
     }
 
-    /** Returns the number of oldest spans evicted on overflow. */
     public static int traceDroppedCount() {
         return AttachmentStack.traceDroppedCount();
     }
 
-    /** Returns total appended spans including evicted ones. */
     public static int traceTotal() {
         return AttachmentStack.traceTotal();
     }
 
-    /** Returns the current trace generation id, or -1 when not tracing. */
     public static long traceId() {
         return AttachmentStack.traceId();
     }
 
-    // --- profiling session ------------------------------------------------------------------------
+    // --- profiling session
+    // ------------------------------------------------------------------------
 
-    /** Returns whether a profiling session is currently recording. */
     public static boolean isProfiling() {
         return profiling;
     }
 
     /**
-     * Starts a profiling session: enables unified flame tracing across component builds and
-     * reactive operations, clears all session counters, and shows a start notification.
+     * Starts a profiling session: enables unified flame tracing across component
+     * builds and
+     * reactive operations, clears all session counters, and shows a start
+     * notification.
      *
-     * <p>Does nothing when profiling is disabled, since the debug services that drive tracing and
+     * <p>
+     * Does nothing when profiling is disabled, since the debug services that drive
+     * tracing and
      * input polling are not installed in that case.
      */
     public static void startProfiling() {
@@ -259,7 +283,8 @@ public final class Perf {
 
     /**
      * Stops the profiling session, writes the self-contained HTML report under
-     * {@code solim-profiles/}, notifies the player, and opens the report in the system browser.
+     * {@code solim-profiles/}, notifies the player, and opens the report in the
+     * system browser.
      */
     public static void stopProfiling() {
         if (!profiling) {
@@ -282,7 +307,6 @@ public final class Perf {
         }
     }
 
-    /** Starts profiling when idle, stops it when already recording. */
     public static void toggleProfiling() {
         if (profiling) {
             stopProfiling();
@@ -292,7 +316,8 @@ public final class Perf {
     }
 
     /**
-     * Writes the report to the default {@code solim-profiles} directory under the game's data
+     * Writes the report to the default {@code solim-profiles} directory under the
+     * game's data
      * directory, creating it if needed.
      */
     private static File writeProfile(List<TraceSpan> spans, int dropped, long id,
@@ -308,7 +333,8 @@ public final class Perf {
     }
 
     /**
-     * Returns the default report path, {@code <data dir>/solim-profiles/profile-<timestamp>.html},
+     * Returns the default report path,
+     * {@code <data dir>/solim-profiles/profile-<timestamp>.html},
      * creating the parent directory when it does not yet exist.
      */
     private static Fi defaultProfileFile() {
@@ -317,7 +343,6 @@ public final class Perf {
         return dir.child("profile-" + System.currentTimeMillis() + ".html");
     }
 
-    /** Writes the report to an explicit file. Used by tests and headless tooling. */
     public static void stopProfiling(@Nullable File target) throws IOException {
         if (!profiling) {
             return;
@@ -334,7 +359,6 @@ public final class Perf {
         return new Fi(".");
     }
 
-    /** Opens the report in the system browser, guarded for headless environments. */
     private static void openReport(File file) {
         if (Core.app == null) {
             return;

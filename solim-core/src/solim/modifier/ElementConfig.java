@@ -40,12 +40,10 @@ import solim.layout.GapContainer;
  */
 public interface ElementConfig<SELF extends ElementConfig<SELF>> {
 
-    /** Returns the root Arc Element for this component. */
     Element element();
 
     // ---------- size ----------
 
-    /** Sets the element's width and updates the parent cell if attached. */
     default SELF width(float width) {
         Element el = element();
         if (el == null)
@@ -65,7 +63,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         return self();
     }
 
-    /** Sets the element's width reactively. */
     default SELF width(@Nullable Readable<Float> width) {
         if (width == null)
             return self();
@@ -84,7 +81,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         return self();
     }
 
-    /** Sets the element's height and updates the parent cell if attached. */
     default SELF height(float height) {
         Element el = element();
         if (el == null)
@@ -104,7 +100,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         return self();
     }
 
-    /** Sets the element's height reactively. */
     default SELF height(@Nullable Readable<Float> height) {
         if (height == null)
             return self();
@@ -123,26 +118,22 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         return self();
     }
 
-    /** Sets both width and height to the given dimensions. */
     default SELF size(float width, float height) {
         width(width);
         height(height);
         return self();
     }
 
-    /** Sets both width and height to the same value (square). */
     default SELF size(float size) {
         return size(size, size);
     }
 
-    /** Sets both width and height to the same reactive value. */
     default SELF size(@Nullable Readable<Float> size) {
         width(size);
         height(size);
         return self();
     }
 
-    /** Sets width and height to independent reactive values. */
     default SELF size(@Nullable Readable<Float> width, @Nullable Readable<Float> height) {
         width(width);
         height(height);
@@ -151,7 +142,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
 
     // ---------- position ----------
 
-    /** Sets the element's x coordinate. */
     default SELF x(float x) {
         Element el = element();
         if (el != null)
@@ -159,7 +149,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         return self();
     }
 
-    /** Sets the element's x coordinate reactively. */
     default SELF x(@Nullable Readable<Float> x) {
         if (x == null)
             return self();
@@ -175,7 +164,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         return self();
     }
 
-    /** Sets the element's y coordinate. */
     default SELF y(float y) {
         Element el = element();
         if (el != null)
@@ -183,7 +171,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         return self();
     }
 
-    /** Sets the element's y coordinate reactively. */
     default SELF y(@Nullable Readable<Float> y) {
         if (y == null)
             return self();
@@ -199,14 +186,12 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         return self();
     }
 
-    /** Sets the element's position (x, y). */
     default SELF position(float x, float y) {
         x(x);
         y(y);
         return self();
     }
 
-    /** Sets the element's position (x, y) reactively. */
     default SELF position(@Nullable Readable<Float> x, @Nullable Readable<Float> y) {
         x(x);
         y(y);
@@ -215,7 +200,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
 
     // ---------- visibility ----------
 
-    /** Sets whether the element is visible. */
     default SELF visible(boolean visible) {
         Element el = element();
         if (el == null)
@@ -227,7 +211,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         return self();
     }
 
-    /** Sets element visibility reactively. */
     default SELF visible(@Nullable Readable<Boolean> visible) {
         if (visible == null)
             return self();
@@ -244,7 +227,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
 
     // ---------- opacity / alpha ----------
 
-    /** Sets the element's opacity (alpha channel of its color). */
     default SELF opacity(float opacity) {
         Element el = element();
         if (el != null) {
@@ -253,7 +235,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         return self();
     }
 
-    /** Sets the element's opacity reactively. */
     default SELF opacity(@Nullable Readable<Float> opacity) {
         if (opacity == null)
             return self();
@@ -269,19 +250,16 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         return self();
     }
 
-    /** Alias for {@link #opacity(float)}. */
     default SELF alpha(float alpha) {
         return opacity(alpha);
     }
 
-    /** Alias for {@link #opacity(Readable)}. */
     default SELF alpha(@Nullable Readable<Float> alpha) {
         return opacity(alpha);
     }
 
     // ---------- name ----------
 
-    /** Sets the element's debug name. */
     default SELF name(String name) {
         Element el = element();
         if (el != null)
@@ -310,7 +288,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         return self();
     }
 
-    /** Sets whether this element's click listener stops propagation. */
     default SELF stopClickPropagation(boolean stop) {
         Element el = element();
         if (el == null)
@@ -323,7 +300,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
 
     // ---------- tooltip ----------
 
-    /** Removes all Tooltip listeners attached to the given element. */
     static void removeTooltips(@Nullable Element el) {
         if (el == null)
             return;
@@ -336,7 +312,8 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
     }
 
     /**
-     * Attaches a static text tooltip to this element, replacing any previous tooltip.
+     * Attaches a static text tooltip to this element, replacing any previous
+     * tooltip.
      * Passing {@code null} or an empty string removes existing tooltips.
      */
     default SELF tooltip(@Nullable String tip) {
@@ -348,9 +325,11 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
     }
 
     /**
-     * Attaches a reactive text tooltip to this element, replacing any previous tooltip.
+     * Attaches a reactive text tooltip to this element, replacing any previous
+     * tooltip.
      * The tooltip text updates whenever the signal changes, and its effect is owned
-     * by the active component context. Passing {@code null} removes existing tooltips.
+     * by the active component context. Passing {@code null} removes existing
+     * tooltips.
      */
     default SELF tooltip(@Nullable Readable<String> tip) {
         if (tip == null) {
@@ -366,7 +345,8 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
     }
 
     /**
-     * Attaches a custom tooltip built with the given container builder, replacing any previous tooltip.
+     * Attaches a custom tooltip built with the given container builder, replacing
+     * any previous tooltip.
      * Passing {@code null} removes existing tooltips.
      */
     default SELF tooltip(@Nullable Cons<Table> tooltipBuilder) {
@@ -385,19 +365,16 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
 
     // ---------- draggable ----------
 
-    /** Makes this element draggable to move its parent HUD. */
     default SELF draggable() {
         Hud.makeDraggable(element(), null, null, null);
         return self();
     }
 
-    /** Makes this element draggable with reactive coordinate reporting. */
     default SELF draggable(@Nullable Signal<Float> xSignal, @Nullable Signal<Float> ySignal) {
         Hud.makeDraggable(element(), null, xSignal, ySignal);
         return self();
     }
 
-    /** Makes this element draggable targeting an explicit HUD. */
     default SELF draggable(@Nullable Hud hud) {
         Hud.makeDraggable(element(), hud, null, null);
         return self();

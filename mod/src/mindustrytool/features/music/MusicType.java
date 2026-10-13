@@ -11,12 +11,10 @@ public enum MusicType {
     MENU,
     EDITOR;
 
-    /** True when this type replaces a single vanilla {@code Musics} field rather than a rotation. */
     public boolean isSlot() {
         return this == MENU || this == EDITOR;
     }
 
-    /** Bundle key for the human-readable section label of this music type. */
     public String labelKey() {
         return "feature.music.section." + name().toLowerCase();
     }

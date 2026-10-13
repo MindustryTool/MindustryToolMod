@@ -46,31 +46,22 @@ public final class PendingCellConfig {
         AttachmentStack.setCellConfigurator(DEFAULT_CONFIGURATOR);
     }
 
-    /** Preferred width. Null means "no constraint — use natural size". */
     public @Nullable Readable<Float> prefWidth;
 
-    /** Preferred height. Null means "no constraint — use natural size". */
     public @Nullable Readable<Float> prefHeight;
 
-    /** Minimum width. Applied as cell.minWidth(). */
     public @Nullable Readable<Float> minWidth;
 
-    /** Minimum height. Applied as cell.minHeight(). */
     public @Nullable Readable<Float> minHeight;
 
-    /** Maximum width. Applied as cell.maxWidth(). */
     public @Nullable Readable<Float> maxWidth;
 
-    /** Maximum height. Applied as cell.maxHeight(). */
     public @Nullable Readable<Float> maxHeight;
 
-    /** Whether the parent cell should grow this element on the X axis. */
     public boolean growX = false;
 
-    /** Whether the parent cell should grow this element on the Y axis. */
     public boolean growY = false;
 
-    /** Outer margins (applied as cell.pad()). Null means use container default. */
     public @Nullable Readable<Float> padTop;
     public @Nullable Readable<Float> padLeft;
     public @Nullable Readable<Float> padBottom;
@@ -218,7 +209,9 @@ public final class PendingCellConfig {
      * Immediately applies size constraints to the element's parent cell if the
      * element is already attached to a parent Table.
      *
-     * <p>Prefer the per-property appliers: this aggregate reads every constraint, so a reactive
+     * <p>
+     * Prefer the per-property appliers: this aggregate reads every constraint, so a
+     * reactive
      * caller using it would track all of them and re-run on any change.
      */
     public void applySizeToParentCell(@Nullable Element element) {
@@ -230,32 +223,26 @@ public final class PendingCellConfig {
         applyMaxHeight(element);
     }
 
-    /** Applies only {@link #prefWidth}; tracks only {@code prefWidth}. */
     public void applyPrefWidth(@Nullable Element element) {
         applySize(element, prefWidth, Cell::width);
     }
 
-    /** Applies only {@link #prefHeight}; tracks only {@code prefHeight}. */
     public void applyPrefHeight(@Nullable Element element) {
         applySize(element, prefHeight, Cell::height);
     }
 
-    /** Applies only {@link #minWidth}; tracks only {@code minWidth}. */
     public void applyMinWidth(@Nullable Element element) {
         applySize(element, minWidth, Cell::minWidth);
     }
 
-    /** Applies only {@link #minHeight}; tracks only {@code minHeight}. */
     public void applyMinHeight(@Nullable Element element) {
         applySize(element, minHeight, Cell::minHeight);
     }
 
-    /** Applies only {@link #maxWidth}; tracks only {@code maxWidth}. */
     public void applyMaxWidth(@Nullable Element element) {
         applySize(element, maxWidth, Cell::maxWidth);
     }
 
-    /** Applies only {@link #maxHeight}; tracks only {@code maxHeight}. */
     public void applyMaxHeight(@Nullable Element element) {
         applySize(element, maxHeight, Cell::maxHeight);
     }
@@ -264,7 +251,9 @@ public final class PendingCellConfig {
      * Immediately applies margin constraints to the element's parent cell if the
      * element is already attached to a parent Table.
      *
-     * <p>Prefer the per-edge appliers for the same reason as {@link #applySizeToParentCell}.
+     * <p>
+     * Prefer the per-edge appliers for the same reason as
+     * {@link #applySizeToParentCell}.
      */
     public void applyMarginToParentCell(@Nullable Element element) {
         applyPadTop(element);
@@ -273,22 +262,18 @@ public final class PendingCellConfig {
         applyPadRight(element);
     }
 
-    /** Applies only {@link #padTop}; tracks only {@code padTop}. */
     public void applyPadTop(@Nullable Element element) {
         applyMargin(element, padTop, Cell::padTop);
     }
 
-    /** Applies only {@link #padLeft}; tracks only {@code padLeft}. */
     public void applyPadLeft(@Nullable Element element) {
         applyMargin(element, padLeft, Cell::padLeft);
     }
 
-    /** Applies only {@link #padBottom}; tracks only {@code padBottom}. */
     public void applyPadBottom(@Nullable Element element) {
         applyMargin(element, padBottom, Cell::padBottom);
     }
 
-    /** Applies only {@link #padRight}; tracks only {@code padRight}. */
     public void applyPadRight(@Nullable Element element) {
         applyMargin(element, padRight, Cell::padRight);
     }
@@ -329,8 +314,10 @@ public final class PendingCellConfig {
     // ---------- private helpers ----------
 
     /**
-     * Applies one size constraint read from {@code source}, then invalidates the parent
-     * hierarchy exactly once. Reads {@code source} and nothing else, so an {@code Effect}
+     * Applies one size constraint read from {@code source}, then invalidates the
+     * parent
+     * hierarchy exactly once. Reads {@code source} and nothing else, so an
+     * {@code Effect}
      * wrapping this tracks a single constraint.
      */
     private static void applySize(@Nullable Element element, @Nullable Readable<Float> source,
@@ -351,8 +338,10 @@ public final class PendingCellConfig {
     }
 
     /**
-     * Applies one margin constraint read from {@code source}, then invalidates the parent
-     * exactly once. Gap containers re-space instead of padding, matching the aggregate applier.
+     * Applies one margin constraint read from {@code source}, then invalidates the
+     * parent
+     * exactly once. Gap containers re-space instead of padding, matching the
+     * aggregate applier.
      */
     private static void applyMargin(@Nullable Element element, @Nullable Readable<Float> source,
             EdgeApplier applier) {
