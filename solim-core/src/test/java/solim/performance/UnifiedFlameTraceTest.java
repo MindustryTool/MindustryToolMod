@@ -15,8 +15,6 @@ import solim.reactive.Computed;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
 import solim.runtime.AttachmentStack;
-import solim.runtime.DebugReactiveContext;
-import solim.runtime.ReactiveContext;
 import solim.test.SolimEnv;
 
 class UnifiedFlameTraceTest extends SolimEnv {
@@ -232,7 +230,7 @@ class UnifiedFlameTraceTest extends SolimEnv {
     @Test
     void reactiveMetricsAreRecordedAlongsideSpans() {
         Perf.setTracingEnabled(true);
-        DebugReactiveContext debug = (DebugReactiveContext) ReactiveContext.instance();
+        ProfilerSink sink = Perf.sink();
 
         Signal<Integer> signal = Signal.of(0);
         Computed<Integer> computed = Signal.computed(signal::get);
@@ -242,10 +240,10 @@ class UnifiedFlameTraceTest extends SolimEnv {
         signal.set(1);
         flushEffects();
 
-        assertEquals(1, debug.signalSnapshots().size(), "the signal write must be counted");
-        assertFalse(debug.computedSnapshots().isEmpty(), "the computed evaluation must be counted");
-        assertFalse(debug.effectSnapshots().isEmpty(), "the effect run must be counted");
-        assertEquals(1, debug.signalSnapshots().get(0).writeCount);
+        assertEquals(1, sink.signalSnapshots().size(), "the signal write must be counted");
+        assertFalse(sink.computedSnapshots().isEmpty(), "the computed evaluation must be counted");
+        assertFalse(sink.effectSnapshots().isEmpty(), "the effect run must be counted");
+        assertEquals(1, sink.signalSnapshots().get(0).writeCount);
     }
 
     private static TraceSpan firstWithPhase(List<TraceSpan> spans, String phase) {

@@ -1,5 +1,6 @@
 package solim.performance;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -27,7 +28,9 @@ public final class ComputedSnapshot {
         this.totalNs = totalNs < 0L ? 0L : totalNs;
         this.lastNs = lastNs < 0L ? 0L : lastNs;
         this.dirty = dirty;
-        this.dependencies = dependencies != null ? dependencies : Collections.<String>emptyList();
+        this.dependencies = dependencies != null
+                ? Collections.unmodifiableList(new ArrayList<>(dependencies))
+                : Collections.<String>emptyList();
     }
 
     public long averageNs() {

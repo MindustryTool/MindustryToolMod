@@ -1,116 +1,118 @@
 package solim.runtime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import arc.scene.Element;
 import arc.scene.ui.layout.Table;
-import java.util.List;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import solim.core.Component;
-import solim.performance.PerfSpan;
+import solim.instrumentation.AttachSubtree;
+import solim.instrumentation.Instrumentation;
+import solim.instrumentation.InstrumentationEvent;
+import solim.instrumentation.InstrumentationSink;
 
 class AttachmentStackPerfTest {
 
-    static Component elementComponent() {
-        return new StubComponent();
+    private static final class RecordingSink implements InstrumentationSink {
+
+        private int opened;
+        private int closed;
+        private AttachSubtree lastClosed;
+
+        @Override
+        public void accept(InstrumentationEvent event) {
+            if (!(event instanceof AttachSubtree)) {
+                return;
+            }
+            AttachSubtree attach = (AttachSubtree) event;
+            if (attach.begin) {
+                opened++;
+            } else {
+                closed++;
+                lastClosed = attach;
+            }
+        }
+
+        @Override
+        public void reset() {
+        }
     }
 
-    static class StubComponent extends Component {
-        StubComponent() {
-            super(new Element());
-        }
+    private RecordingSink sink;
+
+    @BeforeEach
+    void installSink() {
+        sink = new RecordingSink();
+        Instrumentation.install(sink);
     }
 
     @AfterEach
     void cleanUp() {
         AttachmentStack.clear();
-        AttachmentStack.install(null);
-        AttachmentStack.reset();
+        Instrumentation.uninstall();
     }
 
     @Test
-    void noSpansWhenDisabled() {
-        AttachmentStack.install(null);
+    void enabledFlagTracksSinkInstallation() {
+        assertTrue(Instrumentation.enabled());
+
+        Instrumentation.uninstall();
+
+        assertFalse(Instrumentation.enabled());
+    }
+
+    @Test
+    void popEmitsSubtreeEventCarryingDepthAndChildCount() {
         Table root = new Table();
+        root.name = "root";
         AttachmentStack.push(root);
         AttachmentStack.add(new Element());
         AttachmentStack.pop();
-        assertTrue(AttachmentStack.snapshot(10).isEmpty());
-        assertEquals(0, AttachmentStack.maxDepthObserved());
+
+        assertEquals(1, sink.opened);
+        assertEquals(1, sink.closed);
+        assertEquals("root", sink.lastClosed.owner);
+        assertEquals(1, sink.lastClosed.depth);
+        assertEquals(1, sink.lastClosed.childCount);
     }
 
     @Test
-    void popEmitsSubtreeSpanAndTracksDepth() {
-        AttachmentStack.install(new DebugAttachmentStack());
-        AttachmentStack.setThreshold(0f);
-
-        Table root = new Table();
-        AttachmentStack.push(root);
+    void nestedScopesReportDescendingDepth() {
         AttachmentStack.push(new Table());
         AttachmentStack.push(new Table());
         AttachmentStack.pop();
         AttachmentStack.pop();
-        AttachmentStack.pop();
 
-        assertEquals(3, AttachmentStack.maxDepthObserved());
-        List<PerfSpan> spans = AttachmentStack.snapshot(10);
-        assertEquals(3, spans.size());
-        for (PerfSpan span : spans) {
-            assertEquals("AttachmentStack", span.component);
-            assertEquals("subtree", span.phase);
-            assertTrue(span.detail.contains("depth="));
-            assertTrue(span.detail.contains("children="));
-        }
+        assertEquals(2, sink.opened);
+        assertEquals(2, sink.closed);
     }
 
     @Test
-    void thresholdSuppressesFastPops() {
-        AttachmentStack.install(new DebugAttachmentStack());
-        AttachmentStack.setThreshold(10_000f);
+    void isolateTruncatesUnbalancedPushes() {
+        Table outer = new Table();
+        AttachmentStack.push(outer);
 
-        Table root = new Table();
-        AttachmentStack.push(root);
+        AttachmentStack.isolate(() -> AttachmentStack.push(new Table()));
+
+        assertEquals(1, AttachmentStack.size(),
+                "a block that pushes without popping must be truncated back to the entry depth");
+        assertEquals(outer, AttachmentStack.current());
         AttachmentStack.pop();
-
-        assertTrue(AttachmentStack.snapshot(10).isEmpty());
     }
 
     @Test
-    void attachBatchEmitsSpanWithParentName() {
-        AttachmentStack.install(new DebugAttachmentStack());
-        AttachmentStack.setThreshold(0f);
+    void noEmissionWhenDisabled() {
+        Instrumentation.uninstall();
+        sink.opened = 0;
+        sink.closed = 0;
 
-        Table root = new Table();
-        root.name = "test-parent";
-        AttachmentStack.push(root);
-
-        elementComponent();
-        elementComponent();
-        AttachmentStack.pop();
-
-        assertEquals(2, root.getChildren().size);
-        boolean foundAttach = false;
-        for (PerfSpan span : AttachmentStack.snapshot(10)) {
-            if ("attach".equals(span.phase)) {
-                foundAttach = true;
-                assertTrue(span.detail.contains("children=2"));
-                assertTrue(span.detail.contains("test-parent"));
-            }
-        }
-        assertTrue(foundAttach);
-    }
-
-    @Test
-    void resetClearsDepth() {
-        AttachmentStack.install(new DebugAttachmentStack());
-        AttachmentStack.push(new Table());
         AttachmentStack.push(new Table());
         AttachmentStack.pop();
-        AttachmentStack.pop();
-        assertEquals(2, AttachmentStack.maxDepthObserved());
-        AttachmentStack.reset();
-        assertEquals(0, AttachmentStack.maxDepthObserved());
+
+        assertEquals(0, sink.opened);
+        assertEquals(0, sink.closed);
     }
 }

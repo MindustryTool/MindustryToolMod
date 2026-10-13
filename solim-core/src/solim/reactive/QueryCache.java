@@ -35,32 +35,36 @@ public final class QueryCache {
 
     private final ConcurrentHashMap<QueryKey, CacheEntry<?>> entries = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<QueryKey, List<InvalidationListener>> observers = new ConcurrentHashMap<>();
-    private Scheduler scheduler = (runnable, delaySeconds) -> {
-        try {
-            if (Core.app == null) {
+    private Scheduler scheduler = defaultScheduler();
+
+    private static Scheduler defaultScheduler() {
+        return (runnable, delaySeconds) -> {
+            try {
+                if (Core.app == null) {
+                    return null;
+                }
+                Task task = Timer.schedule(runnable, delaySeconds);
+                return new Disposable() {
+                    private boolean disposed = false;
+
+                    @Override
+                    public void dispose() {
+                        if (!disposed) {
+                            disposed = true;
+                            task.cancel();
+                        }
+                    }
+
+                    @Override
+                    public boolean isDisposed() {
+                        return disposed;
+                    }
+                };
+            } catch (Throwable ignored) {
                 return null;
             }
-            Task task = Timer.schedule(runnable, delaySeconds);
-            return new Disposable() {
-                private boolean disposed = false;
-
-                @Override
-                public void dispose() {
-                    if (!disposed) {
-                        disposed = true;
-                        task.cancel();
-                    }
-                }
-
-                @Override
-                public boolean isDisposed() {
-                    return disposed;
-                }
-            };
-        } catch (Throwable ignored) {
-            return null;
-        }
-    };
+        };
+    }
 
     QueryCache() {
     }
@@ -75,6 +79,14 @@ public final class QueryCache {
 
     void setSchedulerForTest(Scheduler scheduler) {
         this.scheduler = scheduler != null ? scheduler : (runnable, delaySeconds) -> null;
+    }
+
+    public Scheduler scheduler() {
+        return scheduler;
+    }
+
+    public void setScheduler(@Nullable Scheduler scheduler) {
+        this.scheduler = scheduler != null ? scheduler : defaultScheduler();
     }
 
     @SuppressWarnings("unchecked")
@@ -94,8 +106,12 @@ public final class QueryCache {
         Objects.requireNonNull(listener, "listener cannot be null");
 
         CacheEntry<?> entry = getOrCreateEntry(key);
+        List<InvalidationListener> list = observers.computeIfAbsent(key, k -> new CopyOnWriteArrayList<>());
+        if (list.contains(listener)) {
+            return;
+        }
+        list.add(listener);
         entry.incrementObservers();
-        observers.computeIfAbsent(key, k -> new CopyOnWriteArrayList<>()).add(listener);
     }
 
     public void detachObserver(QueryKey key, InvalidationListener listener, long gcTimeMillis) {
@@ -130,22 +146,24 @@ public final class QueryCache {
     private void scheduleEviction(QueryKey key, CacheEntry<?> entry, long gcTimeMillis) {
         if (gcTimeMillis <= 0) {
             removeEntry(key, entry);
-        } else {
-            float delaySeconds = Math.max(0.001f, gcTimeMillis / 1000f);
-            Disposable task = scheduler.schedule(() -> {
-                synchronized (entry) {
-                    if (entry.getActiveObservers() <= 0) {
-                        removeEntry(key, entry);
-                    }
-                }
-            }, delaySeconds);
-            entry.setGcTask(task);
+            return;
         }
+        long generation = entry.generation();
+        Disposable task = scheduler.schedule(() -> {
+            if (entry.generation() != generation) {
+                return;
+            }
+            if (entry.getActiveObservers() <= 0) {
+                removeEntry(key, entry);
+            }
+        }, TimeUtil.millisToSeconds(gcTimeMillis));
+        entry.setGcTask(task);
     }
 
     private void removeEntry(QueryKey key, CacheEntry<?> entry) {
-        entries.remove(key);
-        entry.clear();
+        if (entries.remove(key, entry)) {
+            entry.clear();
+        }
         List<InvalidationListener> list = observers.get(key);
         if (list != null && list.isEmpty()) {
             observers.remove(key);
@@ -201,36 +219,39 @@ public final class QueryCache {
     public <T> CompletableFuture<T> fetchCached(QueryKey key, long staleTimeMs,
             Prov<CompletableFuture<T>> fetcher) {
         CacheEntry<T> entry = getOrCreateEntry(key);
-        synchronized (entry) {
-            CompletableFuture<T> inflight = entry.getInflight();
-            if (inflight != null && !inflight.isDone()) {
-                return inflight;
-            }
-            if (entry.hasData() && !entry.isStale(staleTimeMs)) {
-                return CompletableFuture.completedFuture(entry.getData());
-            }
-            return startFetch(entry, fetcher);
+        CompletableFuture<T> inflight = entry.getInflight();
+        if (inflight != null && !inflight.isDone()) {
+            return inflight;
         }
+        if (entry.hasData() && !entry.isStale(staleTimeMs)) {
+            return CompletableFuture.completedFuture(entry.getData());
+        }
+        return startFetch(entry, fetcher);
     }
 
     public <T> CompletableFuture<T> fetchOrJoin(QueryKey key, Prov<CompletableFuture<T>> fetcher) {
         CacheEntry<T> entry = getOrCreateEntry(key);
-        synchronized (entry) {
-            CompletableFuture<T> inflight = entry.getInflight();
-            if (inflight != null && !inflight.isDone()) {
-                return inflight;
-            }
-            return startFetch(entry, fetcher);
+        CompletableFuture<T> inflight = entry.getInflight();
+        if (inflight != null && !inflight.isDone()) {
+            return inflight;
         }
+        return startFetch(entry, fetcher);
     }
 
     private <T> CompletableFuture<T> startFetch(CacheEntry<T> entry, Prov<CompletableFuture<T>> fetcher) {
         CompletableFuture<T> future = fetcher.get();
-        entry.setInflight(future);
+        synchronized (entry) {
+            CompletableFuture<T> current = entry.getInflight();
+            if (current != null && !current.isDone()) {
+                return current;
+            }
+            entry.setInflight(future);
+        }
+        long fetchGeneration = entry.generation();
         future.whenComplete((result, throwable) -> {
             synchronized (entry) {
                 entry.setInflight(null);
-                if (throwable == null) {
+                if (throwable == null && entry.generation() == fetchGeneration) {
                     entry.setData(result);
                 }
             }
@@ -239,10 +260,7 @@ public final class QueryCache {
     }
 
     public <T> void put(QueryKey key, @Nullable T data) {
-        CacheEntry<T> entry = getOrCreateEntry(key);
-        synchronized (entry) {
-            entry.setData(data);
-        }
+        getOrCreateEntry(key).setData(data);
     }
 
     public <T> T get(QueryKey key) {

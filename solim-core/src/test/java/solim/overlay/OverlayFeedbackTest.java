@@ -14,7 +14,7 @@ import solim.core.Component;
 import solim.core.DisposableAction;
 import solim.feedback.Alert;
 import solim.feedback.Avatar;
-import solim.feedback.Badge;
+import solim.feedback.FeedbackBadge;
 import solim.feedback.ProgressBar;
 import solim.feedback.Spinner;
 import solim.reactive.Computed;
@@ -154,7 +154,7 @@ class OverlayFeedbackTest extends SolimEnv {
     void badgeReactiveCount() {
         Signal<Integer> count = Signal.of(5);
         Computed<String> text = count.map(v -> v > 99 ? "99+" : String.valueOf(v));
-        Badge b = Badge.of(text);
+        FeedbackBadge b = FeedbackBadge.of(text);
         assertEquals("5", ((Label) b.table().getChildren().get(0)).getText().toString());
 
         count.set(50);

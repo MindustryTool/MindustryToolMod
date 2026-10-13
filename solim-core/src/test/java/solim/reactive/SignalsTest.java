@@ -114,4 +114,11 @@ class SignalsTest extends SolimEnv {
         e1.dispose();
         e2.dispose();
     }
+
+    @Test
+    void requestRefreshUpdatesSignalsAfterEventlessTransition() {
+        assertNotNull(Signals.singlePlayer());
+        Signals.requestRefresh();
+        assertNotNull(Signals.netActive().peek());
+    }
 }

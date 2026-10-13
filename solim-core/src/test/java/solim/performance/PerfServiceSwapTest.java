@@ -3,7 +3,6 @@ package solim.performance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import arc.scene.ui.layout.Table;
@@ -12,15 +11,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.core.SessionRoot;
+import solim.instrumentation.Instrumentation;
 import solim.reactive.Computed;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
 import solim.runtime.AttachmentStack;
-import solim.runtime.DebugAttachmentStack;
-import solim.runtime.DebugReactiveContext;
-import solim.runtime.DebugSignalDispatcher;
-import solim.runtime.ReactiveContext;
-import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
 class PerfServiceSwapTest extends SolimEnv {
@@ -39,65 +34,59 @@ class PerfServiceSwapTest extends SolimEnv {
     }
 
     @Test
-    void disabledRuntimeUsesBaseServiceInstances() {
+    void disabledRuntimeInstallsNoSink() {
         Perf.setEnabled(false);
 
         assertFalse(Perf.isEnabled());
-        assertFalse(AttachmentStack.instance() instanceof DebugAttachmentStack);
-        assertFalse(ReactiveContext.instance() instanceof DebugReactiveContext);
-        assertFalse(SignalDispatcher.instance() instanceof DebugSignalDispatcher);
+        assertFalse(Instrumentation.enabled());
     }
 
     @Test
-    void enablingPerfInstallsAllThreeDebugServices() {
+    void enablingPerfInstallsTheSink() {
         Perf.setEnabled(true);
 
         assertTrue(Perf.isEnabled());
-        assertTrue(AttachmentStack.instance() instanceof DebugAttachmentStack);
-        assertTrue(ReactiveContext.instance() instanceof DebugReactiveContext);
-        assertTrue(SignalDispatcher.instance() instanceof DebugSignalDispatcher);
+        assertTrue(Instrumentation.enabled());
+        assertEquals(Perf.sink(), Instrumentation.sink());
     }
 
     @Test
-    void disablingPerfRestoresBaseServiceInstances() {
+    void disablingPerfUninstallsTheSink() {
         Perf.setEnabled(true);
         Perf.setEnabled(false);
 
         assertFalse(Perf.isEnabled());
-        assertFalse(AttachmentStack.instance() instanceof DebugAttachmentStack);
-        assertFalse(ReactiveContext.instance() instanceof DebugReactiveContext);
-        assertFalse(SignalDispatcher.instance() instanceof DebugSignalDispatcher);
+        assertFalse(Instrumentation.enabled());
     }
 
     @Test
-    void reEnablingPerfInstallsFreshServiceInstances() {
+    void reEnablingPerfInstallsAFreshSink() {
         Perf.setEnabled(true);
-        Object firstContext = ReactiveContext.instance();
-        Object firstDispatcher = SignalDispatcher.instance();
+        Object first = Instrumentation.sink();
 
         Perf.setEnabled(false);
         Perf.setEnabled(true);
 
-        assertNotSame(firstContext, ReactiveContext.instance());
-        assertNotSame(firstDispatcher, SignalDispatcher.instance());
+        assertNotSame(first, Instrumentation.sink(),
+                "a fresh sink must start with empty registries, not inherit the old session");
     }
 
     @Test
     void disablingPerfDiscardsRecordedReactiveMetrics() {
         Perf.setEnabled(true);
-        DebugReactiveContext debug = (DebugReactiveContext) ReactiveContext.instance();
+        ProfilerSink sink = Perf.sink();
 
         Signal<Integer> signal = Signal.of(0);
         signal.set(1);
         signal.set(2);
-        assertTrue(debug.hasMetrics(), "debug context should have recorded the signal writes");
+        assertTrue(sink.hasMetrics(), "the sink should have recorded the signal writes");
 
         Perf.setEnabled(false);
 
-        assertFalse(debug.hasMetrics(), "disabling must release every tracked node");
-        assertTrue(((DebugReactiveContext) debug).signalSnapshots().isEmpty());
-        assertTrue(((DebugReactiveContext) debug).computedSnapshots().isEmpty());
-        assertTrue(((DebugReactiveContext) debug).effectSnapshots().isEmpty());
+        assertFalse(sink.hasMetrics(), "disabling must release every tracked node");
+        assertTrue(sink.signalSnapshots().isEmpty());
+        assertTrue(sink.computedSnapshots().isEmpty());
+        assertTrue(sink.effectSnapshots().isEmpty());
     }
 
     @Test
@@ -118,16 +107,16 @@ class PerfServiceSwapTest extends SolimEnv {
     @Test
     void resetClearsReactiveMetricsWhileStayingEnabled() {
         Perf.setEnabled(true);
-        DebugReactiveContext debug = (DebugReactiveContext) ReactiveContext.instance();
+        ProfilerSink sink = Perf.sink();
 
         Signal<Integer> signal = Signal.of(0);
         signal.set(1);
-        assertTrue(debug.hasMetrics());
+        assertTrue(sink.hasMetrics());
 
         Perf.reset();
 
         assertTrue(Perf.isEnabled(), "reset must not disable profiling");
-        assertFalse(debug.hasMetrics(), "reset must drop recorded reactive metrics");
+        assertFalse(sink.hasMetrics(), "reset must drop recorded reactive metrics");
     }
 
     @Test
@@ -143,8 +132,8 @@ class PerfServiceSwapTest extends SolimEnv {
         flushEffects();
 
         Perf.setEnabled(true);
-        DebugReactiveContext debug = (DebugReactiveContext) ReactiveContext.instance();
-        assertFalse(debug.hasMetrics());
+        assertFalse(Perf.sink().hasMetrics(),
+                "work performed before the sink existed cannot be retroactively recorded");
     }
 
     @Test
@@ -153,8 +142,7 @@ class PerfServiceSwapTest extends SolimEnv {
         Perf.setTracingEnabled(false);
 
         assertTrue(Perf.isEnabled());
-        assertTrue(Perf.isTracing() == false);
-        assertSame(AttachmentStack.instance(), AttachmentStack.instance());
+        assertFalse(Perf.isTracing());
     }
 
     @Test

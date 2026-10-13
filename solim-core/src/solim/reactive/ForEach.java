@@ -44,6 +44,9 @@ public final class ForEach<T> extends Component
 
     public void children(@Nullable Func<T, Component> itemFactory) {
         this.itemFactorySignal.set(itemFactory);
+        if (itemFactory != null && isBuilt()) {
+            reconcile();
+        }
     }
 
     private Object extractKey(T item) {

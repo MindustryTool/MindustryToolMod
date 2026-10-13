@@ -25,7 +25,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
             cellConfig().applyMinWidth(el);
             if (el != null && v != null) {
                 Effect e = Effect.of(() -> cellConfig().applyMinWidth(el));
-                ModifierOwnership.own(this, e);
+                ((Component) this).own(e);
             }
         }
         return self();
@@ -46,7 +46,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
             cellConfig().applyMinHeight(el);
             if (el != null && v != null) {
                 Effect e = Effect.of(() -> cellConfig().applyMinHeight(el));
-                ModifierOwnership.own(this, e);
+                ((Component) this).own(e);
             }
         }
         return self();
@@ -67,7 +67,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
             cellConfig().applyMaxWidth(el);
             if (el != null && v != null) {
                 Effect e = Effect.of(() -> cellConfig().applyMaxWidth(el));
-                ModifierOwnership.own(this, e);
+                ((Component) this).own(e);
             }
         }
         return self();
@@ -88,7 +88,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
             cellConfig().applyMaxHeight(el);
             if (el != null && v != null) {
                 Effect e = Effect.of(() -> cellConfig().applyMaxHeight(el));
-                ModifierOwnership.own(this, e);
+                ((Component) this).own(e);
             }
         }
         return self();
@@ -152,7 +152,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
             cellConfig().applyMarginToParentCell(el);
             if (el != null) {
                 Effect e = Effect.of(() -> cellConfig().applyMarginToParentCell(el));
-                ModifierOwnership.own(this, e);
+                ((Component) this).own(e);
             }
         }
         return self();
@@ -173,7 +173,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
             cellConfig().applyPadTop(el);
             if (el != null && top != null) {
                 Effect e = Effect.of(() -> cellConfig().applyPadTop(el));
-                ModifierOwnership.own(this, e);
+                ((Component) this).own(e);
             }
         }
         return self();
@@ -194,7 +194,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
             cellConfig().applyPadBottom(el);
             if (el != null && bottom != null) {
                 Effect e = Effect.of(() -> cellConfig().applyPadBottom(el));
-                ModifierOwnership.own(this, e);
+                ((Component) this).own(e);
             }
         }
         return self();
@@ -215,7 +215,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
             cellConfig().applyPadLeft(el);
             if (el != null && left != null) {
                 Effect e = Effect.of(() -> cellConfig().applyPadLeft(el));
-                ModifierOwnership.own(this, e);
+                ((Component) this).own(e);
             }
         }
         return self();
@@ -236,7 +236,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
             cellConfig().applyPadRight(el);
             if (el != null && right != null) {
                 Effect e = Effect.of(() -> cellConfig().applyPadRight(el));
-                ModifierOwnership.own(this, e);
+                ((Component) this).own(e);
             }
         }
         return self();
@@ -259,7 +259,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
             cellConfig().applyMarginToParentCell(el);
             if (el != null && x != null) {
                 Effect e = Effect.of(() -> cellConfig().applyMarginToParentCell(el));
-                ModifierOwnership.own(this, e);
+                ((Component) this).own(e);
             }
         }
         return self();
@@ -282,7 +282,7 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
             cellConfig().applyMarginToParentCell(el);
             if (el != null && y != null) {
                 Effect e = Effect.of(() -> cellConfig().applyMarginToParentCell(el));
-                ModifierOwnership.own(this, e);
+                ((Component) this).own(e);
             }
         }
         return self();

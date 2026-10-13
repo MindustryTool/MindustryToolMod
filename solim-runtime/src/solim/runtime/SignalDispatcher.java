@@ -4,41 +4,35 @@ import arc.Events;
 import arc.util.Log;
 import arc.util.Nullable;
 import java.util.ArrayDeque;
-import java.util.Queue;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.IdentityHashMap;
+import java.util.Set;
 import mindustry.game.EventType.Trigger;
 import solim.core.SchedulableEffect;
 import solim.core.SolimAssert;
+import solim.instrumentation.FlushPass;
+import solim.instrumentation.Instrumentation;
 
-public class SignalDispatcher {
+public final class SignalDispatcher {
 
-    private static volatile SignalDispatcher INSTANCE = new SignalDispatcher();
+    private static final int MAX_CASCADE_DEPTH = 100;
 
-    protected static final int MAX_CASCADE_DEPTH = 100;
+    private static boolean registered = false;
 
-    protected static boolean registered = false;
+    private static final Deque<SchedulableEffect> queue = new ArrayDeque<>();
+    private static final Set<SchedulableEffect> queued = Collections
+            .newSetFromMap(new IdentityHashMap<SchedulableEffect, Boolean>());
+    private static boolean flushing = false;
 
-    protected final Queue<SchedulableEffect> queue = new ArrayDeque<>();
-    protected boolean flushing = false;
-
-    protected SignalDispatcher() {
-    }
-
-    public static SignalDispatcher instance() {
-        return INSTANCE;
-    }
-
-    public static void install(@Nullable SignalDispatcher dispatcher) {
-        INSTANCE = dispatcher != null ? dispatcher : new SignalDispatcher();
+    private SignalDispatcher() {
     }
 
     public static void register() {
-        if (registered)
+        if (registered) {
             return;
-        registered = true;
-        if (SolimAssert.getMainThread() == null) {
-            SolimAssert.setMainThread(Thread.currentThread());
         }
-
+        registered = true;
         Events.run(Trigger.update, (Runnable) () -> flush());
     }
 
@@ -49,22 +43,64 @@ public class SignalDispatcher {
     }
 
     public static void enqueue(@Nullable SchedulableEffect effect) {
-        if (effect == null || effect.isDisposed())
+        if (effect == null || effect.isDisposed()) {
             return;
+        }
         ensureRegistered();
-        INSTANCE.doEnqueue(effect);
+        if (queued.add(effect)) {
+            queue.addLast(effect);
+        }
     }
 
     public static void flush() {
-        INSTANCE.doFlush();
+        SolimAssert.checkMainThread();
+        if (flushing) {
+            return;
+        }
+        flushing = true;
+        long startNs = Instrumentation.enabled() ? System.nanoTime() : 0L;
+        try {
+            int pass = 0;
+            while (!queue.isEmpty()) {
+                if (++pass > MAX_CASCADE_DEPTH) {
+                    Log.err(
+                            "[Solim] Infinite reactive loop detected in SignalDispatcher (exceeded @ cascade iterations). Clearing @ pending effects.",
+                            MAX_CASCADE_DEPTH, queue.size());
+                    for (SchedulableEffect remaining : queue) {
+                        remaining.clearPending();
+                    }
+                    clear();
+                    break;
+                }
+
+                int batchSize = queue.size();
+                for (int i = 0; i < batchSize; i++) {
+                    SchedulableEffect effect = queue.pollFirst();
+                    if (effect == null) {
+                        continue;
+                    }
+                    queued.remove(effect);
+                    if (effect.isDisposed()) {
+                        effect.clearPending();
+                        continue;
+                    }
+                    effect.runPending();
+                }
+            }
+        } finally {
+            flushing = false;
+            if (Instrumentation.enabled()) {
+                Instrumentation.emit(new FlushPass(startNs, System.nanoTime() - startNs));
+            }
+        }
     }
 
     public static int size() {
-        return INSTANCE.queue.size();
+        return queue.size();
     }
 
     public static boolean isFlushing() {
-        return INSTANCE.flushing;
+        return flushing;
     }
 
     public static boolean isRegistered() {
@@ -72,55 +108,15 @@ public class SignalDispatcher {
     }
 
     public static void resetForTests() {
-        INSTANCE.doResetForTests();
-    }
-
-    protected void doEnqueue(SchedulableEffect effect) {
-        queue.add(effect);
-    }
-
-    protected void doFlush() {
-        SolimAssert.checkMainThread();
-        if (flushing)
-            return;
-        flushing = true;
-        try {
-            int pass = 0;
-            while (!queue.isEmpty()) {
-                if (++pass > MAX_CASCADE_DEPTH) {
-                    Log.err("[Solim] Infinite reactive loop detected in SignalDispatcher (exceeded @ cascade iterations). Clearing @ pending effects.",
-                            MAX_CASCADE_DEPTH, queue.size());
-                    for (SchedulableEffect remaining : queue) {
-                        remaining.clearPending();
-                    }
-                    queue.clear();
-                    break;
-                }
-
-                int batchSize = queue.size();
-                for (int i = 0; i < batchSize; i++) {
-                    SchedulableEffect effect = queue.poll();
-                    if (effect == null)
-                        continue;
-
-                    if (effect.isDisposed()) {
-                        effect.clearPending();
-                        continue;
-                    }
-
-                    effect.runPending();
-                }
-            }
-        } finally {
-            flushing = false;
-        }
-    }
-
-    protected void doResetForTests() {
         for (SchedulableEffect remaining : queue) {
             remaining.clearPending();
         }
-        queue.clear();
+        clear();
         flushing = false;
+    }
+
+    private static void clear() {
+        queue.clear();
+        queued.clear();
     }
 }

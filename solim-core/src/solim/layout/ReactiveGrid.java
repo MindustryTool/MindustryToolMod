@@ -14,6 +14,7 @@ import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.SolimToken;
 import solim.core.OwnershipContext;
+import solim.runtime.OwnershipScope;
 import solim.runtime.AttachmentStack;
 import solim.runtime.StructuralReconciler;
 import solim.reactive.Computed;
@@ -113,13 +114,6 @@ public final class ReactiveGrid<T> extends Component
 
     public ReactiveGrid<T> columns(@Nullable Readable<Integer> columns) {
         this.columnSource.set(columns != null ? columns : Readable.of(1));
-        if (isBuilt()) {
-            Func2<T, GridItemContext, Component> factory = itemFactorySignal.peek();
-            if (factory != null) {
-                Integer cols = resolvedColumnCount.peek();
-                updateItemsAndReflow(items.peek(), Math.max(1, cols != null ? cols : 1), factory);
-            }
-        }
         return this;
     }
 
@@ -271,13 +265,14 @@ public final class ReactiveGrid<T> extends Component
                         }
                     };
                     Table emptyTable = (Table) currentEmptyComponent.element();
+                    OwnershipScope scope = OwnershipScope.open();
                     AttachmentStack.push(emptyTable);
-                    OwnershipContext.push(currentEmptyComponent);
                     try {
                         emptyRunnable.run();
                     } finally {
-                        OwnershipContext.pop();
                         AttachmentStack.pop();
+                        scope.adoptInto(currentEmptyComponent);
+                        scope.close();
                     }
                 }
                 table.add(currentEmptyComponent.element()).center().colspan(cols).growX();

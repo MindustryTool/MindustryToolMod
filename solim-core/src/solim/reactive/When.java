@@ -10,7 +10,7 @@ import java.util.Objects;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.SolimToken;
-import solim.layout.GapContainer;
+import solim.layout.CollapseHelper;
 import solim.modifier.CellConfig;
 import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
@@ -177,7 +177,7 @@ public final class When extends Component
     }
 
     private void refresh() {
-        lastValue = condition.get();
+        lastValue = condition.peek();
         rebuild();
     }
 
@@ -261,23 +261,7 @@ public final class When extends Component
     }
 
     private void updateParentCell() {
-        Cell<?> parentCell = container.parent instanceof Table ? ((Table) container.parent).getCell(container) : null;
-        if (currentComponent != null) {
-            container.visible = true;
-            if (parentCell != null) {
-                parentCell.minWidth(Float.NEGATIVE_INFINITY).minHeight(Float.NEGATIVE_INFINITY);
-                parentCell.maxWidth(Float.NEGATIVE_INFINITY).maxHeight(Float.NEGATIVE_INFINITY);
-                constraints.applyToCell(parentCell);
-            }
-        } else {
-            container.visible = false;
-            if (parentCell != null) {
-                parentCell.size(0f).pad(0f);
-            }
-        }
-        if (container.parent instanceof Table) {
-            GapContainer.respace((Table) container.parent);
-        }
+        CollapseHelper.updateParentCell(container, currentComponent != null, constraints);
     }
 
     @Override

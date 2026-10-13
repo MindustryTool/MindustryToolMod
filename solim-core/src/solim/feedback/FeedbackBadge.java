@@ -7,25 +7,25 @@ import solim.core.Disposable;
 import solim.reactive.Computed;
 import solim.reactive.Effect;
 
-public final class Badge implements Disposable {
+public final class FeedbackBadge implements Disposable {
     private final Table table = new Table();
     private final Label label = new Label("");
     private Effect binding;
     private boolean disposed = false;
 
-    public Badge() {
+    public FeedbackBadge() {
         table.add(label);
     }
 
-    public Badge(Computed<String> text) {
+    public FeedbackBadge(Computed<String> text) {
         table.add(label);
         this.binding = Effect.of((Cons<Effect.Cleanup>) cleanup -> {
             label.setText(text.get());
         });
     }
 
-    public static Badge of(Computed<String> text) {
-        return new Badge(text);
+    public static FeedbackBadge of(Computed<String> text) {
+        return new FeedbackBadge(text);
     }
 
     public Table table() {

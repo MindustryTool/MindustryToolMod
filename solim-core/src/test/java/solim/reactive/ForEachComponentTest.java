@@ -253,4 +253,19 @@ class ForEachComponentTest extends SolimCoreEnv {
         fe.dispose();
         assertEquals(0, padTopSignal.observerCount(), "All cell constraints must be disposed when ForEach is disposed");
     }
+
+    @Test
+    void childrenOnAlreadyBuiltForEachReconcilesImmediately() {
+        Signal<List<String>> items = Signal.of(Arrays.asList("X", "Y"));
+        ForEach<String> fe = new ForEach<>(items);
+        fe.element();
+        assertTrue(fe.isBuilt());
+        assertEquals(0, fe.container().getChildren().size);
+
+        fe.children(TestComponent::new);
+        assertEquals(2, fe.container().getChildren().size, "Should reconcile immediately when isBuilt");
+
+        SignalDispatcher.flush();
+        fe.dispose();
+    }
 }

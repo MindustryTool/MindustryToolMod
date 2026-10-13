@@ -4,11 +4,13 @@ import solim.test.CollectingOwner;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import solim.core.Disposable;
 import solim.core.OwnershipContext;
 import solim.runtime.SignalDispatcher;
 
@@ -444,4 +446,132 @@ class QueryTest extends SolimEnv {
                 .key(QueryKey.of("builder-missing-fetch"))
                 .build());
     }
+
+    @Test
+    void cachedNullDoesNotSuppressInitialFetchOrEnsureFresh() {
+        QueryKey key = QueryKey.of("cached-null-key");
+        CacheEntry<String> entry = cache.getOrCreateEntry(key);
+        entry.setData(null);
+        assertTrue(entry.isFetched());
+        assertFalse(entry.hasData());
+
+        AtomicInteger fetchCount = new AtomicInteger(0);
+        Query<String> query = Query.<String>builder()
+                .key(key)
+                .fetch(() -> {
+                    fetchCount.incrementAndGet();
+                    return CompletableFuture.completedFuture("fresh-val");
+                })
+                .build();
+
+        assertEquals(1, fetchCount.get(), "Query should not suppress initial fetch on cached null");
+        assertEquals("fresh-val", query.data().get());
+
+        query.mutate(null);
+        assertEquals(1, fetchCount.get());
+
+        query.ensureFresh();
+        assertEquals(2, fetchCount.get(), "ensureFresh should fetch when cached data is null");
+    }
+
+    @Test
+    void dynamicKeySupplierRebindsObserver() {
+        Signal<String> dynamicId = Signal.of("id1");
+        AtomicInteger fetchCount = new AtomicInteger(0);
+
+        Query<String> query = Query.<String>builder()
+                .key(() -> QueryKey.of("user", dynamicId.get()))
+                .fetch(() -> {
+                    fetchCount.incrementAndGet();
+                    return CompletableFuture.completedFuture("data-" + dynamicId.peek());
+                })
+                .build();
+
+        assertEquals(1, fetchCount.get());
+        assertEquals("data-id1", query.data().get());
+
+        QueryKey key1 = QueryKey.of("user", "id1");
+        QueryKey key2 = QueryKey.of("user", "id2");
+
+        assertEquals(1, cache.observerCount(key1));
+        assertEquals(0, cache.observerCount(key2));
+
+        dynamicId.set("id2");
+        SignalDispatcher.flush();
+
+        assertEquals(2, fetchCount.get());
+        assertEquals("data-id2", query.data().get());
+        assertEquals(0, cache.observerCount(key1), "Old key must be detached");
+        assertEquals(1, cache.observerCount(key2), "New key must be attached");
+
+        cache.invalidate(key1);
+        assertEquals(2, fetchCount.get(), "Invalidating old key must not trigger refetch");
+
+        cache.invalidate(key2);
+        assertEquals(3, fetchCount.get(), "Invalidating active key must trigger refetch");
+    }
+
+    @Test
+    void querySharesCacheSchedulerForRetry() {
+        QueryKey key = QueryKey.of("shared-scheduler-retry");
+        AtomicReference<Runnable> scheduledRetry = new AtomicReference<>();
+        cache.setSchedulerForTest((runnable, delay) -> {
+            scheduledRetry.set(runnable);
+            return new Disposable() {
+                private boolean disposed = false;
+
+                @Override
+                public void dispose() {
+                    disposed = true;
+                }
+
+                @Override
+                public boolean isDisposed() {
+                    return disposed;
+                }
+            };
+        });
+
+        CompletableFuture<String> failing = new CompletableFuture<>();
+        failing.completeExceptionally(new RuntimeException("transient error"));
+
+        Query<String> query = Query.<String>builder()
+                .key(key)
+                .fetch(() -> failing)
+                .retry(1)
+                .retryDelay(Duration.ofMillis(500))
+                .build();
+
+        assertNotNull(scheduledRetry.get(), "Retry task should be scheduled using cache's scheduler");
+        assertTrue(query.fetching().get());
+        query.dispose();
+    }
+
+    @Test
+    void cancellationSkipsRetryAndPreservesSuppressedCause() {
+        QueryKey key = QueryKey.of("cancelled-no-retry");
+        AtomicInteger retryCount = new AtomicInteger(0);
+        cache.setSchedulerForTest((runnable, delay) -> {
+            retryCount.incrementAndGet();
+            return null;
+        });
+
+        CompletableFuture<String> future = new CompletableFuture<>();
+        Query<String> query = Query.<String>builder()
+                .key(key)
+                .fetch(() -> future)
+                .retry(3)
+                .retryDelay(Duration.ofMillis(100))
+                .build();
+
+        future.cancel(true);
+
+        assertEquals(0, retryCount.get(), "Cancellation must not schedule a retry");
+        assertTrue(query.isError());
+        assertTrue(query.error().get() instanceof CancellationException);
+        assertFalse(query.fetching().get());
+        assertFalse(query.loading().get());
+        query.dispose();
+    }
 }
+

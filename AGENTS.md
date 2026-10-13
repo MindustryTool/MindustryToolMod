@@ -446,12 +446,12 @@ public Readable<Boolean> enabled() {
 
 **The `mod` module must ONLY depend on `:solim` and `:solim-mcp`. It must NEVER depend on or reference `:solim-runtime`.**
 
-- `:solim-api` contains core public contracts (`Component`, `Disposable`, `SpacingAware`, `SchedulableEffect`, `ReactiveObserver`).
+- `:solim-api` contains core public contracts (`Component`, `Disposable`, `DisposableOwner`, `SpacingAware`, `SchedulableEffect`, `ReactiveObserver`, `ReactiveSource`).
 - `:solim` is the public API library and facade for mod development (`solim.UI`).
-- `:solim-core` contains public UI components, layouts, and reactive types (`BaseComponent`, `Signal`, `Computed`, `Effect`, `Ui`, etc.).
-- `:solim-runtime` contains the private engine runtime (`AttachmentStack`, `OwnershipContext`, `ReactiveContext`, `SignalDispatcher`, `StructuralReconciler`). It is an internal `implementation` dependency physically excluded from `:mod`'s compile classpath.
+- `:solim-core` contains public UI components, layouts, and reactive types (`Signal`, `Computed`, `Effect`, `Column`, `Row`, `Button`, `Text`, etc.).
+- `:solim-runtime` contains the private engine runtime (`AttachmentStack`, `OwnershipContext`, `OwnershipScope`, `ReactiveContext`, `SignalDispatcher`, `StructuralReconciler`). It is an internal `implementation` dependency physically excluded from `:mod`'s compile classpath.
 
-Mod code must use the public `solim.UI.*` declarative facades. Attempting to reference `:solim-runtime` classes or calling `own()` will result in compile-time errors.
+Mod code must use the public `solim.UI.*` declarative facades. Attempting to reference `:solim-runtime` classes will result in compile-time errors. Mod code should not manually call `own()`, relying on ambient ownership instead.
 
 ## Dialogs, Buttons & Layout Conventions — Mandatory
 
@@ -767,7 +767,7 @@ This includes:
 * Input controls
 * Structural reactive children
 
-Application code must not manually manage normal component ownership. `BaseComponent.own()` is package-private and inaccessible outside `solim.core`.
+Application code must not manually manage normal component ownership. While `Component.own()` is `public final`, manual calls are discouraged in favor of ambient ownership.
 
 Instead, use declarative ambient ownership:
 * Use `effect(() -> ...)` for reactive side effects.

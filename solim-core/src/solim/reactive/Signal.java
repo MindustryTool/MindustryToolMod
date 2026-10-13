@@ -13,16 +13,21 @@ import arc.func.Prov;
 import solim.core.DebugReactiveNode;
 import solim.core.ReactiveObserver;
 import solim.core.ReactiveSource;
+import solim.instrumentation.Instrumentation;
+import solim.instrumentation.ReactiveCreated;
+import solim.instrumentation.SignalWrite;
 import solim.runtime.ReactiveContext;
 import solim.core.SolimAssert;
 
 public final class Signal<T> implements Readable<T>, ReactiveSource, DebugReactiveNode {
     private T value;
-    private final Set<ReactiveObserver> observers = new LinkedHashSet<>();
+    private Set<ReactiveObserver> observers = Collections.emptySet();
 
     private Signal(T initial) {
         this.value = initial;
-        ReactiveContext.signalCreated(this);
+        if (Instrumentation.enabled()) {
+            Instrumentation.emit(new ReactiveCreated(this));
+        }
     }
 
     public static <T> Signal<T> of(T initial) {
@@ -59,18 +64,17 @@ public final class Signal<T> implements Readable<T>, ReactiveSource, DebugReacti
 
     public void set(T newValue) {
         SolimAssert.checkMainThread();
-        if (Objects.equals(value, newValue))
+        if (Objects.equals(value, newValue)) {
             return;
+        }
         T oldValue = this.value;
-        ReactiveContext.signalWriteStart(this, oldValue, newValue);
+        long startNs = Instrumentation.enabled() ? System.nanoTime() : 0L;
         this.value = newValue;
-        try {
-            Set<ReactiveObserver> obsCopy = new LinkedHashSet<>(observers);
-            for (ReactiveObserver o : obsCopy) {
-                o.invalidate();
-            }
-        } finally {
-            ReactiveContext.signalWriteEnd(this);
+        for (ReactiveObserver observer : observers) {
+            observer.invalidate();
+        }
+        if (Instrumentation.enabled()) {
+            Instrumentation.emit(new SignalWrite(this, oldValue, newValue, startNs));
         }
     }
 
@@ -84,12 +88,20 @@ public final class Signal<T> implements Readable<T>, ReactiveSource, DebugReacti
 
     @Override
     public void addObserver(ReactiveObserver observer) {
-        observers.add(observer);
+        if (!observers.contains(observer)) {
+            Set<ReactiveObserver> next = new LinkedHashSet<>(observers);
+            next.add(observer);
+            observers = Collections.unmodifiableSet(next);
+        }
     }
 
     @Override
     public void removeObserver(ReactiveObserver observer) {
-        observers.remove(observer);
+        if (observers.contains(observer)) {
+            Set<ReactiveObserver> next = new LinkedHashSet<>(observers);
+            next.remove(observer);
+            observers = Collections.unmodifiableSet(next);
+        }
     }
 
     public int observerCount() {

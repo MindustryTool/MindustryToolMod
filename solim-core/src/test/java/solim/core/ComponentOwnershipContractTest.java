@@ -2,6 +2,7 @@ package solim.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -268,5 +269,36 @@ class ComponentOwnershipContractTest extends SolimCoreEnv {
             }
         }
         throw new AssertionError("Button has no icon Image");
+    }
+
+    @Test
+    void modifierEffectCreatedInParentBuildIsDisposedWithChild() {
+        Signal<Float> widthSignal = Signal.of(100f);
+        Text[] childHolder = new Text[1];
+
+        Component parent = new Component() {
+            @Override
+            protected Element build() {
+                Text child = new Text("hello");
+                child.width(widthSignal);
+                childHolder[0] = child;
+                return child.element();
+            }
+        };
+
+        parent.element();
+        SignalDispatcher.flush();
+
+        Text child = childHolder[0];
+        assertNotNull(child);
+        assertEquals(1, widthSignal.observerCount(), "Modifier effect must observe widthSignal");
+
+        child.dispose();
+
+        assertEquals(0, widthSignal.observerCount(),
+                "Modifier effect must be disposed when the configured child is disposed, even if created during parent build()");
+
+        assertFalse(parent.isDisposed(), "Parent should still be alive");
+        parent.dispose();
     }
 }

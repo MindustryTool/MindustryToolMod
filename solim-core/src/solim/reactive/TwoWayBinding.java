@@ -19,6 +19,11 @@ public final class TwoWayBinding<T> implements Disposable {
             Cons<T> widgetSetter,
             ListenerInstaller listenerInstaller,
             Boolf2<T, T> equalityChecker) {
+        Objects.requireNonNull(signal, "signal cannot be null");
+        Objects.requireNonNull(widgetGetter, "widgetGetter cannot be null");
+        Objects.requireNonNull(widgetSetter, "widgetSetter cannot be null");
+        Objects.requireNonNull(listenerInstaller, "listenerInstaller cannot be null");
+        Objects.requireNonNull(equalityChecker, "equalityChecker cannot be null");
 
         this.listenerDisposable = listenerInstaller.install(() -> {
             if (disposed || updating) {

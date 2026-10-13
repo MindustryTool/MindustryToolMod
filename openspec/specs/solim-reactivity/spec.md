@@ -275,16 +275,16 @@ Reactive bindings SHALL update the underlying Arc `Element` property via setter 
 - **WHEN** reactive `text` binding updates due to signal change
 - **THEN** `label` instance identity remains same (`==` check passes) and only its property changed
 
-### Requirement: Binding is disposable and tracks subscription
-Each reactive binding SHALL create an internal `Subscription`/`Effect` that is disposable. Widget wrappers SHALL expose or internally hold this subscription and dispose on `Component.dispose()` or when element is removed.
+### Requirement: Binding is disposable and tracks reactive source
+Each reactive binding SHALL create an internal `Effect` that is disposable. Widget wrappers SHALL internally hold this effect and dispose it on `Component.dispose()` or when element is removed.
 
 #### Scenario: Binding dispose stops updates
-- **WHEN** `Binding<String> b = Binding.of(label::setText, username)` then `b.dispose()` then `username.set("Charlie")`
-- **THEN** `label` text remains previous value
+- **WHEN** an effect-based property binding is disposed and the source signal changes
+- **THEN** the bound property remains its previous value and does not update
 
 #### Scenario: Component dispose disposes bindings
 - **WHEN** component creates `text(username)` binding and then `component.dispose()` is called
-- **THEN** the binding subscription is disposed and no longer reacts
+- **THEN** the binding effect is disposed and no longer reacts
 
 ### Requirement: Common reactive properties
 Widgets SHALL support reactive bindings for at least: `text` (String), `visible` (boolean), `enabled`/`disabled` (boolean), `style` (Style), and `checked` (for Checkbox/Switch). Additional widget-specific bindings (e.g., `value` for TextField/Slider, `progress` for ProgressBar) follow same pattern.
@@ -297,8 +297,8 @@ Widgets SHALL support reactive bindings for at least: `text` (String), `visible`
 - **WHEN** `button(saveText, onClick).enabled(dirty)` where `dirty = Signal.of(false)` then `dirty.set(true)`
 - **THEN** button enabled state updates via `button.setDisabled(!dirty.get())`
 
-### Requirement: Binding helper and Effect integration
-`Binding` utility SHALL be implementable via `Effect.of(() -> target.set(prop.get()))` or direct `Subscription`; both are valid. Implementation SHALL prefer `Effect` where multi-dependency computed is involved, or `Subscription` for single signal.
+### Requirement: Reactive property binding and Effect integration
+Reactive property bindings SHALL be implemented via `Effect.of(() -> target.set(prop.get()))` or equivalent `Readable` effect binding. Multi-dependency `Computed` values and single `Signal` sources SHALL both be supported seamlessly.
 
 #### Scenario: Computed text binding
 - **WHEN** `Computed<String> saveText = dirty.map(v -> v ? "● Save" : "Save")` and `button(saveText, ...)` is bound

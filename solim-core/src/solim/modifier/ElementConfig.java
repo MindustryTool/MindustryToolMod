@@ -9,6 +9,7 @@ import arc.scene.ui.Tooltip;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
+import solim.core.Component;
 import solim.overlay.Hud;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
@@ -41,17 +42,20 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
     default SELF width(@Nullable Readable<Float> width) {
         if (width == null)
             return self();
+
         if (this instanceof CellConfig) {
             ((CellConfig<?>) this).cellConfig().prefWidth = width;
         }
+
         Element el = element();
+        
         if (el != null) {
             Effect e = Effect.of(() -> {
                 Float w = width.get();
                 if (w != null)
                     width(w);
             });
-            ModifierOwnership.own(this, e);
+            ((Component) this).own(e);
         }
         return self();
     }
@@ -88,7 +92,7 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
                 if (h != null)
                     height(h);
             });
-            ModifierOwnership.own(this, e);
+            ((Component) this).own(e);
         }
         return self();
     }
@@ -132,7 +136,7 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
                 if (v != null)
                     x(v);
             });
-            ModifierOwnership.own(this, e);
+            ((Component) this).own(e);
         }
         return self();
     }
@@ -154,7 +158,7 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
                 if (v != null)
                     y(v);
             });
-            ModifierOwnership.own(this, e);
+            ((Component) this).own(e);
         }
         return self();
     }
@@ -191,7 +195,7 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
                 Boolean v = visible.get();
                 visible(Boolean.TRUE.equals(v));
             });
-            ModifierOwnership.own(this, e);
+            ((Component) this).own(e);
         }
         return self();
     }
@@ -214,7 +218,7 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
                 if (v != null)
                     opacity(v);
             });
-            ModifierOwnership.own(this, e);
+            ((Component) this).own(e);
         }
         return self();
     }
@@ -284,8 +288,11 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         }
         return tooltip(t -> {
             Label label = new Label("");
-            Effect e = Effect.of(() -> label.setText(tip.get() != null ? tip.get() : ""));
-            ModifierOwnership.own(this, e);
+            Effect e = Effect.of(() -> {
+                String text = tip.get();
+                label.setText(text != null ? text : "");
+            });
+            ((Component) this).own(e);
             t.add(label);
         });
     }

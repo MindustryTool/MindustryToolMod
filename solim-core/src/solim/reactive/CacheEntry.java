@@ -8,7 +8,9 @@ public final class CacheEntry<T> {
     private final QueryKey key;
     private @Nullable T data;
     private @Nullable Throwable error;
-    private long updatedAt;
+    private long updatedAtNanos;
+    private boolean fetched = false;
+    private long generation = 0L;
     private int activeObservers;
     private @Nullable CompletableFuture<T> inflight;
     private @Nullable Disposable gcTask;
@@ -27,8 +29,9 @@ public final class CacheEntry<T> {
 
     public synchronized void setData(@Nullable T data) {
         this.data = data;
+        this.fetched = true;
         this.error = null;
-        this.updatedAt = System.currentTimeMillis();
+        this.updatedAtNanos = System.nanoTime();
     }
 
     public synchronized @Nullable Throwable getError() {
@@ -40,17 +43,27 @@ public final class CacheEntry<T> {
     }
 
     public synchronized long getUpdatedAt() {
-        return updatedAt;
+        return TimeUtil.nanosToMillis(updatedAtNanos);
+    }
+
+    public synchronized long generation() {
+        return generation;
     }
 
     public synchronized boolean hasData() {
-        return updatedAt > 0;
+        return data != null;
+    }
+
+    public synchronized boolean isFetched() {
+        return fetched;
     }
 
     public synchronized boolean isStale(long staleTimeMillis) {
-        if (updatedAt <= 0)
+        if (!fetched) {
             return true;
-        return (System.currentTimeMillis() - updatedAt) > staleTimeMillis;
+        }
+        long elapsedNanos = System.nanoTime() - updatedAtNanos;
+        return elapsedNanos > staleTimeMillis * 1_000_000L;
     }
 
     public synchronized int getActiveObservers() {
@@ -97,9 +110,11 @@ public final class CacheEntry<T> {
 
     public synchronized void clear() {
         cancelGc();
+        generation++;
         data = null;
         error = null;
-        updatedAt = 0;
+        updatedAtNanos = 0L;
+        fetched = false;
         inflight = null;
     }
 }

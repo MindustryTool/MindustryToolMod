@@ -1,5 +1,7 @@
 package solim.modifier;
 
+import solim.runtime.ReactiveContext;
+
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
@@ -164,10 +166,11 @@ public final class PendingCellConfig {
 
         if (growX) {
             cell.growX();
-            if (minWidth == null) {
+            Float floor = ReactiveContext.untracked(() -> minWidth != null ? minWidth.peek() : null);
+            if (floor != null) {
+                cell.minWidth(Math.max(0f, floor));
+            } else if (minWidth == null) {
                 cell.minWidth(0f);
-            } else if (minWidth.get() != null) {
-                cell.minWidth(Math.max(0f, minWidth.get()));
             }
         }
         if (growY)

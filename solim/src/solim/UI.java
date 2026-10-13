@@ -20,6 +20,7 @@ import arc.func.Prov;
 import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.EventsUtil;
+import solim.core.SolimAssert;
 import solim.display.Badge;
 import solim.display.NetworkImage;
 import solim.display.SolimImage;
@@ -76,6 +77,7 @@ public final class UI {
     }
 
     public static void init() {
+        SolimAssert.setMainThread(Thread.currentThread());
         SignalDispatcher.register();
     }
 

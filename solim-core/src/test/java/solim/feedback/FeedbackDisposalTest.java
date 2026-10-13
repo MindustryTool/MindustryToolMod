@@ -33,7 +33,7 @@ class FeedbackDisposalTest extends SolimEnv {
 		Signal<String> source = Signal.of("a");
 		Computed<String> text = source.map(v -> "[" + v + "]");
 		text.peek();
-		Badge badge = Badge.of(text);
+		FeedbackBadge badge = FeedbackBadge.of(text);
 		assertFalse(badge.isDisposed());
 
 		source.set("b");
@@ -52,13 +52,13 @@ class FeedbackDisposalTest extends SolimEnv {
 		text.dispose();
 	}
 
-	static String badgeLabel(Badge badge) {
+	static String badgeLabel(FeedbackBadge badge) {
 		return ((Label) badge.table().getChildren().first()).getText().toString();
 	}
 
 	@Test
 	void badgeDefaultConstructorDisposesSafely() {
-		Badge badge = new Badge();
+		FeedbackBadge badge = new FeedbackBadge();
 		assertFalse(badge.isDisposed());
 
 		badge.dispose();

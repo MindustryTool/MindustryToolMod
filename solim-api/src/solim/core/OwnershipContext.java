@@ -19,10 +19,14 @@ public final class OwnershipContext {
 
     public static @Nullable DisposableOwner pop() {
         SolimAssert.checkMainThread();
-        if (!stack.isEmpty()) {
-            return stack.pop();
-        }
-        return null;
+        return stack.isEmpty() ? null : stack.pop();
+    }
+
+    public static @Nullable DisposableOwner pop(@Nullable DisposableOwner expected) {
+        SolimAssert.checkMainThread();
+        DisposableOwner popped = stack.isEmpty() ? null : stack.pop();
+        SolimAssert.checkLifo(popped, expected);
+        return popped;
     }
 
     public static @Nullable DisposableOwner current() {
@@ -38,6 +42,7 @@ public final class OwnershipContext {
     }
 
     public static <T extends Disposable> T register(@Nullable T disposable) {
+        SolimAssert.checkMainThread();
         if (disposable == null) {
             return null;
         }
@@ -49,6 +54,7 @@ public final class OwnershipContext {
     }
 
     public static <T extends Component> T registerChild(@Nullable T child) {
+        SolimAssert.checkMainThread();
         if (child == null) {
             return null;
         }

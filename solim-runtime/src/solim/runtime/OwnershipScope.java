@@ -1,5 +1,6 @@
 package solim.runtime;
 
+import arc.func.Prov;
 import arc.util.Log;
 import arc.util.Nullable;
 import java.util.ArrayDeque;
@@ -11,8 +12,11 @@ import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.DisposableOwner;
 import solim.core.OwnershipContext;
+import solim.core.SolimAssert;
 
 public final class OwnershipScope implements DisposableOwner {
+
+    private static final int MAX_POOLED_BUFFERS = 32;
 
     private static final Deque<OwnershipScope> pool = new ArrayDeque<>();
 
@@ -23,6 +27,7 @@ public final class OwnershipScope implements DisposableOwner {
     }
 
     public static OwnershipScope open() {
+        SolimAssert.checkMainThread();
         OwnershipScope scope = pool.pollFirst();
         if (scope == null) {
             scope = new OwnershipScope();
@@ -30,6 +35,23 @@ public final class OwnershipScope implements DisposableOwner {
         scope.closed = false;
         OwnershipContext.push(scope);
         return scope;
+    }
+
+    public static <T extends Component> T build(Prov<T> supplier) {
+        OwnershipScope scope = open();
+        try {
+            T created = ReactiveContext.untracked(() -> AttachmentStack.isolate(() -> {
+                T component = supplier.get();
+                if (component != null) {
+                    component.element();
+                }
+                return component;
+            }));
+            scope.adoptInto(created);
+            return created;
+        } finally {
+            scope.close();
+        }
     }
 
     @Override
@@ -53,7 +75,6 @@ public final class OwnershipScope implements DisposableOwner {
         Iterator<Disposable> iterator = collected.iterator();
         while (iterator.hasNext()) {
             Disposable disposable = iterator.next();
-
             iterator.remove();
             if (disposable != owner) {
                 owner.adopt(disposable);
@@ -77,11 +98,12 @@ public final class OwnershipScope implements DisposableOwner {
     }
 
     public void close() {
+        SolimAssert.checkMainThread();
         if (closed) {
             return;
         }
         closed = true;
-        OwnershipContext.pop();
+        OwnershipContext.pop(this);
         List<Disposable> collected = this.collected;
         this.collected = null;
         if (collected != null) {
@@ -92,9 +114,11 @@ public final class OwnershipScope implements DisposableOwner {
                     Log.err("Error disposing unadopted resource from ownership scope", t);
                 }
             }
-            collected.clear();
+            if (collected.size() <= MAX_POOLED_BUFFERS) {
+                collected.clear();
+                pool.push(this);
+            }
         }
-        pool.push(this);
     }
 
     @Override

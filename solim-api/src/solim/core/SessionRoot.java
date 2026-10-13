@@ -3,7 +3,9 @@ package solim.core;
 import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
 
 public final class SessionRoot implements DisposableOwner {
 
@@ -11,6 +13,8 @@ public final class SessionRoot implements DisposableOwner {
 
     private final List<Component> children = new ArrayList<>();
     private final List<Disposable> disposables = new ArrayList<>();
+    private final Set<Disposable> disposableIndex = Collections
+            .newSetFromMap(new IdentityHashMap<Disposable, Boolean>());
     private boolean disposed = false;
 
     private SessionRoot() {
@@ -21,7 +25,8 @@ public final class SessionRoot implements DisposableOwner {
     }
 
     @Override
-    public synchronized void adopt(@Nullable Disposable resource) {
+    public void adopt(@Nullable Disposable resource) {
+        SolimAssert.checkMainThread();
         if (resource == null || disposed) {
             return;
         }
@@ -32,37 +37,41 @@ public final class SessionRoot implements DisposableOwner {
             }
             return;
         }
-        if (!disposables.contains(resource)) {
+        if (disposableIndex.add(resource)) {
             disposables.add(resource);
         }
     }
 
-    public synchronized boolean remove(@Nullable Component component) {
+    public boolean remove(@Nullable Component component) {
+        SolimAssert.checkMainThread();
         if (component == null) {
             return false;
         }
         return children.remove(component);
     }
 
-    public synchronized List<Component> children() {
+    public List<Component> children() {
         return Collections.unmodifiableList(new ArrayList<>(children));
     }
 
-    public synchronized List<Disposable> disposables() {
+    public List<Disposable> disposables() {
         return Collections.unmodifiableList(new ArrayList<>(disposables));
     }
 
-    public synchronized boolean contains(@Nullable Component component) {
+    public boolean contains(@Nullable Component component) {
         return component != null && children.contains(component);
     }
 
-    public synchronized void clear() {
+    public void clear() {
+        SolimAssert.checkMainThread();
         children.clear();
         disposables.clear();
+        disposableIndex.clear();
     }
 
     @Override
-    public synchronized void dispose() {
+    public void dispose() {
+        SolimAssert.checkMainThread();
         if (disposed) {
             return;
         }
@@ -88,6 +97,7 @@ public final class SessionRoot implements DisposableOwner {
             }
         }
         disposables.clear();
+        disposableIndex.clear();
         if (firstFailure != null) {
             if (firstFailure instanceof RuntimeException) {
                 throw (RuntimeException) firstFailure;
@@ -100,7 +110,7 @@ public final class SessionRoot implements DisposableOwner {
     }
 
     @Override
-    public synchronized boolean isDisposed() {
+    public boolean isDisposed() {
         return disposed;
     }
 }

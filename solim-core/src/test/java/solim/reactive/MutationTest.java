@@ -131,4 +131,37 @@ class MutationTest extends SolimEnv {
         mutation.dispose();
         assertTrue(mutation.isDisposed());
     }
+
+    @Test
+    void inFlightCancelledOnNewMutateResetAndDispose() {
+        CompletableFuture<String> firstFuture = new CompletableFuture<>();
+        CompletableFuture<String> secondFuture = new CompletableFuture<>();
+
+        AtomicBoolean firstCalled = new AtomicBoolean(false);
+        Mutation<String, String> mutation = Mutation.of(input -> {
+            if (!firstCalled.getAndSet(true)) {
+                return firstFuture;
+            }
+            return secondFuture;
+        });
+
+        mutation.mutate("first");
+        assertFalse(firstFuture.isCancelled());
+
+        mutation.mutate("second");
+        assertTrue(firstFuture.isCancelled(), "New mutation must cancel previous in-flight future");
+        assertFalse(secondFuture.isCancelled());
+
+        mutation.reset();
+        assertTrue(secondFuture.isCancelled(), "reset() must cancel active in-flight future");
+
+        CompletableFuture<String> thirdFuture = new CompletableFuture<>();
+        Mutation<String, String> mutation2 = Mutation.of(input -> thirdFuture);
+        mutation2.mutate("third");
+        assertFalse(thirdFuture.isCancelled());
+
+        mutation2.dispose();
+        assertTrue(thirdFuture.isCancelled(), "dispose() must cancel active in-flight future");
+    }
 }
+

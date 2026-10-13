@@ -26,9 +26,7 @@ import solim.modifier.PendingCellConfig;
 import solim.modifier.RoundedHelper;
 import solim.modifier.TableConfig;
 import solim.core.OwnershipContext;
-import solim.runtime.AttachmentStack;
 import solim.runtime.OwnershipScope;
-import solim.runtime.ReactiveContext;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 
@@ -233,24 +231,7 @@ public final class Popup<T> extends Component implements TableConfig<Popup<T>> {
     private void render(T data, float stageX, float stageY) {
         clearContent();
         if (provider != null) {
-            Component content = ReactiveContext.untracked(() -> {
-                OwnershipScope scope = OwnershipScope.open();
-                try {
-                    Component built = AttachmentStack.isolate(() -> {
-                        Component c = provider.get(data);
-                        if (c != null) {
-                            c.element();
-                        }
-                        return c;
-                    });
-                    if (built != null) {
-                        scope.adoptInto(built);
-                    }
-                    return built;
-                } finally {
-                    scope.close();
-                }
-            });
+            Component content = OwnershipScope.build(() -> provider.get(data));
             if (content != null) {
                 currentContent = content;
                 Cell<?> cell = table.add(content.element());

@@ -518,6 +518,7 @@ class QueryViewTest extends SolimEnv {
         view.element();
         view.loading(() -> label("Async Loading..."));
         view.data(QueryViewTest::label);
+        SignalDispatcher.flush();
 
         assertEquals("Async Loading...", getText(view));
 
@@ -544,6 +545,7 @@ class QueryViewTest extends SolimEnv {
         view.element();
         view.loading(() -> label("Custom Spinner"));
         view.data(QueryViewTest::label);
+        SignalDispatcher.flush();
 
         assertEquals("Custom Spinner", getText(view));
     }
@@ -561,6 +563,7 @@ class QueryViewTest extends SolimEnv {
         view.element();
         view.error(err -> label("Custom Error: " + err.getMessage()));
         view.data(QueryViewTest::label);
+        SignalDispatcher.flush();
 
         assertEquals("Custom Error: Crash", getText(view));
     }

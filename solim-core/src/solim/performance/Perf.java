@@ -1,19 +1,19 @@
 package solim.performance;
 
 import arc.Core;
+import arc.Events;
+import arc.Input;
 import arc.files.Fi;
+import arc.input.KeyCode;
 import arc.util.Log;
 import arc.util.Nullable;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import mindustry.game.EventType.Trigger;
 import mindustry.Vars;
-import solim.runtime.AttachmentStack;
-import solim.runtime.DebugAttachmentStack;
-import solim.runtime.DebugReactiveContext;
-import solim.runtime.DebugSignalDispatcher;
-import solim.runtime.ReactiveContext;
-import solim.runtime.SignalDispatcher;
+import solim.instrumentation.Instrumentation;
 
 public final class Perf {
 
@@ -21,8 +21,12 @@ public final class Perf {
 
     private static boolean profilingRequested = false;
     private static boolean tracingRequested = false;
+    private static boolean keybindPolling = false;
     private static float thresholdMs = 50f;
     private static boolean profiling = false;
+
+    private static @Nullable ProfilerSink sink = null;
+    private static boolean hookInstalled = false;
 
     public static void init() {
         if (!debugEnabledByProperty()) {
@@ -41,124 +45,153 @@ public final class Perf {
     private Perf() {
     }
 
-    public static void setEnabled(boolean state) {
+    public static synchronized void setEnabled(boolean state) {
         profilingRequested = state;
-        if (tracingRequested) {
-            if (state) {
-                installDebugServices();
-            }
+        if (state) {
+            installSink();
+        } else {
+            uninstallSink();
+        }
+        keybindPolling = state || tracingRequested;
+    }
+
+    private static void installSink() {
+        if (sink != null) {
             return;
         }
-        if (state) {
-            installDebugServices();
-        } else {
-            uninstallDebugServices();
-        }
+        ProfilerSink next = new ProfilerSink();
+        next.setThreshold(thresholdMs);
+        sink = next;
+        Instrumentation.install(next);
+        installHook();
     }
 
-    private static void installDebugServices() {
-        if (!(AttachmentStack.instance() instanceof DebugAttachmentStack)) {
-            AttachmentStack.install(new DebugAttachmentStack());
-            AttachmentStack.setThreshold(thresholdMs);
+    private static void uninstallSink() {
+        if (sink == null) {
+            return;
         }
-        ReactiveContext.install(new DebugReactiveContext());
-        DebugSignalDispatcher dispatcher = new DebugSignalDispatcher();
-        dispatcher.setToggleAction(Perf::toggleProfiling);
-        dispatcher.setKeybindPolling(true);
-        SignalDispatcher.install(dispatcher);
+        ProfilerSink previous = sink;
+        sink = null;
+        tracingRequested = false;
+        profiling = false;
+        Instrumentation.uninstall();
+        previous.reset();
     }
 
-    private static void uninstallDebugServices() {
+    private static void installHook() {
+        if (hookInstalled) {
+            return;
+        }
+        hookInstalled = true;
+        Events.run(Trigger.update, (Runnable) Perf::pollProfilingKeybind);
+    }
 
-        ReactiveContext context = ReactiveContext.instance();
-        if (context instanceof DebugReactiveContext) {
-            ((DebugReactiveContext) context).clearState();
+    private static void pollProfilingKeybind() {
+        if (sink == null || !keybindPolling) {
+            return;
         }
-        SignalDispatcher dispatcher = SignalDispatcher.instance();
-        if (dispatcher instanceof DebugSignalDispatcher) {
-            ((DebugSignalDispatcher) dispatcher).setKeybindPolling(false);
-            ((DebugSignalDispatcher) dispatcher).setToggleAction(null);
+        Input input = Core.input;
+        if (input == null) {
+            return;
         }
-        AttachmentStack.install(null);
-        ReactiveContext.install(null);
-        SignalDispatcher.install(null);
+        try {
+            if (input.ctrl() && input.keyTap(KeyCode.d)) {
+                toggleProfiling();
+            }
+        } catch (Throwable t) {
+            Log.err("[Solim] Profiling keybind poll failed", t);
+            keybindPolling = false;
+        }
     }
 
     public static boolean isEnabled() {
-        return AttachmentStack.instance() instanceof DebugAttachmentStack
-                && ReactiveContext.instance() instanceof DebugReactiveContext
-                && SignalDispatcher.instance() instanceof DebugSignalDispatcher;
+        return sink != null;
     }
 
     public static void setThreshold(float ms) {
         thresholdMs = ms < 0f ? 0f : ms;
-        AttachmentStack.setThreshold(thresholdMs);
+        ProfilerSink current = sink;
+        if (current != null) {
+            current.setThreshold(thresholdMs);
+        }
     }
 
     public static List<PerfSpan> snapshot(int max) {
-        return AttachmentStack.snapshot(max);
+        ProfilerSink current = sink;
+        return current != null ? current.snapshot(max) : Collections.<PerfSpan>emptyList();
     }
 
     public static int totalRecorded() {
-        return AttachmentStack.totalRecorded();
+        ProfilerSink current = sink;
+        return current != null ? current.totalRecorded() : 0;
     }
 
     public static void reset() {
-        AttachmentStack.reset();
-        ReactiveContext context = ReactiveContext.instance();
-        if (context instanceof DebugReactiveContext) {
-            ((DebugReactiveContext) context).clearState();
+        ProfilerSink current = sink;
+        if (current != null) {
+            current.reset();
         }
     }
 
     public static int maxDepthObserved() {
-        return AttachmentStack.maxDepthObserved();
+        ProfilerSink current = sink;
+        return current != null ? current.maxDepthObserved() : 0;
     }
 
     public static void setTracingEnabled(boolean state) {
         tracingRequested = state;
-        if (state) {
-            if (!(AttachmentStack.instance() instanceof DebugAttachmentStack)) {
-                AttachmentStack.install(new DebugAttachmentStack());
-                AttachmentStack.setThreshold(thresholdMs);
-            }
-            AttachmentStack.setTracingEnabled(true);
-        } else {
-            if (AttachmentStack.instance() instanceof DebugAttachmentStack) {
-                AttachmentStack.setTracingEnabled(false);
-            }
-            if (!profilingRequested) {
-                AttachmentStack.install(null);
+        ProfilerSink current = sink;
+        if (current == null) {
+            if (state) {
+                installSink();
+                current = sink;
+            } else {
+                keybindPolling = profilingRequested;
+                return;
             }
         }
+        current.setTracingEnabled(state);
+        keybindPolling = state || profilingRequested;
     }
 
     public static boolean isTracing() {
-        return AttachmentStack.isTracing();
+        ProfilerSink current = sink;
+        return current != null && current.isTracing();
     }
 
     public static List<TraceSpan> traceSnapshot(int max) {
-        return AttachmentStack.traceSnapshot(max);
+        ProfilerSink current = sink;
+        return current != null ? current.traceSnapshot(max) : Collections.<TraceSpan>emptyList();
     }
 
     public static void traceReset() {
-        AttachmentStack.traceReset();
+        ProfilerSink current = sink;
+        if (current != null) {
+            current.traceReset();
+        }
     }
 
     public static int traceCapacity() {
-        return DebugAttachmentStack.TRACE_CAPACITY;
+        return ProfilerSink.TRACE_CAPACITY;
     }
 
     public static int traceDroppedCount() {
-        return AttachmentStack.traceDroppedCount();
+        ProfilerSink current = sink;
+        return current != null ? current.traceDroppedCount() : 0;
     }
 
     public static int traceTotal() {
-        return AttachmentStack.traceTotal();
+        ProfilerSink current = sink;
+        return current != null ? current.traceTotal() : 0;
     }
 
     public static long traceId() {
-        return AttachmentStack.traceId();
+        ProfilerSink current = sink;
+        return current != null ? current.traceId() : -1L;
+    }
+
+    public static @Nullable ProfilerSink sink() {
+        return sink;
     }
 
     public static boolean isProfiling() {
@@ -170,10 +203,10 @@ public final class Perf {
             return;
         }
         profiling = true;
-        AttachmentStack.traceReset();
-        ReactiveContext context = ReactiveContext.instance();
-        if (context instanceof DebugReactiveContext) {
-            ((DebugReactiveContext) context).clearState();
+        traceReset();
+        ProfilerSink current = sink;
+        if (current != null) {
+            current.clearReactiveState();
         }
         setTracingEnabled(true);
         notify("Solim profiling started (Ctrl+D to stop)");
@@ -187,7 +220,7 @@ public final class Perf {
         List<TraceSpan> spans = traceSnapshot(traceCapacity());
         int dropped = traceDroppedCount();
         long id = traceId();
-        List<ComponentNodeSnapshot> components = ComponentSnapshotBuilder.capture();
+        List<ComponentNodeSnapshot> components = ComponentSnapshotBuilder.capture(sink);
         boolean wasTracingRequested = tracingRequested;
         setTracingEnabled(false);
 
@@ -214,7 +247,6 @@ public final class Perf {
         try {
             ProfileReportExporter.writeFile(spans, dropped, id, components, file);
         } catch (IOException e) {
-
             Log.err("[Solim] Failed to write profile report to @", file, e);
         }
         return file;
@@ -232,7 +264,7 @@ public final class Perf {
         }
         profiling = false;
         ProfileReportExporter.writeFile(traceSnapshot(traceCapacity()), traceDroppedCount(), traceId(),
-                ComponentSnapshotBuilder.capture(), target);
+                ComponentSnapshotBuilder.capture(sink), target);
     }
 
     private static Fi dataDirectory() {

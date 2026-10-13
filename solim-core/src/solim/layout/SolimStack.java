@@ -11,9 +11,7 @@ import solim.modifier.ElementConfig;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.AttachmentStack;
 import solim.runtime.OwnershipScope;
-import solim.runtime.ReactiveContext;
 import arc.func.Func;
 import arc.func.Prov;
 
@@ -63,20 +61,7 @@ public final class SolimStack extends Component implements CellConfig<SolimStack
         if (isDisposed() || Prov == null) {
             return this;
         }
-        @Nullable
-        Component component = ReactiveContext.untracked(() -> {
-            OwnershipScope scope = OwnershipScope.open();
-            try {
-                Component created = AttachmentStack.isolate(Prov);
-                if (created != null) {
-                    scope.adoptInto(created);
-                }
-                return created;
-            } finally {
-                scope.close();
-            }
-        });
-        attachLayer(component);
+        attachLayer(OwnershipScope.build(Prov));
         return this;
     }
 
@@ -84,20 +69,7 @@ public final class SolimStack extends Component implements CellConfig<SolimStack
         if (isDisposed() || factory == null) {
             return this;
         }
-        @Nullable
-        Component component = ReactiveContext.untracked(() -> {
-            OwnershipScope scope = OwnershipScope.open();
-            try {
-                Component created = AttachmentStack.isolate(() -> factory.get(stack));
-                if (created != null) {
-                    scope.adoptInto(created);
-                }
-                return created;
-            } finally {
-                scope.close();
-            }
-        });
-        attachLayer(component);
+        attachLayer(OwnershipScope.build(() -> factory.get(stack)));
         return this;
     }
 

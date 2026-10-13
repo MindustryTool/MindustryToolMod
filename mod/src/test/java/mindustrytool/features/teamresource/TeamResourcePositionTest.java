@@ -26,6 +26,7 @@ import arc.scene.ui.Button;
 import arc.scene.ui.Button.ButtonStyle;
 import arc.scene.ui.ImageButton.ImageButtonStyle;
 import arc.scene.ui.Label.LabelStyle;
+import arc.scene.ui.ScrollPane.ScrollPaneStyle;
 import arc.scene.ui.TextButton.TextButtonStyle;
 import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.WidgetGroup;
@@ -109,8 +110,8 @@ class TeamResourcePositionTest extends MindustryTestEnv {
         TextButtonStyle textBtnStyle = new TextButtonStyle();
         textBtnStyle.font = font;
         Core.scene.addStyle(TextButtonStyle.class, textBtnStyle);
-        Core.scene.addStyle(arc.scene.ui.ScrollPane.ScrollPaneStyle.class,
-                new arc.scene.ui.ScrollPane.ScrollPaneStyle());
+        Core.scene.addStyle(ScrollPaneStyle.class,
+                new ScrollPaneStyle());
 
         Drawable emptyDrawable = new TextureRegionDrawable(new TextureRegion());
         Styles.outlineLabel = labelStyle;

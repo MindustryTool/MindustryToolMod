@@ -1,13 +1,17 @@
 package solim.core;
+ 
+import arc.util.Nullable;
 
 public final class DisposableAction implements Disposable {
-    private final Runnable action;
+    private final @Nullable Runnable action;
+    private final boolean stateless;
     private boolean disposed = false;
 
     public static final DisposableAction EMPTY = new DisposableAction(null);
 
-    public DisposableAction(Runnable action) {
+    public DisposableAction(@Nullable Runnable action) {
         this.action = action;
+        this.stateless = action == null;
     }
 
     public static DisposableAction of(Runnable action) {
@@ -20,17 +24,15 @@ public final class DisposableAction implements Disposable {
 
     @Override
     public void dispose() {
-        if (disposed) {
+        if (stateless || disposed) {
             return;
         }
         disposed = true;
-        if (action != null) {
-            action.run();
-        }
+        action.run();
     }
 
     @Override
     public boolean isDisposed() {
-        return disposed;
+        return stateless ? false : disposed;
     }
 }

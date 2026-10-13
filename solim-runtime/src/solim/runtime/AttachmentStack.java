@@ -17,10 +17,10 @@ import solim.core.Component;
 import solim.core.DisposableOwner;
 import solim.core.SolimAssert;
 import solim.core.SpacingAware;
-import solim.performance.PerfSpan;
-import solim.performance.TraceSpan;
+import solim.instrumentation.AttachSubtree;
+import solim.instrumentation.Instrumentation;
 
-public class AttachmentStack {
+public final class AttachmentStack {
 
     static {
         AttachmentBridge.install(component -> {
@@ -52,12 +52,19 @@ public class AttachmentStack {
         void configure(Cell<?> cell, Element child, @Nullable Component component);
     }
 
-    private static volatile AttachmentStack INSTANCE = new AttachmentStack();
-    private static final ThreadLocal<Deque<List<Component>>> CAPTURED_LIST_POOL = ThreadLocal
+    private static final Deque<Entry> stack = new ArrayDeque<>();
+    private static final ThreadLocal<Deque<List<Component>>> capturedListPool = ThreadLocal
             .withInitial(ArrayDeque::new);
 
+    private static int suspendFloor = 0;
+
+    private static @Nullable CellConfigurator cellConfigurator = null;
+
+    private AttachmentStack() {
+    }
+
     static List<Component> takeCaptureList() {
-        Deque<List<Component>> pool = CAPTURED_LIST_POOL.get();
+        Deque<List<Component>> pool = capturedListPool.get();
         List<Component> list = pool.pollFirst();
         return list != null ? list : new ArrayList<>();
     }
@@ -65,240 +72,121 @@ public class AttachmentStack {
     static void releaseCaptureList(List<Component> list) {
         if (list != null) {
             list.clear();
-            CAPTURED_LIST_POOL.get().push(list);
+            capturedListPool.get().push(list);
         }
-    }
-
-    protected final Deque<Entry> stack = new ArrayDeque<>();
-    private @Nullable CellConfigurator cellConfigurator = null;
-
-    protected AttachmentStack() {
-    }
-
-    public static AttachmentStack instance() {
-        return INSTANCE;
-    }
-
-    public static void install(@Nullable AttachmentStack instance) {
-        INSTANCE = instance != null ? instance : new AttachmentStack();
     }
 
     public static void setCellConfigurator(@Nullable CellConfigurator configurator) {
-        INSTANCE.doSetCellConfigurator(configurator);
+        cellConfigurator = configurator;
     }
 
     public static void setCellConfigurator(@Nullable Cons2<Cell<?>, Element> configurator) {
-        INSTANCE.doSetCellConfigurator(configurator != null
+        cellConfigurator = configurator != null
                 ? (cell, child, comp) -> configurator.get(cell, child)
-                : null);
+                : null;
     }
 
     public static void push(Table parent) {
-        INSTANCE.doPush(parent, null);
+        push(parent, null);
     }
 
     public static void push(Table parent, Attacher attacher) {
-        INSTANCE.doPush(parent, attacher);
-    }
-
-    public static Table pop() {
-        return INSTANCE.doPop();
-    }
-
-    public static Table current() {
-        return INSTANCE.doCurrent();
-    }
-
-    public static @Nullable Table find(Boolf<Table> Boolf) {
-        return INSTANCE.doFind(Boolf);
-    }
-
-    public static void clear() {
-        INSTANCE.doClear();
-    }
-
-    public static int size() {
-        return INSTANCE.doSize();
-    }
-
-    public static <T> T isolate(Prov<T> Prov) {
-        return INSTANCE.doIsolate(Prov);
-    }
-
-    public static void isolate(Runnable runnable) {
-        INSTANCE.doIsolate(runnable);
-    }
-
-    public static List<Component> capture(Runnable runnable) {
-        if (runnable == null) {
-            return Collections.emptyList();
-        }
-        List<Component> captured = new ArrayList<>();
-        INSTANCE.doCapture(runnable, captured, null);
-        return captured;
-    }
-
-    static void capture(Runnable runnable, List<Component> captured, @Nullable DisposableOwner sink) {
-        INSTANCE.doCapture(runnable, captured, sink);
-    }
-
-    public static void registerPendingComponent(Component component, Table parent) {
-        INSTANCE.doRegisterPendingComponent(component, parent);
-    }
-
-    public static void attachPendingComponents(Entry entry) {
-        INSTANCE.doAttachPendingComponents(entry);
-    }
-
-    public static void attachPendingComponents(Table parent) {
-        INSTANCE.doAttachPendingComponents(parent);
-    }
-
-    public static void attachToParent(Element child) {
-        INSTANCE.doAttachToParent(child);
-    }
-
-    public static Element add(Object child) {
-        return INSTANCE.doAdd(child);
-    }
-
-    public static List<PerfSpan> snapshot(int max) {
-        return INSTANCE.doSnapshot(max);
-    }
-
-    public static int totalRecorded() {
-        return INSTANCE.doTotalRecorded();
-    }
-
-    public static void reset() {
-        INSTANCE.doReset();
-    }
-
-    public static void setThreshold(float ms) {
-        INSTANCE.doSetThreshold(ms);
-    }
-
-    public static int maxDepthObserved() {
-        return INSTANCE.doMaxDepthObserved();
-    }
-
-    public static boolean isTracing() {
-        return INSTANCE.doIsTracing();
-    }
-
-    public static void traceLeaf(@Nullable String name, @Nullable String phase, long startNs, long endNs) {
-        INSTANCE.doTraceLeaf(name, phase, startNs, endNs);
-    }
-
-    public static List<TraceSpan> traceSnapshot(int max) {
-        return INSTANCE.doTraceSnapshot(max);
-    }
-
-    public static int traceDroppedCount() {
-        return INSTANCE.doTraceDroppedCount();
-    }
-
-    public static long traceId() {
-        return INSTANCE.doTraceId();
-    }
-
-    public static int traceCapacity() {
-        return INSTANCE.doTraceCapacity();
-    }
-
-    public static int traceTotal() {
-        return INSTANCE.doTraceTotal();
-    }
-
-    public static void traceReset() {
-        INSTANCE.doTraceReset();
-    }
-
-    public static void setTracingEnabled(boolean enabled) {
-        INSTANCE.doSetTracingEnabled(enabled);
-    }
-
-    public static void beginSpan(@Nullable String name, @Nullable String phase) {
-        INSTANCE.doBeginSpan(name, phase);
-    }
-
-    public static void endSpan() {
-        INSTANCE.doEndSpan();
-    }
-
-    protected void doSetCellConfigurator(@Nullable CellConfigurator configurator) {
-        this.cellConfigurator = configurator;
-    }
-
-    protected void doPush(Table parent, Attacher attacher) {
         SolimAssert.checkMainThread();
-        if (parent != null) {
-            stack.push(new Entry(parent, attacher));
+        if (parent == null) {
+            return;
+        }
+        stack.push(new Entry(parent, attacher));
+        if (Instrumentation.enabled()) {
+            Instrumentation.emit(AttachSubtree.opened(parent.name, stack.size(), System.nanoTime()));
         }
     }
 
-    protected Table doPop() {
+    public static @Nullable Table pop() {
         SolimAssert.checkMainThread();
-        if (!stack.isEmpty()) {
-            Entry popped = stack.pop();
-            doAttachPendingComponents(popped);
-            return popped.table;
-        }
-        return null;
-    }
-
-    protected Table doCurrent() {
-        return stack.isEmpty() ? null : stack.peek().table;
-    }
-
-    protected @Nullable Table doFind(Boolf<Table> Boolf) {
-        if (Boolf == null)
+        if (stack.isEmpty()) {
             return null;
+        }
+        Entry popped = stack.pop();
+        attachPendingComponents(popped);
+        if (Instrumentation.enabled()) {
+            Instrumentation.emit(AttachSubtree.closed(popped.table.name, stack.size() + 1,
+                    popped.table.getChildren().size, System.nanoTime()));
+        }
+        return popped.table;
+    }
+
+    public static @Nullable Table current() {
+        return stack.size() > suspendFloor ? stack.peek().table : null;
+    }
+
+    public static @Nullable Table find(Boolf<Table> predicate) {
+        if (predicate == null) {
+            return null;
+        }
+        int visible = stack.size() - suspendFloor;
+        int index = 0;
         for (Entry entry : stack) {
-            if (Boolf.get(entry.table)) {
+            if (index++ >= visible) {
+                break;
+            }
+            if (predicate.get(entry.table)) {
                 return entry.table;
             }
         }
         return null;
     }
 
-    protected void doClear() {
+    public static void clear() {
         stack.clear();
+        suspendFloor = 0;
     }
 
-    protected int doSize() {
+    public static int size() {
         return stack.size();
     }
 
-    protected <T> T doIsolate(Prov<T> Prov) {
-        if (Prov == null) {
+    public static <T> T isolate(Prov<T> supplier) {
+        if (supplier == null) {
             return null;
         }
-        Deque<Entry> saved = new ArrayDeque<>(stack);
-        stack.clear();
+        SolimAssert.checkMainThread();
+        int depth = stack.size();
+        int floor = suspendFloor;
+        suspendFloor = Math.max(floor, depth);
         try {
-            return Prov.get();
+            return supplier.get();
         } finally {
-            stack.clear();
-            stack.addAll(saved);
+            suspendFloor = floor;
+            truncate(depth);
         }
     }
 
-    protected void doIsolate(Runnable runnable) {
+    public static void isolate(Runnable runnable) {
         if (runnable == null) {
             return;
         }
-        Deque<Entry> saved = new ArrayDeque<>(stack);
-        stack.clear();
+        SolimAssert.checkMainThread();
+        int depth = stack.size();
+        int floor = suspendFloor;
+        suspendFloor = Math.max(floor, depth);
         try {
             runnable.run();
         } finally {
-            stack.clear();
-            stack.addAll(saved);
+            suspendFloor = floor;
+            truncate(depth);
         }
     }
 
-    protected void doCapture(Runnable runnable, List<Component> captured, @Nullable DisposableOwner sink) {
+    public static List<Component> capture(@Nullable Runnable runnable) {
+        if (runnable == null) {
+            return Collections.emptyList();
+        }
+        List<Component> captured = new ArrayList<>();
+        capture(runnable, captured, null);
+        return captured;
+    }
+
+    static void capture(Runnable runnable, List<Component> captured, @Nullable DisposableOwner sink) {
         SolimAssert.checkMainThread();
         captured.clear();
         if (runnable == null) {
@@ -310,7 +198,7 @@ public class AttachmentStack {
         RuntimeException runtimeFailure = null;
         Error errorFailure = null;
         try {
-            doIsolate(runnable);
+            isolate(runnable);
             scope.extractComponents(captured);
             scope.adoptInto(sink);
         } catch (RuntimeException t) {
@@ -318,7 +206,6 @@ public class AttachmentStack {
         } catch (Error t) {
             errorFailure = t;
         } finally {
-
             scope.close();
         }
         if (runtimeFailure != null) {
@@ -331,9 +218,14 @@ public class AttachmentStack {
         }
     }
 
-    protected void doRegisterPendingComponent(Component component, Table parent) {
+    public static void registerPendingComponent(Component component, Table parent) {
         if (component != null && parent != null) {
+            int visible = stack.size() - suspendFloor;
+            int index = 0;
             for (Entry entry : stack) {
+                if (index++ >= visible) {
+                    break;
+                }
                 if (entry.table == parent) {
                     entry.pendingComponents.add(component);
                     break;
@@ -342,16 +234,16 @@ public class AttachmentStack {
         }
     }
 
-    protected void doAttachPendingComponents(Entry entry) {
+    public static void attachPendingComponents(Entry entry) {
         if (entry == null || entry.pendingComponents.isEmpty()) {
             return;
         }
         List<Component> list = new ArrayList<>(entry.pendingComponents);
         entry.pendingComponents.clear();
         for (Component comp : list) {
-            Element el = doIsolate(comp::element);
+            Element el = isolate(comp::element);
             if (el != null && el.parent == null) {
-                doAttach(entry.table, el, entry.attacher, comp);
+                attach(entry.table, el, entry.attacher, comp);
             }
             if (comp instanceof SpacingAware) {
                 ((SpacingAware) comp).applySpacing();
@@ -359,103 +251,54 @@ public class AttachmentStack {
         }
     }
 
-    protected void doAttachPendingComponents(Table parent) {
+    public static void attachPendingComponents(@Nullable Table parent) {
         if (parent == null) {
             return;
         }
+        int visible = stack.size() - suspendFloor;
+        int index = 0;
         for (Entry entry : stack) {
+            if (index++ >= visible) {
+                break;
+            }
             if (entry.table == parent) {
-                doAttachPendingComponents(entry);
+                attachPendingComponents(entry);
                 break;
             }
         }
     }
 
-    protected void doAttachToParent(Element child) {
-        if (child == null || stack.isEmpty()) {
+    public static void attachToParent(Element child) {
+        if (child == null || stack.size() <= suspendFloor) {
             return;
         }
         Entry entry = stack.peek();
-        doAttachPendingComponents(entry);
-        doAttach(entry.table, child, entry.attacher, null);
+        attachPendingComponents(entry);
+        attach(entry.table, child, entry.attacher, null);
     }
 
-    protected Element doAdd(Object child) {
-        Element e = ElementResolver.resolve(child);
-        doAttachToParent(e);
-        return e;
+    public static Element add(Object child) {
+        Element element = ElementResolver.resolve(child);
+        attachToParent(element);
+        return element;
     }
 
-    private void doAttach(Table parent, Element child, Attacher attacher, @Nullable Component comp) {
-        if (parent != null && child != null) {
-            if (child.parent != parent && !parent.getChildren().contains(child, true)) {
-                Cell<?> cell;
-                if (attacher != null) {
-                    cell = attacher.attach(parent, child);
-                } else {
-                    cell = parent.add(child);
-                }
-                if (cell != null && cellConfigurator != null) {
-                    cellConfigurator.configure(cell, child, comp);
-                }
-            }
+    private static void truncate(int depth) {
+        while (stack.size() > depth) {
+            stack.pop();
         }
     }
 
-    protected List<PerfSpan> doSnapshot(int max) {
-        return Collections.emptyList();
-    }
-
-    protected int doTotalRecorded() {
-        return 0;
-    }
-
-    protected void doReset() {
-    }
-
-    protected void doSetThreshold(float ms) {
-    }
-
-    protected int doMaxDepthObserved() {
-        return 0;
-    }
-
-    protected boolean doIsTracing() {
-        return false;
-    }
-
-    protected void doTraceLeaf(@Nullable String name, @Nullable String phase, long startNs, long endNs) {
-    }
-
-    protected List<TraceSpan> doTraceSnapshot(int max) {
-        return Collections.emptyList();
-    }
-
-    protected int doTraceDroppedCount() {
-        return 0;
-    }
-
-    protected long doTraceId() {
-        return -1L;
-    }
-
-    protected int doTraceCapacity() {
-        return 0;
-    }
-
-    protected int doTraceTotal() {
-        return 0;
-    }
-
-    protected void doTraceReset() {
-    }
-
-    protected void doSetTracingEnabled(boolean enabled) {
-    }
-
-    protected void doBeginSpan(@Nullable String name, @Nullable String phase) {
-    }
-
-    protected void doEndSpan() {
+    private static void attach(Table parent, Element child, Attacher attacher, @Nullable Component comp) {
+        if (parent == null || child == null) {
+            return;
+        }
+        if (child.parent != parent && !parent.getChildren().contains(child, true)) {
+            Cell<?> cell = attacher != null ? attacher.attach(parent, child) : parent.add(child);
+            CellConfigurator configurator = cellConfigurator;
+            if (cell != null && configurator != null) {
+                configurator.configure(cell, child, comp);
+            }
+        }
     }
 }

@@ -15,7 +15,10 @@ import solim.core.ReactiveObserver;
 import solim.core.ReactiveSource;
 import solim.core.SchedulableEffect;
 import solim.core.OwnershipContext;
-import solim.runtime.DebugReactiveContext;
+import solim.core.SolimAssert;
+import solim.instrumentation.EffectRun;
+import solim.instrumentation.Instrumentation;
+import solim.instrumentation.ReactiveCreated;
 import solim.runtime.OwnershipScope;
 import solim.runtime.ReactiveContext;
 import solim.runtime.SignalDispatcher;
@@ -25,6 +28,12 @@ public final class Effect implements ReactiveObserver, DisposableOwner, Schedula
 
     public interface Cleanup {
         void add(Runnable runnable);
+    }
+
+    private enum State {
+        idle,
+        queued,
+        running
     }
 
     private final Runnable runnable;
@@ -40,8 +49,7 @@ public final class Effect implements ReactiveObserver, DisposableOwner, Schedula
     private final List<Disposable> owned = new ArrayList<>();
 
     private boolean disposed = false;
-    private boolean running = false;
-    private boolean pending = false;
+    private State state = State.idle;
 
     private Effect(Runnable runnable, Prov<Runnable> Prov, Cons<Cleanup> cleanupConsumer) {
         this.runnable = runnable;
@@ -76,21 +84,23 @@ public final class Effect implements ReactiveObserver, DisposableOwner, Schedula
     private static Effect create(Runnable runnable, Prov<Runnable> Prov, Cons<Cleanup> cleanupConsumer) {
         Effect effect = new Effect(runnable, Prov, cleanupConsumer);
         OwnershipContext.register(effect);
-        ReactiveContext context = ReactiveContext.instance();
-        if (context instanceof DebugReactiveContext) {
-            ((DebugReactiveContext) context).observeEffect(effect);
+        if (Instrumentation.enabled()) {
+            Instrumentation.emit(new ReactiveCreated(effect));
         }
         effect.runEffect();
         return effect;
     }
 
     private void runEffect() {
-        if (disposed || running) {
-            if (running)
-                pending = true;
+        if (disposed) {
             return;
         }
-        running = true;
+        if (state == State.running) {
+            state = State.queued;
+            SignalDispatcher.enqueue(this);
+            return;
+        }
+        state = State.running;
 
         runCleanups();
 
@@ -98,7 +108,6 @@ public final class Effect implements ReactiveObserver, DisposableOwner, Schedula
         newDeps.clear();
         collecting = newDeps;
         ReactiveContext.push(this);
-        ReactiveContext.effectStart(this);
         long startNs = System.nanoTime();
 
         OwnershipScope scope = OwnershipScope.open();
@@ -115,12 +124,16 @@ public final class Effect implements ReactiveObserver, DisposableOwner, Schedula
             scope.adoptInto(this);
         } finally {
             long durationNs = System.nanoTime() - startNs;
-            ReactiveContext.effectEnd(this);
-            ReactiveContext.pop();
+            ReactiveContext.pop(this);
             collecting = null;
-            running = false;
+            if (state != State.queued) {
+                state = State.idle;
+            }
             scope.close();
-            recordDebugRun(durationNs);
+            if (Instrumentation.enabled()) {
+                Instrumentation.emit(new EffectRun(this, startNs, durationNs,
+                        Collections.unmodifiableList(new ArrayList<>(newDeps))));
+            }
         }
         if (returned != null) {
             cleanups.add(returned);
@@ -158,13 +171,6 @@ public final class Effect implements ReactiveObserver, DisposableOwner, Schedula
         }
     }
 
-    private void recordDebugRun(long durationNs) {
-        ReactiveContext context = ReactiveContext.instance();
-        if (context instanceof DebugReactiveContext) {
-            ((DebugReactiveContext) context).recordEffectRun(this, durationNs);
-        }
-    }
-
     private void updateDependencies(Set<ReactiveSource> newDeps) {
         for (ReactiveSource dep : dependencies) {
             if (!newDeps.contains(dep)) {
@@ -182,8 +188,9 @@ public final class Effect implements ReactiveObserver, DisposableOwner, Schedula
 
     @Override
     public void addDependency(ReactiveSource observable) {
-        if (disposed)
+        if (disposed) {
             return;
+        }
         if (collecting != null) {
             collecting.add(observable);
         }
@@ -191,36 +198,46 @@ public final class Effect implements ReactiveObserver, DisposableOwner, Schedula
 
     @Override
     public void invalidate() {
-        if (disposed || pending)
+        if (disposed || state == State.queued) {
             return;
-        pending = true;
+        }
+        state = State.queued;
         SignalDispatcher.enqueue(this);
     }
 
     @Override
     public void runPending() {
         if (disposed) {
-            pending = false;
+            state = State.idle;
             return;
         }
-        pending = false;
+        if (state == State.running) {
+            state = State.queued;
+            SignalDispatcher.enqueue(this);
+            return;
+        }
+        state = State.idle;
         runEffect();
     }
 
     @Override
     public void clearPending() {
-        pending = false;
+        if (state == State.queued) {
+            state = State.idle;
+        }
     }
 
     boolean isPending() {
-        return pending;
+        return state == State.queued;
     }
 
     public void dispose() {
-        if (disposed)
+        SolimAssert.checkMainThread();
+        if (disposed) {
             return;
+        }
         disposed = true;
-        pending = false;
+        state = State.idle;
 
         for (ReactiveSource dep : new ArrayList<>(dependencies)) {
             dep.removeObserver(this);
@@ -265,14 +282,15 @@ public final class Effect implements ReactiveObserver, DisposableOwner, Schedula
 
     @Override
     public boolean debugDirty() {
-        return pending;
+        return state == State.queued;
     }
 
     private class CleanupImpl implements Cleanup {
         @Override
         public void add(Runnable runnable) {
-            if (runnable != null)
+            if (runnable != null) {
                 cleanups.add(runnable);
+            }
         }
     }
 }

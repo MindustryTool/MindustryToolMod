@@ -12,8 +12,6 @@ import solim.core.Component;
 import solim.core.DebugReactiveNode;
 import solim.core.Disposable;
 import solim.core.SessionRoot;
-import solim.runtime.DebugReactiveContext;
-import solim.runtime.ReactiveContext;
 
 public final class ComponentSnapshotBuilder {
 
@@ -23,28 +21,33 @@ public final class ComponentSnapshotBuilder {
     }
 
     public static List<ComponentNodeSnapshot> capture() {
+        return capture(Perf.sink());
+    }
+
+    public static List<ComponentNodeSnapshot> capture(@Nullable ProfilerSink sink) {
         List<ComponentNodeSnapshot> roots = new ArrayList<>();
         Map<Component, Boolean> visited = new IdentityHashMap<>();
         int[] nextId = { 1 };
         for (Component child : SessionRoot.get().children()) {
-            captureComponent(child, visited, nextId, 0, roots);
+            captureComponent(sink, child, visited, nextId, 0, roots);
         }
         return roots;
     }
 
-    private static void captureComponent(@Nullable Component component, Map<Component, Boolean> visited,
-            int[] nextId, int depth, List<ComponentNodeSnapshot> out) {
+    private static void captureComponent(@Nullable ProfilerSink sink, @Nullable Component component,
+            Map<Component, Boolean> visited, int[] nextId, int depth,
+            List<ComponentNodeSnapshot> out) {
         if (component == null || depth > MAX_DEPTH || visited.put(component, Boolean.TRUE) != null) {
             return;
         }
 
         List<ComponentNodeSnapshot> children = new ArrayList<>();
         for (Component child : component.children()) {
-            captureComponent(child, visited, nextId, depth + 1, children);
+            captureComponent(sink, child, visited, nextId, depth + 1, children);
         }
 
         Element element = component.peekElement();
-        NodeReactive reactive = collectReactive(component);
+        NodeReactive reactive = collectReactive(sink, component);
 
         out.add(new ComponentNodeSnapshot(nextId[0]++,
                 component.getClass().getSimpleName(),
@@ -74,14 +77,13 @@ public final class ComponentSnapshotBuilder {
         final List<String> others = new ArrayList<>();
     }
 
-    private static NodeReactive collectReactive(Component component) {
+    private static NodeReactive collectReactive(@Nullable ProfilerSink sink, Component component) {
         NodeReactive result = new NodeReactive();
-        DebugReactiveContext debug = debugContext();
 
         List<Object> attributed = new ArrayList<>();
-        Set<Object> seen = DebugReactiveContext.newIdentitySet();
-        if (debug != null) {
-            for (Object node : debug.createdNodes(component)) {
+        Set<Object> seen = ProfilerSink.newIdentitySet();
+        if (sink != null) {
+            for (Object node : sink.createdNodes(component)) {
                 addAttributed(attributed, seen, node);
             }
         }
@@ -90,27 +92,27 @@ public final class ComponentSnapshotBuilder {
                 result.others.add(disposable.getClass().getSimpleName());
                 continue;
             }
-            for (Object node : DebugReactiveContext.reachableSources(disposable)) {
+            for (Object node : ProfilerSink.reachableSources(disposable)) {
                 addAttributed(attributed, seen, node);
             }
             addAttributed(attributed, seen, disposable);
         }
 
-        if (debug == null) {
+        if (sink == null) {
             return result;
         }
         for (Object node : attributed) {
-            SignalSnapshot signal = debug.signalSnapshot(node);
+            SignalSnapshot signal = sink.signalSnapshot(node);
             if (signal != null) {
                 result.signals.add(signal);
                 continue;
             }
-            ComputedSnapshot computed = debug.computedSnapshot(node);
+            ComputedSnapshot computed = sink.computedSnapshot(node);
             if (computed != null) {
                 result.computeds.add(computed);
                 continue;
             }
-            EffectSnapshot effect = debug.effectSnapshot(node);
+            EffectSnapshot effect = sink.effectSnapshot(node);
             if (effect != null) {
                 result.effects.add(effect);
             }
@@ -122,11 +124,6 @@ public final class ComponentSnapshotBuilder {
         if (node != null && seen.add(node)) {
             attributed.add(node);
         }
-    }
-
-    private static @Nullable DebugReactiveContext debugContext() {
-        ReactiveContext context = ReactiveContext.instance();
-        return context instanceof DebugReactiveContext ? (DebugReactiveContext) context : null;
     }
 
     public static List<ComponentNodeSnapshot> empty() {

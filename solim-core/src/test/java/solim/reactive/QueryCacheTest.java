@@ -304,4 +304,32 @@ class QueryCacheTest extends SolimEnv {
         scheduledTask.get().run();
         assertNotNull(cache.getEntry(key), "Entry should not be evicted while active observer is attached");
     }
+
+    @Test
+    void attachObserverDeduplicationDoesNotInflateRefcount() {
+        QueryKey key = QueryKey.of("dedup-observer");
+        QueryCache.InvalidationListener listener = () -> {
+        };
+
+        cache.attachObserver(key, listener);
+        cache.attachObserver(key, listener);
+
+        assertEquals(1, cache.getEntry(key).getActiveObservers(), "Duplicate attach must not inflate refcount");
+
+        cache.detachObserver(key, listener, 0L);
+        assertNull(cache.getEntry(key), "Single detach must balance observer and evict if gcTime <= 0");
+    }
+
+    @Test
+    void invalidationInvokesListenerOnce() {
+        QueryKey key = QueryKey.of("dedup-invalidate");
+        AtomicInteger callCount = new AtomicInteger(0);
+        QueryCache.InvalidationListener listener = callCount::incrementAndGet;
+
+        cache.attachObserver(key, listener);
+        cache.attachObserver(key, listener);
+
+        cache.invalidate(key);
+        assertEquals(1, callCount.get(), "Invalidation must invoke listener exactly once");
+    }
 }

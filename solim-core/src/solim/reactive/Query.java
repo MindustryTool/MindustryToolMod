@@ -2,11 +2,11 @@ package solim.reactive;
 
 import arc.Core;
 import arc.util.Nullable;
-import arc.util.Timer;
 import java.time.Duration;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import arc.func.Prov;
 import solim.core.Disposable;
@@ -16,6 +16,9 @@ public final class Query<T> implements Readable<T>, Disposable {
 
     private static final int DEFAULT_RETRY_COUNT = 3;
     private static final long DEFAULT_RETRY_DELAY_MS = 1_000L;
+    private static final int MAX_RETRY_SHIFT = 10;
+    private static final long MAX_RETRY_DELAY_MS = 60_000L;
+    private static final int MAX_FETCHED_KEYS = 32;
 
     static final class Options {
         @Nullable
@@ -28,7 +31,7 @@ public final class Query<T> implements Readable<T>, Disposable {
         Duration refetchInterval;
     }
 
-    private final QueryKey key;
+    private QueryKey key;
     private final Prov<CompletableFuture<T>> fetcher;
     private final @Nullable Prov<QueryKey> keySupplier;
     private final Set<QueryKey> fetchedKeys = new LinkedHashSet<>();
@@ -71,6 +74,9 @@ public final class Query<T> implements Readable<T>, Disposable {
         this.retryDelayMs = options.retryDelayMs;
         this.refetchInterval = options.refetchInterval;
         this.cache = QueryCache.getInstance();
+
+        boolean isInitiallyEnabled = options.enabled == null || Boolean.TRUE.equals(options.enabled.peek());
+        this.loading.set(isInitiallyEnabled);
 
         OwnershipContext.register(this);
         this.cache.attachObserver(this.key, cacheListener);
@@ -203,7 +209,7 @@ public final class Query<T> implements Readable<T>, Disposable {
         }
 
         float seconds = Math.max(0.1f, refetchInterval.toMillis() / 1000f);
-        intervalTask = scheduleTimer(new Runnable() {
+        intervalTask = cache.scheduler().schedule(new Runnable() {
             @Override
             public void run() {
                 if (disposed)
@@ -249,7 +255,12 @@ public final class Query<T> implements Readable<T>, Disposable {
         try {
 
             QueryKey fetchKey = keyForFetch();
-            fetchedKeys.add(fetchKey);
+            if (!fetchKey.equals(this.key)) {
+                cache.detachObserver(this.key, cacheListener, gcTimeMs);
+                this.key = fetchKey;
+                cache.attachObserver(this.key, cacheListener);
+            }
+            rememberFetchedKey(fetchKey);
             future = cache.fetchOrJoin(fetchKey, fetcher);
         } catch (Throwable t) {
             handleError(gen, t);
@@ -287,12 +298,21 @@ public final class Query<T> implements Readable<T>, Disposable {
             return;
 
         Throwable cause = throwable.getCause() != null ? throwable.getCause() : throwable;
+        if (cause != throwable) {
+            cause.addSuppressed(throwable);
+        }
 
-        if (currentRetry < retryCount) {
+        boolean isCancelled = cause instanceof CancellationException;
+
+        if (!isCancelled && currentRetry < retryCount) {
             int attempt = currentRetry++;
-            long delayMs = retryDelayMs * (1L << attempt);
+            int shift = Math.min(attempt, MAX_RETRY_SHIFT);
+            long multiplier = 1L << shift;
+            long delayMs = retryDelayMs > MAX_RETRY_DELAY_MS / multiplier
+                    ? MAX_RETRY_DELAY_MS
+                    : retryDelayMs * multiplier;
             float delaySeconds = Math.max(0.001f, delayMs / 1000f);
-            retryTask = scheduleTimer(this::doFetch, delaySeconds);
+            retryTask = cache.scheduler().schedule(this::doFetch, delaySeconds);
         } else {
             currentRetry = 0;
             error.set(cause);
@@ -316,7 +336,7 @@ public final class Query<T> implements Readable<T>, Disposable {
         loading.set(false);
         fetching.set(false);
         hasData = true;
-        cache.put(key, newData);
+        cache.put(keyForFetch(), newData);
     }
 
     public Readable<T> data() {
@@ -409,39 +429,26 @@ public final class Query<T> implements Readable<T>, Disposable {
         return disposed;
     }
 
-    private static void postToMain(Runnable runnable) {
-        if (Core.app != null) {
-            Core.app.post(runnable);
-        } else {
-            runnable.run();
+    private void rememberFetchedKey(QueryKey fetched) {
+        if (fetchedKeys.contains(fetched)) {
+            return;
+        }
+        fetchedKeys.add(fetched);
+        while (fetchedKeys.size() > MAX_FETCHED_KEYS) {
+            QueryKey oldest = fetchedKeys.iterator().next();
+            fetchedKeys.remove(oldest);
+            cache.evictIfUnobserved(oldest, gcTimeMs);
         }
     }
 
-    private static @Nullable Disposable scheduleTimer(Runnable runnable, float delaySeconds) {
-        try {
-            if (Core.app == null) {
-                return null;
+    private void postToMain(Runnable runnable) {
+        if (Core.app != null) {
+            Core.app.post(runnable);
+        } else {
+            Disposable scheduled = cache.scheduler().schedule(runnable, 0f);
+            if (scheduled == null) {
+                runnable.run();
             }
-            Timer.Task task = Timer.schedule(runnable, delaySeconds);
-
-            return new Disposable() {
-                private boolean disposed = false;
-
-                @Override
-                public void dispose() {
-                    if (!disposed) {
-                        disposed = true;
-                        task.cancel();
-                    }
-                }
-
-                @Override
-                public boolean isDisposed() {
-                    return disposed;
-                }
-            };
-        } catch (Throwable ignored) {
-            return null;
         }
     }
 }

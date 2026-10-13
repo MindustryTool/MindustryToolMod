@@ -25,6 +25,7 @@ public final class Mutation<T, R> implements Disposable {
 
     private int mutationGeneration = 0;
     private boolean disposed = false;
+    private @Nullable CompletableFuture<R> inflightFuture;
 
     private Mutation(Func<T, CompletableFuture<R>> mutator) {
         this.mutator = Objects.requireNonNull(mutator, "mutator cannot be null");
@@ -91,6 +92,10 @@ public final class Mutation<T, R> implements Disposable {
         if (disposed)
             return;
 
+        if (inflightFuture != null && !inflightFuture.isDone()) {
+            inflightFuture.cancel(true);
+        }
+
         int gen = ++mutationGeneration;
         pending.set(true);
         error.set(null);
@@ -108,6 +113,7 @@ public final class Mutation<T, R> implements Disposable {
         CompletableFuture<R> future;
         try {
             future = mutator.get(input);
+            this.inflightFuture = future;
         } catch (Throwable t) {
             handleError(gen, t, context);
             return;
@@ -119,6 +125,7 @@ public final class Mutation<T, R> implements Disposable {
                 if (disposed || gen != mutationGeneration) {
                     return;
                 }
+                inflightFuture = null;
                 if (throwable != null) {
                     handleError(gen, throwable, finalContext);
                 } else {
@@ -150,6 +157,9 @@ public final class Mutation<T, R> implements Disposable {
             return;
 
         Throwable cause = throwable.getCause() != null ? throwable.getCause() : throwable;
+        if (cause != throwable) {
+            cause.addSuppressed(throwable);
+        }
 
         pending.set(false);
         error.set(cause);
@@ -161,6 +171,10 @@ public final class Mutation<T, R> implements Disposable {
 
     public void reset() {
         mutationGeneration++;
+        if (inflightFuture != null && !inflightFuture.isDone()) {
+            inflightFuture.cancel(true);
+        }
+        inflightFuture = null;
         pending.set(false);
         error.set(null);
         result.set(null);
@@ -184,6 +198,10 @@ public final class Mutation<T, R> implements Disposable {
             return;
         disposed = true;
         mutationGeneration++;
+        if (inflightFuture != null && !inflightFuture.isDone()) {
+            inflightFuture.cancel(true);
+        }
+        inflightFuture = null;
         pending.set(false);
     }
 
@@ -196,7 +214,10 @@ public final class Mutation<T, R> implements Disposable {
         if (Core.app != null) {
             Core.app.post(runnable);
         } else {
-            runnable.run();
+            Disposable scheduled = QueryCache.getInstance().scheduler().schedule(runnable, 0f);
+            if (scheduled == null) {
+                runnable.run();
+            }
         }
     }
 }

@@ -14,7 +14,10 @@ import solim.core.Disposable;
 import solim.core.ReactiveObserver;
 import solim.core.ReactiveSource;
 import solim.core.OwnershipContext;
-import solim.runtime.DebugReactiveContext;
+import solim.core.SolimAssert;
+import solim.instrumentation.ComputedRun;
+import solim.instrumentation.Instrumentation;
+import solim.instrumentation.ReactiveCreated;
 import solim.runtime.ReactiveContext;
 
 public final class Computed<T> implements Disposable, ReactiveObserver, Readable<T>, ReactiveSource,
@@ -35,15 +38,14 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
     public Computed(Prov<T> Prov) {
         this.Prov = Prov;
         OwnershipContext.register(this);
-        if (ReactiveContext.instance() instanceof DebugReactiveContext) {
-            ((DebugReactiveContext) ReactiveContext.instance()).observeComputed(this);
+        if (Instrumentation.enabled()) {
+            Instrumentation.emit(new ReactiveCreated(this));
         }
     }
 
     @Override
     public T get() {
         if (disposed) {
-
             return cachedValue;
         }
         if (dirty || !hasValue) {
@@ -56,6 +58,9 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 
     @Override
     public T peek() {
+        if (disposed) {
+            return cachedValue;
+        }
         if (dirty || !hasValue) {
             recompute();
         }
@@ -71,7 +76,6 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
         newDeps.clear();
         collecting = newDeps;
         ReactiveContext.push(this);
-        ReactiveContext.computedStart(this);
         long startNs = System.nanoTime();
         T newValue = null;
         Throwable error = null;
@@ -81,11 +85,13 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
             error = e;
         } finally {
             long durationNs = System.nanoTime() - startNs;
-            ReactiveContext.computedEnd(this, !hasValue || !Objects.equals(cachedValue, newValue));
-            ReactiveContext.pop();
+            boolean changed = !hasValue || !Objects.equals(cachedValue, newValue);
+            ReactiveContext.pop(this);
             collecting = null;
             computing = false;
-            recordDebugRun(durationNs);
+            if (Instrumentation.enabled()) {
+                Instrumentation.emit(new ComputedRun(this, startNs, durationNs, changed));
+            }
         }
         if (error != null) {
             updateDependencies(newDeps);
@@ -101,13 +107,6 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
         hasValue = true;
         dirty = false;
         updateDependencies(newDeps);
-    }
-
-    private void recordDebugRun(long durationNs) {
-        ReactiveContext context = ReactiveContext.instance();
-        if (context instanceof DebugReactiveContext) {
-            ((DebugReactiveContext) context).recordComputedRun(this, durationNs);
-        }
     }
 
     private void updateDependencies(Set<ReactiveSource> newDeps) {
@@ -154,6 +153,7 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 
     @Override
     public void dispose() {
+        SolimAssert.checkMainThread();
         if (disposed)
             return;
         disposed = true;

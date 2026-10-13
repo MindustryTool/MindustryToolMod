@@ -7,20 +7,27 @@ import arc.util.Log;
 import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import mindustry.Vars;
+import solim.instrumentation.Dispose;
+import solim.instrumentation.Instrumentation;
 
 public abstract class Component implements DisposableOwner {
 
-    private Element cached;
+    private @Nullable Element cached;
     private @Nullable String componentName;
 
     private final List<Disposable> disposables = new ArrayList<>();
+    private final Set<Disposable> disposableIndex = Collections
+            .newSetFromMap(new IdentityHashMap<Disposable, Boolean>());
 
     private final List<Component> children = new ArrayList<>();
 
     private @Nullable Component parent;
-    private boolean disposed = false;
+    private volatile boolean disposed = false;
 
     protected Component() {
         joinAmbientScope();
@@ -62,11 +69,11 @@ public abstract class Component implements DisposableOwner {
     }
 
     public List<Component> children() {
-        return Collections.unmodifiableList(children);
+        return Collections.unmodifiableList(new ArrayList<>(children));
     }
 
     public List<Disposable> disposables() {
-        return Collections.unmodifiableList(disposables);
+        return Collections.unmodifiableList(new ArrayList<>(disposables));
     }
 
     public @Nullable Element peekElement() {
@@ -83,11 +90,12 @@ public abstract class Component implements DisposableOwner {
         }
         String compName = getClass().getSimpleName();
         String elementName = element.getClass().getSimpleName();
-        element.name = "solim-" + (compName.isEmpty() ? "component" : compName.toLowerCase())
-                + "-" + (elementName.isEmpty() ? "element" : elementName.toLowerCase());
+        element.name = "solim-" + (compName.isEmpty() ? "component" : compName.toLowerCase(Locale.ROOT))
+                + "-" + (elementName.isEmpty() ? "element" : elementName.toLowerCase(Locale.ROOT));
     }
 
     public final Element element() {
+        SolimAssert.checkMainThread();
         checkNotDisposed();
         Element built = cached;
         if (built != null) {
@@ -103,6 +111,7 @@ public abstract class Component implements DisposableOwner {
             }
             cached = built;
             applyDefaultName(built);
+            applySpacing();
             return built;
         } catch (Throwable throwable) {
             if (Vars.ui != null) {
@@ -113,7 +122,7 @@ public abstract class Component implements DisposableOwner {
             dispose();
             throw throwable;
         } finally {
-            OwnershipContext.pop();
+            OwnershipContext.pop(this);
         }
     }
 
@@ -141,6 +150,7 @@ public abstract class Component implements DisposableOwner {
 
     @Override
     public void adopt(@Nullable Disposable resource) {
+        SolimAssert.checkMainThread();
         if (resource == null || disposed) {
             return;
         }
@@ -158,9 +168,24 @@ public abstract class Component implements DisposableOwner {
             children.add(child);
             return;
         }
-        if (!disposables.contains(resource)) {
+        if (disposableIndex.add(resource)) {
             disposables.add(resource);
         }
+    }
+
+    public void reparentTo(@Nullable DisposableOwner newOwner) {
+        SolimAssert.checkMainThread();
+        checkNotDisposed();
+        Element element = cached;
+        if (newOwner == null) {
+            detachFromParent();
+            return;
+        }
+        if (element != null && element.parent != null) {
+            element.remove();
+        }
+        detachFromParent();
+        newOwner.adopt(this);
     }
 
     public final <T extends Disposable> T own(@Nullable T resource) {
@@ -173,7 +198,7 @@ public abstract class Component implements DisposableOwner {
         return own(DisposableAction.of(() -> Events.remove(eventType, listener)));
     }
 
-    protected final boolean isBuilt() {
+    public final boolean isBuilt() {
         return cached != null;
     }
 
@@ -199,21 +224,28 @@ public abstract class Component implements DisposableOwner {
 
     @Override
     public void dispose() {
+        SolimAssert.checkMainThread();
         if (disposed) {
             return;
         }
         disposed = true;
 
-        onDispose();
-        detachFromParent();
+        if (Instrumentation.enabled()) {
+            Instrumentation.emit(new Dispose(this, children.size(), disposables.size()));
+        }
+
         Throwable firstFailure = null;
+        try {
+            onDispose();
+        } catch (Throwable t) {
+            firstFailure = t;
+        }
+        detachFromParent();
         for (int i = children.size() - 1; i >= 0; i--) {
             try {
                 children.get(i).dispose();
             } catch (Throwable t) {
-                if (firstFailure == null) {
-                    firstFailure = t;
-                }
+                firstFailure = record(firstFailure, t);
             }
         }
         children.clear();
@@ -221,12 +253,11 @@ public abstract class Component implements DisposableOwner {
             try {
                 disposables.get(i).dispose();
             } catch (Throwable t) {
-                if (firstFailure == null) {
-                    firstFailure = t;
-                }
+                firstFailure = record(firstFailure, t);
             }
         }
         disposables.clear();
+        disposableIndex.clear();
         if (firstFailure != null) {
             if (firstFailure instanceof RuntimeException) {
                 throw (RuntimeException) firstFailure;
@@ -236,6 +267,16 @@ public abstract class Component implements DisposableOwner {
             }
             throw new RuntimeException("Error disposing " + getClass().getSimpleName(), firstFailure);
         }
+    }
+
+    private static Throwable record(@Nullable Throwable first, Throwable next) {
+        if (first == null) {
+            return next;
+        }
+        if (first != next) {
+            first.addSuppressed(next);
+        }
+        return first;
     }
 
     @Override

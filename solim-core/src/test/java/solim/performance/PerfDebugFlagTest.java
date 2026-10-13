@@ -2,17 +2,14 @@ package solim.performance;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import solim.runtime.AttachmentStack;
-import solim.runtime.DebugAttachmentStack;
-import solim.runtime.DebugReactiveContext;
-import solim.runtime.DebugSignalDispatcher;
-import solim.runtime.ReactiveContext;
-import solim.runtime.SignalDispatcher;
+import solim.instrumentation.Instrumentation;
 import solim.test.SolimEnv;
 
 class PerfDebugFlagTest extends SolimEnv {
@@ -67,7 +64,6 @@ class PerfDebugFlagTest extends SolimEnv {
 
     @Test
     void unrecognizedValuesLeaveDebugModeOff() {
-
         for (String value : new String[] { "", " ", "yes", "1", "on", "enabled", "truthy" }) {
             System.setProperty(Perf.debugProperty, value);
 
@@ -89,10 +85,8 @@ class PerfDebugFlagTest extends SolimEnv {
         Perf.init();
 
         assertFalse(Perf.isEnabled(), "an absent property must leave debug mode off");
-        assertFalse(AttachmentStack.instance() instanceof DebugAttachmentStack);
-        assertFalse(ReactiveContext.instance() instanceof DebugReactiveContext);
-        assertFalse(SignalDispatcher.instance() instanceof DebugSignalDispatcher,
-                "an absent property must leave the Ctrl+D poll uninstalled");
+        assertFalse(Instrumentation.enabled(), "no sink may be installed without the property");
+        assertNull(Instrumentation.sink());
     }
 
     @Test
@@ -107,27 +101,16 @@ class PerfDebugFlagTest extends SolimEnv {
     }
 
     @Test
-    void initInstallsAllThreeDebugServicesWhenPropertyIsTrue() {
+    void initInstallsAnInstrumentationSinkWhenPropertyIsTrue() {
         System.setProperty(Perf.debugProperty, "true");
         Perf.setEnabled(false);
 
         Perf.init();
 
         assertTrue(Perf.isEnabled());
-        assertTrue(AttachmentStack.instance() instanceof DebugAttachmentStack);
-        assertTrue(ReactiveContext.instance() instanceof DebugReactiveContext);
-        assertTrue(SignalDispatcher.instance() instanceof DebugSignalDispatcher);
-    }
-
-    @Test
-    void initArmsTheProfilingKeybindWhenPropertyIsTrue() {
-        System.setProperty(Perf.debugProperty, "true");
-        Perf.setEnabled(false);
-
-        Perf.init();
-
-        assertTrue(((DebugSignalDispatcher) SignalDispatcher.instance()).isKeybindPolling(),
-                "a property-driven enable must arm the Ctrl+D poll, otherwise the flag is useless");
+        assertTrue(Instrumentation.enabled());
+        assertSame(Perf.sink(), Instrumentation.sink(),
+                "Perf must consume events as a subscriber, never substitute a runtime service");
     }
 
     @Test
@@ -147,7 +130,6 @@ class PerfDebugFlagTest extends SolimEnv {
 
     @Test
     void initDoesNotDependOnPriorEnablement() {
-
         System.setProperty(Perf.debugProperty, "true");
         Perf.setEnabled(false);
         Perf.setTracingEnabled(false);
@@ -158,32 +140,21 @@ class PerfDebugFlagTest extends SolimEnv {
     }
 
     @Test
-    void baseDispatcherPerformsNoProfilingKeybindPolling() {
+    void disabledPerfLeavesNoSinkInstalled() {
         Perf.setEnabled(false);
 
-        assertFalse(SignalDispatcher.instance() instanceof DebugSignalDispatcher,
-                "the Ctrl+D poll lives only on DebugSignalDispatcher, so an absent property "
-                        + "means no keybind polling at all");
+        assertFalse(Instrumentation.enabled(),
+                "with no sink installed the emit branch is constant-folded away at every call site");
     }
 
     @Test
-    void enabledDispatcherPollsTheProfilingKeybind() {
+    void enablingPerfInstallsExactlyOneSink() {
+        Perf.setEnabled(true);
+        Object first = Instrumentation.sink();
+
         Perf.setEnabled(true);
 
-        DebugSignalDispatcher dispatcher = (DebugSignalDispatcher) SignalDispatcher.instance();
-        assertTrue(dispatcher.isKeybindPolling(),
-                "enabling debug mode must arm the Ctrl+D poll");
-    }
-
-    @Test
-    void disablingDebugModeDisarmsTheKeybindPoll() {
-        Perf.setEnabled(true);
-        DebugSignalDispatcher dispatcher = (DebugSignalDispatcher) SignalDispatcher.instance();
-
-        Perf.setEnabled(false);
-
-        assertFalse(dispatcher.isKeybindPolling(),
-                "disabling must disarm the poll on the outgoing instance, not merely drop it");
+        assertSame(first, Instrumentation.sink(), "re-enabling must not stack duplicate subscribers");
     }
 
     @Test
@@ -196,6 +167,6 @@ class PerfDebugFlagTest extends SolimEnv {
 
         assertFalse(Perf.isEnabled(),
                 "an explicit setEnabled(false) must fully override property-derived enablement");
-        assertFalse(AttachmentStack.instance() instanceof DebugAttachmentStack);
+        assertFalse(Instrumentation.enabled());
     }
 }

@@ -17,14 +17,12 @@ import solim.core.Disposable;
 import solim.core.SolimToken;
 import solim.display.Text;
 import solim.input.Button;
-import solim.layout.GapContainer;
+import solim.layout.CollapseHelper;
 import solim.modifier.CellConfig;
 import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.TableConfig;
-import solim.runtime.AttachmentStack;
 import solim.runtime.OwnershipScope;
-import solim.runtime.ReactiveContext;
 
 public final class QueryView<T> extends Component
         implements CellConfig<QueryView<T>>, TableConfig<QueryView<T>>, ElementConfig<QueryView<T>> {
@@ -53,7 +51,7 @@ public final class QueryView<T> extends Component
         table.center();
         String msg = throwable != null
                 ? (throwable.getMessage() != null ? throwable.getMessage() : throwable.toString())
-                : "An error occurred";
+                : (Core.bundle != null ? Core.bundle.get("query.error.default", "An error occurred") : "An error occurred");
         Text errorText = new Text(msg).color(Color.scarlet);
         table.add(errorText.element()).padBottom(8f).row();
 
@@ -118,7 +116,7 @@ public final class QueryView<T> extends Component
         if (built && (currentViewState == ViewState.DATA || currentComponent == null)) {
             currentViewState = ViewState.NONE;
             if (effect != null) {
-                effect.runPending();
+                effect.invalidate();
             }
         }
         return this;
@@ -129,7 +127,7 @@ public final class QueryView<T> extends Component
         if (built && (currentViewState == ViewState.DATA || currentComponent == null)) {
             currentViewState = ViewState.NONE;
             if (effect != null) {
-                effect.runPending();
+                effect.invalidate();
             }
         }
         return this;
@@ -140,7 +138,7 @@ public final class QueryView<T> extends Component
         if (built && currentViewState == ViewState.LOADING) {
             currentViewState = ViewState.NONE;
             if (effect != null) {
-                effect.runPending();
+                effect.invalidate();
             }
         }
         return this;
@@ -151,7 +149,7 @@ public final class QueryView<T> extends Component
         if (built && currentViewState == ViewState.ERROR) {
             currentViewState = ViewState.NONE;
             if (effect != null) {
-                effect.runPending();
+                effect.invalidate();
             }
         }
         return this;
@@ -311,38 +309,26 @@ public final class QueryView<T> extends Component
 
         cleanupCurrent();
 
-        currentComponent = ReactiveContext.untracked(() -> {
-            OwnershipScope scope = OwnershipScope.open();
-            try {
-                Component created = AttachmentStack.isolate(() -> {
-                    switch (targetState) {
-                        case LOADING:
-                            return loadingFactory != null ? loadingFactory.get() : defaultLoadingFactory.get();
-                        case ERROR:
-                            return errorFactory != null
-                                    ? errorFactory.get(err)
-                                    : defaultErrorFactory.get(err, query::refetch);
-                        case DATA:
-                            if (dataWithFetchingFactory != null) {
-                                return dataWithFetchingFactory.get(data, isFetching);
-                            } else if (dataFactory != null) {
-                                return dataFactory.get(data);
-                            }
-                            return null;
-                        case EMPTY:
-                        default:
-                            return null;
+        currentComponent = OwnershipScope.build(() -> {
+            switch (targetState) {
+                case LOADING:
+                    return loadingFactory != null ? loadingFactory.get() : defaultLoadingFactory.get();
+                case ERROR:
+                    return errorFactory != null
+                            ? errorFactory.get(err)
+                            : defaultErrorFactory.get(err, query::refetch);
+                case DATA:
+                    if (dataWithFetchingFactory != null) {
+                        return dataWithFetchingFactory.get(data, isFetching);
+                    } else if (dataFactory != null) {
+                        return dataFactory.get(data);
                     }
-                });
-                if (created != null) {
-                    scope.adoptInto(created);
-                }
-                return created;
-            } finally {
-                scope.close();
+                    return null;
+                case EMPTY:
+                default:
+                    return null;
             }
         });
-
         if (currentComponent != null) {
             Element el = currentComponent.element();
             Cell<?> cell = container.add(el);
@@ -384,25 +370,8 @@ public final class QueryView<T> extends Component
     }
 
     private void updateParentCell() {
-        Cell<?> parentCell = container.parent instanceof Table ? ((Table) container.parent).getCell(container) : null;
-        if (currentComponent != null) {
-            container.visible = true;
-            if (parentCell != null) {
-                parentCell.minWidth(Float.NEGATIVE_INFINITY).minHeight(Float.NEGATIVE_INFINITY);
-                parentCell.maxWidth(Float.NEGATIVE_INFINITY).maxHeight(Float.NEGATIVE_INFINITY);
-                constraints.applyToCell(parentCell);
-            }
-        } else {
-            container.visible = false;
-            if (parentCell != null) {
-                parentCell.size(0f).pad(0f);
-            }
-        }
-        if (container.parent instanceof Table) {
-            GapContainer.respace((Table) container.parent);
-        }
+        CollapseHelper.updateParentCell(container, currentComponent != null, constraints);
     }
-
     @Override
     protected void onDispose() {
         cleanupCurrent();

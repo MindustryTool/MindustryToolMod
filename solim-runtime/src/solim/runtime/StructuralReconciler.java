@@ -12,13 +12,12 @@ import java.util.Set;
 import arc.func.Func;
 import solim.core.Component;
 import solim.core.Disposable;
+import solim.instrumentation.Instrumentation;
+import solim.instrumentation.ReconcilePass;
 
 public final class StructuralReconciler<K, C extends Component> implements Disposable {
     private final Map<K, C> activeComponents = new LinkedHashMap<>();
     private boolean disposed = false;
-    private volatile int lastNewCount = 0;
-    private volatile int lastReuseCount = 0;
-    private volatile int lastTotalCount = 0;
 
     public <T> Map<K, C> reconcile(
             Iterable<T> items,
@@ -92,28 +91,17 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
             }
         }
 
-        lastNewCount = newlyCreated.size();
-        lastTotalCount = nextComponents.size();
-        lastReuseCount = Math.max(0, lastTotalCount - lastNewCount);
+        if (Instrumentation.enabled()) {
+            int total = nextComponents.size();
+            int created = newlyCreated.size();
+            Instrumentation.emit(new ReconcilePass(this, created, Math.max(0, total - created), total));
+        }
 
         return activeComponents;
     }
 
     private <T> C create(T item, Func<T, C> factory) {
-        OwnershipScope scope = OwnershipScope.open();
-        try {
-            C created = ReactiveContext.untracked(() -> AttachmentStack.isolate(() -> {
-                C c = factory.get(item);
-                if (c != null) {
-                    c.element();
-                }
-                return c;
-            }));
-            scope.adoptInto(created);
-            return created;
-        } finally {
-            scope.close();
-        }
+        return OwnershipScope.build(() -> factory.get(item));
     }
 
     public Map<K, C> activeComponents() {
@@ -122,18 +110,6 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
 
     public boolean isEmpty() {
         return activeComponents.isEmpty();
-    }
-
-    public int getLastNewCount() {
-        return lastNewCount;
-    }
-
-    public int getLastReuseCount() {
-        return lastReuseCount;
-    }
-
-    public int getLastTotalCount() {
-        return lastTotalCount;
     }
 
     @Override

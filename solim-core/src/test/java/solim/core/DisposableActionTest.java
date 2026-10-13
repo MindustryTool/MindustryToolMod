@@ -26,12 +26,25 @@ class DisposableActionTest extends SolimEnv {
     }
 
     @Test
-    void emptyDisposableActionIsSafe() {
-
+    void emptyDisposableActionIsStateless() {
         DisposableAction empty = DisposableAction.empty();
 
         assertDoesNotThrow(empty::dispose);
-        assertTrue(empty.isDisposed());
+        assertFalse(empty.isDisposed(), "EMPTY carries no per-instance disposed state to poison later holders");
+        assertDoesNotThrow(empty::dispose);
+        assertFalse(empty.isDisposed());
+    }
+
+    @Test
+    void repeatedEmptyDisposalNeverPoisonsNewHolders() {
+        DisposableAction.empty().dispose();
+
+        AtomicInteger count = new AtomicInteger(0);
+        DisposableAction action = DisposableAction.of(count::incrementAndGet);
+
+        assertFalse(action.isDisposed());
+        action.dispose();
+        assertEquals(1, count.get());
     }
 
     @Test

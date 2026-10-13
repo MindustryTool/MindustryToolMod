@@ -15,6 +15,7 @@ import solim.core.Units;
 import solim.graphics.RoundedDrawable;
 import solim.input.Button;
 import solim.runtime.AttachmentStack;
+import solim.runtime.OwnershipScope;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -120,19 +121,19 @@ public final class Tabs extends Component implements CellConfig<Tabs>, ElementCo
 
         boolean[] built = new boolean[] { false };
         Runnable mountContent = () -> {
-            if (!built[0]) {
+            if (!built[0] && contentBuilder != null) {
                 built[0] = true;
+                OwnershipScope scope = OwnershipScope.open();
                 AttachmentStack.push(contentContainer, Column.ATTACHER);
                 try {
-                    if (contentBuilder != null) {
-                        contentBuilder.run();
-                    }
+                    contentBuilder.run();
                 } finally {
                     AttachmentStack.pop();
+                    scope.adoptInto(this);
+                    scope.close();
                 }
             }
         };
-
         own(Effect.of(() -> {
             Integer cur = activeTab.get();
             boolean isActive = (cur != null && cur == index);

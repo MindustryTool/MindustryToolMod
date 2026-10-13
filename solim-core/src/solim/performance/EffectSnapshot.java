@@ -1,5 +1,6 @@
 package solim.performance;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -20,7 +21,9 @@ public final class EffectSnapshot {
         this.runCount = runCount < 0 ? 0 : runCount;
         this.totalNs = totalNs < 0L ? 0L : totalNs;
         this.lastNs = lastNs < 0L ? 0L : lastNs;
-        this.dependencies = dependencies != null ? dependencies : Collections.<String>emptyList();
+        this.dependencies = dependencies != null
+                ? Collections.unmodifiableList(new ArrayList<>(dependencies))
+                : Collections.<String>emptyList();
     }
 
     public long averageNs() {
