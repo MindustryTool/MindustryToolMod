@@ -68,3 +68,26 @@
 - [ ] 7.5 Verify no dangling references to `ModifierOwnership`, `DebugReactiveContext`, `DebugAttachmentStack`, `DebugSignalDispatcher`, or any `install(...)` service locator remain
 - [ ] 7.6 Run `openspec validate solim-fixes --strict`
 - [ ] 7.7 Confirm the profiler produces a flame graph and a profile report after the SPI refactor, with metrics matching the pre-change output for an equivalent workload
+
+## 8. Audit hardening appendix (decided 2026-10-13)
+
+- [ ] 8.1 Make `DisposableAction.EMPTY` stateless; add a test proving repeated `dispose()` never poisons new holders
+- [ ] 8.2 Wrap `Component.onDispose()` as `firstFailure` with `addSuppressed` and always continue through detach plus LIFO disposal
+- [ ] 8.3 Apply `SpacingAware` on fresh build and cached `element()`; document idempotency
+- [ ] 8.4 Enforce main-confined thread model (`checkMainThread` everywhere, `volatile` disposed, de-sync `SessionRoot`, test-only null-opt-out)
+- [ ] 8.5 Harden `AttachmentBridge` as a composite hook list with aggregation
+- [ ] 8.6 Dedup `SignalDispatcher` queue preserving FIFO
+- [ ] 8.7 Guard `OwnershipScope` pool with asserts plus pop-identity check; drop oversize buffers
+- [ ] 8.8 Dispose/transfer prior-run `Effect` owned resources at rerun start
+- [ ] 8.9 Cap `Query` retry backoff (saturate shift, cap delay)
+- [ ] 8.10 Fix `QueryCache` compare-and-remove and fetch-outside-lock with double-checked inflight
+- [ ] 8.11 Fix `Query` disable/loading, fetch-key `mutate`, bounded `fetchedKeys`, validate-before-attach
+- [ ] 8.12 Add `CacheEntry` generation token and monotonic staleness
+- [ ] 8.13 Share/inject scheduler across `QueryCache`/`Query`; document TTL/cap
+- [ ] 8.14 Centralize collapse helper (save/restore cell, gated `respace`, `peek()` refresh)
+- [ ] 8.15 Fix `Mutation` context last-wins plus cancel and clear-on-dispose
+- [ ] 8.16 Defensive-copy snapshot DTOs; unify unknown-string and clamp policy
+- [ ] 8.17 Nullability annotation pass over `solim-api` and snapshots
+- [ ] 8.18 Improve `ElementResolver` error (safe class-name, preview, single null policy)
+- [ ] 8.19 Guard `TwoWayBinding` both directions with null-checks and immutable-or-equality contract
+- [ ] 8.20 Preserve error cause as suppressed, skip retry on cancel, scheduler-route headless completions
