@@ -2,13 +2,16 @@
 
 - [ ] 1.1 Remove `reparentTo()` from `Component.java` and `ElementResolver.java`
 - [ ] 1.2 Make `adopt()` and `own()` in `Component.java` and `DisposableOwner.java` package-private (internal to `solim.core`)
-- [ ] 1.3 Verify `Effect.of()` auto-registration in ambient `OwnershipContext` and ensure no orphaned effects exist
+- [ ] 1.3 Enforce strict single ownership for all `Disposable`s (prevent duplicate or concurrent adoption across owners)
+- [ ] 1.4 Verify `Effect.of()` auto-registration in ambient `OwnershipContext` and ensure no orphaned effects exist
 
-## 2. Modifiers Cleanup
+## 2. Modifiers Cleanup & Deferred Configurations
 
-- [ ] 2.1 Remove all redundant `((Component) this).own(e)` calls in `CellConfig.java`, `ElementConfig.java`, and `TableConfig.java`
-- [ ] 2.2 Remove all eager `((Component) this).element()` and `if (this instanceof Component)` checks from `CellConfig.java`, making it purely configure `PendingCellConfig`
-- [ ] 2.3 Verify `PendingCellConfig.DEFAULT_CONFIGURATOR` correctly applies all pending cell properties when elements mount into parent cells
+- [ ] 2.1 Remove `Pending` prefix (rename/consolidate `PendingCellConfig` into clean `CellConfig` configuration model)
+- [ ] 2.2 Introduce deferred configuration models for `ElementConfig` and `TableConfig`
+- [ ] 2.3 Remove all eager `element()`, `table()`, and `((Component) this).own(e)` calls from modifier methods, purely recording configuration state instead
+- [ ] 2.4 Apply element/table configs and install their reactive effects during component realization when `OwnershipContext.push(this)` has the component active as the single owner
+- [ ] 2.5 Verify cell configurator correctly applies all cell properties when elements mount into parent cells
 
 ## 3. Declarative DSL Lazy Realization
 

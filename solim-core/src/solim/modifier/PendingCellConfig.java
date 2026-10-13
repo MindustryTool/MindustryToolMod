@@ -21,15 +21,18 @@ public final class PendingCellConfig {
 
     public static final AttachmentStack.CellConfigurator DEFAULT_CONFIGURATOR = (cell, child, comp) -> {
         PendingCellConfig config = comp != null ? find(comp) : null;
+
         if (config == null) {
             config = find(child);
         }
+
         if (config != null) {
             List<Disposable> effects = config.applyToCell(cell);
             for (Disposable effect : effects) {
                 OwnershipContext.register(effect);
             }
         }
+
         GapContainer.respace(cell.getTable());
     };
 
@@ -97,14 +100,18 @@ public final class PendingCellConfig {
     }
 
     public static @Nullable PendingCellConfig find(@Nullable Object target) {
-        if (target == null)
+        if (target == null) {
             return null;
+        }
+
         if (target instanceof CellConfig) {
             return ((CellConfig<?>) target).cellConfig();
         }
+
         if (target instanceof PendingCellConfig) {
             return (PendingCellConfig) target;
         }
+
         if (target instanceof Element) {
             Element el = (Element) target;
             SolimToken token = SolimToken.get(el);

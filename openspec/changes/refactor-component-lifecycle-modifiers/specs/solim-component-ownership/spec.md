@@ -28,3 +28,11 @@ A reactive primitive SHALL be registered with the component that configures it, 
 #### Scenario: External code cannot manually adopt or own
 - **WHEN** application code or external callers instantiate a `Component`
 - **THEN** they cannot call `own()` or `adopt()` directly on the component; resource binding happens via ambient context registration.
+
+### Requirement: Strict single ownership for all Disposables
+A `Disposable` SHALL only ever be owned by at most one `DisposableOwner` at any given time. Multi-owner DAGs or concurrent adoptions of the same `Disposable` SHALL NOT be permitted.
+
+#### Scenario: Attempting to adopt an already-owned Disposable
+- **WHEN** a `Disposable` is already adopted by an active `DisposableOwner`
+- **AND** another `DisposableOwner` attempts to adopt the same `Disposable`
+- **THEN** the adoption SHALL either be rejected / disallow multiple concurrent owners or cleanly detach from the previous owner, ensuring the resource is disposed exactly once when its true owner is destroyed.

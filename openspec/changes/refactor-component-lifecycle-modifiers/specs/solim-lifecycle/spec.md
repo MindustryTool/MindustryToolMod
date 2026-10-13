@@ -25,8 +25,12 @@ Layouts and parents SHALL accept children that are `Element` or `Component`; `Co
 - **THEN** it cannot be reassigned or adopted into another owner via `reparentTo`.
 
 ### Requirement: Single lazy realization upon parent attachment
-Component `element()` SHALL be invoked lazily when the component is attached to its parent container by `AttachmentStack.pop()`. Factory methods in `solim.UI` and modifier methods in `CellConfig` SHALL NOT eagerly realize `element()`.
+Component `element()` SHALL be invoked lazily when the component is attached to its parent container by `AttachmentStack.pop()`. Factory methods in `solim.UI` and modifier methods in `CellConfig`, `ElementConfig`, and `TableConfig` SHALL NOT eagerly realize `element()`.
 
 #### Scenario: Modifier chaining before realization
-- **WHEN** `button("Click").minWidth(100f).size(40f)` is called inside a `children()` block
+- **WHEN** `button("Click").minWidth(100f).size(40f).padding(unit(2))` is called inside a `children()` block
 - **THEN** `element()` is not invoked until the parent `children()` scope ends and attaches its pending children.
+
+#### Scenario: Modifier reactive effects owned strictly by component
+- **WHEN** reactive modifiers such as `.padding(Readable)` or `.width(Readable)` are declared on a component
+- **THEN** the reactive `Effect`s are not instantiated during chaining while the parent scope is active, but deferred to component realization when the component itself is pushed onto `OwnershipContext`.

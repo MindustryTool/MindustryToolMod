@@ -29,14 +29,25 @@ Solim's declarative architecture expects components to be created inside tree-bu
 - **Rationale:** A component belongs strictly to the scope that created it. If a component is needed under a different parent or after disposal, declarative architecture dictates recreating the component.
 - **Alternatives considered:** Keeping an internal reparenting hook. Rejected because no legitimate declarative use case requires mutating component ownership after instantiation.
 
-### 2. Rely exclusively on ambient auto-registration for `Effect`
-- **Decision:** Remove `((Component) this).own(e)` from all mixins (`CellConfig`, `ElementConfig`, `TableConfig`).
-- **Rationale:** `Effect.create()` already calls `OwnershipContext.register(effect)`. Manual `.own(e)` in mixins was purely redundant and forced ugly casts.
-- **Alternatives considered:** Adding a `bind(Readable, Cons)` method to `Component`. Rejected because `Effect.of()` is already ambient-registered and adding extra methods adds unnecessary layers.
+### 2. Strictly Enforce Single Ownership for all `Disposable`s
+- **Decision:** Every `Disposable` SHALL only ever be owned by at most one `DisposableOwner` at any given time.
+- **Rationale:** Shared ownership causes catastrophic lifecycle bugs in reactive systems: when Owner A is disposed, the shared resource is destroyed, leaving Owner B holding a dead/disposed resource (premature disposal / use-after-free).
+- **Implementation Strategy:**
+  - Track current owner or assert on re-adoption.
+  - If a `Disposable` is registered with an owner while already belonging to an active owner, reject or disallow multiple concurrent ownership.
+  - Components and bindings form a strict ownership hierarchy tree without multi-owner DAGs.
 
-### 3. Defer `CellConfig` execution to parent attachment
-- **Decision:** `CellConfig` methods only write to `PendingCellConfig` (`cellConfig().minWidth = ...`). They do not call `applyMinWidth()` or `((Component) this).element()`.
-- **Rationale:** When the parent attaches pending components, `PendingCellConfig.DEFAULT_CONFIGURATOR` calls `applyToCell(cell)`, which reads all configurations and sets up reactive cell bindings on the `Cell<?>`. Removing eager element calls eliminates premature component realization and removes 25+ redundant `if (this instanceof Component)` guard checks.
+### 3. Clean Configuration Records (`CellConfig`, `ElementConfig`, `TableConfig`) without "Pending" Prefix
+- **Decision:** 
+  - Standardize configuration records without the redundant `Pending` prefix. A modifier configuration in a declarative framework is naturally deferred until realization.
+  - Modifier mixins purely record properties into configuration data holders during declaration.
+- **Rationale:** 
+  - Naming classes `PendingCellConfig`, `PendingElementConfig`, etc., adds needless noise and artificial complexity. Simple, clean names (`CellConfig`, `ElementConfig`, `TableConfig`) match project rules: *"variable, function must explain itself"* and avoid backend-style verbosity.
+  - When modifier methods like `.padding(Readable)` or `.width(Readable)` are called during DSL declaration, the parent container is currently on top of `OwnershipContext`.
+  - Creating `Effect.of(...)` eagerly causes the parent to adopt the child's modifier effect (polluting the parent and creating multi-owner DAGs). Eagerly calling `element()` / `table()` forces half-baked Arc widget instantiation before children blocks run.
+  - By deferring effect creation and Arc widget configuration to component realization time (inside `Component.element()`), `OwnershipContext.push(this)` guarantees that the component itself is the active, sole owner of all its modifier effects.
+  - Completely eliminates all manual `((Component) this).own(e)` casts across mixins.
+- **Alternatives considered:** Calling `((Component) this).own(e)` and unregistering from parent. Rejected as brittle, complex, and prone to scope leaks.
 
 ### 4. Remove manual `.element()` in `solim.UI`
 - **Decision:** Factory methods in `solim.UI` (`button()`, `image()`, `badge()`, `video()`, `card()`, `row()`, etc.) return the component without calling `AttachmentStack.attachToParent(x.element())`.
