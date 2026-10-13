@@ -14,6 +14,7 @@ import mindustry.type.UnitType;
 import mindustrytool.components.WebStyles;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
+import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
@@ -37,7 +38,7 @@ public class GodModeUnitsDialog extends SolimDialog {
         Seq<UnitType> allUnits = Vars.content.units().select(GodModeUnitsDialog::isSpawnable);
         this.selectedUnit = Signal.of(allUnits.size > 0 ? allUnits.first() : null);
 
-        countString.subscribe(s -> {
+        Effect.of(countString, s -> {
             if (s != null) {
                 try {
                     int val = Integer.parseInt(s.trim());

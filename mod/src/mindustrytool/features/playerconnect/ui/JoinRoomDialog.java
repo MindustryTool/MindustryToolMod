@@ -13,6 +13,7 @@ import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import solim.core.Component;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
+import solim.reactive.Effect;
 import solim.reactive.Signal;
 
 public class JoinRoomDialog extends SolimDialog {
@@ -38,7 +39,7 @@ public class JoinRoomDialog extends SolimDialog {
                 ? clipboard
                 : Core.settings.getString(LAST_LINK_KEY, "player-connect://"));
 
-        linkSignal.subscribe(val -> {
+        Effect.of(linkSignal, val -> {
             if (val != null) {
                 Core.settings.put(LAST_LINK_KEY, val);
             }

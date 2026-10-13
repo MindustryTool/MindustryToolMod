@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 import solim.input.SolimTextField;
 import solim.reactive.Signal;
-import solim.reactive.Binding;
+import solim.reactive.Effect;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
@@ -67,7 +67,7 @@ class AmbientOwnershipTest extends SolimEnv {
                 textField = SolimTextField.of(textSignal);
             }
             boundElement = new Element();
-            Binding.bindWidth(boundElement, widthSignal);
+            Effect.of(widthSignal, w -> boundElement.setWidth(w));
             return new Element();
         }
     }

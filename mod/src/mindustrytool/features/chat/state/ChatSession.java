@@ -4,6 +4,7 @@ import arc.util.Nullable;
 import mindustrytool.features.chat.ChatMessageParser;
 import mindustrytool.services.auth.MindustryAuthProvider;
 import solim.reactive.Computed;
+import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
@@ -25,7 +26,7 @@ public final class ChatSession {
             .map(session -> session != null ? session.getName() : null);
 
     public ChatSession() {
-        username.subscribe(name -> ChatMessageParser.clearCache());
+        Effect.of(username, name -> ChatMessageParser.clearCache());
         username.peek();
     }
 

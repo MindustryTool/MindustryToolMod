@@ -28,9 +28,11 @@ class LogicVisualizerFeatureTest extends MindustryTestEnv {
         assertFalse(feature.isShowEnemyUnits());
 
         feature.showAllyUnitsConfig.signal().set(false);
+        flushEffects();
         assertFalse(feature.isShowAllyUnits());
 
         feature.showEnemyUnitsConfig.signal().set(true);
+        flushEffects();
         assertTrue(feature.isShowEnemyUnits());
     }
 }

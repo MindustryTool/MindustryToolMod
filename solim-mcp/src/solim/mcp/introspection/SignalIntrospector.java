@@ -26,14 +26,14 @@ public final class SignalIntrospector {
                 node.set("value", IntrospectionJson
                         .renderValue(ReflectAccess.read(ReflectAccess.field(type, "value"), instance)));
                 node.put("valueClass", valueClass(instance));
-                node.put("listeners", intOf(type, instance, "listenerCount"));
+                node.put("listeners", 0);
                 node.put("observers", intOf(type, instance, "observerCount"));
                 break;
             case COMPUTED:
                 node.set("value", IntrospectionJson
                         .renderValue(ReflectAccess.read(ReflectAccess.field(type, "cachedValue"), instance)));
                 node.put("valueClass", valueClass(instance));
-                node.put("listeners", intOf(type, instance, "listenerCount"));
+                node.put("listeners", 0);
                 node.put("observers", intOf(type, instance, "observerCount"));
                 node.put("dependencies", intOf(type, instance, "dependencyCount"));
                 node.put("dirty", boolOf(type, instance, "isDirty"));
@@ -41,9 +41,6 @@ public final class SignalIntrospector {
                 break;
             case EFFECT:
                 node.put("dependencies", intOf(type, instance, "dependencyCount"));
-                node.put("disposed", boolOf(type, instance, "isDisposed"));
-                break;
-            case SUBSCRIPTION:
                 node.put("disposed", boolOf(type, instance, "isDisposed"));
                 break;
             case MAP:

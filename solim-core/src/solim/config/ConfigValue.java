@@ -5,15 +5,15 @@ import java.util.Objects;
 import arc.func.Cons;
 import arc.func.Prov;
 import solim.core.Disposable;
+import solim.core.ReactiveObserver;
+import solim.core.ReactiveSource;
 import solim.reactive.Signal;
-import solim.reactive.Subscription;
 
-public class ConfigValue<T> implements Disposable {
+public class ConfigValue<T> implements Disposable, ReactiveObserver {
 	protected String key;
 	protected final @Nullable T defaultValue;
 	protected final Cons<T> setter;
 	protected final Signal<T> signal;
-	protected final Subscription signalSub;
 	protected boolean updating = false;
 	protected boolean disposed = false;
 
@@ -28,18 +28,7 @@ public class ConfigValue<T> implements Disposable {
 
 		T initial = getter != null ? getter.get() : null;
 		this.signal = Signal.of(initial != null ? initial : defaultValue);
-
-		this.signalSub = this.signal.subscribe(value -> {
-			if (updating) {
-				return;
-			}
-			updating = true;
-			try {
-				save(value);
-			} finally {
-				updating = false;
-			}
-		});
+		this.signal.addObserver(this);
 	}
 
 	public ConfigValue(
@@ -99,14 +88,29 @@ public class ConfigValue<T> implements Disposable {
 	}
 
 	@Override
+	public void addDependency(ReactiveSource observable) {
+	}
+
+	@Override
+	public void invalidate() {
+		if (disposed || updating) {
+			return;
+		}
+		updating = true;
+		try {
+			save(signal.peek());
+		} finally {
+			updating = false;
+		}
+	}
+
+	@Override
 	public void dispose() {
 		if (disposed) {
 			return;
 		}
 		disposed = true;
-		if (signalSub != null) {
-			signalSub.dispose();
-		}
+		signal.removeObserver(this);
 	}
 
 	@Override

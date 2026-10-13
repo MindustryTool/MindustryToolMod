@@ -26,7 +26,7 @@ import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.settings.ModSettings;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
-
+import solim.reactive.Effect;
 import solim.overlay.SolimDialog;
 
 public class HealthBarFeature extends Feature {
@@ -97,14 +97,14 @@ public class HealthBarFeature extends Feature {
         scaleConfig = config.floatValue("scale", 1f);
         widthConfig = config.floatValue("width", 1f);
 
-        showFriendlyUnitsConfig.signal().subscribe(v -> cachedShowFriendlyUnits = v != null ? v : true);
-        showEnemyUnitsConfig.signal().subscribe(v -> cachedShowEnemyUnits = v != null ? v : true);
-        showFriendlyBlocksConfig.signal().subscribe(v -> cachedShowFriendlyBlocks = v != null ? v : false);
-        showEnemyBlocksConfig.signal().subscribe(v -> cachedShowEnemyBlocks = v != null ? v : false);
-        zoomThresholdConfig.signal().subscribe(v -> cachedZoomThreshold = v != null ? v : 0.5f);
-        opacityConfig.signal().subscribe(v -> cachedOpacity = v != null ? v : 1f);
-        scaleConfig.signal().subscribe(v -> cachedScale = v != null ? v : 1f);
-        widthConfig.signal().subscribe(v -> cachedWidth = v != null ? v : 1f);
+        Effect.of(showFriendlyUnitsConfig.signal(), v -> cachedShowFriendlyUnits = v != null ? v : true);
+        Effect.of(showEnemyUnitsConfig.signal(), v -> cachedShowEnemyUnits = v != null ? v : true);
+        Effect.of(showFriendlyBlocksConfig.signal(), v -> cachedShowFriendlyBlocks = v != null ? v : false);
+        Effect.of(showEnemyBlocksConfig.signal(), v -> cachedShowEnemyBlocks = v != null ? v : false);
+        Effect.of(zoomThresholdConfig.signal(), v -> cachedZoomThreshold = v != null ? v : 0.5f);
+        Effect.of(opacityConfig.signal(), v -> cachedOpacity = v != null ? v : 1f);
+        Effect.of(scaleConfig.signal(), v -> cachedScale = v != null ? v : 1f);
+        Effect.of(widthConfig.signal(), v -> cachedWidth = v != null ? v : 1f);
 
         syncConfigCache();
 

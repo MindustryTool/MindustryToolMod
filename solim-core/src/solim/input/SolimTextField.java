@@ -19,7 +19,6 @@ import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.style.InputStyle;
-import solim.reactive.Binding;
 
 public final class SolimTextField extends Component
         implements ElementConfig<SolimTextField>, CellConfig<SolimTextField> {
@@ -114,7 +113,7 @@ public final class SolimTextField extends Component
         if (disabledEffect != null) {
             disabledEffect.dispose();
         }
-        disabledEffect = own(Binding.bind(disabled, d -> field.setDisabled(Boolean.TRUE.equals(d))));
+        disabledEffect = own(Effect.of(disabled, d -> field.setDisabled(Boolean.TRUE.equals(d))));
         return this;
     }
 

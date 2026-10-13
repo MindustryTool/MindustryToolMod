@@ -23,6 +23,7 @@ import mindustrytool.features.callout.CalloutFeature;
 import mindustrytool.features.griefalert.GriefAlertFeature;
 import mindustrytool.features.visualizer.VisualizerFeature;
 import mindustrytool.features.healthbar.HealthBarFeature;
+import solim.reactive.Effect;
 import mindustrytool.features.rangedisplay.RangeDisplayFeature;
 import mindustrytool.features.screenshot.ScreenshotFeature;
 import mindustrytool.features.wavepreview.WavePreviewFeature;
@@ -80,13 +81,14 @@ class FeatureKeybindTest extends MindustryTestEnv {
         assertTrue(keybind.isDefault());
 
         AtomicBoolean notified = new AtomicBoolean(false);
-        keybind.keySignal().subscribe(k -> {
+        Effect.of(keybind.keySignal(), k -> {
             if (k == KeyCode.h) {
                 notified.set(true);
             }
         });
 
         keybind.rebind(KeyCode.h);
+        flushEffects();
         assertEquals(KeyCode.h, keybind.getKeyCode());
         assertFalse(keybind.isDefault());
         assertTrue(notified.get());

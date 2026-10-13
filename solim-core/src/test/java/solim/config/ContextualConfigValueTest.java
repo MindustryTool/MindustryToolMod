@@ -8,7 +8,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import solim.reactive.Effect;
 import solim.reactive.Signal;
+import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
 class ContextualConfigValueTest extends SolimEnv {
@@ -71,11 +73,13 @@ class ContextualConfigValueTest extends SolimEnv {
         Core.settings.put("app.posX.portrait", 250f);
 
         AtomicReference<Float> signalValue = new AtomicReference<>(xConfig.get());
-        xConfig.signal().subscribe(signalValue::set);
+        Effect sub = Effect.of(xConfig.signal(), signalValue::set);
 
         portrait.set(true);
+        SignalDispatcher.flush();
         assertEquals(250f, signalValue.get());
         assertEquals(250f, xConfig.get());
+        sub.dispose();
     }
 
     @Test
@@ -92,6 +96,7 @@ class ContextualConfigValueTest extends SolimEnv {
         endpoint.dispose();
 
         env.set("prod");
+        SignalDispatcher.flush();
 
         assertEquals("test.endpoint.dev", endpoint.getCurrentKey());
     }
@@ -111,6 +116,7 @@ class ContextualConfigValueTest extends SolimEnv {
         assertEquals("hud.x.collapsed.landscape", xConfig.getCurrentKey());
 
         context.set("expanded.landscape");
+        SignalDispatcher.flush();
         assertEquals(500f, xConfig.get());
         assertEquals("hud.x.expanded.landscape", xConfig.getCurrentKey());
 
@@ -119,9 +125,11 @@ class ContextualConfigValueTest extends SolimEnv {
         assertEquals(600f, Core.settings.getFloat("hud.x.expanded.landscape"));
 
         context.set("collapsed.landscape");
+        SignalDispatcher.flush();
         assertEquals(100f, xConfig.get());
 
         context.set("expanded.landscape");
+        SignalDispatcher.flush();
         assertEquals(600f, xConfig.get());
 
         xConfig.reset();

@@ -12,6 +12,7 @@ import mindustry.gen.Tex;
 import mindustry.type.Item;
 import mindustrytool.components.WebStyles;
 import solim.overlay.SolimDialog;
+import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
@@ -30,7 +31,7 @@ public class GodModeItemsDialog extends SolimDialog {
         addCloseButton();
         closeOnBack();
 
-        amountString.subscribe(s -> {
+        Effect.of(amountString, s -> {
             if (s != null) {
                 try {
                     int val = Integer.parseInt(s.trim());

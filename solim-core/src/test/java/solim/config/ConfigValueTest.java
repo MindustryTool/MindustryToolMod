@@ -8,6 +8,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import solim.reactive.Effect;
+import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
 class ConfigValueTest extends SolimEnv {
@@ -51,14 +53,16 @@ class ConfigValueTest extends SolimEnv {
                 ConfigPersister.INTEGER);
 
         AtomicInteger listenerValue = new AtomicInteger(-1);
-        config.signal().subscribe(listenerValue::set);
+        Effect sub = Effect.of(config.signal(), listenerValue::set);
 
         config.set(42);
+        SignalDispatcher.flush();
 
         assertEquals(42, config.get());
         assertEquals(42, Core.settings.getInt("test.count"));
         assertEquals(42, listenerValue.get());
         assertTrue(config.isModified());
+        sub.dispose();
     }
 
     @Test
@@ -69,6 +73,7 @@ class ConfigValueTest extends SolimEnv {
                 ConfigPersister.BOOLEAN);
 
         config.signal().set(true);
+        SignalDispatcher.flush();
 
         assertEquals(true, config.get());
         assertTrue(Core.settings.getBool("test.flag"));

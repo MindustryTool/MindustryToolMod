@@ -231,4 +231,22 @@ class EffectTest extends SolimEnv {
         assertDoesNotThrow(e::dispose);
         assertTrue(e.isDisposed());
     }
+
+    @Test
+    void bindingOverloadTracksAndUpdates() {
+        Signal<String> text = Signal.of("Hello");
+        AtomicReference<String> target = new AtomicReference<>("");
+        Effect e = Effect.of(text, target::set);
+
+        assertEquals("Hello", target.get());
+
+        text.set("World");
+        SignalDispatcher.flush();
+        assertEquals("World", target.get());
+
+        e.dispose();
+        text.set("After Dispose");
+        SignalDispatcher.flush();
+        assertEquals("World", target.get());
+    }
 }

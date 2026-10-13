@@ -7,7 +7,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import arc.func.Cons;
 import arc.func.Func;
 import arc.func.Prov;
 import solim.core.DebugReactiveNode;
@@ -32,7 +31,6 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
     private final Set<ReactiveSource> staging = new LinkedHashSet<>();
     private Set<ReactiveSource> collecting = null;
     private final Set<ReactiveObserver> observers = new LinkedHashSet<>();
-    private final List<Cons<T>> listeners = new ArrayList<>();
 
     public Computed(Prov<T> Prov) {
         this.Prov = Prov;
@@ -99,19 +97,10 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
             }
             throw new RuntimeException(error);
         }
-        boolean changed = !hasValue || !Objects.equals(cachedValue, newValue);
         cachedValue = newValue;
         hasValue = true;
         dirty = false;
         updateDependencies(newDeps);
-        if (changed) {
-
-            List<Cons<T>> copy = new ArrayList<>(listeners);
-            for (Cons<T> l : copy) {
-                l.get(cachedValue);
-            }
-
-        }
     }
 
     private void recordDebugRun(long durationNs) {
@@ -157,30 +146,6 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
         for (ReactiveObserver o : copy) {
             o.invalidate();
         }
-
-        if (!listeners.isEmpty() && !computing) {
-            recompute();
-        }
-    }
-
-    public Subscription subscribe(Cons<T> listener) {
-        listeners.add(listener);
-        return new Subscription() {
-            private boolean disposedFlag = false;
-
-            @Override
-            public void dispose() {
-                if (!disposedFlag) {
-                    disposedFlag = true;
-                    listeners.remove(listener);
-                }
-            }
-
-            @Override
-            public boolean isDisposed() {
-                return disposedFlag;
-            }
-        };
     }
 
     public <R> Computed<R> map(Func<T, R> mapper) {
@@ -198,7 +163,6 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
         }
         dependencies.clear();
         observers.clear();
-        listeners.clear();
         dirty = false;
         hasValue = false;
         cachedValue = null;
@@ -220,10 +184,6 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 
     int observerCount() {
         return observers.size();
-    }
-
-    int listenerCount() {
-        return listeners.size();
     }
 
     boolean isDirty() {
@@ -263,7 +223,7 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
 
     @Override
     public int debugListenerCount() {
-        return listeners.size();
+        return 0;
     }
 
     @Override

@@ -29,6 +29,7 @@ import solim.config.ContextualConfigValue;
 import solim.core.Units;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
+import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.reactive.Signals;
@@ -107,7 +108,7 @@ public class ArmyControlFeature extends Feature {
         Events.on(WorldLoadEvent.class, e -> onWorldReset());
         Events.on(ResetEvent.class, e -> onWorldReset());
 
-        displayModeConfig.signal().subscribe(mode -> {
+        Effect.of(displayModeConfig.signal(), mode -> {
             ArmyControlPopup.hide();
             updateHud();
         });
@@ -272,7 +273,7 @@ public class ArmyControlFeature extends Feature {
                 return;
             }
             quickAccessHooked = true;
-            qa.enabled().subscribe(v -> updateHud());
+            Effect.of(qa.enabled(), v -> updateHud());
         } catch (Exception ignored) {
         }
     }

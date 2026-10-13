@@ -51,6 +51,7 @@ import mindustrytool.features.rangedisplay.ui.RangeDisplaySettingsDialog;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
+import solim.reactive.Effect;
 import solim.reactive.Signal;
 
 public class RangeDisplayFeature extends Feature {
@@ -192,28 +193,28 @@ public class RangeDisplayFeature extends Feature {
         dashedConfig = config.boolValue("dashed", true);
         zoomThresholdConfig = config.floatValue("zoom-threshold", 0.5f);
 
-        opacityConfig.signal().subscribe(v -> cachedOpacity = v != null ? v : 1.0f);
-        strokeWidthConfig.signal().subscribe(v -> cachedStrokeWidth = v != null ? v : 1.0f);
-        hoverOnlyConfig.signal().subscribe(v -> cachedHoverOnly = v != null ? v : false);
-        filterTargetAirConfig.signal().subscribe(v -> cachedFilterTargetAir = v != null ? v : true);
-        filterTargetGroundConfig.signal().subscribe(v -> cachedFilterTargetGround = v != null ? v : true);
-        onlyWithAmmoConfig.signal().subscribe(v -> cachedOnlyWithAmmo = v != null ? v : false);
-        proximityFilterConfig.signal().subscribe(v -> cachedProximityFilter = v != null ? v : false);
-        proximityRadiusConfig.signal().subscribe(v -> cachedProximityRadius = v != null ? v : 30f);
-        drawTurretRangeAllyConfig.signal().subscribe(v -> cachedDrawTurretRangeAlly = v != null ? v : true);
-        drawTurretRangeEnemyConfig.signal().subscribe(v -> cachedDrawTurretRangeEnemy = v != null ? v : true);
-        drawUnitRangePlayerConfig.signal().subscribe(v -> cachedDrawUnitRangePlayer = v != null ? v : true);
-        drawUnitRangeAllyConfig.signal().subscribe(v -> cachedDrawUnitRangeAlly = v != null ? v : true);
-        drawUnitRangeEnemyConfig.signal().subscribe(v -> cachedDrawUnitRangeEnemy = v != null ? v : true);
-        drawBlockRangeAllyConfig.signal().subscribe(v -> cachedDrawBlockRangeAlly = v != null ? v : true);
-        drawBlockRangeEnemyConfig.signal().subscribe(v -> cachedDrawBlockRangeEnemy = v != null ? v : true);
-        drawSpawnerRangeConfig.signal().subscribe(v -> cachedDrawSpawnerRange = v != null ? v : true);
-        drawOverdriveRangeConfig.signal().subscribe(v -> cachedDrawOverdriveRange = v != null ? v : true);
-        drawMenderRangeConfig.signal().subscribe(v -> cachedDrawMenderRange = v != null ? v : true);
-        drawPointDefenseRangeConfig.signal().subscribe(v -> cachedDrawPointDefenseRange = v != null ? v : true);
-        useTeamColorForSpecialConfig.signal().subscribe(v -> cachedUseTeamColorForSpecial = v != null ? v : false);
-        dashedConfig.signal().subscribe(v -> cachedDashed = v != null ? v : true);
-        zoomThresholdConfig.signal().subscribe(v -> cachedZoomThreshold = v != null ? v : 0.5f);
+        Effect.of(opacityConfig.signal(), v -> cachedOpacity = v != null ? v : 1.0f);
+        Effect.of(strokeWidthConfig.signal(), v -> cachedStrokeWidth = v != null ? v : 1.0f);
+        Effect.of(hoverOnlyConfig.signal(), v -> cachedHoverOnly = v != null ? v : false);
+        Effect.of(filterTargetAirConfig.signal(), v -> cachedFilterTargetAir = v != null ? v : true);
+        Effect.of(filterTargetGroundConfig.signal(), v -> cachedFilterTargetGround = v != null ? v : true);
+        Effect.of(onlyWithAmmoConfig.signal(), v -> cachedOnlyWithAmmo = v != null ? v : false);
+        Effect.of(proximityFilterConfig.signal(), v -> cachedProximityFilter = v != null ? v : false);
+        Effect.of(proximityRadiusConfig.signal(), v -> cachedProximityRadius = v != null ? v : 30f);
+        Effect.of(drawTurretRangeAllyConfig.signal(), v -> cachedDrawTurretRangeAlly = v != null ? v : true);
+        Effect.of(drawTurretRangeEnemyConfig.signal(), v -> cachedDrawTurretRangeEnemy = v != null ? v : true);
+        Effect.of(drawUnitRangePlayerConfig.signal(), v -> cachedDrawUnitRangePlayer = v != null ? v : true);
+        Effect.of(drawUnitRangeAllyConfig.signal(), v -> cachedDrawUnitRangeAlly = v != null ? v : true);
+        Effect.of(drawUnitRangeEnemyConfig.signal(), v -> cachedDrawUnitRangeEnemy = v != null ? v : true);
+        Effect.of(drawBlockRangeAllyConfig.signal(), v -> cachedDrawBlockRangeAlly = v != null ? v : true);
+        Effect.of(drawBlockRangeEnemyConfig.signal(), v -> cachedDrawBlockRangeEnemy = v != null ? v : true);
+        Effect.of(drawSpawnerRangeConfig.signal(), v -> cachedDrawSpawnerRange = v != null ? v : true);
+        Effect.of(drawOverdriveRangeConfig.signal(), v -> cachedDrawOverdriveRange = v != null ? v : true);
+        Effect.of(drawMenderRangeConfig.signal(), v -> cachedDrawMenderRange = v != null ? v : true);
+        Effect.of(drawPointDefenseRangeConfig.signal(), v -> cachedDrawPointDefenseRange = v != null ? v : true);
+        Effect.of(useTeamColorForSpecialConfig.signal(), v -> cachedUseTeamColorForSpecial = v != null ? v : false);
+        Effect.of(dashedConfig.signal(), v -> cachedDashed = v != null ? v : true);
+        Effect.of(zoomThresholdConfig.signal(), v -> cachedZoomThreshold = v != null ? v : 0.5f);
 
         syncConfigCache();
 
@@ -336,7 +337,7 @@ public class RangeDisplayFeature extends Feature {
         if (signal == null) {
             boolean initial = Core.settings.getBool(blockSettingKey(block), true);
             signal = Signal.of(initial);
-            signal.subscribe(enabled -> {
+            Effect.of(signal, enabled -> {
                 Core.settings.put(blockSettingKey(block), enabled);
                 if (blockEnabled == null && Vars.content != null && Vars.content.blocks() != null) {
                     rebuildBitSet();

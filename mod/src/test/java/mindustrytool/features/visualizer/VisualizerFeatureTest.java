@@ -143,25 +143,31 @@ class VisualizerFeatureTest extends MindustryTestEnv {
         assertTrue(feature.isTurretEnabled(lancer));
 
         feature.setTurretEnabled(duo, false);
+        flushEffects();
         assertFalse(feature.isTurretEnabled(duo));
         assertFalse(feature.getTurretSignal(duo).peek());
         assertTrue(feature.isTurretEnabled(lancer));
 
         feature.setTurretEnabled(duo, true);
+        flushEffects();
         assertTrue(feature.isTurretEnabled(duo));
         assertTrue(feature.getTurretSignal(duo).peek());
 
         feature.setAllTurretsEnabled(false);
+        flushEffects();
         assertFalse(feature.isTurretEnabled(duo));
         assertFalse(feature.isTurretEnabled(lancer));
 
         feature.setAllTurretsEnabled(true);
+        flushEffects();
         assertTrue(feature.isTurretEnabled(duo));
         assertTrue(feature.isTurretEnabled(lancer));
 
         feature.setTurretEnabled(duo, false);
+        flushEffects();
         assertFalse(feature.isTurretEnabled(duo));
         feature.resetToDefaults();
+        flushEffects();
         assertTrue(feature.isTurretEnabled(duo));
     }
 
@@ -176,6 +182,7 @@ class VisualizerFeatureTest extends MindustryTestEnv {
         assertEquals(6.9f, feature.calculateBadgeSize(3), 0.001f);
 
         feature.turretBadgeScaleConfig.set(0.5f);
+        flushEffects();
         assertEquals(1.95f, feature.calculateBadgeSize(1), 0.001f);
         assertEquals(2.7f, feature.calculateBadgeSize(2), 0.001f);
     }

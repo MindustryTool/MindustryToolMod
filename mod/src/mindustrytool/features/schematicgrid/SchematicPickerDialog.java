@@ -18,6 +18,7 @@ import solim.core.Component;
 import solim.layout.Scroll;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
+import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
@@ -53,8 +54,8 @@ public class SchematicPickerDialog extends SolimDialog {
             return Math.max(0, total - shownCount);
         });
 
-        registerDisposable(searchQuery.subscribe(query -> resetBatch()));
-        registerDisposable(selectedTag.subscribe(tag -> resetBatch()));
+        registerDisposable(Effect.of(searchQuery, query -> resetBatch()));
+        registerDisposable(Effect.of(selectedTag, tag -> resetBatch()));
 
         Computed<Float> viewportWidth = dvw(100f);
         Readable<Boolean> portrait = isPortrait();

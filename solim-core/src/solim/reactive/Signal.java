@@ -18,7 +18,6 @@ import solim.core.SolimAssert;
 
 public final class Signal<T> implements Readable<T>, ReactiveSource, DebugReactiveNode {
     private T value;
-    private final List<Cons<T>> listeners = new ArrayList<>();
     private final Set<ReactiveObserver> observers = new LinkedHashSet<>();
 
     private Signal(T initial) {
@@ -66,12 +65,6 @@ public final class Signal<T> implements Readable<T>, ReactiveSource, DebugReacti
         ReactiveContext.signalWriteStart(this, oldValue, newValue);
         this.value = newValue;
         try {
-
-            List<Cons<T>> copy = new ArrayList<>(listeners);
-            for (Cons<T> c : copy) {
-                c.get(value);
-            }
-
             Set<ReactiveObserver> obsCopy = new LinkedHashSet<>(observers);
             for (ReactiveObserver o : obsCopy) {
                 o.invalidate();
@@ -83,26 +76,6 @@ public final class Signal<T> implements Readable<T>, ReactiveSource, DebugReacti
 
     public void update(Func<T, T> updater) {
         set(updater.get(value));
-    }
-
-    public Subscription subscribe(Cons<T> listener) {
-        listeners.add(listener);
-        return new Subscription() {
-            private boolean disposed = false;
-
-            @Override
-            public void dispose() {
-                if (!disposed) {
-                    disposed = true;
-                    listeners.remove(listener);
-                }
-            }
-
-            @Override
-            public boolean isDisposed() {
-                return disposed;
-            }
-        };
     }
 
     public <R> Computed<R> map(Func<T, R> mapper) {
@@ -117,10 +90,6 @@ public final class Signal<T> implements Readable<T>, ReactiveSource, DebugReacti
     @Override
     public void removeObserver(ReactiveObserver observer) {
         observers.remove(observer);
-    }
-
-    public int listenerCount() {
-        return listeners.size();
     }
 
     public int observerCount() {
@@ -158,7 +127,7 @@ public final class Signal<T> implements Readable<T>, ReactiveSource, DebugReacti
 
     @Override
     public int debugListenerCount() {
-        return listeners.size();
+        return 0;
     }
 
     @Override

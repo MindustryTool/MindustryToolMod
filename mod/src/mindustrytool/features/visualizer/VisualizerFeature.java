@@ -38,6 +38,8 @@ import mindustry.gen.TimeItem;
 import mindustry.gen.Unit;
 import mindustry.graphics.Drawf;
 import mindustry.graphics.Layer;
+import solim.reactive.Effect;
+import solim.reactive.Signal;
 import mindustry.graphics.Pal;
 import mindustry.type.Item;
 import mindustry.type.Liquid;
@@ -190,22 +192,22 @@ public class VisualizerFeature extends Feature {
         turretBadgeScaleConfig = config.floatValue("turret-badge-scale", 1.0f);
         targetLineOpacityConfig = config.floatValue("target-line-opacity", 0.6f);
 
-        showItemBridgesConfig.signal().subscribe(v -> cachedShowItemBridges = v != null ? v : true);
-        showDuctBridgesConfig.signal().subscribe(v -> cachedShowDuctBridges = v != null ? v : true);
-        showLiquidBridgesConfig.signal().subscribe(v -> cachedShowLiquidBridges = v != null ? v : true);
-        bridgeItemScaleConfig.signal().subscribe(v -> cachedBridgeItemScale = v != null ? v : 1.0f);
-        bridgeOpacityConfig.signal().subscribe(v -> cachedBridgeOpacity = v != null ? v : 1.0f);
-        showBridgeFlowRateConfig.signal().subscribe(v -> cachedShowBridgeFlowRate = v != null ? v : true);
-        hideIdleBridgeFlowConfig.signal().subscribe(v -> cachedHideIdleBridgeFlow = v != null ? v : false);
-        bridgeFlowRateScaleConfig.signal().subscribe(v -> cachedBridgeFlowRateScale = v != null ? v : 1.0f);
+        Effect.of(showItemBridgesConfig.signal(), v -> cachedShowItemBridges = v != null ? v : true);
+        Effect.of(showDuctBridgesConfig.signal(), v -> cachedShowDuctBridges = v != null ? v : true);
+        Effect.of(showLiquidBridgesConfig.signal(), v -> cachedShowLiquidBridges = v != null ? v : true);
+        Effect.of(bridgeItemScaleConfig.signal(), v -> cachedBridgeItemScale = v != null ? v : 1.0f);
+        Effect.of(bridgeOpacityConfig.signal(), v -> cachedBridgeOpacity = v != null ? v : 1.0f);
+        Effect.of(showBridgeFlowRateConfig.signal(), v -> cachedShowBridgeFlowRate = v != null ? v : true);
+        Effect.of(hideIdleBridgeFlowConfig.signal(), v -> cachedHideIdleBridgeFlow = v != null ? v : false);
+        Effect.of(bridgeFlowRateScaleConfig.signal(), v -> cachedBridgeFlowRateScale = v != null ? v : 1.0f);
 
-        showAmmoBadgeConfig.signal().subscribe(v -> cachedShowAmmoBadge = v != null ? v : true);
-        showTargetLineConfig.signal().subscribe(v -> cachedShowTargetLine = v != null ? v : true);
-        targetLineAllyConfig.signal().subscribe(v -> cachedTargetLineAlly = v != null ? v : true);
-        targetLineEnemyConfig.signal().subscribe(v -> cachedTargetLineEnemy = v != null ? v : false);
-        onlyWhenShootingConfig.signal().subscribe(v -> cachedOnlyWhenShooting = v != null ? v : false);
-        turretBadgeScaleConfig.signal().subscribe(v -> cachedTurretBadgeScale = v != null ? v : 1.0f);
-        targetLineOpacityConfig.signal().subscribe(v -> cachedTargetLineOpacity = v != null ? v : 0.6f);
+        Effect.of(showAmmoBadgeConfig.signal(), v -> cachedShowAmmoBadge = v != null ? v : true);
+        Effect.of(showTargetLineConfig.signal(), v -> cachedShowTargetLine = v != null ? v : true);
+        Effect.of(targetLineAllyConfig.signal(), v -> cachedTargetLineAlly = v != null ? v : true);
+        Effect.of(targetLineEnemyConfig.signal(), v -> cachedTargetLineEnemy = v != null ? v : false);
+        Effect.of(onlyWhenShootingConfig.signal(), v -> cachedOnlyWhenShooting = v != null ? v : false);
+        Effect.of(turretBadgeScaleConfig.signal(), v -> cachedTurretBadgeScale = v != null ? v : 1.0f);
+        Effect.of(targetLineOpacityConfig.signal(), v -> cachedTargetLineOpacity = v != null ? v : 0.6f);
 
         syncConfigCache();
 
@@ -251,7 +253,7 @@ public class VisualizerFeature extends Feature {
         if (signal == null) {
             boolean initial = Core.settings.getBool(turretSettingKey(block), true);
             signal = Signal.of(initial);
-            signal.subscribe(enabled -> {
+            Effect.of(signal, enabled -> {
                 Core.settings.put(turretSettingKey(block), enabled);
                 if (turretEnabled == null && Vars.content != null && Vars.content.blocks() != null) {
                     rebuildBitSet();

@@ -18,6 +18,7 @@ import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
 
 import solim.overlay.SolimDialog;
+import solim.reactive.Effect;
 import solim.reactive.Signal;
 import solim.reactive.Signals;
 import solim.core.Units;
@@ -89,8 +90,8 @@ public class GodModeFeature extends Feature {
         xSignal = xConfig.signal();
         ySignal = yConfig.signal();
 
-        providerModeConfig.signal().subscribe(m -> checkProvider());
-        displayModeConfig.signal().subscribe(mode -> updateHud());
+        Effect.of(providerModeConfig.signal(), m -> checkProvider());
+        Effect.of(displayModeConfig.signal(), mode -> updateHud());
 
         Events.run(PlayEvent.class, () -> {
             fogDisabled.set(false);
@@ -226,7 +227,7 @@ public class GodModeFeature extends Feature {
                 return;
             }
             quickAccessHooked = true;
-            quickAccess.enabled().subscribe(value -> updateHud());
+            Effect.of(quickAccess.enabled(), value -> updateHud());
         } catch (Exception ignored) {
         }
     }

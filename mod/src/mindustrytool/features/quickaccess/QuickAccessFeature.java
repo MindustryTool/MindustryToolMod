@@ -21,6 +21,7 @@ import solim.config.ContextualConfigValue;
 import solim.config.OrderedSeqPersister;
 
 import solim.overlay.SolimDialog;
+import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.reactive.Signals;
@@ -106,7 +107,7 @@ public class QuickAccessFeature extends Feature {
         xSignal = xConfig.signal();
         ySignal = yConfig.signal();
 
-        Signals.isPortrait().subscribe(p -> {
+        Effect.of(Signals.isPortrait(), p -> {
             if (hudView != null) {
                 Core.app.post(hudView::keepInScreen);
             }

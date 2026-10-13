@@ -17,9 +17,11 @@ class SignalTest extends SolimEnv {
     void equalityGuardedNotification() {
         Signal<Integer> c = Signal.of(0);
         AtomicInteger calls = new AtomicInteger(0);
-        c.subscribe(v -> calls.incrementAndGet());
+        Effect e = Effect.of(c, v -> calls.incrementAndGet());
+        assertEquals(1, calls.get());
         c.set(0);
-        assertEquals(0, calls.get(), "Equal value should not notify");
+        SignalDispatcher.flush();
+        assertEquals(1, calls.get(), "Equal value should not notify");
 
         Signal.computed(() -> "val:" + c.get());
         AtomicInteger compRuns = new AtomicInteger(0);
@@ -32,18 +34,22 @@ class SignalTest extends SolimEnv {
         c.set(0);
         comp2.get();
         assertEquals(1, compRuns.get(), "Equal set should not dirty computed");
+        e.dispose();
     }
 
     @Test
-    void subscribeDisposeStops() {
+    void effectBindingDisposeStops() {
         Signal<Integer> count = Signal.of(1);
         AtomicInteger seen = new AtomicInteger(-1);
-        Subscription s = count.subscribe(v -> seen.set(v));
+        Effect s = Effect.of(count, v -> seen.set(v));
+        assertEquals(1, seen.get());
         count.set(2);
+        SignalDispatcher.flush();
         assertEquals(2, seen.get());
         s.dispose();
         count.set(3);
-        assertEquals(2, seen.get(), "Disposed subscription should not receive");
+        SignalDispatcher.flush();
+        assertEquals(2, seen.get(), "Disposed effect should not receive");
 
         assertDoesNotThrow(s::dispose);
         assertTrue(s.isDisposed());
@@ -85,15 +91,15 @@ class SignalTest extends SolimEnv {
     }
 
     @Test
-    void subscriptionDisposeIdempotentAndNoLeak() {
+    void effectDisposeIdempotentAndNoLeak() {
         Signal<Integer> s = Signal.of(0);
-        Subscription sub = s.subscribe(v -> {
+        Effect sub = Effect.of(s, v -> {
         });
-        assertEquals(1, s.listenerCount());
+        assertEquals(1, s.observerCount());
         sub.dispose();
         sub.dispose();
         assertTrue(sub.isDisposed());
-        assertEquals(0, s.listenerCount());
+        assertEquals(0, s.observerCount());
     }
 
     @Test

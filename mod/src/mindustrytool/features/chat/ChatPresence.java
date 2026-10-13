@@ -17,6 +17,7 @@ import mindustrytool.features.playerconnect.PcRoomClosed;
 import mindustrytool.features.playerconnect.PcRoomOpened;
 import mindustrytool.services.MindustryTool;
 import solim.config.ConfigValue;
+import solim.reactive.Effect;
 import solim.reactive.Signal;
 
 public class ChatPresence {
@@ -50,24 +51,24 @@ public class ChatPresence {
         Events.on(PcRoomOpened.class, this::onPcRoomOpened);
         Events.on(PcRoomClosed.class, event -> onPcRoomClosed());
 
-        session.loggedIn().subscribe(loggedIn -> {
+        Effect.of(session.loggedIn(), loggedIn -> {
             if (Boolean.TRUE.equals(loggedIn)) {
                 forceSync();
             }
         });
-        session.connected().subscribe(connected -> {
+        Effect.of(session.connected(), connected -> {
             if (Boolean.TRUE.equals(connected)) {
                 forceSync();
             }
         });
-        sharePresence.signal().subscribe(optIn -> {
+        Effect.of(sharePresence.signal(), optIn -> {
             if (Boolean.TRUE.equals(optIn)) {
                 forceSync();
             } else {
                 cancelPendingSync();
             }
         });
-        featureEnabled.subscribe(enabled -> {
+        Effect.of(featureEnabled, enabled -> {
             if (Boolean.TRUE.equals(enabled)) {
                 forceSync();
             }

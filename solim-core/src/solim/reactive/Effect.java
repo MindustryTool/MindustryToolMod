@@ -53,6 +53,10 @@ public final class Effect implements ReactiveObserver, DisposableOwner, Schedula
         return create(runnable, null, null);
     }
 
+    public static <T> Effect of(Readable<T> source, Cons<T> target) {
+        return of(() -> target.get(source.get()));
+    }
+
     public static Effect of(Prov<Runnable> Prov) {
         return create(null, Prov, null);
     }

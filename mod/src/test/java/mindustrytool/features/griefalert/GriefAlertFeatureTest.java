@@ -38,6 +38,7 @@ import mindustry.world.blocks.ConstructBlock;
 import mindustry.world.blocks.power.PowerGenerator;
 import mindustry.world.blocks.storage.CoreBlock;
 import mindustrytool.test.MindustryTestEnv;
+import solim.reactive.Effect;
 import solim.reactive.Readable;
 
 class GriefAlertFeatureTest extends MindustryTestEnv {
@@ -111,10 +112,15 @@ class GriefAlertFeatureTest extends MindustryTestEnv {
     void raiseAlert_publishesAlertToReactiveSignal() {
         GriefAlertFeature feature = enabledFeature();
         List<GriefAlertInfo> observed = new ArrayList<>();
-        feature.activeAlertSignal().subscribe(alert -> observed.add(alert));
+        Effect.of(feature.activeAlertSignal(), alert -> {
+            if (alert != null) {
+                observed.add(alert);
+            }
+        });
 
         GriefAlertInfo alert = alertAt(120f, 240f);
         feature.raiseAlert(alert);
+        flushEffects();
 
         assertTrue(feature.hasActiveAlert());
         assertSame(alert, feature.activeAlert());

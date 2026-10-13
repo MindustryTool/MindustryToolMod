@@ -55,6 +55,7 @@ import mindustrytool.features.settings.ModSettings;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
+import solim.reactive.Effect;
 
 public class BlockStatsDisplayFeature extends Feature {
 
@@ -187,7 +188,7 @@ public class BlockStatsDisplayFeature extends Feature {
         ConfigValue<Boolean> value = progressBlockValues.get(block);
         if (value == null) {
             value = progressBlockConfig.boolValue(block.name, true);
-            value.signal().subscribe(enabled -> applyProgressBit(block, Boolean.TRUE.equals(enabled)));
+            Effect.of(value.signal(), enabled -> applyProgressBit(block, Boolean.TRUE.equals(enabled)));
             progressBlockValues.put(block, value);
         }
         return value;
@@ -197,7 +198,7 @@ public class BlockStatsDisplayFeature extends Feature {
         ConfigValue<Boolean> value = efficiencyBlockValues.get(block);
         if (value == null) {
             value = efficiencyBlockConfig.boolValue(block.name, true);
-            value.signal().subscribe(enabled -> applyEfficiencyBit(block, Boolean.TRUE.equals(enabled)));
+            Effect.of(value.signal(), enabled -> applyEfficiencyBit(block, Boolean.TRUE.equals(enabled)));
             efficiencyBlockValues.put(block, value);
         }
         return value;

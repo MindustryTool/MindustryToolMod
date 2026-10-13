@@ -38,6 +38,7 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
+import solim.reactive.Effect;
 import solim.overlay.SolimDialog;
 
 public class PathfindingFeature extends Feature {
@@ -115,15 +116,15 @@ public class PathfindingFeature extends Feature {
             costTypeConfigs[i] = config.boolValue("cost-type." + i, true);
         }
 
-        drawUnitPathConfig.signal().subscribe(v -> cachedDrawUnitPath = v != null ? v : true);
-        drawSpawnPathConfig.signal().subscribe(v -> cachedDrawSpawnPath = v != null ? v : true);
-        drawAlliesConfig.signal().subscribe(v -> cachedDrawAllies = v != null ? v : false);
-        zoomThresholdConfig.signal().subscribe(v -> cachedZoomThreshold = v != null ? v : 0.5f);
-        opacityConfig.signal().subscribe(v -> cachedOpacity = v != null ? v : 1.0f);
+        Effect.of(drawUnitPathConfig.signal(), v -> cachedDrawUnitPath = v != null ? v : true);
+        Effect.of(drawSpawnPathConfig.signal(), v -> cachedDrawSpawnPath = v != null ? v : true);
+        Effect.of(drawAlliesConfig.signal(), v -> cachedDrawAllies = v != null ? v : false);
+        Effect.of(zoomThresholdConfig.signal(), v -> cachedZoomThreshold = v != null ? v : 0.5f);
+        Effect.of(opacityConfig.signal(), v -> cachedOpacity = v != null ? v : 1.0f);
 
         for (int i = 0; i < COST_COUNT; i++) {
             final int index = i;
-            costTypeConfigs[i].signal().subscribe(v -> cachedCostTypes[index] = v != null ? v : true);
+            Effect.of(costTypeConfigs[i].signal(), v -> cachedCostTypes[index] = v != null ? v : true);
         }
 
         syncConfigCache();

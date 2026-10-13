@@ -141,9 +141,10 @@ public class AutoplaySettingsView extends Component {
                 }
             });
 
-            taskEnabled.subscribe(val -> {
-                if (feature.isTaskEnabled(task.getId()) != Boolean.TRUE.equals(val)) {
-                    feature.setTaskEnabled(task.getId(), Boolean.TRUE.equals(val));
+            effect(() -> {
+                boolean val = Boolean.TRUE.equals(taskEnabled.get());
+                if (feature.isTaskEnabled(task.getId()) != val) {
+                    feature.setTaskEnabled(task.getId(), val);
                 }
             });
 

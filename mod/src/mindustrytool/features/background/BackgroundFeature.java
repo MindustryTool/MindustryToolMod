@@ -18,6 +18,7 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
+import solim.reactive.Effect;
 
 public class BackgroundFeature extends Feature {
 
@@ -40,7 +41,7 @@ public class BackgroundFeature extends Feature {
         pathConfig = config.stringValue("path", "");
         opacityConfig = config.intValue("opacity", 100);
 
-        pathConfig.signal().subscribe(path -> {
+        Effect.of(pathConfig.signal(), path -> {
             if (isEnabled()) {
                 applyPath(path);
             }

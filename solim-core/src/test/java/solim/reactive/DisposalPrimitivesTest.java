@@ -64,35 +64,37 @@ class DisposalPrimitivesTest extends SolimEnv {
 	}
 
 	@Test
-	void signalSubscriptionStopsAndIsIdempotent() {
+	void signalBindingStopsAndIsIdempotent() {
 		Signal<String> source = Signal.of("a");
 		AtomicInteger calls = new AtomicInteger(0);
-		Subscription sub = source.subscribe(v -> calls.incrementAndGet());
+		Effect sub = Effect.of(source, v -> calls.incrementAndGet());
+		assertEquals(1, calls.get());
 		assertFalse(sub.isDisposed());
 
 		source.set("b");
-		assertEquals(1, calls.get());
+		SignalDispatcher.flush();
+		assertEquals(2, calls.get());
 
 		sub.dispose();
 		assertTrue(sub.isDisposed());
 
 		source.set("c");
-		assertEquals(1, calls.get(), "Disposed subscription must stay silent");
-		assertEquals(0, source.listenerCount());
+		SignalDispatcher.flush();
+		assertEquals(2, calls.get(), "Disposed effect must stay silent");
+		assertEquals(0, source.observerCount());
 
 		assertDoesNotThrow(sub::dispose, "Double dispose must be safe");
 		assertTrue(sub.isDisposed());
 	}
 
 	@Test
-	void computedSubscriptionStopsAndIsIdempotent() {
+	void computedBindingStopsAndIsIdempotent() {
 		Signal<Integer> source = Signal.of(1);
 		Computed<Integer> doubled = source.map(v -> v * 2);
 		AtomicInteger calls = new AtomicInteger(0);
-		Subscription sub = doubled.subscribe(v -> calls.incrementAndGet());
+		Effect sub = Effect.of(doubled, v -> calls.incrementAndGet());
 		assertFalse(sub.isDisposed());
-		assertEquals(2, doubled.peek(), "Reading establishes the upstream subscription");
-		assertEquals(1, calls.get(), "First evaluation notifies the subscriber");
+		assertEquals(1, calls.get(), "First evaluation notifies the effect");
 
 		source.set(2);
 		SignalDispatcher.flush();
@@ -103,8 +105,8 @@ class DisposalPrimitivesTest extends SolimEnv {
 
 		source.set(3);
 		SignalDispatcher.flush();
-		assertEquals(2, calls.get(), "Disposed computed subscription must stay silent");
-		assertEquals(0, doubled.listenerCount());
+		assertEquals(2, calls.get(), "Disposed computed effect must stay silent");
+		assertEquals(0, doubled.observerCount());
 
 		assertDoesNotThrow(sub::dispose, "Double dispose must be safe");
 		doubled.dispose();
@@ -114,14 +116,13 @@ class DisposalPrimitivesTest extends SolimEnv {
 	@Test
 	void signalGraphDrainsAfterDownstreamDisposal() {
 		Signal<Integer> source = Signal.of(0);
-		Subscription first = source.subscribe(v -> {
+		Effect first = Effect.of(source, v -> {
 		});
-		Subscription second = source.subscribe(v -> {
+		Effect second = Effect.of(source, v -> {
 		});
 		Computed<Integer> derived = source.map(v -> v + 1);
 		Effect effect = Effect.of(() -> derived.get());
 
-		assertTrue(source.listenerCount() > 0);
 		assertTrue(source.observerCount() > 0);
 
 		first.dispose();
@@ -129,7 +130,6 @@ class DisposalPrimitivesTest extends SolimEnv {
 		effect.dispose();
 		derived.dispose();
 
-		assertEquals(0, source.listenerCount());
 		assertEquals(0, source.observerCount());
 	}
 
@@ -137,7 +137,7 @@ class DisposalPrimitivesTest extends SolimEnv {
 	void repeatedMountUnmoutLeavesNoObservers() {
 		Signal<Integer> source = Signal.of(0);
 		for (int i = 0; i < 25; i++) {
-			Subscription sub = source.subscribe(v -> {
+			Effect sub = Effect.of(source, v -> {
 			});
 			Computed<Integer> derived = source.map(v -> v);
 			Effect effect = Effect.of(() -> derived.get());
@@ -146,7 +146,6 @@ class DisposalPrimitivesTest extends SolimEnv {
 			derived.dispose();
 		}
 		SignalDispatcher.flush();
-		assertEquals(0, source.listenerCount(), "Repeated mount/unmount must not accumulate listeners");
 		assertEquals(0, source.observerCount(), "Repeated mount/unmount must not accumulate observers");
 	}
 
@@ -156,8 +155,6 @@ class DisposalPrimitivesTest extends SolimEnv {
 		Computed<Integer> doubled = source.map(v -> v * 2);
 		assertEquals(2, doubled.peek());
 
-		AtomicInteger calls = new AtomicInteger(0);
-		Subscription sub = doubled.subscribe(v -> calls.incrementAndGet());
 		Effect watcher = Effect.of(() -> doubled.get());
 
 		doubled.dispose();
@@ -165,15 +162,11 @@ class DisposalPrimitivesTest extends SolimEnv {
 
 		source.set(5);
 		SignalDispatcher.flush();
-		assertEquals(0, calls.get(), "Disposed computed must not notify");
 		assertEquals(0, source.observerCount());
-		assertEquals(0, doubled.listenerCount());
 		assertEquals(0, doubled.observerCount());
 
 		assertDoesNotThrow(doubled::dispose, "Double dispose must be safe");
 		assertTrue(doubled.isDisposed());
-
-		sub.dispose();
 		watcher.dispose();
 	}
 }

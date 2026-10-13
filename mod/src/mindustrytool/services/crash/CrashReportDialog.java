@@ -6,6 +6,7 @@ import arc.Core;
 import arc.files.Fi;
 import arc.util.Log;
 import solim.overlay.SolimDialog;
+import solim.reactive.Effect;
 import solim.reactive.Signal;
 
 public class CrashReportDialog extends SolimDialog {
@@ -18,7 +19,7 @@ public class CrashReportDialog extends SolimDialog {
 
         boolean sendCrashReport = Core.settings.getBool(KEY_SEND, true);
         Signal<Boolean> sendSignal = Signal.of(sendCrashReport);
-        sendSignal.subscribe(value -> Core.settings.put(KEY_SEND, Boolean.TRUE.equals(value)));
+        Effect.of(sendSignal, value -> Core.settings.put(KEY_SEND, Boolean.TRUE.equals(value)));
 
         addCloseButton();
         closeOnBack();

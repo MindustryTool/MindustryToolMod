@@ -18,6 +18,7 @@ import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
 
 import solim.overlay.SolimDialog;
+import solim.reactive.Effect;
 import solim.reactive.Signal;
 import solim.reactive.Signals;
 import solim.core.Units;
@@ -97,26 +98,26 @@ public class TimeControlFeature extends Feature {
         xSignal = xConfig.signal();
         ySignal = yConfig.signal();
 
-        speed.subscribe(value -> {
+        Effect.of(speed, value -> {
             if (canApply()) {
                 applyProvider(value != null ? value : 1f);
             }
         });
 
-        sliderPosition.subscribe(position -> {
+        Effect.of(sliderPosition, position -> {
             if (canApply()) {
                 speed.set(speedFromSlider(position != null ? position : 0f));
             }
         });
 
-        Signals.netClient().subscribe(client -> {
+        Effect.of(Signals.netClient(), client -> {
             if (Boolean.TRUE.equals(client)) {
                 resetSpeed();
             }
         });
 
-        modeConfig.signal().subscribe(mode -> resetSpeed());
-        displayModeConfig.signal().subscribe(mode -> updateHud());
+        Effect.of(modeConfig.signal(), mode -> resetSpeed());
+        Effect.of(displayModeConfig.signal(), mode -> updateHud());
 
         bindAction("timecontrolpause", KeyCode.unset, this::togglePause);
         bindAction("timecontrolspeedup", KeyCode.unset, this::speedUp);
@@ -335,7 +336,7 @@ public class TimeControlFeature extends Feature {
                 return;
             }
             quickAccessHooked = true;
-            quickAccess.enabled().subscribe(value -> updateHud());
+            Effect.of(quickAccess.enabled(), value -> updateHud());
         } catch (Exception ignored) {
         }
     }

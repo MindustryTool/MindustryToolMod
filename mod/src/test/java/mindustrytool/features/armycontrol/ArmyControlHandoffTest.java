@@ -138,6 +138,7 @@ class ArmyControlHandoffTest extends MindustryTestEnv {
         assertEquals(true, ArmyControlPopup.isShowing());
 
         feature.displayModeConfig.set(ArmyControlFeature.DISPLAY_HUD);
+        flushEffects();
         assertEquals(false, ArmyControlPopup.isShowing());
         assertNotNull(hudViewOf(feature));
         feature.setEnabled(false);

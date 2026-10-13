@@ -282,10 +282,12 @@ class QuickAccessClickDelegationTest extends MindustryTestEnv {
         feature.onQuickAccessClick();
         assertFalse(feature.isEnabled(), "Clicking QuickAccess on schematic browser must not toggle enabled");
         assertNotNull(feature.getMainDialog());
-        assertNotNull(feature.getMainDialog().get(), "Dialog must be created and available");
+        SolimDialog dlg = feature.getMainDialog().get();
+        assertNotNull(dlg, "Dialog must be created and available");
 
         assertTrue(feature.quickAccessHighlight().peek(),
                 "Schematic browser quick access icon must always be highlighted");
+        dlg.dispose();
     }
 
     @Test
@@ -296,9 +298,11 @@ class QuickAccessClickDelegationTest extends MindustryTestEnv {
         feature.onQuickAccessClick();
         assertFalse(feature.isEnabled(), "Clicking QuickAccess on map browser must not toggle enabled");
         assertNotNull(feature.getMainDialog());
-        assertNotNull(feature.getMainDialog().get(), "Dialog must be created and available");
+        SolimDialog dlg = feature.getMainDialog().get();
+        assertNotNull(dlg, "Dialog must be created and available");
 
         assertTrue(feature.quickAccessHighlight().peek(), "Map browser quick access icon must always be highlighted");
+        dlg.dispose();
     }
 
     @Test

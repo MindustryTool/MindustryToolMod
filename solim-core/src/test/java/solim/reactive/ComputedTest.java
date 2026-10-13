@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
+import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
 class ComputedTest extends SolimEnv {
@@ -75,21 +76,23 @@ class ComputedTest extends SolimEnv {
     }
 
     @Test
-    void subscriptionAndDispose() {
+    void effectObservationAndDispose() {
         Signal<Integer> s = Signal.of(1);
         Computed<Integer> comp = Signal.computed(() -> s.get() * 2);
         comp.get();
         AtomicInteger seen = new AtomicInteger(-1);
-        Subscription sub = comp.subscribe(v -> seen.set(v));
+        Effect sub = Effect.of(comp, v -> seen.set(v));
 
+        assertEquals(2, seen.get());
         s.set(2);
+        SignalDispatcher.flush();
 
         assertEquals(4, seen.get());
         comp.dispose();
         assertTrue(comp.isDisposed());
         assertEquals(0, comp.dependencyCount());
-        assertEquals(0, comp.listenerCount());
         s.set(3);
+        SignalDispatcher.flush();
 
         assertEquals(4, seen.get());
 

@@ -20,6 +20,7 @@ import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
 import arc.scene.ui.layout.Scl;
+import solim.reactive.Effect;
 import solim.reactive.Signal;
 import solim.reactive.Signals;
 
@@ -143,7 +144,7 @@ public class TeamResourceFeature extends Feature {
 
         this.state = new TeamResourceState(this);
 
-        Signals.isPortrait().subscribe(p -> {
+        Effect.of(Signals.isPortrait(), p -> {
             if (hudView != null) {
                 Core.app.post(hudView::keepInScreen);
             }

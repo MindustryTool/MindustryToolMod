@@ -34,13 +34,15 @@ import mindustry.world.blocks.liquid.LiquidJunction;
 import mindustry.world.blocks.liquid.LiquidRouter;
 import mindustry.world.blocks.production.BeamDrill;
 import mindustry.world.blocks.production.Drill;
+import mindustrytool.test.MindustryTestEnv;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class SmartUpgradeFeatureTest {
+class SmartUpgradeFeatureTest extends MindustryTestEnv {
 
     @BeforeEach
     void setUp() {
+        super.setUpMindustryTestEnv();
         Core.app = new MockApplication();
         Core.graphics = new MockGraphics();
         Core.settings = new MockSettings();
@@ -70,6 +72,7 @@ class SmartUpgradeFeatureTest {
         feature.triggerModeConfig.set(SmartUpgradeFeature.MODE_PERSISTENT);
         feature.onlySameTypeConfig.set(true);
         feature.traverseBridgesConfig.set(false);
+        flushEffects();
 
         assertEquals(1000, feature.maxUpdatesConfig.get());
         assertEquals(SmartUpgradeFeature.MODE_PERSISTENT, feature.triggerModeConfig.get());
@@ -187,6 +190,7 @@ class SmartUpgradeFeatureTest {
         SmartUpgradeFeature feature = new SmartUpgradeFeature();
         feature.onlySameTypeConfig.set(true);
         feature.traverseBridgesConfig.set(true);
+        flushEffects();
 
         Conveyor start = new Conveyor("del-same-start");
         Conveyor sameType = start;
@@ -240,6 +244,7 @@ class SmartUpgradeFeatureTest {
         SmartUpgradeFeature feature = new SmartUpgradeFeature();
         feature.onlySameTypeConfig.set(false);
         feature.traverseBridgesConfig.set(false);
+        flushEffects();
 
         Conveyor start = new Conveyor("del-off-start");
         SmartUpgradeFeature.BlockGroup conveyorGroup = SmartUpgradeFeature.getGroup(start);

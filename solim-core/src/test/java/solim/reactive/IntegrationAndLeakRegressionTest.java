@@ -195,6 +195,5 @@ public class IntegrationAndLeakRegressionTest extends SolimEnv {
         sharedState.set(999);
         TestScheduler.flush();
         assertEquals(0, sharedState.observerCount());
-        assertEquals(0, sharedState.listenerCount());
     }
 }

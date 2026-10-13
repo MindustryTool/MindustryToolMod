@@ -16,6 +16,7 @@ import mindustrytool.models.response.PlayerConnectProvider;
 import solim.core.Component;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
+import solim.reactive.Effect;
 import solim.reactive.Signal;
 
 public class HostRoomDialog extends SolimDialog {
@@ -104,7 +105,7 @@ public class HostRoomDialog extends SolimDialog {
                         });
 
                         Signal<String> maxPlayersSig = Signal.of(String.valueOf(feature.maxPlayerConfig.get()));
-                        maxPlayersSig.subscribe(str -> {
+                        Effect.of(maxPlayersSig, str -> {
                             try {
                                 if (str != null) {
                                     feature.maxPlayerConfig.set(Math.max(0, Integer.parseInt(str.trim())));

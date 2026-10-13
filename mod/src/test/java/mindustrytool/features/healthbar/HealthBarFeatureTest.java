@@ -76,6 +76,7 @@ class HealthBarFeatureTest extends MindustryTestEnv {
         feature.opacityConfig.set(0.3f);
         feature.scaleConfig.set(1.5f);
         feature.widthConfig.set(2.0f);
+        flushEffects();
 
         assertFalse(getCachedBool(feature, "cachedShowFriendlyUnits"));
         assertFalse(getCachedBool(feature, "cachedShowEnemyUnits"));
@@ -92,6 +93,7 @@ class HealthBarFeatureTest extends MindustryTestEnv {
         feature.opacityConfig.signal().set(0.9f);
         feature.scaleConfig.signal().set(1.1f);
         feature.widthConfig.signal().set(1.2f);
+        flushEffects();
 
         assertTrue(getCachedBool(feature, "cachedShowFriendlyUnits"));
         assertFalse(getCachedBool(feature, "cachedShowFriendlyBlocks"));
@@ -103,11 +105,13 @@ class HealthBarFeatureTest extends MindustryTestEnv {
         feature.showFriendlyUnitsConfig.signal().set(null);
         feature.zoomThresholdConfig.signal().set(null);
         feature.opacityConfig.signal().set(null);
+        flushEffects();
         assertTrue(getCachedBool(feature, "cachedShowFriendlyUnits"));
         assertEquals(0.5f, getCachedFloat(feature, "cachedZoomThreshold"), 0.001f);
         assertEquals(1.0f, getCachedFloat(feature, "cachedOpacity"), 0.001f);
 
         feature.opacityConfig.set(0.1f);
+        flushEffects();
         feature.resetToDefaults();
         assertEquals(1.0f, getCachedFloat(feature, "cachedOpacity"), 0.001f);
         assertTrue(getCachedBool(feature, "cachedShowFriendlyUnits"));

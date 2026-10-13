@@ -23,6 +23,7 @@ import mindustry.gen.Icon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.test.MindustryTestEnv;
 import solim.reactive.Computed;
+import solim.reactive.Effect;
 import solim.reactive.Signal;
 
 class QuickSchematicGridTest extends MindustryTestEnv {
@@ -550,11 +551,11 @@ class QuickSchematicGridTest extends MindustryTestEnv {
 
         Computed<List<QuickSchematicEntry>> watcher = Signal.computed(() -> feature.entries().get());
         int[] notifications = { 0 };
-        watcher.subscribe(value -> notifications[0]++);
-        watcher.get();
+        Effect.of(watcher, value -> notifications[0]++);
         int before = notifications[0];
 
         assertTrue(feature.updateEntry(id, entry -> entry.customIcon = "X"));
+        flushEffects();
 
         assertEquals(before + 1, notifications[0]);
         assertEquals("X", feature.getEntry(id).customIcon);

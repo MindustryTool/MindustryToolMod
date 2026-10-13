@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import arc.Core;
 import arc.math.geom.Rect;
 import arc.struct.Seq;
+import solim.reactive.Effect;
 import mindustry.Vars;
 import mindustry.core.ContentLoader;
 import mindustry.game.Rules;
@@ -117,7 +118,7 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
         RangeDisplayFeature feature = new RangeDisplayFeature();
         boolean[] notified = new boolean[1];
 
-        feature.opacityConfig.signal().subscribe(v -> notified[0] = true);
+        Effect.of(feature.opacityConfig.signal(), v -> notified[0] = true);
         feature.opacityConfig.set(0.75f);
 
         assertTrue(notified[0]);
@@ -218,11 +219,13 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
         assertTrue(feature.getBlockSignal(turret).peek());
 
         feature.setBlockEnabled(turret, false);
+        flushEffects();
         assertFalse(feature.isBlockEnabled(turret));
         assertFalse(feature.getBlockSignal(turret).peek());
         assertFalse(Core.settings.getBool(RangeDisplayFeature.blockSettingKey(turret)));
 
         feature.setBlockEnabled(turret, true);
+        flushEffects();
         assertTrue(feature.isBlockEnabled(turret));
         assertTrue(feature.getBlockSignal(turret).peek());
         assertTrue(Core.settings.getBool(RangeDisplayFeature.blockSettingKey(turret)));
@@ -238,20 +241,24 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
         feature.rebuildBitSet();
 
         feature.setCategoryEnabled(true, false);
+        flushEffects();
         assertFalse(feature.isBlockEnabled(turret1));
         assertFalse(feature.isBlockEnabled(turret2));
         assertTrue(feature.isBlockEnabled(mender));
 
         feature.setCategoryEnabled(true, true);
+        flushEffects();
         assertTrue(feature.isBlockEnabled(turret1));
         assertTrue(feature.isBlockEnabled(turret2));
 
         feature.setBlockEnabled(turret1, false);
         feature.setBlockEnabled(mender, false);
+        flushEffects();
         assertFalse(feature.isBlockEnabled(turret1));
         assertFalse(feature.isBlockEnabled(mender));
 
         feature.resetToDefaults();
+        flushEffects();
         assertTrue(feature.isBlockEnabled(turret1));
         assertTrue(feature.isBlockEnabled(mender));
     }
@@ -305,6 +312,7 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
         feature.useTeamColorForSpecialConfig.set(true);
         feature.dashedConfig.set(false);
         feature.zoomThresholdConfig.set(1.5f);
+        flushEffects();
 
         assertEquals(0.42f, getCachedFloat(feature, "cachedOpacity"), 0.001f);
         assertEquals(2.8f, getCachedFloat(feature, "cachedStrokeWidth"), 0.001f);
@@ -351,6 +359,7 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
         feature.useTeamColorForSpecialConfig.signal().set(false);
         feature.dashedConfig.signal().set(true);
         feature.zoomThresholdConfig.signal().set(2.5f);
+        flushEffects();
 
         assertEquals(0.88f, getCachedFloat(feature, "cachedOpacity"), 0.001f);
         assertEquals(3.5f, getCachedFloat(feature, "cachedStrokeWidth"), 0.001f);
@@ -380,6 +389,7 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
         feature.filterTargetAirConfig.signal().set(null);
         feature.useTeamColorForSpecialConfig.signal().set(null);
         feature.zoomThresholdConfig.signal().set(null);
+        flushEffects();
         assertEquals(1.0f, getCachedFloat(feature, "cachedOpacity"), 0.001f);
         assertFalse(getCachedBool(feature, "cachedHoverOnly"));
         assertTrue(getCachedBool(feature, "cachedFilterTargetAir"));
@@ -388,7 +398,9 @@ class RangeDisplayFeatureTest extends MindustryTestEnv {
 
         feature.opacityConfig.set(0.1f);
         feature.zoomThresholdConfig.set(3.0f);
+        flushEffects();
         feature.resetToDefaults();
+        flushEffects();
         assertEquals(1.0f, getCachedFloat(feature, "cachedOpacity"), 0.001f);
         assertEquals(1.0f, getCachedFloat(feature, "cachedStrokeWidth"), 0.001f);
         assertFalse(getCachedBool(feature, "cachedHoverOnly"));

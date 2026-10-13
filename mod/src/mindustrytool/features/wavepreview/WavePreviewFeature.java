@@ -16,7 +16,7 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
-
+import solim.reactive.Effect;
 import solim.overlay.SolimDialog;
 
 public class WavePreviewFeature extends Feature {
@@ -61,7 +61,7 @@ public class WavePreviewFeature extends Feature {
             }
         }));
 
-        depthConfig.signal().subscribe(d -> {
+        Effect.of(depthConfig.signal(), d -> {
             if (isEnabled()) {
                 recompute();
             }

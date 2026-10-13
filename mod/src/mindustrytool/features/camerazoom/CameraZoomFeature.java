@@ -14,6 +14,7 @@ import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
+import solim.reactive.Effect;
 
 public class CameraZoomFeature extends Feature {
 
@@ -55,14 +56,14 @@ public class CameraZoomFeature extends Feature {
         minZoomConfig = config.floatValue("min-zoom", DEFAULT_MIN_ZOOM);
         maxZoomConfig = config.floatValue("max-zoom", DEFAULT_MAX_ZOOM);
 
-        minZoomConfig.signal().subscribe(min -> {
+        Effect.of(minZoomConfig.signal(), min -> {
             Float max = maxZoomConfig.signal().peek();
             if (min != null && max != null && min > max) {
                 maxZoomConfig.set(min);
             }
         });
 
-        maxZoomConfig.signal().subscribe(max -> {
+        Effect.of(maxZoomConfig.signal(), max -> {
             Float min = minZoomConfig.signal().peek();
             if (min != null && max != null && max < min) {
                 minZoomConfig.set(max);

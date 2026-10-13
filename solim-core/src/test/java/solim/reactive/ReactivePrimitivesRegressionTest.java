@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import solim.runtime.ReactiveContext;
+import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 import solim.test.TestScheduler;
 
@@ -31,32 +32,40 @@ public class ReactivePrimitivesRegressionTest extends SolimEnv {
     void signalEqualitySuppression() {
         Signal<String> signal = Signal.of("value");
         AtomicInteger subscriberRuns = new AtomicInteger(0);
-        Subscription sub = signal.subscribe(v -> subscriberRuns.incrementAndGet());
+        Effect sub = Effect.of(signal, v -> subscriberRuns.incrementAndGet());
 
-        assertEquals(0, subscriberRuns.get());
+        assertEquals(1, subscriberRuns.get());
 
         signal.set("value");
         signal.set(new String("value"));
-        assertEquals(0, subscriberRuns.get(), "Equal values must not trigger notification");
+        SignalDispatcher.flush();
+        assertEquals(1, subscriberRuns.get(), "Equal values must not trigger notification");
 
         signal.set("new-value");
-        assertEquals(1, subscriberRuns.get());
+        SignalDispatcher.flush();
+        assertEquals(2, subscriberRuns.get());
 
         Signal<String> nullSignal = Signal.of(null);
         AtomicInteger nullRuns = new AtomicInteger(0);
-        Subscription nullSub = nullSignal.subscribe(v -> nullRuns.incrementAndGet());
+        Effect nullSub = Effect.of(nullSignal, v -> nullRuns.incrementAndGet());
 
-        nullSignal.set(null);
-        assertEquals(0, nullRuns.get(), "Equal nulls must not trigger notification");
-
-        nullSignal.set("not-null");
         assertEquals(1, nullRuns.get());
 
         nullSignal.set(null);
+        SignalDispatcher.flush();
+        assertEquals(1, nullRuns.get(), "Equal nulls must not trigger notification");
+
+        nullSignal.set("not-null");
+        SignalDispatcher.flush();
         assertEquals(2, nullRuns.get());
 
         nullSignal.set(null);
-        assertEquals(2, nullRuns.get());
+        SignalDispatcher.flush();
+        assertEquals(3, nullRuns.get());
+
+        nullSignal.set(null);
+        SignalDispatcher.flush();
+        assertEquals(3, nullRuns.get());
 
         sub.dispose();
         nullSub.dispose();

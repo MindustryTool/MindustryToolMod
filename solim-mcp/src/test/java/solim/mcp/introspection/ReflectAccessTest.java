@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
+import solim.reactive.Effect;
 import solim.reactive.Signal;
 
 class ReflectAccessTest {
@@ -33,10 +34,11 @@ class ReflectAccessTest {
 	@Test
 	void invokesPackagePrivateCountMethod() {
 		Signal<Integer> signal = Signal.of(1);
-		signal.subscribe(v -> {});
-		Method listeners = ReflectAccess.method(Signal.class, "listenerCount");
-		assertNotNull(listeners);
-		assertEquals(1, ReflectAccess.invoke(listeners, signal));
+		Effect e = Effect.of(signal, v -> {});
+		Method observers = ReflectAccess.method(Signal.class, "observerCount");
+		assertNotNull(observers);
+		assertEquals(1, ReflectAccess.invoke(observers, signal));
+		e.dispose();
 	}
 
 	@Test

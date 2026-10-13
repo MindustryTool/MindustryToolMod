@@ -18,9 +18,9 @@ import mindustrytool.features.translation.providers.DevXTranslationProvider;
 import mindustrytool.features.translation.providers.GeminiTranslationProvider;
 import mindustrytool.features.translation.providers.GoogleWebTranslationProvider;
 import solim.core.Component;
+import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
-import solim.reactive.Subscription;
 
 public class TranslationSettingsView extends Component {
 
@@ -38,7 +38,7 @@ public class TranslationSettingsView extends Component {
     private @Nullable LanguageDropdown languageDropdown;
     private final Signal<Boolean> bothSignal;
     private final Signal<Boolean> onlySignal;
-    private final @Nullable Subscription configSubscription;
+    private final @Nullable Effect configSubscription;
     private final Signal<Boolean> isTestingSignal = Signal.of(false);
     private final Signal<String> testStatusSignal = Signal.of("");
 
@@ -49,7 +49,7 @@ public class TranslationSettingsView extends Component {
         this.bothSignal = Signal.of(initialBoth);
         this.onlySignal = Signal.of(!initialBoth);
 
-        this.bothSignal.subscribe(checked -> {
+        Effect.of(this.bothSignal, checked -> {
             if (Boolean.TRUE.equals(checked)) {
                 feature.outgoingFormatConfig.set("both");
                 feature.outgoingShowOriginalConfig.set(true);
@@ -63,7 +63,7 @@ public class TranslationSettingsView extends Component {
             }
         });
 
-        this.onlySignal.subscribe(checked -> {
+        Effect.of(this.onlySignal, checked -> {
             if (Boolean.TRUE.equals(checked)) {
                 feature.outgoingFormatConfig.set("translated_only");
                 feature.outgoingShowOriginalConfig.set(false);
@@ -77,7 +77,7 @@ public class TranslationSettingsView extends Component {
             }
         });
 
-        this.configSubscription = feature.outgoingFormatConfig.signal().subscribe(fmt -> {
+        this.configSubscription = Effect.of(feature.outgoingFormatConfig.signal(), fmt -> {
             boolean isBoth = !"translated_only".equalsIgnoreCase(fmt);
             if (!Boolean.valueOf(isBoth).equals(bothSignal.peek())) {
                 bothSignal.set(isBoth);
@@ -87,7 +87,7 @@ public class TranslationSettingsView extends Component {
             }
         });
 
-        feature.providerConfig.signal().subscribe(id -> testStatusSignal.set(""));
+        Effect.of(feature.providerConfig.signal(), id -> testStatusSignal.set(""));
     }
 
     public void closeDropdown() {

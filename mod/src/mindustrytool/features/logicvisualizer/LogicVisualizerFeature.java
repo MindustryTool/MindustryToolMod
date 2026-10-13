@@ -22,6 +22,7 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
+import solim.reactive.Effect;
 import solim.overlay.SolimDialog;
 
 public class LogicVisualizerFeature extends Feature {
@@ -54,8 +55,8 @@ public class LogicVisualizerFeature extends Feature {
         showAllyUnitsConfig = config.boolValue("logic-unit-ally", true);
         showEnemyUnitsConfig = config.boolValue("logic-unit-enemy", false);
 
-        showAllyUnitsConfig.signal().subscribe(v -> cachedShowAllyUnits = v != null ? v : true);
-        showEnemyUnitsConfig.signal().subscribe(v -> cachedShowEnemyUnits = v != null ? v : false);
+        Effect.of(showAllyUnitsConfig.signal(), v -> cachedShowAllyUnits = v != null ? v : true);
+        Effect.of(showEnemyUnitsConfig.signal(), v -> cachedShowEnemyUnits = v != null ? v : false);
 
         syncConfigCache();
 

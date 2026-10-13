@@ -9,6 +9,7 @@ import mindustry.gen.Icon;
 import mindustry.ui.dialogs.SchematicsDialog.SchematicImage;
 import mindustrytool.components.WebStyles;
 import solim.overlay.SolimDialog;
+import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
@@ -34,8 +35,8 @@ public class QuickSchematicGridSlotDialog extends SolimDialog {
         schematicFile = Signal.of(entry != null ? entry.schematicFile : null);
         iconText = Signal.of(entry != null ? entry.customIcon : null);
 
-        labelText.subscribe(value -> persist());
-        iconText.subscribe(value -> persist());
+        Effect.of(labelText, value -> persist());
+        Effect.of(iconText, value -> persist());
 
         Readable<Schematic> resolved = Signal.computed(
                 () -> feature.resolveSchematic(schematicFile.get(), schematicName.get()));

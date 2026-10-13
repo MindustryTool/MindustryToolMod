@@ -65,6 +65,7 @@ import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
+import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
@@ -108,10 +109,10 @@ public class SmartUpgradeFeature extends Feature {
         onlySameTypeConfig = config.boolValue("only-same-type", false);
         traverseBridgesConfig = config.boolValue("traverse-bridges", true);
 
-        maxUpdatesConfig.signal().subscribe(v -> cachedMaxUpdates = v != null ? v : 500);
-        triggerModeConfig.signal().subscribe(v -> cachedTriggerMode = v != null ? v : MODE_ONE_SHOT);
-        onlySameTypeConfig.signal().subscribe(v -> cachedOnlySameType = v != null ? v : false);
-        traverseBridgesConfig.signal().subscribe(v -> cachedTraverseBridges = v != null ? v : true);
+        Effect.of(maxUpdatesConfig.signal(), v -> cachedMaxUpdates = v != null ? v : 500);
+        Effect.of(triggerModeConfig.signal(), v -> cachedTriggerMode = v != null ? v : MODE_ONE_SHOT);
+        Effect.of(onlySameTypeConfig.signal(), v -> cachedOnlySameType = v != null ? v : false);
+        Effect.of(traverseBridgesConfig.signal(), v -> cachedTraverseBridges = v != null ? v : true);
 
         syncConfigCache();
 

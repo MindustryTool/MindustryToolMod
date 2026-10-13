@@ -4,6 +4,5 @@ public enum ReactiveKind {
     SIGNAL,
     COMPUTED,
     EFFECT,
-    SUBSCRIPTION,
     MAP
 }

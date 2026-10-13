@@ -10,6 +10,7 @@ import mindustry.gen.Icon;
 import mindustry.type.StatusEffect;
 import mindustrytool.components.WebStyles;
 import solim.overlay.SolimDialog;
+import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
@@ -27,7 +28,7 @@ public class GodModeEffectsDialog extends SolimDialog {
         addCloseButton();
         closeOnBack();
 
-        durationString.subscribe(s -> {
+        Effect.of(durationString, s -> {
             if (s != null) {
                 try {
                     float val = Float.parseFloat(s.trim());

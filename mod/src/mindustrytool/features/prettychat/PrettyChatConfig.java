@@ -2,6 +2,7 @@ package mindustrytool.features.prettychat;
 
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
+import solim.reactive.Effect;
 import solim.reactive.Signal;
 
 import java.util.ArrayList;
@@ -20,7 +21,7 @@ public class PrettyChatConfig {
         List<String> initial = parseList(enabledPrettiersConfig.signal().peek());
         this.enabledIdsSignal = Signal.of(initial);
 
-        this.enabledPrettiersConfig.signal().subscribe(val -> {
+        Effect.of(this.enabledPrettiersConfig.signal(), val -> {
             List<String> parsed = parseList(val);
             enabledIdsSignal.set(parsed);
         });

@@ -44,6 +44,7 @@ import solim.config.ContextualConfigValue;
 import solim.config.OrderedSeqPersister;
 import solim.core.Units;
 import solim.overlay.SolimDialog;
+import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.reactive.Signals;
@@ -130,7 +131,7 @@ public class AutoplayFeature extends Feature {
         xSignal = xConfig.signal();
         ySignal = yConfig.signal();
 
-        displayModeConfig.signal().subscribe(mode -> updateHud());
+        Effect.of(displayModeConfig.signal(), mode -> updateHud());
 
         taskMap.put(SelfHealTask.ID, new SelfHealTask(this));
         taskMap.put(FleeTask.ID, new FleeTask(this));
@@ -345,7 +346,7 @@ public class AutoplayFeature extends Feature {
                 return;
             }
             quickAccessHooked = true;
-            quickAccess.enabled().subscribe(value -> updateHud());
+            Effect.of(quickAccess.enabled(), value -> updateHud());
         } catch (Exception ignored) {
         }
     }

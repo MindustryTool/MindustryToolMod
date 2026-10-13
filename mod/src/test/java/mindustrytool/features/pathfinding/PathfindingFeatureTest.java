@@ -60,6 +60,7 @@ class PathfindingFeatureTest extends MindustryTestEnv {
         feature.zoomThresholdConfig.set(1.5f);
         feature.opacityConfig.set(0.6f);
         feature.costTypeConfigs[0].set(false);
+        flushEffects();
 
         assertFalse(feature.drawUnitPathConfig.get());
         assertFalse(feature.drawSpawnPathConfig.get());

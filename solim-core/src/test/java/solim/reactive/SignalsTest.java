@@ -11,6 +11,7 @@ import mindustry.game.EventType.ResizeEvent;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import solim.runtime.SignalDispatcher;
 
 class SignalsTest extends SolimEnv {
 
@@ -74,21 +75,23 @@ class SignalsTest extends SolimEnv {
     @Test
     void testDeduplicationWhenOrientationUnchanged() {
         AtomicInteger fireCount = new AtomicInteger(0);
-        if (Signals.isPortrait() instanceof Signal) {
-            ((Signal<Boolean>) Signals.isPortrait()).subscribe(val -> fireCount.incrementAndGet());
-        }
+        Effect e = Effect.of(Signals.isPortrait(), val -> fireCount.incrementAndGet());
+        assertEquals(1, fireCount.get());
 
         mockGraphics.width = 1600;
         mockGraphics.height = 900;
         Events.fire(new ResizeEvent());
+        SignalDispatcher.flush();
 
-        assertEquals(0, fireCount.get());
+        assertEquals(1, fireCount.get());
 
         mockGraphics.width = 400;
         mockGraphics.height = 800;
         Events.fire(new ResizeEvent());
+        SignalDispatcher.flush();
 
-        assertEquals(1, fireCount.get());
+        assertEquals(2, fireCount.get());
+        e.dispose();
     }
 
     @Test
@@ -96,16 +99,19 @@ class SignalsTest extends SolimEnv {
         AtomicInteger sub1 = new AtomicInteger(0);
         AtomicInteger sub2 = new AtomicInteger(0);
 
-        if (Signals.isPortrait() instanceof Signal) {
-            ((Signal<Boolean>) Signals.isPortrait()).subscribe(val -> sub1.incrementAndGet());
-            ((Signal<Boolean>) Signals.isPortrait()).subscribe(val -> sub2.incrementAndGet());
-        }
+        Effect e1 = Effect.of(Signals.isPortrait(), val -> sub1.incrementAndGet());
+        Effect e2 = Effect.of(Signals.isPortrait(), val -> sub2.incrementAndGet());
+        assertEquals(1, sub1.get());
+        assertEquals(1, sub2.get());
 
         mockGraphics.width = 300;
         mockGraphics.height = 600;
         Events.fire(new ResizeEvent());
+        SignalDispatcher.flush();
 
-        assertEquals(1, sub1.get());
-        assertEquals(1, sub2.get());
+        assertEquals(2, sub1.get());
+        assertEquals(2, sub2.get());
+        e1.dispose();
+        e2.dispose();
     }
 }

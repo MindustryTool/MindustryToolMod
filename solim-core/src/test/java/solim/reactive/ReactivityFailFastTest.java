@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Test;
 import arc.Application;
 import arc.Core;
 import arc.mock.MockApplication;
+import solim.core.ReactiveObserver;
+import solim.core.ReactiveSource;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
@@ -34,11 +36,18 @@ class ReactivityFailFastTest extends SolimEnv {
     }
 
     @Test
-    void signalPropagatesSubscriberException() {
+    void signalPropagatesObserverException() {
         Signal<String> signal = Signal.of("initial");
-        signal.subscribe(val -> {
-            if ("bad".equals(val)) {
-                throw new IllegalStateException("Bad value: " + val);
+        signal.addObserver(new ReactiveObserver() {
+            @Override
+            public void addDependency(solim.core.ReactiveSource observable) {
+            }
+
+            @Override
+            public void invalidate() {
+                if ("bad".equals(signal.peek())) {
+                    throw new IllegalStateException("Bad value: bad");
+                }
             }
         });
 
@@ -60,11 +69,10 @@ class ReactivityFailFastTest extends SolimEnv {
             return "val:" + v;
         });
 
-        derived.get();
-        derived.subscribe(val -> {
-        });
+        assertEquals("val:10", derived.get());
+        mapSignal.put("k1", 100);
 
-        RuntimeException thrown = assertThrows(RuntimeException.class, () -> mapSignal.put("k1", 100));
+        RuntimeException thrown = assertThrows(RuntimeException.class, derived::get);
         assertEquals("Overflow value: 100", thrown.getMessage());
     }
 

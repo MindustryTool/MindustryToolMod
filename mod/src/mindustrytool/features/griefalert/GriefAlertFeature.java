@@ -37,6 +37,7 @@ import mindustrytool.input.ModMobileInput;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
+import solim.reactive.Effect;
 import solim.reactive.Signal;
 
 public class GriefAlertFeature extends Feature {
@@ -114,7 +115,7 @@ public class GriefAlertFeature extends Feature {
         if (signal == null) {
             boolean initial = Core.settings.getBool(blockSettingKey(block), true);
             signal = Signal.of(initial);
-            signal.subscribe(enabled -> {
+            Effect.of(signal, enabled -> {
                 Core.settings.put(blockSettingKey(block), enabled);
                 if (blockEnabled == null) {
                     rebuildBlockLookup();

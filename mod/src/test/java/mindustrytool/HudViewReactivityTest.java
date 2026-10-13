@@ -20,9 +20,9 @@ import mindustrytool.features.teamresource.TeamResourceState;
 import mindustrytool.features.timecontrol.TimeControlFeature;
 import mindustrytool.test.MindustryTestEnv;
 import solim.reactive.Computed;
+import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
-import solim.reactive.Subscription;
 
 class HudViewReactivityTest extends MindustryTestEnv {
 
@@ -66,20 +66,22 @@ class HudViewReactivityTest extends MindustryTestEnv {
         long initialTick = state.tickSignal.get();
         AtomicInteger notificationCount = new AtomicInteger(0);
 
-        state.tickSignal.subscribe(tick -> notificationCount.incrementAndGet());
+        Effect.of(state.tickSignal, tick -> notificationCount.incrementAndGet());
 
-        assertEquals(0, notificationCount.get(), "No notifications before mutation");
+        assertEquals(1, notificationCount.get(), "Initial invocation seeded on Effect creation");
 
         state.reset();
+        flushEffects();
         assertTrue(state.tickSignal.get() > initialTick);
-        assertEquals(1, notificationCount.get());
+        assertEquals(2, notificationCount.get());
 
         for (int i = 0; i < 50; i++) {
             state.getFormattedAmount(null);
             state.getFormattedRate(null);
             state.getRateColor(null);
         }
-        assertEquals(1, notificationCount.get(), "State queries must not emit redundant ticks");
+        flushEffects();
+        assertEquals(2, notificationCount.get(), "State queries must not emit redundant ticks");
     }
 
     @Test
@@ -166,23 +168,28 @@ class HudViewReactivityTest extends MindustryTestEnv {
             observedValues.add(val);
         };
 
-        Subscription subscription = themeSignal.subscribe(listener);
+        Effect effect = Effect.of(themeSignal, listener);
 
         assertEquals("dark", themeSignal.get());
+        assertEquals(1, updateCount.get());
+        assertEquals("dark", observedValues.get(0));
 
         themeSignal.set("light");
+        flushEffects();
         assertEquals("light", themeSignal.get());
-        assertEquals(1, updateCount.get());
-        assertEquals("light", observedValues.get(0));
+        assertEquals(2, updateCount.get());
+        assertEquals("light", observedValues.get(1));
 
         themeSignal.set("high-contrast");
+        flushEffects();
         assertEquals("high-contrast", themeSignal.get());
-        assertEquals(2, updateCount.get());
-        assertEquals("high-contrast", observedValues.get(1));
+        assertEquals(3, updateCount.get());
+        assertEquals("high-contrast", observedValues.get(2));
 
-        subscription.dispose();
+        effect.dispose();
         themeSignal.set("dark");
-        assertEquals(2, updateCount.get(), "Updates must stop after subscription is disposed");
+        flushEffects();
+        assertEquals(3, updateCount.get(), "Updates must stop after subscription is disposed");
     }
 
     @Test
