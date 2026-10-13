@@ -1,4 +1,10 @@
-## ADDED Requirements
+# effect-binding-overload Specification
+
+## Purpose
+
+Defines the `Effect.of(Readable<T>, Cons<T>)` binding factory overload that replaces `solim.reactive.Binding`, establishing unified reactivity through auto-owned and frame-scheduled effects.
+
+## Requirements
 
 ### Requirement: Effect.of(Readable, Cons) binding overload
 `Effect` SHALL provide a static factory `Effect.of(Readable<T> source, Cons<T> target)` that creates an `Effect` whose body reads `source.get()` and passes the value to `target`. The resulting `Effect` SHALL auto-register with the ambient `OwnershipContext` exactly once, exactly as all other `Effect.of()` overloads do. It SHALL track `source` as a reactive dependency and re-run whenever `source` changes.
