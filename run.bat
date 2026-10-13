@@ -180,32 +180,43 @@ if /I "%APP_TO_RUN:~-4%"==".jar" (
 
 ) else (
 
-    :: Mindustry.exe is a launcher stub, so -D flags cannot be appended to it. The bundled
-    :: JRE beside it can, so prefer launching that directly: it is the only way the
-    :: solim.debug.enabled flag reaches the JVM, and java.exe keeps a console attached so
-    :: the "[Solim] ... enabled via system property" line is actually visible. Falls back
-    :: to the plain executable when the distribution has no bundled jre\desktop.jar.
-    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-        "$parentPid = (Get-CimInstance Win32_Process -Filter ('ProcessId=' + $PID)).ParentProcessId; " ^
-        "$dir = '%DEFAULT_DIR%'; " ^
-        "$jreJava = Join-Path $dir 'jre\bin\java.exe'; " ^
-        "$jreJar = Join-Path $dir 'jre\desktop.jar'; " ^
-        "if ((Test-Path $jreJava) -and (Test-Path $jreJar)) { " ^
-        "    Write-Host 'Launching bundled JRE with Solim debug flags...'; " ^
-        "    $mindustry = Start-Process -FilePath $jreJava -ArgumentList '-Dsolim.mcp.enabled=true','-Dsolim.debug.enabled=true','-jar',$jreJar -WorkingDirectory $dir -PassThru; " ^
-        "} else { " ^
-        "    Write-Host 'Bundled JRE not found - launching Mindustry.exe WITHOUT Solim debug flags.'; " ^
-        "    $mindustry = Start-Process -FilePath '%APP_TO_RUN%' -WorkingDirectory $dir -PassThru; " ^
-        "} " ^
-        "Write-Host ('Mindustry started with PID ' + $mindustry.Id); " ^
-        "while (-not $mindustry.HasExited) { " ^
-        "    Start-Sleep -Milliseconds 500; " ^
-        "    if (-not (Get-Process -Id $parentPid -ErrorAction SilentlyContinue)) { " ^
-        "        Write-Host 'Launcher terminated. Stopping Mindustry...'; " ^
-        "        Stop-Process -Id $mindustry.Id -Force -ErrorAction SilentlyContinue; " ^
-        "        break; " ^
-        "    } " ^
-        "}"
+    :: Mindustry.exe is a launcher stub: -D flags cannot be appended to it, and the game
+    :: runs in a console-less child, so its log never reaches this terminal. When the
+    :: distribution ships a bundled JRE, launch it directly with -NoNewWindow instead:
+    :: flag arguments become passable, the log streams into this terminal, no extra window
+    :: opens, and the auto-close loop still tracks one directly-killable process.
+    if exist "%DEFAULT_DIR%jre\bin\java.exe" (
+        if exist "%DEFAULT_DIR%jre\desktop.jar" (
+            set "LAUNCH_JRE=1"
+        )
+    )
+    if defined LAUNCH_JRE (
+        powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+            "$parentPid = (Get-CimInstance Win32_Process -Filter ('ProcessId=' + $PID)).ParentProcessId; " ^
+            "$mindustry = Start-Process -FilePath '%DEFAULT_DIR%jre\bin\java.exe' -ArgumentList '-Dsolim.mcp.enabled=true','-Dsolim.debug.enabled=true','-jar','%DEFAULT_DIR%jre\desktop.jar' -WorkingDirectory '%DEFAULT_DIR%' -NoNewWindow -PassThru; " ^
+            "Write-Host ('Mindustry started with PID ' + $mindustry.Id); " ^
+            "while (-not $mindustry.HasExited) { " ^
+            "    Start-Sleep -Milliseconds 500; " ^
+            "    if (-not (Get-Process -Id $parentPid -ErrorAction SilentlyContinue)) { " ^
+            "        Write-Host 'Launcher terminated. Stopping Mindustry...'; " ^
+            "        Stop-Process -Id $mindustry.Id -Force -ErrorAction SilentlyContinue; " ^
+            "        break; " ^
+            "    } " ^
+            "}"
+    ) else (
+        powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+            "$parentPid = (Get-CimInstance Win32_Process -Filter ('ProcessId=' + $PID)).ParentProcessId; " ^
+            "$mindustry = Start-Process -FilePath '%APP_TO_RUN%' -WorkingDirectory '%DEFAULT_DIR%' -PassThru; " ^
+            "Write-Host ('Mindustry started with PID ' + $mindustry.Id); " ^
+            "while (-not $mindustry.HasExited) { " ^
+            "    Start-Sleep -Milliseconds 500; " ^
+            "    if (-not (Get-Process -Id $parentPid -ErrorAction SilentlyContinue)) { " ^
+            "        Write-Host 'Launcher terminated. Stopping Mindustry...'; " ^
+            "        Stop-Process -Id $mindustry.Id -Force -ErrorAction SilentlyContinue; " ^
+            "        break; " ^
+            "    } " ^
+            "}"
+    )
 )
 
 echo.
