@@ -84,6 +84,8 @@ public final class ChatActionPopup {
             return;
         }
         String messageId = message.getId();
+        String content = message.getContent();
+
         String alreadyTranslating = store.ui().currentTranslatingMessageId();
         if (messageId != null && messageId.equals(alreadyTranslating)) {
             dismiss();
@@ -101,17 +103,16 @@ public final class ChatActionPopup {
         TranslationFeature tf = FeatureManager.getFeature(TranslationFeature.class);
         CompletableFuture<String> future;
         if (tf != null && tf.getActiveProvider().isConfigured()) {
-            future = tf.translate(message.getContent(), tf.getTargetLanguage());
+            future = tf.translate(content, tf.getTargetLanguage());
         } else {
-            future = MindustryTool.translate(message.getContent(), targetLocale);
+            future = MindustryTool.translate(content, targetLocale);
         }
 
         future.whenComplete((res, err) -> {
             Core.app.post(() -> {
                 store.ui().setTranslatingMessageId(null);
                 if (err != null || res == null) {
-                    Vars.ui.showInfoToast(Core.bundle.get("feature.chat.ui.translate-failed", "Translation failed"),
-                            2f);
+                    Vars.ui.showInfoFade(Core.bundle.get("feature.chat.ui.translate-failed", "Translation failed"));
                 } else {
                     ChatMessageHeightCalculator.clearCache();
                     store.translations().set(messageId, res);

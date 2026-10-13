@@ -12,7 +12,6 @@ import arc.Application;
 import arc.Core;
 import arc.mock.MockApplication;
 import solim.core.ReactiveObserver;
-import solim.core.ReactiveSource;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 

@@ -66,7 +66,6 @@ import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
-import solim.reactive.Signal;
 
 public class VisualizerFeature extends Feature {
 

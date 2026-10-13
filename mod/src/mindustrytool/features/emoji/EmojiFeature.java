@@ -2,7 +2,6 @@ package mindustrytool.features.emoji;
 
 import arc.func.Prov;
 import arc.util.Nullable;
-import mindustry.gen.Iconc;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;

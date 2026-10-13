@@ -7,7 +7,6 @@ import arc.graphics.Color;
 import arc.struct.Seq;
 import mindustry.Vars;
 import mindustry.gen.Icon;
-import mindustry.gen.Iconc;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.emoji.EmojiIcons.Entry;
 import solim.overlay.SolimDialog;
