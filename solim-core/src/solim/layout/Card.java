@@ -1,4 +1,5 @@
 package solim.layout;
+
 import solim.modifier.CellConfig;
 
 import arc.graphics.Color;
@@ -16,11 +17,8 @@ import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.modifier.PendingCellConfig;
 
-/**
- * Clickable card container built on a single Arc Table with lazy click
- * handling borrowed from Arc Button semantics.
- */
-public final class Card extends Component implements CellConfig<Card>, ElementConfig<Card>, TableConfig<Card>, GapContainer {
+public final class Card extends Component
+        implements CellConfig<Card>, ElementConfig<Card>, TableConfig<Card>, GapContainer {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -70,7 +68,6 @@ public final class Card extends Component implements CellConfig<Card>, ElementCo
         return table;
     }
 
-
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
@@ -85,7 +82,7 @@ public final class Card extends Component implements CellConfig<Card>, ElementCo
 
     public Card color(@Nullable Readable<Color> color) {
         if (color != null) {
-        own(Effect.of(() -> {
+            own(Effect.of(() -> {
                 Color c = color.get();
                 if (c != null) {
                     table.setColor(c);
@@ -138,8 +135,6 @@ public final class Card extends Component implements CellConfig<Card>, ElementCo
     public void respace() {
         GapContainer.applySpacing(table, Direction.VERTICAL, gap);
     }
-
-
 
     @Override
     public Card align(int align) {

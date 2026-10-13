@@ -4,9 +4,6 @@ import arc.util.Nullable;
 import mindustry.game.Schematic;
 import mindustrytool.models.response.ChatMessage;
 
-/**
- * Domain model representing a pre-parsed chat message with its resolved payload type.
- */
 public abstract class ParsedChatMessage {
 
     private final ChatMessage raw;

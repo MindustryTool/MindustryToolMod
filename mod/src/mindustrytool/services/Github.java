@@ -25,10 +25,6 @@ public final class Github {
     private Github() {
     }
 
-    /**
-     * Warms both live cacheable endpoints once using QueryCache prefetching.
-     * Safe to call repeatedly. Never blocks the caller.
-     */
     public static void prefetchAll() {
         QueryCache cache = QueryCache.getInstance();
         cache.prefetch(QueryKey.of("github", "mod.hjson"),
@@ -42,10 +38,6 @@ public final class Github {
                 () -> rawApi.get(Config.MOD_HJSON_URL).sendAsync().thenApply(r -> r.body()));
     }
 
-    /**
-     * Fetches mod.hjson for a specific release tag from GitHub raw content.
-     * Cached by tag in QueryCache.
-     */
     public static CompletableFuture<String> getModHjson(String tag) {
         String url = "https://raw.githubusercontent.com/" + Config.ORG_NAME + "/" + Config.REPO_NAME + "/" + tag
                 + "/mod.hjson";
@@ -53,12 +45,6 @@ public final class Github {
                 () -> rawApi.get(url).sendAsync().thenApply(r -> r.body()));
     }
 
-    /**
-     * GitHub releases return a heterogeneous JSON array; callers parse via
-     * Jval/JsonUtils. Kept as
-     * String to avoid coupling to GitHub schema; use JsonUtils if typed parsing
-     * needed.
-     */
     public static CompletableFuture<String> getReleases() {
         return QueryCache.getInstance().fetchCached(QueryKey.of("github", "releases"),
                 () -> githubApi.get("").sendAsync().thenApply(r -> r.body()));
@@ -71,10 +57,6 @@ public final class Github {
                         .thenApply(r -> r.body()));
     }
 
-    /**
-     * Live on every call by contract: status-parameterized and freshness-sensitive.
-     * Never memoized.
-     */
     public static CompletableFuture<TaskResponse> getProjectTasks(String status) {
         return projectApi
                 .get("/api/v1/projects/" + Config.PROJECT_ID + "/tasks?status=" + status)

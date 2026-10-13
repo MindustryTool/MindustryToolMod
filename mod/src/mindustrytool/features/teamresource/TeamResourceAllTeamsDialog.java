@@ -7,10 +7,6 @@ import mindustry.gen.Tex;
 import mindustrytool.components.WebStyles;
 import solim.overlay.SolimDialog;
 
-/**
- * Modal dialog for selecting an active team when many teams exist, using
- * SolimDialog.
- */
 public class TeamResourceAllTeamsDialog extends SolimDialog {
 
     public TeamResourceAllTeamsDialog(TeamResourceState state) {

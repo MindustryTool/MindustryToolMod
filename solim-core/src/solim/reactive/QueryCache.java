@@ -15,10 +15,6 @@ import arc.func.Boolf;
 import arc.func.Prov;
 import solim.core.Disposable;
 
-/**
- * Global cache for queries, managing entry caching, deduplication,
- * invalidation, and garbage collection.
- */
 public final class QueryCache {
 
     public static final long DEFAULT_STALE_TIME_MS = 30_000L;
@@ -114,52 +110,47 @@ public final class QueryCache {
             }
         }
 
-		CacheEntry<?> entry = getEntry(key);
-		if (entry != null) {
-			int remaining = entry.decrementObservers();
-			if (remaining <= 0) {
-				scheduleEviction(key, entry, gcTimeMillis);
-			}
-		}
-	}
+        CacheEntry<?> entry = getEntry(key);
+        if (entry != null) {
+            int remaining = entry.decrementObservers();
+            if (remaining <= 0) {
+                scheduleEviction(key, entry, gcTimeMillis);
+            }
+        }
+    }
 
-	/**
-	 * Evicts the entry for {@code key} after {@code gcTimeMillis} only when it
-	 * has no active observers. Used for parameter-keyed entries fetched without
-	 * a registered observer (e.g. dynamic-key queries) so they do not leak.
-	 */
-	public void evictIfUnobserved(QueryKey key, long gcTimeMillis) {
-		Objects.requireNonNull(key, "key cannot be null");
-		CacheEntry<?> entry = getEntry(key);
-		if (entry != null) {
-			scheduleEviction(key, entry, gcTimeMillis);
-		}
-	}
+    public void evictIfUnobserved(QueryKey key, long gcTimeMillis) {
+        Objects.requireNonNull(key, "key cannot be null");
+        CacheEntry<?> entry = getEntry(key);
+        if (entry != null) {
+            scheduleEviction(key, entry, gcTimeMillis);
+        }
+    }
 
-	private void scheduleEviction(QueryKey key, CacheEntry<?> entry, long gcTimeMillis) {
-		if (gcTimeMillis <= 0) {
-			removeEntry(key, entry);
-		} else {
-			float delaySeconds = Math.max(0.001f, gcTimeMillis / 1000f);
-			Disposable task = scheduler.schedule(() -> {
-				synchronized (entry) {
-					if (entry.getActiveObservers() <= 0) {
-						removeEntry(key, entry);
-					}
-				}
-			}, delaySeconds);
-			entry.setGcTask(task);
-		}
-	}
+    private void scheduleEviction(QueryKey key, CacheEntry<?> entry, long gcTimeMillis) {
+        if (gcTimeMillis <= 0) {
+            removeEntry(key, entry);
+        } else {
+            float delaySeconds = Math.max(0.001f, gcTimeMillis / 1000f);
+            Disposable task = scheduler.schedule(() -> {
+                synchronized (entry) {
+                    if (entry.getActiveObservers() <= 0) {
+                        removeEntry(key, entry);
+                    }
+                }
+            }, delaySeconds);
+            entry.setGcTask(task);
+        }
+    }
 
-	private void removeEntry(QueryKey key, CacheEntry<?> entry) {
-		entries.remove(key);
-		entry.clear();
-		List<InvalidationListener> list = observers.get(key);
-		if (list != null && list.isEmpty()) {
-			observers.remove(key);
-		}
-	}
+    private void removeEntry(QueryKey key, CacheEntry<?> entry) {
+        entries.remove(key);
+        entry.clear();
+        List<InvalidationListener> list = observers.get(key);
+        if (list != null && list.isEmpty()) {
+            observers.remove(key);
+        }
+    }
 
     public void invalidate(QueryKey key) {
         Objects.requireNonNull(key, "key cannot be null");
@@ -233,12 +224,6 @@ public final class QueryCache {
         }
     }
 
-    /**
-     * Single fetch core shared by all cache paths: deduplicates concurrent
-     * requests, writes the entry on success, and never caches failures so the
-     * last good data is always preserved. Must be called holding the entry
-     * monitor.
-     */
     private <T> CompletableFuture<T> startFetch(CacheEntry<T> entry, Prov<CompletableFuture<T>> fetcher) {
         CompletableFuture<T> future = fetcher.get();
         entry.setInflight(future);

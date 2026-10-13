@@ -9,10 +9,6 @@ import java.util.Map;
 import solim.mcp.introspection.SnapshotRoot;
 import solim.mcp.introspection.UiSnapshot;
 
-/**
- * Registers and dispatches the debug tools. Tools are stateless and safe to
- * call concurrently.
- */
 public final class ToolRegistry {
     private final Map<String, McpTool> tools = new LinkedHashMap<>();
     private final SnapshotRoot snapshotRoot;

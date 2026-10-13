@@ -8,23 +8,16 @@ import mindustry.game.EventType.WorldLoadEvent;
 import mindustry.input.DesktopInput;
 import mindustry.input.MobileInput;
 
-/**
- * Manages the installation and verification of MindustryTool's unified input handlers.
- * Ensures {@link ModDesktopInput} and {@link ModMobileInput} are permanently active
- * without requiring individual features to swap or restore inputs.
- */
 public final class ModInputManager {
 
-    private ModInputManager() {}
+    private ModInputManager() {
+    }
 
     public static void init() {
         Events.on(ClientLoadEvent.class, e -> Core.app.post(ModInputManager::ensureCustomInput));
         Events.on(WorldLoadEvent.class, e -> Core.app.post(ModInputManager::ensureCustomInput));
     }
 
-    /**
-     * Ensures the active input handler is wrapped with MindustryTool's custom implementation.
-     */
     public static void ensureCustomInput() {
         if (Vars.control == null) {
             return;

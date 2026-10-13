@@ -40,10 +40,6 @@ import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
 import arc.util.Time;
 
-/**
- * Pure Button container widget supporting explicit children composition, custom
- * width/height sizing, and reactive state.
- */
 public final class Button
         extends Component implements GapContainer, ElementConfig<Button>, TableConfig<Button>, CellConfig<Button> {
 
@@ -248,15 +244,6 @@ public final class Button
         return this;
     }
 
-    /**
-     * Installs a click listener that re-asserts a reactive {@code checked} binding
-     * after
-     * Arc's built-in auto-toggle has flipped the flag. Runs on every click for
-     * signal-backed bindings only. Arc's public {@code setChecked} uses
-     * {@code programmaticChangeEvents == false} and fires no {@code ChangeEvent},
-     * so this
-     * cannot loop.
-     */
     private void ensureCheckedReassertListener() {
         if (hasCheckedReassertListener) {
             return;

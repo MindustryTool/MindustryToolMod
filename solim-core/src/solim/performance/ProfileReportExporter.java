@@ -9,49 +9,11 @@ import java.io.OutputStreamWriter;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Writes the self-contained 3-tab interactive profile report.
- *
- * <p>
- * The report is a single HTML file with no external network dependencies: all
- * CSS and JavaScript
- * are inlined and the whole profile is embedded as one JSON payload. Three
- * views are provided:
- * <ol>
- * <li><b>Flame Graph</b> — the unified {@code build} / {@code signal} /
- * {@code computed} /
- * {@code effect} / {@code flush} timeline, zoomable and pannable, with search
- * filtering and a
- * click-to-inspect details panel. The Chrome Trace and Speedscope payloads
- * remain embedded so the
- * session can still be opened in external tools.</li>
- * <li><b>Component Tree</b> — the live hierarchy from {@link SessionRoot} with
- * an expandable tree on
- * the left and a reactive inspector for the selected component on the
- * right.</li>
- * <li><b>Reactive Hotspots</b> — sortable tables ranking signals, computeds,
- * and effects.</li>
- * </ol>
- *
- * <p>
- * All payload strings are escaped before being embedded, so component names,
- * signal values, and
- * dependency labels containing quotes or angle brackets cannot break out of the
- * JSON script block.
- */
 public final class ProfileReportExporter {
 
     private ProfileReportExporter() {
     }
 
-    /**
-     * Renders the report as an HTML document.
-     *
-     * @param spans        recorded trace spans for the session
-     * @param droppedCount number of spans evicted by the ring buffer
-     * @param traceId      the trace generation id
-     * @param components   live component tree snapshot
-     */
     public static String render(@Nullable List<TraceSpan> spans, int droppedCount, long traceId,
             @Nullable List<ComponentNodeSnapshot> components) {
         List<TraceSpan> ordered = FlameExporter.ordered(spans);
@@ -89,14 +51,6 @@ public final class ProfileReportExporter {
         return sb.toString();
     }
 
-    /**
-     * Builds the single JSON payload consumed by the report's three views.
-     *
-     * <p>
-     * Exposed separately from {@link #render} so tests can assert on the embedded
-     * data without
-     * parsing the surrounding HTML.
-     */
     public static String payload(@Nullable List<TraceSpan> spans, int droppedCount, long traceId,
             @Nullable List<ComponentNodeSnapshot> components) {
         StringBuilder sb = new StringBuilder(8 * 1024);

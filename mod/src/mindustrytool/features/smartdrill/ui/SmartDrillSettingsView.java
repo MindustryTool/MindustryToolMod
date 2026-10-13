@@ -13,9 +13,6 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.features.smartdrill.SmartDrillFeature;
 import solim.core.Component;
 
-/**
- * Modern declarative Solim settings view for Smart Drill.
- */
 public class SmartDrillSettingsView extends Component {
 
     private final SmartDrillFeature feature;

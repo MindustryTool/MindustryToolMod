@@ -23,12 +23,6 @@ import solim.runtime.ReactiveContext;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
-/**
- * Verifies the contract that {@link Perf#setEnabled(boolean)} swaps <em>all
- * three</em> runtime
- * services as one operation, and that disabling releases every piece of
- * recorded debug state.
- */
 class PerfServiceSwapTest extends SolimEnv {
 
     @BeforeEach

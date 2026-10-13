@@ -13,14 +13,6 @@ import solim.core.SolimToken;
 import solim.modifier.PendingCellConfig;
 import solim.reactive.Readable;
 
-/**
- * Vanilla schematic preview with a fixed preferred size. Arc Table sizes cells
- * from actor preferred size, so reporting the bound as the pref constrains the
- * preview on every layout pass with no dependence on attach timing. (A previous
- * effect-based cell-pinning approach silently never applied: effects run during
- * lazy build before the image has a parent.) Centering travels on the element
- * as a pending cell config, applied by the framework at attach time.
- */
 final class BoundedSchematicImage extends Component {
 
     private final Schematic schematic;

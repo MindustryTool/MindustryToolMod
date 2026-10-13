@@ -42,9 +42,7 @@ import solim.core.Component;
 import solim.reactive.Computed;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
-/**
- * Declarative rules inspector with search, category filters, and role-based editing.
- */
+
 public class MapRulesView extends Component {
 
     private static final String CAT_ALL = RuleDescriptor.CAT_ALL;
@@ -616,13 +614,13 @@ public class MapRulesView extends Component {
         refresh();
     }
 
-
     private void boolRow(RuleDescriptor def, Rules rules) {
         boolean modified = feature.diff.isModified(def, rules);
         boolean current = def.boolGetter.get(rules);
         String label = t(def.nameKey()) + (modified ? " *" : "");
         boolean editable = "fog".equals(def.fieldName) || "lighting".equals(def.fieldName)
-                ? visualEditable(def.fieldName) : editableGameplay();
+                ? visualEditable(def.fieldName)
+                : editableGameplay();
         ruleCard(def.descKey(), () -> {
             if (editable) {
                 boolean isVisualOnly = !editableGameplay() && visualEditable(def.fieldName);

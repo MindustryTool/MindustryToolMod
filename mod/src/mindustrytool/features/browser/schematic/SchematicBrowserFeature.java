@@ -15,11 +15,6 @@ import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
 import arc.scene.Element;
 
-/**
- * Feature for browsing, searching, and downloading schematics from the online
- * library. Supports in-game placement, clipboard copying, and local library
- * saving.
- */
 public class SchematicBrowserFeature extends Feature {
 
     private @Nullable SchematicBrowserDialog dialog;

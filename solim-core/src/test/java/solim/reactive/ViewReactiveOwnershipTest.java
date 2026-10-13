@@ -9,18 +9,6 @@ import org.junit.jupiter.api.Test;
 import solim.core.Component;
 import solim.test.SolimCoreEnv;
 
-/**
- * Verifies that reactive state declared inside {@code build()} is owned by the
- * component that
- * declares it, rather than by whichever component happened to construct it.
- *
- * <p>
- * A field initialiser runs before the component can push itself as the
- * ownership scope, so a
- * {@code Computed} declared there attaches to the enclosing component (or to
- * nothing, when the
- * view is constructed at top level) and survives the view's disposal.
- */
 class ViewReactiveOwnershipTest extends SolimCoreEnv {
 
     static final class View extends Component {

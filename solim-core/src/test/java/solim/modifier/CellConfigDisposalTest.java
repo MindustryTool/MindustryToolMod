@@ -17,22 +17,6 @@ import solim.test.BuildScopeHost;
 import solim.test.ModifierScope;
 import solim.test.SolimEnv;
 
-/**
- * Method-by-method disposal proof for the reactive {@link CellConfig}
- * constraints.
- *
- * <p>
- * Each constraint is applied to the component's parent {@link Cell}, so the
- * proof reads the
- * cell back after disposal: a leaked effect would keep writing
- * {@code Cell.minWidth()} and friends
- * long after the component that configured them is gone.
- *
- * <p>
- * The parent is a plain Arc {@link Table}, not a gap container, so margins land
- * on
- * {@code Cell.pad*} where they are observable.
- */
 class CellConfigDisposalTest extends SolimEnv {
 
     @Test

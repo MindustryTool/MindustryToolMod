@@ -24,14 +24,6 @@ import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.reactive.Subscription;
 
-/**
- * Headless E2E test suite verifying Solim HUD reactivity:
- * 1. Fine-grained reactive signal propagation across TeamResource, QuickAccess,
- * TimeControl.
- * 2. Combined reactive computed tracking (colsConfig + items size).
- * 3. Absence of redundant layout invalidation cycles during state ticks.
- * 4. Standard Solim lifecycle ownership and cleanup.
- */
 class HudViewReactivityTest extends MindustryTestEnv {
 
     @BeforeEach

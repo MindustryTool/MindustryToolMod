@@ -32,27 +32,6 @@ import solim.runtime.ReactiveContext;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 
-/**
- * Floating context menu: a scene-hosted, non-modal menu with reactive provider
- * content, anchor positioning, and built-in dismissal.
- *
- * <p>
- * Usage:
- * 
- * <pre>
- * Popup&lt;ChatMessage&gt; menu = popup()
- *         .children(request -> column()...rows...)
- *         .rounded(2);
- * menu.show(message, stageX, stageY);
- * menu.hide();
- * </pre>
- *
- * <p>
- * All mutating methods return this instance for chaining. Show and hide are
- * explicit and safe to call headless (no-ops without a scene). Outside taps
- * dismiss the menu without consuming the touch, so underlying UI stays
- * usable.
- */
 public final class Popup<T> extends Component implements TableConfig<Popup<T>> {
 
     public enum Edge {
@@ -118,10 +97,6 @@ public final class Popup<T> extends Component implements TableConfig<Popup<T>> {
         return table;
     }
 
-    /**
-     * Opts into pinned-edge reconciliation: as content height drifts, the chosen
-     * edge stays fixed in stage coordinates. Null restores legacy behavior.
-     */
     public Popup<T> pinnedEdge(@Nullable Edge edge) {
         this.pinnedEdge = edge;
         return this;
@@ -131,11 +106,6 @@ public final class Popup<T> extends Component implements TableConfig<Popup<T>> {
         return pinnedEdge;
     }
 
-    /**
-     * Pure pinned-edge repositioning math: preserves the chosen edge across a
-     * content size change, then clamps into the stage (clamp wins over pin).
-     * Null edge returns the position unchanged.
-     */
     public static Vec2 pinnedPosition(@Nullable Edge edge, float x, float y, float w, float h,
             float newW, float newH, float stageW, float stageH) {
         float nx = x;
@@ -196,31 +166,16 @@ public final class Popup<T> extends Component implements TableConfig<Popup<T>> {
         return this;
     }
 
-    /**
-     * Sets an anchor element the menu mounts behind: on show, the menu is
-     * inserted into the anchor's parent before the anchor so the anchor draws
-     * above the menu. Falls back to the scene root when the anchor is null or
-     * detached. Returns this for chaining.
-     */
     public Popup<T> layerBehind(@Nullable Element anchor) {
         this.layerAnchor = anchor;
         return this;
     }
 
-    /**
-     * Sets the content provider applied to the data passed to {@link #show}.
-     * Content is rebuilt on every show call.
-     */
     public Popup<T> children(@Nullable Func<T, Component> provider) {
         this.provider = provider;
         return this;
     }
 
-    /**
-     * Shows the menu for the given data anchored near the given stage coordinates.
-     * Re-showing while open rebuilds content and re-anchors. Null data hides
-     * instead. No-op without a scene.
-     */
     public Popup<T> show(@Nullable T data, float stageX, float stageY) {
         if (data == null || Core.scene == null || Core.scene.root == null) {
             if (data == null) {
@@ -232,10 +187,6 @@ public final class Popup<T> extends Component implements TableConfig<Popup<T>> {
         return this;
     }
 
-    /**
-     * Removes the menu from the scene and detaches its listeners. Idempotent and
-     * safe to call headless.
-     */
     public Popup<T> hide() {
         lastHideTime = Time.millis();
         detachListeners();
@@ -252,11 +203,6 @@ public final class Popup<T> extends Component implements TableConfig<Popup<T>> {
         return lastHideTime;
     }
 
-    /**
-     * Computes menu placement: bottom edge at the anchor when it fits above,
-     * flipped below the anchor on overflow, clamped inside the stage on both axes.
-     * Pure Func of its inputs, safe to unit test headless.
-     */
     public static Vec2 place(float anchorX, float anchorY, float menuWidth, float menuHeight,
             float stageWidth, float stageHeight) {
         float x = Math.max(0f, Math.min(anchorX, Math.max(0f, stageWidth - menuWidth)));
@@ -330,10 +276,6 @@ public final class Popup<T> extends Component implements TableConfig<Popup<T>> {
         attachListeners();
     }
 
-    /**
-     * Attaches the menu table to the scene: behind the configured anchor when
-     * it has a live parent, otherwise at the scene root.
-     */
     private void mount() {
         if (table.parent != null) {
             return;
@@ -403,10 +345,6 @@ public final class Popup<T> extends Component implements TableConfig<Popup<T>> {
         return this;
     }
 
-    /**
-     * Popup table that reconciles an opted-in pinned edge when content size
-     * drifts. Without pinning it behaves exactly like a plain Table.
-     */
     private final class PopupTable extends Table {
         @Override
         public void validate() {

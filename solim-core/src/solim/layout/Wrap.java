@@ -1,4 +1,5 @@
 package solim.layout;
+
 import solim.modifier.CellConfig;
 
 import arc.scene.Element;
@@ -15,11 +16,6 @@ import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.modifier.PendingCellConfig;
 
-/**
- * Wrap container: lays out children in a row that wraps when the row is full.
- * Children receive growX() by default so WrapTable receives the full available
- * width.
- */
 public final class Wrap extends Component implements CellConfig<Wrap>, ElementConfig<Wrap>, TableConfig<Wrap>,
         GapContainer {
 
@@ -52,7 +48,6 @@ public final class Wrap extends Component implements CellConfig<Wrap>, ElementCo
     public Table table() {
         return table;
     }
-
 
     @Override
     public PendingCellConfig cellConfig() {
@@ -210,8 +205,6 @@ public final class Wrap extends Component implements CellConfig<Wrap>, ElementCo
         respace();
         return this;
     }
-
-
 
     @Override
     public Wrap name(@Nullable String name) {

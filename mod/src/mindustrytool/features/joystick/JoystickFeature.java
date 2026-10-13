@@ -14,11 +14,6 @@ import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
 
-/**
- * On-screen virtual joystick that decouples unit movement from camera panning.
- * Feeds movement vectors directly into the unified mod input handlers while
- * enabled.
- */
 public class JoystickFeature extends Feature {
 
     public static final float DEFAULT_POS_X = 25f;

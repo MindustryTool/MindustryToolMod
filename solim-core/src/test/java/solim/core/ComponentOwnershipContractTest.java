@@ -30,13 +30,6 @@ import solim.runtime.SignalDispatcher;
 import solim.test.CollectingOwner;
 import solim.test.SolimCoreEnv;
 
-/**
- * The behaviours the unified base class is meant to guarantee: one ownership
- * tree, one disposal
- * order across both element strategies, reactive resources owned by the
- * component that configures
- * them, and an ambient stack that holds owners without allocating a callback.
- */
 class ComponentOwnershipContractTest extends SolimCoreEnv {
 
     private static class Lazy extends Component {

@@ -14,12 +14,6 @@ import mindustrytool.components.WebStyles;
 import solim.core.Component;
 import solim.reactive.Readable;
 
-/**
- * Component rendering saved Control Groups list with recall and delete buttons.
- * Each row shows the group's living-unit icons plus count; group names are not
- * shown.
- * Renders nothing when no groups are saved.
- */
 public class ControlGroupList extends Component {
 
     private final ArmyControlFeature feature;

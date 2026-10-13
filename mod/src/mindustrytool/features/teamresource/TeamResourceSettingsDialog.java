@@ -3,9 +3,6 @@ package mindustrytool.features.teamresource;
 import arc.Core;
 import solim.overlay.SolimDialog;
 
-/**
- * Settings dialog for configuring Team Resource Tracker options, using SolimDialog.
- */
 public class TeamResourceSettingsDialog extends SolimDialog {
 
     public TeamResourceSettingsDialog(TeamResourceFeature feature) {

@@ -12,39 +12,6 @@ import solim.core.Disposable;
 import solim.core.DisposableOwner;
 import solim.core.OwnershipContext;
 
-/**
- * Collects every {@link Disposable} registered through {@link OwnershipContext}
- * while the scope
- * is open, regardless of its type, and either transfers them to an owner or
- * destroys them.
- *
- * <p>
- * This replaces clearing the {@code OwnershipContext} stack to "suspend"
- * ownership. Clearing
- * the stack discarded whatever a factory registered; a scope keeps it and
- * decides what happens to
- * it. Usage is always the same shape:
- *
- * <pre>{@code
- * OwnershipScope scope = OwnershipScope.open();
- * try {
- *     C created = factory.get(item);
- *     scope.adoptInto(created);
- * } finally {
- *     scope.close();
- * }
- * }</pre>
- *
- * <p>
- * {@code close()} is strict: anything collected and not adopted is disposed. A
- * block that
- * throws therefore never leaves live resources behind.
- *
- * <p>
- * Instances are pooled and the collection list is allocated lazily, so opening
- * a scope on a
- * hot path (an effect body) allocates nothing once the pool is warm.
- */
 public final class OwnershipScope implements DisposableOwner {
 
     private static final Deque<OwnershipScope> pool = new ArrayDeque<>();
@@ -78,13 +45,6 @@ public final class OwnershipScope implements DisposableOwner {
         collected.add(disposable);
     }
 
-    /**
-     * Transfers everything collected so far to {@code owner}.
-     *
-     * <p>
-     * The owner is never transferred into itself. Resources are left unadopted when
-     * {@code owner} is {@code null}, which means {@link #close()} destroys them.
-     */
     public void adoptInto(@Nullable DisposableOwner owner) {
         List<Disposable> collected = this.collected;
         if (collected == null || owner == null) {
@@ -116,12 +76,6 @@ public final class OwnershipScope implements DisposableOwner {
         }
     }
 
-    /**
-     * Closes the scope: restores the previous registrar and disposes every
-     * collected resource
-     * that was not adopted. Idempotent, and always safe to call from a
-     * {@code finally} block.
-     */
     public void close() {
         if (closed) {
             return;

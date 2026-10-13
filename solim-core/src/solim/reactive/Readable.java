@@ -9,10 +9,6 @@ public interface Readable<T> extends Prov<T> {
     @Override
     T get();
 
-    /**
-     * Returns the current value without dependency tracking.
-     * Use for non-reactive reads (e.g. inside event handlers or callbacks).
-     */
     default T peek() {
         return get();
     }

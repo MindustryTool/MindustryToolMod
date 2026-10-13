@@ -6,9 +6,6 @@ import arc.util.Nullable;
 import mindustry.Vars;
 import mindustry.maps.Map;
 
-/**
- * Saves the active playing map with its current rules.
- */
 public class MapSaveService {
 
     public boolean hasCollision(String name) {

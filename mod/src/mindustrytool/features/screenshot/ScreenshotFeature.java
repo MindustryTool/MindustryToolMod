@@ -15,11 +15,6 @@ import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
 
-/**
- * Simple in-game screen capture with toggleable UI presence. Screenshots always
- * land in the standard screenshots directory with fixed timestamped names.
- * Quick Access click captures immediately, long-click opens settings.
- */
 public class ScreenshotFeature extends Feature {
 
     public final ConfigGroup config;
@@ -76,10 +71,6 @@ public class ScreenshotFeature extends Feature {
         }
     }
 
-    /**
-     * Entry point for captures. Hides the settings dialog so it never appears in
-     * the image.
-     */
     public void capture() {
         if (settingsDialog != null && settingsDialog.isShown()) {
             settingsDialog.hide();

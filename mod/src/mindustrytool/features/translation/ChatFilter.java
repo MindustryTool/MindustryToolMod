@@ -4,11 +4,6 @@ import arc.util.Nullable;
 import arc.util.Strings;
 import java.util.regex.Pattern;
 
-/**
- * Intelligent filter that identifies messages that should bypass translation
- * (such as system notices, bot bridges, coordinates, schematics, and universal
- * acronyms).
- */
 public final class ChatFilter {
 
     private static final Pattern SYSTEM_OR_BOT_PREFIX = Pattern.compile(
@@ -41,9 +36,6 @@ public final class ChatFilter {
     private ChatFilter() {
     }
 
-    /**
-     * Determines whether an incoming multiplayer chat message should be translated.
-     */
     public static boolean shouldTranslateIncoming(@Nullable String raw) {
         if (raw == null) {
             return false;
@@ -65,10 +57,6 @@ public final class ChatFilter {
         return !isNoise(content);
     }
 
-    /**
-     * Determines whether an outgoing chat message typed by the player should be
-     * translated.
-     */
     public static boolean shouldTranslateOutgoing(@Nullable String raw) {
         if (raw == null) {
             return false;
@@ -99,9 +87,6 @@ public final class ChatFilter {
         return !isNoise(text);
     }
 
-    /**
-     * Checks if the text starts with a system, bot, or console tag.
-     */
     public static boolean isSystemOrBotMessage(String text) {
         if (text == null || text.trim().isEmpty()) {
             return false;
@@ -109,10 +94,6 @@ public final class ChatFilter {
         return SYSTEM_OR_BOT_PREFIX.matcher(text.trim()).find();
     }
 
-    /**
-     * Checks if the text is pure noise: numbers, punctuation, emoticons, URLs,
-     * schematics, or universal acronyms.
-     */
     public static boolean isNoise(String text) {
         if (text == null) {
             return true;
@@ -152,9 +133,6 @@ public final class ChatFilter {
         return false;
     }
 
-    /**
-     * Checks if the text matches Mindustry schematic base64 format.
-     */
     public static boolean isSchematic(String text) {
         if (text == null || text.length() < 20) {
             return false;
@@ -162,10 +140,6 @@ public final class ChatFilter {
         return SCHEMATIC_BASE64.matcher(text.trim()).matches();
     }
 
-    /**
-     * Checks if a string contains only punctuation, math symbols, whitespace, or
-     * emoticons.
-     */
     public static boolean isPunctuationOrEmoticonOnly(String text) {
         if (text == null || text.isEmpty()) {
             return true;
@@ -194,11 +168,6 @@ public final class ChatFilter {
         return false;
     }
 
-    /**
-     * Extracts the message body after sender name prefix, e.g. "Player: hello" ->
-     * "hello".
-     * If no colon is found, returns the clean text.
-     */
     public static String extractMessageContent(String cleanText) {
         if (cleanText == null) {
             return "";

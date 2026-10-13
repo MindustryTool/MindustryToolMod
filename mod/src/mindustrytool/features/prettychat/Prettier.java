@@ -3,9 +3,6 @@ package mindustrytool.features.prettychat;
 import arc.Core;
 import arc.util.Nullable;
 
-/**
- * Contract for a chat text transformer.
- */
 public interface Prettier {
 
     String id();
@@ -34,21 +31,8 @@ public interface Prettier {
         return "effect";
     }
 
-    /**
-     * Transforms the given message string.
-     *
-     * @param input raw message text
-     * @return transformed text
-     */
     String transform(String input);
 
-    /**
-     * Transforms the given message string with a target length limit.
-     *
-     * @param input     raw message text
-     * @param maxLength target max length limit
-     * @return transformed text
-     */
     default String transform(String input, int maxLength) {
         return transform(input);
     }

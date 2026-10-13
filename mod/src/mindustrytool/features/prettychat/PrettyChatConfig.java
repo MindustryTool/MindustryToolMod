@@ -7,9 +7,6 @@ import solim.reactive.Signal;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Manages configuration and reactive state for Pretty Chat.
- */
 public class PrettyChatConfig {
 
     public final ConfigGroup configGroup;

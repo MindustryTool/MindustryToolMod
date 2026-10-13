@@ -24,9 +24,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Modern declarative Solim settings view for Pretty Chat.
- */
 public class PrettyChatSettingsView extends Component {
 
     private static final String[] CATEGORIES = { "all", "color", "font", "effect", "case", "fun", "custom" };

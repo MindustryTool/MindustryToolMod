@@ -134,12 +134,6 @@ public class ChatService {
         Core.app.post(() -> store.session().setConnected(false));
     }
 
-    /**
-     * Releases the reactive effects owned by this service. Terminal: the
-     * service must not be started again afterwards. Production instances live
-     * for the application lifetime; tests call this in teardown so leaked
-     * effects do not pollute the shared dispatcher across tests.
-     */
     public void dispose() {
         autoLoadEffect.dispose();
         unreadEffect.dispose();

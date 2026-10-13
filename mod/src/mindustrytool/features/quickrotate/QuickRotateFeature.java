@@ -27,10 +27,6 @@ import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
 
-/**
- * Quick rotate feature: shows an in-world floating overlay next to the
- * selected rotatable building with step-rotate controls.
- */
 public class QuickRotateFeature extends Feature {
 
     private static final float OVERLAY_GAP = 8f;

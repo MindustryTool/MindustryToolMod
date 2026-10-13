@@ -22,10 +22,6 @@ import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
 
-/**
- * Allows toggling rendering layers such as allied/enemy units and buildings
- * to improve performance or capture clean screenshots.
- */
 public class ToggleRenderingFeature extends Feature {
 
     public final ConfigGroup config;

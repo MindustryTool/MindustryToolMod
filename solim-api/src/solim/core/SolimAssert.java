@@ -2,10 +2,6 @@ package solim.core;
 
 import arc.util.Nullable;
 
-/**
- * Thread-safety verification for Solim runtime operations. Validates that
- * mutating operations happen on the registered main/render thread.
- */
 public final class SolimAssert {
     private static volatile @Nullable Thread mainThread;
 

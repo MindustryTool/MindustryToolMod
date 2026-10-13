@@ -10,13 +10,6 @@ import solim.mcp.introspection.SnapshotRoot;
 import solim.mcp.introspection.UiSnapshot;
 import solim.mcp.rpc.SubscriptionSink;
 
-/**
- * Samples live UI state on a fixed interval and pushes {@code solim/notify}
- * notifications to
- * subscribers when discovered signal values change or the tree shape changes.
- * Sampling instead of
- * per-signal subscription keeps the server decoupled and cheap.
- */
 public final class SubscriptionPoller implements Runnable {
     private final SnapshotRoot root;
     private final Set<SubscriptionSink> subscribers;

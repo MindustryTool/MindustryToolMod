@@ -42,9 +42,6 @@ import mindustrytool.features.prettychat.PrettyChatFeature;
 import mindustrytool.services.PacketReplacer;
 import solim.reactive.Signal;
 
-/**
- * Feature that provides in-game multiplayer chat translation.
- */
 public class TranslationFeature extends Feature {
 
     public final ConfigGroup config;

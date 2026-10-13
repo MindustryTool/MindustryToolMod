@@ -101,12 +101,6 @@ public final class SolimStack extends Component implements CellConfig<SolimStack
         return this;
     }
 
-    /**
-     * Mounts a layer and hands it to this component. A layer that mounts but turns
-     * out to be
-     * unusable is disposed here rather than adopted, so ownership only ever holds
-     * what is live.
-     */
     private void attachLayer(@Nullable Component component) {
         if (component == null) {
             return;

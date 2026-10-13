@@ -9,11 +9,6 @@ import mindustry.gen.Icon;
 import mindustrytool.components.FileIcon;
 import mindustrytool.components.WebStyles;
 
-/**
- * In-world floating overlay with step-rotate controls anchored to the
- * selected rotatable building. Uses a raw Arc table like other floating
- * world menus so it can track the building's projected screen position.
- */
 public class QuickRotateOverlayView {
 
     private final QuickRotateFeature feature;

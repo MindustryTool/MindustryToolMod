@@ -19,10 +19,6 @@ import solim.config.ConfigValue;
 
 import solim.overlay.SolimDialog;
 
-/**
- * Wave Preview feature providing upcoming wave unit compositions directly
- * inside the HUD waves panel.
- */
 public class WavePreviewFeature extends Feature {
 
     public static final int MIN_DEPTH = 1;

@@ -25,10 +25,6 @@ import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.TableConfig;
 
-/**
- * Keyed reactive grid that reflows existing component cells when column count
- * changes and structurally reconciles items when the item collection changes.
- */
 public final class ReactiveGrid<T> extends Component
         implements CellConfig<ReactiveGrid<T>>, ElementConfig<ReactiveGrid<T>>, TableConfig<ReactiveGrid<T>>,
         GapContainer {

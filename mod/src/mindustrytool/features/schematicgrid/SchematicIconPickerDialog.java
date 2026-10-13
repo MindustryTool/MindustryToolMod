@@ -20,10 +20,6 @@ import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Vanilla-style icon picker with font glyph and unlocked content sections.
- * Selection returns the single resolved emoji string for slot storage.
- */
 public class SchematicIconPickerDialog extends SolimDialog {
 
     private final Signal<String> searchQuery = Signal.of("");

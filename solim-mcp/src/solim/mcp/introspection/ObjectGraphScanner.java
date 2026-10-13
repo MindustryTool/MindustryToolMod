@@ -17,24 +17,6 @@ import solim.reactive.Signal;
 import solim.reactive.Subscription;
 import java.lang.reflect.Array;
 
-/**
- * Cycle-safe reflective scan of an object graph for reactive Solim instances.
- *
- * <p>
- * Traversal rules:
- *
- * <ul>
- * <li>Identity tracking prevents infinite loops on cyclic graphs.
- * <li>Primitives, strings, numbers, enums, and classes are leaves.
- * <li>{@link Element} instances are shallow-scanned: their own reactive fields
- * are recorded but
- * the graph is never descended into (Arc internals are explosive and the
- * element subtree is
- * walked separately by the tree inspector).
- * <li>Collections, arrays, and iterables are descended into.
- * <li>Everything else is descended into field by field.
- * </ul>
- */
 public final class ObjectGraphScanner {
     private final int maxDepth;
     private final Map<Object, Boolean> visited = new IdentityHashMap<>();
@@ -48,12 +30,6 @@ public final class ObjectGraphScanner {
         return scan(root, null, null, maxDepth);
     }
 
-    /**
-     * Scans an element and its immediate reactive fields without descending into
-     * other {@link
-     * Element} objects. The small depth budget allows the user-object graph ({@code
-     * Element.userObject}) to be walked a few levels deep.
-     */
     public static List<ReactiveRef> scanElement(@Nullable Element element) {
         ObjectGraphScanner s = new ObjectGraphScanner(4);
         if (element == null)

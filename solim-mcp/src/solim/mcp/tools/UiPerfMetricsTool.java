@@ -8,10 +8,6 @@ import solim.mcp.introspection.SnapshotRoot;
 import solim.performance.PerfFrame;
 import solim.performance.UiProfiler;
 
-/**
- * MCP tool that queries real-time UI performance metrics and phase breakdowns
- * (act, layout, draw) for Solim UI overlays.
- */
 public final class UiPerfMetricsTool implements McpTool {
 
     private final SnapshotRoot snapshotRoot;
@@ -75,7 +71,8 @@ public final class UiPerfMetricsTool implements McpTool {
             hudMetrics.put("drawCallCount", avg.drawCallCount);
             hudMetrics.put("layoutPassesPerFrame", avg.layoutPasses);
         } else {
-            result.put("message", "Profiler recently enabled. Accumulating frames... Please re-query in a few moments.");
+            result.put("message",
+                    "Profiler recently enabled. Accumulating frames... Please re-query in a few moments.");
         }
 
         return result;

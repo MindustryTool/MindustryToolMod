@@ -15,14 +15,6 @@ import mindustrytool.features.autoplay.AutoplayFeature;
 import mindustrytool.features.freecamera.FreeCameraFeature;
 import mindustrytool.features.joystick.JoystickFeature;
 
-/**
- * Unified desktop input handler for MindustryTool.
- * Pans the camera via WASD when FreeCameraFeature is active,
- * blends virtual joystick input with keyboard axis when JoystickFeature is
- * active,
- * yields unit control to AutoplayFeature when autonomous gameplay is enabled,
- * and falls back to vanilla DesktopInput behavior when features are inactive.
- */
 public class ModDesktopInput extends DesktopInput {
 
     @Override

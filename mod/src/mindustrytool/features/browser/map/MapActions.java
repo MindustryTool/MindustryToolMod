@@ -7,19 +7,11 @@ import mindustry.Vars;
 import mindustry.maps.Map;
 import mindustrytool.services.MindustryTool;
 
-/**
- * Utility actions for map operations: download with import into custom maps,
- * and direct play of a downloaded map.
- */
 public final class MapActions {
 
     private MapActions() {
     }
 
-    /**
-     * Downloads the map, saves it into the custom maps directory, and imports
-     * it into the game's map registry.
-     */
     public static CompletableFuture<Void> downloadAndImport(String itemId) {
         return MindustryTool.downloadMap(itemId).thenAccept(bytes -> {
             Core.app.post(() -> {
@@ -35,10 +27,6 @@ public final class MapActions {
         }).exceptionally(MapActions::notifyDownloadError);
     }
 
-    /**
-     * Ensures the map is downloaded and imported, then starts a local game on
-     * it directly.
-     */
     public static CompletableFuture<Void> playMap(String itemId) {
         return MindustryTool.downloadMap(itemId).thenAccept(bytes -> {
             Core.app.post(() -> {

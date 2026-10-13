@@ -13,11 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Headless flame exporter turning trace snapshots into dual-format payloads
- * and a self-contained HTML file. All filtering happens at export time; the
- * recorded span list is never modified.
- */
 public final class FlameExporter {
 
     private FlameExporter() {
@@ -64,10 +59,6 @@ public final class FlameExporter {
         return out;
     }
 
-    /**
-     * Returns spans with duration at or above {@code minMs}, preserving order.
-     * A non-positive threshold keeps every span.
-     */
     public static List<TraceSpan> pruned(@Nullable List<TraceSpan> spans, double minMs) {
         List<TraceSpan> out = new ArrayList<>();
         if (spans == null) {
@@ -86,10 +77,6 @@ public final class FlameExporter {
         return out;
     }
 
-    /**
-     * Computes self-time per span id as total minus direct children totals.
-     * Only spans present in the given list contribute; missing parents are ignored.
-     */
     public static Map<Integer, Long> selfTimes(@Nullable List<TraceSpan> spans) {
         Map<Integer, Long> self = new HashMap<>();
         if (spans == null || spans.isEmpty()) {

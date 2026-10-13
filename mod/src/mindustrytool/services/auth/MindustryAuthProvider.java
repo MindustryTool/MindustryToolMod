@@ -21,15 +21,6 @@ import mindustrytool.services.Request;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Merged auth provider for the rewritten codebase. Implements AuthProvider and
- * owns a Request
- * instance, and now also owns session/login/logout lifecycle previously in
- * AuthService. All HTTP
- * for auth/* goes via MindustryTool typed facade except refresh which uses its
- * own Request with
- * withoutAuth to avoid recursion.
- */
 public class MindustryAuthProvider implements AuthProvider {
     private static MindustryAuthProvider instance;
 
@@ -50,18 +41,6 @@ public class MindustryAuthProvider implements AuthProvider {
     private volatile boolean loginCancelled = false;
     private volatile @Nullable String activeLoginId;
 
-    /**
-     * Single reactive source of truth for session identity (null when no session is
-     * loaded).
-     *
-     * <p>
-     * <b>Threading contract:</b> mutated exclusively on the main thread. Solim
-     * signals notify
-     * observers synchronously on the calling thread, so setting from a network
-     * callback would run
-     * UI-bound computeds off the GL thread. All sets go through
-     * {@code Core.app.post}.
-     */
     private final Signal<UserSession> session = Signal.of(null);
     private final Signal<Boolean> sessionLoading = Signal.of(false);
     private final Signal<Throwable> sessionError = Signal.of(null);
@@ -226,12 +205,6 @@ public class MindustryAuthProvider implements AuthProvider {
         return sessionError;
     }
 
-    /**
-     * Non-subscribing read of the current session for non-reactive contexts (e.g.
-     * the static
-     * chat message parser). Reactive code MUST use {@link #session()} instead so
-     * updates propagate.
-     */
     public @Nullable UserSession getSession() {
         return session.peek();
     }

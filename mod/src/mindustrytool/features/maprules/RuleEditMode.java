@@ -2,9 +2,6 @@ package mindustrytool.features.maprules;
 
 import mindustry.Vars;
 
-/**
- * Editing authority for map rules based on network context.
- */
 public enum RuleEditMode {
     SINGLE_PLAYER,
     HOST,

@@ -4,12 +4,6 @@ import arc.util.Nullable;
 import java.util.concurrent.ConcurrentHashMap;
 import arc.func.Prov;
 
-/**
- * Thread-safe flyweight cache interning static button style configurations.
- * Identical static styles share a single {@link SolimButtonStyle} instance
- * with zero redundant allocations. Dynamic styles containing signals bypass
- * the cache entirely.
- */
 public final class StyleCache {
 
     private static final ConcurrentHashMap<String, SolimButtonStyle> CACHE = new ConcurrentHashMap<>();

@@ -20,17 +20,6 @@ import solim.runtime.OwnershipScope;
 import solim.runtime.ReactiveContext;
 import solim.runtime.SignalDispatcher;
 
-/**
- * Reactive effect with auto-tracking and cleanup.
- *
- * <p>
- * Fail-fast by design: an exception thrown by the body is <b>not</b> caught or
- * logged here.
- * It propagates to whoever triggered the run (the caller of {@code Effect.of},
- * or the
- * dispatcher flush) so a broken binding fails loudly instead of silently going
- * dead.
- */
 public final class Effect implements ReactiveObserver, DisposableOwner, SchedulableEffect,
         DebugReactiveNode {
 
@@ -60,21 +49,10 @@ public final class Effect implements ReactiveObserver, DisposableOwner, Schedula
         this.cleanupConsumer = cleanupConsumer;
     }
 
-    /**
-     * Creates an effect from a runnable. If called inside an active component build
-     * scope, the effect
-     * is automatically owned by that component (registered before its initial
-     * execution).
-     */
     public static Effect of(Runnable runnable) {
         return create(runnable, null, null);
     }
 
-    /**
-     * Creates an effect from a Prov that returns a cleanup runnable. If called
-     * inside an active
-     * component build scope, the effect is automatically owned by that component.
-     */
     public static Effect of(Prov<Runnable> Prov) {
         return create(null, Prov, null);
     }
@@ -83,17 +61,6 @@ public final class Effect implements ReactiveObserver, DisposableOwner, Schedula
         return of(Prov);
     }
 
-    /**
-     * Creates an effect with a cleanup Cons. If called inside an active component
-     * build scope,
-     * the effect is automatically owned by that component.
-     *
-     * <p>
-     * For API {@code Effect.of(() -> { Subscription s=...; return s::dispose; })}
-     * use ofSupplier.
-     * This overload handles cleanup Cons:
-     * {@code Effect.of(cleanup -> { ... cleanup.add(...); })}.
-     */
     public static Effect of(Cons<Cleanup> Cons) {
         return create(null, null, Cons);
     }
@@ -102,11 +69,6 @@ public final class Effect implements ReactiveObserver, DisposableOwner, Schedula
         return of(r);
     }
 
-    /**
-     * Internal factory: registers the effect with the active OwnershipContext (if
-     * any) BEFORE
-     * running it so that ownership is established even if the initial run throws.
-     */
     private static Effect create(Runnable runnable, Prov<Runnable> Prov, Cons<Cleanup> cleanupConsumer) {
         Effect effect = new Effect(runnable, Prov, cleanupConsumer);
         OwnershipContext.register(effect);
@@ -199,16 +161,6 @@ public final class Effect implements ReactiveObserver, DisposableOwner, Schedula
         }
     }
 
-    /**
-     * Diffs the staging buffer against the recorded dependency set and reconciles
-     * subscriptions.
-     *
-     * <p>
-     * Allocation-free when nothing changed, which is the common case for a stable
-     * binding:
-     * the membership tests below never reach
-     * {@code removeObserver}/{@code addObserver}.
-     */
     private void updateDependencies(Set<ReactiveSource> newDeps) {
         for (ReactiveSource dep : dependencies) {
             if (!newDeps.contains(dep)) {

@@ -1,15 +1,5 @@
 package solim.performance;
 
-/**
- * Immutable debug snapshot of a single {@code Signal}'s runtime metrics,
- * captured by the profiling
- * session when the report is written.
- *
- * <p>
- * The live signal value is never held here — only a truncated textual summary —
- * so exporting a
- * profile cannot retain large or cyclic object graphs.
- */
 public final class SignalSnapshot {
 
     public final int id;

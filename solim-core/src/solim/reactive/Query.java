@@ -12,27 +12,11 @@ import arc.func.Prov;
 import solim.core.Disposable;
 import solim.core.OwnershipContext;
 
-/**
- * Asynchronous reactive query primitive with dependency tracking, caching,
- * stale-while-revalidate, retry, and lifecycle management.
- *
- * <p>
- * Create simple queries with {@link #of(QueryKey, Prov)} or
- * {@link #noKey(Prov)}; use {@link #builder()} for advanced
- * configuration. All options must be supplied before {@code build()} —
- * configuration is fixed for the query's lifetime.
- *
- * @param <T> query data type
- */
 public final class Query<T> implements Readable<T>, Disposable {
 
     private static final int DEFAULT_RETRY_COUNT = 3;
     private static final long DEFAULT_RETRY_DELAY_MS = 1_000L;
 
-    /**
-     * Package-private configuration bundle. Accumulated by {@link Builder}
-     * and consumed once by the {@link Query} constructor.
-     */
     static final class Options {
         @Nullable
         Readable<Boolean> enabled;
@@ -102,28 +86,14 @@ public final class Query<T> implements Readable<T>, Disposable {
         startIntervalTimer();
     }
 
-    /**
-     * Creates a simple query with a static cache key. Equivalent to
-     * {@code Query.builder().key(key).fetch(fetcher).build()}.
-     */
     public static <T> Query<T> of(QueryKey key, Prov<CompletableFuture<T>> fetcher) {
         return Query.<T>builder().key(key).fetch(fetcher).build();
     }
 
-    /**
-     * Creates a simple query with a static cache key and an enablement gate.
-     * Equivalent to
-     * {@code Query.builder().key(key).enabled(enabled).fetch(fetcher).build()}.
-     */
     public static <T> Query<T> of(QueryKey key, Readable<Boolean> enabled, Prov<CompletableFuture<T>> fetcher) {
         return Query.<T>builder().key(key).enabled(enabled).fetch(fetcher).build();
     }
 
-    /**
-     * Creates a stateless query under an anonymous key. The key cannot be
-     * targeted by {@link QueryCache#invalidate(QueryKey)}, so this is only
-     * appropriate for fetches with no cache identity (e.g. one-off loads).
-     */
     public static <T> Query<T> noKey(Prov<CompletableFuture<T>> fetcher) {
         return Query.<T>builder().fetch(fetcher).build();
     }
@@ -132,42 +102,18 @@ public final class Query<T> implements Readable<T>, Disposable {
         return new Builder<>();
     }
 
-    /**
-     * Builder for advanced query configuration. All options are applied at
-     * {@link #build()} time, before the query's fetch effect starts — late or
-     * out-of-order configuration is impossible.
-     *
-     * @param <T> query data type
-     */
     public static final class Builder<T> {
         private final Options options = new Options();
         private @Nullable QueryKey key;
         private @Nullable Prov<QueryKey> keySupplier;
         private @Nullable Prov<CompletableFuture<T>> fetcher;
 
-        /**
-         * Sets a static cache key. Clears any previously supplied key Prov.
-         */
         public Builder<T> key(QueryKey key) {
             this.key = Objects.requireNonNull(key, "key cannot be null");
             this.keySupplier = null;
             return this;
         }
 
-        /**
-         * Sets a dynamic cache key recomputed before every fetch from reactive
-         * state, so each parameter combination (e.g. browser pagination, search
-         * terms) owns its own cache entry and in-flight request. The Prov
-         * must read the same reactive state the fetcher uses to build its
-         * request; it is evaluated inside the query effect so dependency
-         * tracking stays intact even when an identical in-flight request is
-         * joined.
-         *
-         * <p>
-         * Cache helpers operating on the fixed key ({@link Query#mutate},
-         * {@link Query#isStale()}, {@link Query#getKey()}) address the initial
-         * key. Clears any previously supplied static key.
-         */
         public Builder<T> key(Prov<QueryKey> keySupplier) {
             this.keySupplier = Objects.requireNonNull(keySupplier, "key Prov cannot be null");
             this.key = null;

@@ -67,10 +67,6 @@ import solim.reactive.QueryView;
 import solim.core.Units;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * Public entry point and declarative UI facade for Solim. This class exposes
- * all allowed factory and utility methods for user-facing and mod development.
- */
 public final class UI {
     static {
         init();
@@ -79,11 +75,6 @@ public final class UI {
     private UI() {
     }
 
-    /**
-     * Initializes Solim runtime hooks, registering the single-frame signal
-     * dispatcher with Mindustry. This method is idempotent and safe to call
-     * repeatedly.
-     */
     public static void init() {
         SignalDispatcher.register();
     }
@@ -439,11 +430,6 @@ public final class UI {
         return Query.of(key, enabled, fetcher);
     }
 
-    /**
-     * Creates a stateless query under an anonymous key that cannot be targeted
-     * by cache invalidation. Use {@code Query.builder()} for keyed or
-     * configured queries.
-     */
     public static <T> Query<T> query(Prov<CompletableFuture<T>> fetcher) {
         return Query.noKey(fetcher);
     }
@@ -468,13 +454,6 @@ public final class UI {
         return d;
     }
 
-    /**
-     * Creates a boolean conditional with a fluent chaining API. Declare branches
-     * with {@code thenDo()} and {@code elseDo()} using void runnables that
-     * create components declaratively. Unlike {@link #dynamic}, the component
-     * is mounted lazily so chained branches are installed before the first
-     * build; post-mount branch updates remount immediately.
-     */
     public static When when(Readable<Boolean> condition) {
         return When.of(condition);
     }
@@ -515,11 +494,6 @@ public final class UI {
         return vl;
     }
 
-    /**
-     * Escape hatch for raw Arc elements with no Solim equivalent (e.g.
-     * SchematicImage). Prefer Solim primitives such as text() or image() whenever
-     * one exists.
-     */
     public static <T extends Element> T arc(@Nullable T el) {
         AttachmentStack.attachToParent(el);
         return el;

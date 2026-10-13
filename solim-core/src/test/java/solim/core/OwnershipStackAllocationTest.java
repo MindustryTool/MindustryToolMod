@@ -8,18 +8,6 @@ import arc.scene.Element;
 import org.junit.jupiter.api.Test;
 import solim.test.SolimCoreEnv;
 
-/**
- * The ownership stack holds the owner itself, so registering one cannot
- * allocate a callback.
- *
- * <p>
- * Before the unification an owning component pushed a {@code Cons<Disposable>}
- * method
- * reference: one captured allocation for every component that ever built. These
- * tests pin the
- * replacement structurally — what the stack stores, and that a push costs
- * exactly one slot.
- */
 class OwnershipStackAllocationTest extends SolimCoreEnv {
 
     private static final class FixedElement extends Component {

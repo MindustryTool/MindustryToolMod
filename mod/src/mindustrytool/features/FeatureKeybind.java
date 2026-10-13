@@ -4,11 +4,6 @@ import arc.input.KeyBind;
 import arc.input.KeyCode;
 import solim.reactive.Signal;
 
-/**
- * Descriptor for a single feature hotkey binding.
- * Holds the Arc {@link KeyBind}, the action to run when triggered,
- * and whether the parent feature must be enabled for the action to run.
- */
 public class FeatureKeybind {
     private final KeyBind bind;
     private final Runnable action;

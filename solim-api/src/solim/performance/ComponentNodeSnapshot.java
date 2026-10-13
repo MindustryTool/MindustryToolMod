@@ -3,17 +3,6 @@ package solim.performance;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Immutable debug snapshot of one live {@code Component} in the
- * {@code SessionRoot} hierarchy.
- *
- * <p>
- * The snapshot is fully detached from the live tree: it stores labels and
- * primitive layout
- * bounds rather than element or component references, so a written profile
- * report cannot keep
- * disposed components alive.
- */
 public final class ComponentNodeSnapshot {
 
     public final int id;

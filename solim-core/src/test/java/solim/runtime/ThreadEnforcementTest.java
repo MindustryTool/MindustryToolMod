@@ -14,11 +14,6 @@ import solim.reactive.Signal;
 import solim.test.SolimCoreEnv;
 import solim.test.TestObserver;
 
-/**
- * Verifies that Solim's main-thread guard is unconditional, and that dependency
- * tracking is only guarded on the branch where a dependency is actually
- * recorded.
- */
 class ThreadEnforcementTest extends SolimCoreEnv {
 
     @AfterEach

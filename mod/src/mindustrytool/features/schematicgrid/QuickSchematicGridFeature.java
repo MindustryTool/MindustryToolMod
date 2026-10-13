@@ -25,9 +25,6 @@ import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.reactive.Signals;
 
-/**
- * Quick access grid of player-configured schematics with HUD and Popup variants.
- */
 public class QuickSchematicGridFeature extends Feature {
 
     public static final String DISPLAY_HUD = "hud";

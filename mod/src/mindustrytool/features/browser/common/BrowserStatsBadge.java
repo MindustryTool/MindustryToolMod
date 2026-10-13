@@ -7,10 +7,6 @@ import mindustry.gen.Icon;
 import mindustrytool.components.FileIcon;
 import solim.core.Component;
 
-/**
- * Compact badge row showing formatted likes, comments, and downloads counts
- * with vanilla stat icons.
- */
 public class BrowserStatsBadge extends Component {
 
     private final long likes;
@@ -53,11 +49,6 @@ public class BrowserStatsBadge extends Component {
         return String.valueOf(count);
     }
 
-    /**
-     * Uses a locale-invariant decimal point for compact UI counts. Negative
-     * half values follow Java Math.round semantics, which is irrelevant for
-     * normal non-negative browser statistics but keeps this helper deterministic.
-     */
     private static String oneDecimal(double value) {
         long rounded = Math.round(value * 10.0);
         long whole = rounded / 10;

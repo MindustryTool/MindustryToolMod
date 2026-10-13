@@ -13,11 +13,6 @@ import solim.modifier.ElementConfig;
 import solim.modifier.CellConfig;
 import solim.modifier.PendingCellConfig;
 
-/**
- * Select widget bound to Signal&lt;T&gt;. Uses TextButton as placeholder (Arc
- * SelectBox unavailable in this version). State held in signal; visual updates
- * on change.
- */
 public final class SolimSelect<T> extends Component
         implements ElementConfig<SolimSelect<T>>, CellConfig<SolimSelect<T>> {
     private final TextButton selectBox;

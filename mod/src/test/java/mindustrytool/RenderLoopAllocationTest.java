@@ -29,11 +29,6 @@ import mindustrytool.features.visualizer.VisualizerFeature;
 import mindustrytool.features.visualizer.VisualizerFeature.BridgeFlowState;
 import mindustrytool.test.MindustryTestEnv;
 
-/**
- * Headless E2E allocation test verifying zero heap object allocation
- * during 60 FPS simulated gameplay frame render loops across VisualizerFeature,
- * RangeDisplayFeature, and HealthBarFeature using {@link ThreadMXBean}.
- */
 class RenderLoopAllocationTest extends MindustryTestEnv {
 
     private UI prevUi;

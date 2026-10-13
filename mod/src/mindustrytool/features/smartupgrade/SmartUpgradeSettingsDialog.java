@@ -3,9 +3,6 @@ package mindustrytool.features.smartupgrade;
 import arc.Core;
 import solim.overlay.SolimDialog;
 
-/**
- * Settings dialog for configuring Smart Upgrade feature options.
- */
 public class SmartUpgradeSettingsDialog extends SolimDialog {
 
     public SmartUpgradeSettingsDialog(SmartUpgradeFeature feature) {

@@ -8,11 +8,6 @@ import mindustrytool.features.settings.ModSettings;
 import mindustrytool.services.Github;
 import mindustrytool.services.MindustryTool;
 
-/**
- * Update check orchestrator. Directly delegates to {@link Github} /
- * {@link MindustryTool} and shows
- * {@link UpdateDialog} — no indirection interfaces.
- */
 public final class UpdateService {
 
     private static volatile UpdateService instance;
@@ -84,10 +79,6 @@ public final class UpdateService {
         });
     }
 
-    /**
-     * Reads the beta flag defensively; any failure falls back to the stable
-     * channel.
-     */
     private static boolean isBetaParticipate() {
         try {
             return Boolean.TRUE.equals(ModSettings.betaParticipate.get());
@@ -97,11 +88,6 @@ public final class UpdateService {
         }
     }
 
-    /**
-     * Beta channel: releases-only gate, no {@code mod.hjson} fetch. Every failure
-     * (no network, request error, malformed/empty payload, nothing newer) resolves
-     * to silent — log and finish — so the game can never crash or stall here.
-     */
     private void checkForUpdateBeta(int[] currentVersion, String currentVerStr, Runnable done) {
         final int[] safeCurrent = currentVersion != null ? currentVersion : new int[0];
         final String safeCurrentStr = currentVerStr != null ? currentVerStr : "";

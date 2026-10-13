@@ -12,11 +12,6 @@ import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Per-slot edit dialog with live thumbnail (tap re-picks the schematic), custom
- * label field, and custom icon pick/clear actions. All edits persist
- * immediately to the feature.
- */
 public class QuickSchematicGridSlotDialog extends SolimDialog {
 
     private final QuickSchematicGridFeature feature;

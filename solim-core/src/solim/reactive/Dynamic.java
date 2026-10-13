@@ -20,22 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import solim.core.Disposable;
 
-/**
- * Structural reactive component for switching dynamic subtrees based on a
- * reactive value.
- *
- * <p>
- * The factory {@code Cons<T>} is invoked with the current source value
- * (including {@code null}).
- * The factory creates components declaratively without returning a value. If
- * the factory creates
- * no components, the container collapses.
- * </p>
- *
- * <p>
- * Use {@link #of} to create a Dynamic with a void factory.
- * </p>
- */
 public final class Dynamic<T> extends Component
         implements CellConfig<Dynamic<T>>, TableConfig<Dynamic<T>>, ElementConfig<Dynamic<T>> {
     private static final Object SENTINEL = new Object();

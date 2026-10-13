@@ -15,29 +15,6 @@ import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.layout.GapContainer;
 
-/**
- * Mixin interface for operations that directly mutate an Arc {@link Element}'s
- * own properties.
- *
- * <p>
- * Implementing components provide {@link #element()} to supply their root Arc
- * Element. All methods are default methods that operate on the element returned
- * by {@code element()}.
- *
- * <p>
- * Targets:
- * <ul>
- * <li>{@code width/height/size} — element's size</li>
- * <li>{@code x/y/position} — element's position in local coordinates</li>
- * <li>{@code visible} — element's visibility</li>
- * <li>{@code opacity/alpha} — element's transparency</li>
- * <li>{@code name} — element's debug name</li>
- * <li>{@code onClick/stopClickPropagation} — element click handling</li>
- * <li>{@code draggable} — element drag-to-move integration</li>
- * </ul>
- *
- * @param <SELF> the concrete component type, enabling fluent chaining
- */
 public interface ElementConfig<SELF extends ElementConfig<SELF>> {
 
     Element element();
@@ -257,11 +234,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         return self();
     }
 
-    /**
-     * Makes this element clickable, replacing any previously registered handler.
-     * The element becomes touchable automatically. Propagation is not stopped
-     * unless {@link #stopClickPropagation(boolean)} is enabled.
-     */
     default SELF onClick(Runnable action) {
         Element el = element();
         if (el == null)
@@ -297,11 +269,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         }
     }
 
-    /**
-     * Attaches a static text tooltip to this element, replacing any previous
-     * tooltip.
-     * Passing {@code null} or an empty string removes existing tooltips.
-     */
     default SELF tooltip(@Nullable String tip) {
         if (tip == null || tip.isEmpty()) {
             removeTooltips(element());
@@ -310,13 +277,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         return tooltip(t -> t.add(tip));
     }
 
-    /**
-     * Attaches a reactive text tooltip to this element, replacing any previous
-     * tooltip.
-     * The tooltip text updates whenever the signal changes, and its effect is owned
-     * by the active component context. Passing {@code null} removes existing
-     * tooltips.
-     */
     default SELF tooltip(@Nullable Readable<String> tip) {
         if (tip == null) {
             removeTooltips(element());
@@ -330,11 +290,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         });
     }
 
-    /**
-     * Attaches a custom tooltip built with the given container builder, replacing
-     * any previous tooltip.
-     * Passing {@code null} removes existing tooltips.
-     */
     default SELF tooltip(@Nullable Cons<Table> tooltipBuilder) {
         Element el = element();
         if (el == null)
@@ -364,10 +319,6 @@ public interface ElementConfig<SELF extends ElementConfig<SELF>> {
         return self();
     }
 
-    /**
-     * Makes this element draggable targeting an explicit HUD with reactive
-     * coordinate reporting.
-     */
     default SELF draggable(@Nullable Hud hud, @Nullable Signal<Float> xSignal, @Nullable Signal<Float> ySignal) {
         Hud.makeDraggable(element(), hud, xSignal, ySignal);
         return self();

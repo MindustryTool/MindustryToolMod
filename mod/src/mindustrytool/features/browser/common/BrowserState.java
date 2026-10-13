@@ -11,16 +11,6 @@ import solim.reactive.QueryKey;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Generic reactive state for a paged browser with search, tag filtering, and
- * sort. Pages are zero-based internally, matching the API convention.
- *
- * Created in dialog constructors outside any component scope, so it owns its
- * {@code Query} explicitly: dialogs must dispose the state in
- * {@code onDispose()} to release the {@code QueryCache} observer.
- *
- * @param <T> the item type returned by the API
- */
 public class BrowserState<T> implements Disposable {
 
     public static final int PAGE_SIZE = 20;
@@ -48,12 +38,6 @@ public class BrowserState<T> implements Disposable {
                 .build();
     }
 
-    /**
-     * Structural identity of the current request. Recomputed inside the query
-     * effect so every parameter change (pagination, search, filters, sort)
-     * triggers a fresh fetch and rapid parameter changes never join a
-     * request made for different parameters.
-     */
     private QueryKey queryKey() {
         return QueryKey.of("browser",
                 page.get(),
@@ -212,10 +196,6 @@ public class BrowserState<T> implements Disposable {
         return queryPrimitive.data().map(list -> list != null ? Seq.with(list) : new Seq<T>());
     }
 
-    /**
-     * Pure slice helper for chunked rendering: returns a copy of the first
-     * {@code limit} items, or an empty sequence when the input is null.
-     */
     public static <T> Seq<T> firstItems(@Nullable Seq<T> all, int limit) {
         Seq<T> out = new Seq<>();
         if (all == null) {
@@ -228,19 +208,14 @@ public class BrowserState<T> implements Disposable {
         return out;
     }
 
-    /**
-     * Intentionally backed by {@code fetching()} rather than {@code loading()}:
-     * browser views render a full spinner on every background refetch
-     * (stale-while-revalidate at the view layer), so any in-flight fetch —
-     * initial or background — maps to the loading state.
-     */
     public Readable<Boolean> loading() {
         return queryPrimitive.fetching();
     }
 
     public Readable<String> error() {
         return queryPrimitive.error().map(err -> {
-            if (err == null) return null;
+            if (err == null)
+                return null;
             Throwable cause = err.getCause() != null ? err.getCause() : err;
             return cause.getMessage() != null ? cause.getMessage() : cause.toString();
         });

@@ -26,9 +26,6 @@ import mindustrytool.features.rangedisplay.RangeDisplayFeature;
 import solim.core.Component;
 import solim.reactive.Signal;
 
-/**
- * Modern declarative Solim settings view for Range Display options.
- */
 public class RangeDisplaySettingsView extends Component {
 
     private final RangeDisplayFeature feature;

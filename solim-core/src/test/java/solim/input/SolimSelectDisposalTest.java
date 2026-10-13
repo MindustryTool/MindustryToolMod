@@ -23,18 +23,6 @@ import solim.reactive.Signal;
 import solim.test.BuildScopeHost;
 import solim.test.SolimEnv;
 
-/**
- * Disposal proof for the two-way binding a {@link SolimSelect} installs.
- *
- * <p>
- * The binding owns two halves that must both die with the component: the effect
- * that pushes the
- * signal into the widget, and the widget listener that pushes the widget back
- * into the signal.
- * Only the second is easy to get wrong — a surviving listener keeps writing a
- * signal whose owner
- * is gone — so detachment is asserted directly on the widget's listener list.
- */
 class SolimSelectDisposalTest extends SolimEnv {
 
     private static final List<String> options = Arrays.asList("A", "B", "C");

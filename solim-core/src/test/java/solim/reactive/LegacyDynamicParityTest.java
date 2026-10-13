@@ -31,21 +31,6 @@ import solim.runtime.ReactiveContext;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimCoreEnv;
 
-/**
- * Parity between the pre-migration {@code dynamic(source, Func<T, Component>)}
- * (single-root factory, {@code null} collapses) and the migrated void-factory
- * {@link Dynamic} / {@link When}.
- *
- * <p>
- * Every {@code dynamic(...)} call site that existed in {@code mod/} before
- * the migration is mapped to exactly one test below (see the covered-sites
- * note on each test). Each test drives the old shape and the migrated shape
- * through the same signal values and requires identical results in every way:
- * container visibility, container child count, recursive child structure and
- * the laid-out parent size/cell state (i.e. collapsed branches take no space
- * on both sides).
- * </p>
- */
 class LegacyDynamicParityTest extends SolimCoreEnv {
 
     static final class LegacyDynamic<T> extends Component
@@ -217,14 +202,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         return element.getClass().getSimpleName() + ":" + element.name + ";";
     }
 
-    /**
-     * Rendered-structure signature. Single-child {@link Table} wrappers are
-     * transparent: a migrated branch legitimately adds one container level per
-     * nested {@code when()} (old nesting mounted content one level shallower),
-     * and such wrappers measure exactly to their child. Tables with zero or
-     * several children stay explicit, so stolen/duplicated roots and
-     * fall-through siblings still fail.
-     */
     static String boxSignature(Table box) {
         return "Box[" + box.visible + "](" + innerSignature(box) + ")";
     }
@@ -296,9 +273,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         newSide.dispose();
     }
 
-    /**
-     * Covers AttachContentDialog (uploading row vs form column).
-     */
     @Test
     @SuppressWarnings("unchecked")
     void attachContent_uploadingVsForm() {
@@ -346,10 +320,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         newSide.dispose();
     }
 
-    /**
-     * Covers ChatInputView (login row vs composer column containing a nested
-     * reply-target dynamic plus a static row).
-     */
     @Test
     void chatInput_loginVsComposerWithNestedReply() {
         Signal<Boolean> oldLogged = Signal.of(false);
@@ -412,11 +382,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers MapDetailDialog and SchematicDetailDialog (portrait vs landscape
-     * method-reference branches) plus HostRoomDialog step1/step2 and
-     * QuickSchematicGridHudView page-position column/row.
-     */
     @Test
     void detailDialogs_portraitVsLandscape() {
         Signal<Boolean> oldSignal = Signal.of(true);
@@ -456,10 +421,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers TeamResourceHudView expanded content vs empty-row placeholder
-     * (also the showItems/showUnits/showPower/showStoredPower outer shape).
-     */
     @Test
     void teamResources_expandedVsPlaceholderRow() {
         Signal<Boolean> oldSignal = Signal.of(false);
@@ -490,10 +451,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers RoomBrowserView (collapsed row vs list column with a nested
-     * grouped-rooms dynamic) and AuthLoginDialog (url button vs loader).
-     */
     @Test
     void roomBrowser_collapsedVsListWithNestedGroups() {
         Signal<Boolean> oldCollapsed = Signal.of(true);
@@ -550,10 +507,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers QuickSchematicGridSlotDialog resolved schematic (warning row vs
-     * image row) with outer grow.
-     */
     @Test
     void schematicSlot_nullVsContentRow() {
         Signal<String> oldSignal = Signal.of(null);
@@ -591,9 +544,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers ChatOverlayHudView collapsed badge vs expanded window.
-     */
     @Test
     void chatOverlay_collapsedBadgeVsWindow() {
         Signal<Boolean> oldSignal = Signal.of(true);
@@ -627,10 +577,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers SchematicPickerDialog preview ready vs loading card (both
-     * branches render, with different children).
-     */
     @Test
     void schematicPicker_previewCardVsLoadingCard() {
         Signal<Boolean> oldSignal = Signal.of(false);
@@ -664,11 +610,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers GodModeHudView, TimeControlHudView, QuickAccessHudView and
-     * QuickSchematicGridHudView hide-drag-handle buttons plus
-     * JoystickHudView show-handle button.
-     */
     @Test
     void dragHandles_thenOnlyCollapses() {
         Signal<Boolean> oldSignal = Signal.of(false);
@@ -707,12 +648,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers MusicSettingsView playing progress, HostRoomDialog showAddress
-     * text, BrowserSearchHeader selected tags row and SchematicPickerDialog
-     * remaining-count button plus QuickSchematicGridSettingsView clear-icon
-     * button.
-     */
     @Test
     void optionalContent_thenOnlyCollapsesWithOuterGrow() {
         Signal<Boolean> oldSignal = Signal.of(false);
@@ -744,9 +679,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers ChatOverlayHudView channel/user side panels.
-     */
     @Test
     void chatOverlay_sidePanelsElseOnlyCollapse() {
         Signal<Boolean> oldSignal = Signal.of(false);
@@ -778,10 +710,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers ChatMessageListView translated text and translating indicator
-     * (string source, empty collapses).
-     */
     @Test
     void chatMessage_translatedTextCollapsesWhenEmpty() {
         Signal<String> oldSignal = Signal.of(null);
@@ -822,11 +750,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers JoinApprovalHudView request banner (method reference, always a
-     * single row root) and PrettyChatSettingsView card list (always a
-     * column root).
-     */
     @Test
     void methodRefFactories_alwaysSingleRoot() {
         Signal<String> oldSignal = Signal.of(null);
@@ -868,11 +791,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers TranslationSettingsView provider api-key rows (per-value column
-     * branches, unknown provider collapses) and TimeControlHudView mode
-     * content (always a root, branch per mode).
-     */
     @Test
     void valueBranches_perValueRoots() {
         Signal<String> oldSignal = Signal.of("other");
@@ -918,9 +836,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers ChatOverlayHudView desktop vs mobile body (width threshold).
-     */
     @Test
     void chatOverlay_widthThresholdBranches() {
         Signal<Float> oldSignal = Signal.of(800f);
@@ -958,10 +873,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers ChatMessageListView invite card (room vs fallback, named root
-     * with height and growX).
-     */
     @Test
     void chatMessage_roomCardVsFallback() {
         Signal<String> oldSignal = Signal.of(null);
@@ -999,10 +910,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers ChatMessageListView player-connect buttons (both branches
-     * render sized buttons).
-     */
     @Test
     void chatMessage_playerConnectButtons() {
         Signal<Boolean> oldSignal = Signal.of(true);
@@ -1037,9 +944,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers GodModeHudView provider tools vs unavailable content.
-     */
     @Test
     void godMode_providerActiveVsUnavailable() {
         Signal<String> oldSignal = Signal.of(null);
@@ -1072,11 +976,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers AuthOverlay session states. Regression test: the migration
-     * dropped early returns here and stacked loading/error/login/card rows
-     * as siblings. Exactly one branch must mount per state on both sides.
-     */
     @Test
     void authOverlay_sessionStatesExclusive() {
         Signal<String> oldSignal = Signal.of("loading");
@@ -1127,10 +1026,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers EmojiDialog empty row vs chip wrap and both
-     * SchematicIconPickerDialog glyph/content lists.
-     */
     @Test
     void emoji_emptyRowVsChipWrap() {
         Signal<List<String>> oldSignal = Signal.of(new ArrayList<String>());
@@ -1182,12 +1077,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers GodModeEffectsDialog/GodModeItemsDialog/GodModeUnitsDialog wraps,
-     * QuickSchematicGridSettingsView pages wrap, TeamResourceAllTeamsDialog
-     * grid and TeamResourceHudView team chips row (null-safe loops that
-     * always mount exactly one root).
-     */
     @Test
     void collectionWraps_alwaysSingleRoot() {
         Signal<List<String>> oldSignal = Signal.of(null);
@@ -1233,10 +1122,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers BrowserFilterDialog block filter (empty text vs chip wrap) and
-     * QuickSchematicGridSlotDialog icon text variants.
-     */
     @Test
     void filterBlocks_emptyTextVsWrap() {
         Signal<Boolean> oldSignal = Signal.of(true);
@@ -1280,10 +1165,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers BrowserFilterDialog tag categories and WavePreviewPanelView wave
-     * sections (single column root with an early return on empty input).
-     */
     @Test
     void earlyReturnColumn_emptyVsLoop() {
         Signal<List<String>> oldSignal = Signal.of(new ArrayList<String>());
@@ -1333,10 +1214,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers ChatMessageListView message area: hasMessages list vs the nested
-     * initial-loading / error / empty chain.
-     */
     @Test
     void chatList_nestedLoadingErrorEmpty() {
         Signal<String> oldMode = Signal.of("list");
@@ -1403,10 +1280,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers ChatUserListView no-channel branch: loading vs nested
-     * error/empty chain (post-fix exclusive shape).
-     */
     @Test
     void chatUsers_loadingVsErrorVsEmpty() {
         Signal<Boolean> oldLoading = Signal.of(true);
@@ -1468,10 +1341,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers TeamResourceHudView item/unit sections: outer show toggle with
-     * an inner used-items dynamic (empty row vs card column).
-     */
     @Test
     void teamResources_sectionWithInnerItems() {
         Signal<Boolean> oldShow = Signal.of(true);
@@ -1528,11 +1397,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers ChatMessageListView channel switch and ChatUserListView channel
-     * switch (query/content column vs no-channel column) plus the three
-     * then-only banners (refresh-failed, end-of-history, loading-older).
-     */
     @Test
     void channelSwitch_andThenOnlyBanners() {
         Signal<Boolean> oldChannel = Signal.of(false);
@@ -1590,10 +1454,6 @@ class LegacyDynamicParityTest extends SolimCoreEnv {
         finish(oldBox, oldSide, newBox, newSide);
     }
 
-    /**
-     * Covers QuickSchematicGridSettingsView page-icon text variants and
-     * QuickSchematicGridSlotDialog icon text variants.
-     */
     @Test
     void iconText_emptyVsValue() {
         Signal<String> oldSignal = Signal.of(null);

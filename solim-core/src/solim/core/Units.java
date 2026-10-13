@@ -8,13 +8,6 @@ import solim.reactive.Computed;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Viewport unit signals and helpers for Solim. Exposes reactive {@link #dvw}
- * and {@link #dvh}
- * signals representing 1% of dynamic viewport width and height in scene
- * coordinates. Automatically
- * synchronizes with window resize events via Mindustry's {@link ResizeEvent}.
- */
 public final class Units {
 
     public static final Signal<Float> dvw = Signal.of(calcDvw());

@@ -21,11 +21,6 @@ import mindustrytool.models.response.ChatMessage;
 import mindustrytool.models.response.UserSession;
 import mindustrytool.services.auth.MindustryAuthProvider;
 
-/**
- * Parser that categorizes raw {@link ChatMessage} instances into typed
- * {@link ParsedChatMessage} domain models, caching results to ensure regexes
- * and base64 schematic decoding execute only once.
- */
 public final class ChatMessageParser {
 
     private static final Pattern MINDUSTRY_TOOL_LINK_PATTERN = Pattern
@@ -38,10 +33,6 @@ public final class ChatMessageParser {
     private ChatMessageParser() {
     }
 
-    /**
-     * Parses a raw chat message into a strongly-typed {@link ParsedChatMessage}.
-     * Results are cached by message ID when present.
-     */
     public static ParsedChatMessage parse(@Nullable ChatMessage message) {
         if (message == null) {
             return new TextMessage(new ChatMessage(), "", false);

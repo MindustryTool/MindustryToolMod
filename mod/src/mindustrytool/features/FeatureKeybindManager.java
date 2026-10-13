@@ -5,13 +5,6 @@ import arc.Events;
 import mindustry.game.EventType.Trigger;
 import mindustrytool.components.SettingKeybindRow;
 
-/**
- * Centralized dispatcher for all feature keybinds.
- * Polls registered {@link FeatureKeybind}s on {@link Trigger#update},
- * suppresses execution while any scene field holds focus or key listening is active,
- * enforces {@code requireEnabled} preconditions,
- * and runs actions on the application main thread.
- */
 public final class FeatureKeybindManager {
     private static boolean initialized = false;
 
@@ -39,15 +32,6 @@ public final class FeatureKeybindManager {
         }
     }
 
-    /**
-     * Pure precondition check used by {@link #update()} and unit tests.
-     *
-     * @param feature     parent feature owning the keybind
-     * @param keybind     keybind descriptor to evaluate
-     * @param hasField    true when any scene field holds keyboard focus
-     * @param keyReleased true when the bound key was pressed and released
-     * @return true when the action should run
-     */
     public static boolean shouldTrigger(Feature feature, FeatureKeybind keybind, boolean hasField,
             boolean keyReleased) {
         if (hasField || !keyReleased) {

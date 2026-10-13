@@ -4,9 +4,6 @@ import arc.Core;
 import mindustrytool.features.rangedisplay.RangeDisplayFeature;
 import solim.overlay.SolimDialog;
 
-/**
- * Settings dialog for configuring Range Display options.
- */
 public class RangeDisplaySettingsDialog extends SolimDialog {
 
     public RangeDisplaySettingsDialog(RangeDisplayFeature feature) {

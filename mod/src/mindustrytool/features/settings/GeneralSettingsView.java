@@ -22,12 +22,6 @@ import mindustrytool.features.FeatureManager;
 import mindustrytool.services.crash.CrashTimestampParser;
 import solim.core.Component;
 
-/**
- * Modern declarative Solim settings view for mod-wide preferences and
- * diagnostics.
- * Includes toggles for beta updates and game presence sharing,
- * as well as one-tap buttons to copy recent logs and crash reports.
- */
 public class GeneralSettingsView extends Component {
 
     @Override

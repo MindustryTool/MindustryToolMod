@@ -4,12 +4,6 @@ import arc.graphics.g2d.Font;
 import arc.scene.ui.Button.ButtonStyle;
 import arc.util.Nullable;
 
-/**
- * Immutable resolved button style snapshot containing a {@link ButtonStyle}
- * with layout metadata and an optional font.
- * Static instances are shared via {@link StyleCache}; dynamic snapshots are
- * rebuilt on every reactive invalidation.
- */
 public final class SolimButtonStyle {
 
     private final ButtonStyle style;

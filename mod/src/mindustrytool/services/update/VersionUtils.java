@@ -6,40 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 import mindustry.core.Version;
 
-/**
- * Pure version utilities extracted from
- * {@code old.mindustrytool.services.UpdateService}.
- *
- * <p>
- * Stripping rule for {@link #parseVersion(String)}:
- *
- * <ul>
- * <li>If {@code null} or empty → {@code int[0]}.
- * <li>Trim whitespace.
- * <li>Remove leading {@code v} / {@code V} if present.
- * <li>Strip suffix after first {@code -} or {@code +} (e.g. {@code 1.2.3-beta},
- * {@code
- *       2.0+build}).
- * <li>Keep only digits and dots via {@code [^0-9.]}.
- * <li>Split on {@code \.}, drop empty segments, parse ints. Any failure →
- * {@code int[0]}.
- * </ul>
- *
- * Fixes legacy bug where
- * {@code version.contains("v") ? substring(v, indexOf("-"))} throws when
- * {@code v} present without {@code -}.
- */
 public final class VersionUtils {
 
     private VersionUtils() {
     }
 
-    /**
-     * Parses a version string into int components.
-     *
-     * @param version raw version string (may be null)
-     * @return int[] components, empty if unparseable
-     */
     public static int[] parseVersion(String version) {
         if (version == null) {
             return new int[0];
@@ -144,24 +115,6 @@ public final class VersionUtils {
         return sb.toString();
     }
 
-    /**
-     * Checks whether the specified game build and revision meet or exceed
-     * {@code minGameVersion},
-     * replicating {@link Version#isAtLeast(int, int, String)} semantics.
-     *
-     * <p>
-     * Rules:
-     * <ul>
-     * <li>If {@code gameBuild <= 0} (custom / developer builds) → returns
-     * {@code true}.</li>
-     * <li>If {@code minGameVersion} is {@code null} or empty → returns
-     * {@code true}.</li>
-     * <li>If {@code minGameVersion} contains {@code .} (e.g. {@code 146.1}),
-     * requires
-     * {@code gameBuild > targetBuild || (gameBuild == targetBuild && gameRevision >= targetRev)}.</li>
-     * <li>Otherwise, requires {@code gameBuild >= targetBuild}.</li>
-     * </ul>
-     */
     public static boolean isGameVersionAtLeast(int gameBuild, int gameRevision, @Nullable String minGameVersion) {
         if (gameBuild <= 0 || minGameVersion == null) {
             return true;
@@ -179,11 +132,6 @@ public final class VersionUtils {
         return gameBuild >= Strings.parseInt(trimmed, 0);
     }
 
-    /**
-     * Runtime convenience check delegating to
-     * {@link #isGameVersionAtLeast(int, int, String)}
-     * using {@link Version#build} and {@link Version#revision}.
-     */
     public static boolean isGameVersionAtLeast(@Nullable String minGameVersion) {
         return isGameVersionAtLeast(Version.build, Version.revision, minGameVersion);
     }

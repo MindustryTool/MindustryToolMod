@@ -9,11 +9,6 @@ import arc.graphics.Color;
 import mindustrytool.components.WebStyles;
 import mindustrytool.models.response.TagData;
 
-
-/**
- * Layout constants and responsive capacity calculations for schematic and map
- * browsers.
- */
 public final class BrowserLayout {
 
     public static final float CARD_SIZE = unit(58f);
@@ -29,11 +24,6 @@ public final class BrowserLayout {
     public static final int PAGE_SIZE_MIN = 20;
     public static final int PAGE_SIZE_MAX = 100;
 
-    /**
-     * Number of cards revealed per frame when a browser page arrives. Keeps
-     * each frame under a 60fps budget while keyed reconciliation reuses the
-     * previous chunk, so later chunks only build new cards.
-     */
     public static final int RENDER_CHUNK_SIZE = 8;
 
     private BrowserLayout() {

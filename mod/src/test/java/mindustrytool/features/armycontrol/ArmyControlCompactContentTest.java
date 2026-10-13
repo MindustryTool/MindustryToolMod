@@ -166,12 +166,6 @@ class ArmyControlCompactContentTest extends MindustryTestEnv {
         }
     }
 
-    /**
-     * Chips (icon + count) must match the remove button height (unit 9).
-     * Identifies chips as buttons containing both an Image and a Label:
-     * toolbar and remove buttons carry icons only, and recall rows render
-     * label-only headless with no living units to summarize.
-     */
     private static void assertChipHeightsMatchRemoveButton(Element root, int expectedChips) {
         Seq<Element> buttons = new Seq<>();
         collectButtons(root, buttons);
@@ -202,7 +196,6 @@ class ArmyControlCompactContentTest extends MindustryTestEnv {
         }
         return false;
     }
-
 
     private static void assertDividersFillWidth(Element root, float contentWidth) {
         Seq<Element> dividers = new Seq<>();
@@ -272,7 +265,8 @@ class ArmyControlCompactContentTest extends MindustryTestEnv {
         }
     }
 
-    private static void collectNames(Element element, Seq<String> out) {        if (element.name != null) {
+    private static void collectNames(Element element, Seq<String> out) {
+        if (element.name != null) {
             out.add(element.name);
         }
         if (element instanceof Group) {

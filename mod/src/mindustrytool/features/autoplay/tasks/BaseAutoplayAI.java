@@ -6,10 +6,6 @@ import arc.util.Nullable;
 import mindustry.entities.units.AIController;
 import mindustry.gen.Teamc;
 
-/**
- * Base AI controller for autoplay tasks.
- * Tracks target positions for overhead indicator rendering.
- */
 public abstract class BaseAutoplayAI extends AIController {
 
     public final Vec2 targetPos = new Vec2();

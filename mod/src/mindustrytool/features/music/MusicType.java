@@ -1,9 +1,5 @@
 package mindustrytool.features.music;
 
-/**
- * Music categories that custom tracks can be injected into. AMBIENT, DARK and
- * BOSS are game rotations; MENU and EDITOR replace a single vanilla music slot.
- */
 public enum MusicType {
     AMBIENT,
     DARK,

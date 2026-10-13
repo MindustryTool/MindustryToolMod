@@ -6,9 +6,6 @@ import mindustry.gen.Groups;
 import mindustry.gen.Unit;
 import mindustry.type.UnitType;
 
-/**
- * Represents a saved RTS army control group of unit IDs.
- */
 public class ControlGroup {
 
     private final int id;
@@ -53,9 +50,6 @@ public class ControlGroup {
         return unitIds.size;
     }
 
-    /**
-     * Prunes dead or missing units from this group and returns the number of living units remaining.
-     */
     public int pruneDeadUnits() {
         for (int i = unitIds.size - 1; i >= 0; i--) {
             int uid = unitIds.get(i);
@@ -67,9 +61,6 @@ public class ControlGroup {
         return unitIds.size;
     }
 
-    /**
-     * Calculates a summary mapping each UnitType in this group to its living count.
-     */
     public ObjectIntMap<UnitType> summarizeUnits() {
         ObjectIntMap<UnitType> summary = new ObjectIntMap<>();
         for (int i = 0; i < unitIds.size; i++) {

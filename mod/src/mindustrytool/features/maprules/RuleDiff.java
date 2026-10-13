@@ -3,10 +3,6 @@ package mindustrytool.features.maprules;
 import arc.util.Nullable;
 import mindustry.game.Rules;
 
-/**
- * Compares active rules against a default baseline, driven by the
- * {@link RuleDescriptors} table instead of per-field methods.
- */
 public class RuleDiff {
 
     private static final float EPSILON = 0.0001f;

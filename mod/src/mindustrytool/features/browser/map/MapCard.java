@@ -19,10 +19,6 @@ import solim.core.Component;
 import solim.reactive.Readable;
 import mindustrytool.components.WebStyles;
 
-/**
- * Image-first card layout showing a dedicated preview card with a centered
- * title strip and a compact row of interactive stat action buttons.
- */
 public class MapCard extends Component {
 
     public static final float CARD_SIZE = BrowserLayout.CARD_SIZE;

@@ -3,9 +3,6 @@ package mindustrytool.features.maprules;
 import arc.Core;
 import solim.overlay.SolimDialog;
 
-/**
- * Feature settings dialog.
- */
 public class MapRulesSettingsDialog extends SolimDialog {
 
     public MapRulesSettingsDialog(MapRulesFeature feature) {

@@ -32,12 +32,6 @@ import solim.performance.Perf;
 import solim.performance.PerfSpan;
 import solim.reactive.Signal;
 
-/**
- * Headless reproduction of a schematic browser page change: real
- * {@link SchematicCard} lists built through {@link ReactiveGrid} with image
- * loading stubbed out. Asserts the structural subtree/attach spans emitted by
- * the profiling parent stack.
- */
 class SchematicBrowserPerfTest extends MindustryTestEnv {
 
     private static final int PAGE_SIZE = 5;

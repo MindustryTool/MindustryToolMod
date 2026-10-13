@@ -16,11 +16,6 @@ import solim.display.SolimImage;
 import solim.runtime.AttachmentStack;
 import solim.test.SolimEnv;
 
-/**
- * The eager-component contract: an element that already exists, a deferred
- * attachment to the open
- * parent, and disposal of whatever the component handed itself.
- */
 class EagerComponentTest extends SolimEnv {
 
     @AfterEach

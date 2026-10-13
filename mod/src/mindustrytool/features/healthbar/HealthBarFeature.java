@@ -29,15 +29,6 @@ import solim.config.ConfigValue;
 
 import solim.overlay.SolimDialog;
 
-/**
- * Draws health bars above damaged units and a single shield bar with a
- * whole-bar count above shielded units, plus optional HP bars above damaged
- * buildings. Configuration is synchronized to primitive cached fields via
- * reactive
- * signal subscriptions; frame scratch fields copy these primitives once per
- * frame with
- * zero boxing, allocations, or signal peeking.
- */
 public class HealthBarFeature extends Feature {
 
     public final ConfigGroup config;

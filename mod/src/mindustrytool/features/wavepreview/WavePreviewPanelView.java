@@ -15,9 +15,6 @@ import mindustrytool.features.settings.ModSettings;
 import solim.core.Component;
 import solim.reactive.Readable;
 
-/**
- * Solim HUD panel view injected into the vanilla waves table.
- */
 public class WavePreviewPanelView extends Component {
 
     private final WavePreviewFeature feature;

@@ -16,9 +16,6 @@ import mindustrytool.components.WebStyles;
 import solim.core.Component;
 import solim.reactive.Readable;
 
-/**
- * Modern declarative Solim settings view for main menu background customization.
- */
 public class BackgroundSettingsView extends Component {
 
     private final BackgroundFeature feature;
@@ -49,40 +46,43 @@ public class BackgroundSettingsView extends Component {
             return Core.bundle.format("feature.background.settings.current-file", fileName);
         });
 
-        return SettingCard.section(Icon.image, Core.bundle.get("feature.background.settings.image-selection", "Image Selection"), () -> {
-            text(Core.bundle.get("feature.background.settings.image-desc", "Select a custom PNG image to replace the main menu background."))
-                    .color(WebStyles.Colors.GHOST_FG)
-                    .wrap()
-                    .growX()
-                    .left();
+        return SettingCard.section(Icon.image,
+                Core.bundle.get("feature.background.settings.image-selection", "Image Selection"), () -> {
+                    text(Core.bundle.get("feature.background.settings.image-desc",
+                            "Select a custom PNG image to replace the main menu background."))
+                            .color(WebStyles.Colors.GHOST_FG)
+                            .wrap()
+                            .growX()
+                            .left();
 
-            button(this::selectImage)
-                    .style(WebStyles.outline())
-                    .growX()
-                    .height(unit(11))
-                    .gap(unit(2))
-                    .children(() -> {
-                        icon(Icon.file).size(unit(6));
-                        text(Core.bundle.get("feature.background.settings.select-image", "Select Background Image"));
-                    });
+                    button(this::selectImage)
+                            .style(WebStyles.outline())
+                            .growX()
+                            .height(unit(11))
+                            .gap(unit(2))
+                            .children(() -> {
+                                icon(Icon.file).size(unit(6));
+                                text(Core.bundle.get("feature.background.settings.select-image",
+                                        "Select Background Image"));
+                            });
 
-            text(currentFileText)
-                    .color(WebStyles.Colors.GHOST_FG)
-                    .left();
-        });
+                    text(currentFileText)
+                            .color(WebStyles.Colors.GHOST_FG)
+                            .left();
+                });
     }
 
     private Component appearanceCard() {
-        return SettingCard.section(Icon.spray, Core.bundle.get("feature.background.settings.appearance", "Appearance"), () -> {
-            SettingSlider.of(
-                    Core.bundle.get("feature.background.settings.opacity", "Opacity"),
-                    feature.opacityConfig.signal(),
-                    5,
-                    100,
-                    5,
-                    feature.opacityConfig.signal().map(v -> (v != null ? v : 100) + "%")
-            );
-        });
+        return SettingCard.section(Icon.spray, Core.bundle.get("feature.background.settings.appearance", "Appearance"),
+                () -> {
+                    SettingSlider.of(
+                            Core.bundle.get("feature.background.settings.opacity", "Opacity"),
+                            feature.opacityConfig.signal(),
+                            5,
+                            100,
+                            5,
+                            feature.opacityConfig.signal().map(v -> (v != null ? v : 100) + "%"));
+                });
     }
 
     private Component actionsCard() {

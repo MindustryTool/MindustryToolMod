@@ -13,23 +13,6 @@ import arc.func.Func;
 import solim.core.Component;
 import solim.core.Disposable;
 
-/**
- * Shared keyed reconciliation manager for structural reactive components.
- *
- * <p>
- * Preserves component identity across updates:
- * <ul>
- * <li>Existing keys: preserves the existing component instance without
- * rebuilding.</li>
- * <li>New keys: instantiates a new component in an isolated context and eagerly
- * builds its element.</li>
- * <li>Removed keys: disposes the removed component cleanly after committing
- * state.</li>
- * </ul>
- *
- * @param <K> the key type identifying each item
- * @param <C> the component type
- */
 public final class StructuralReconciler<K, C extends Component> implements Disposable {
     private final Map<K, C> activeComponents = new LinkedHashMap<>();
     private boolean disposed = false;
@@ -37,11 +20,6 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
     private volatile int lastReuseCount = 0;
     private volatile int lastTotalCount = 0;
 
-    /**
-     * Reconciles the given items against currently active components with
-     * transactional rollback.
-     * Duplicate keys are ignored with a warning (first wins).
-     */
     public <T> Map<K, C> reconcile(
             Iterable<T> items,
             Func<T, K> keyExtractor,
@@ -121,19 +99,6 @@ public final class StructuralReconciler<K, C extends Component> implements Dispo
         return activeComponents;
     }
 
-    /**
-     * Builds one item in an isolated, untracked context.
-     *
-     * <p>
-     * Everything the factory registers — the component itself plus any Computed,
-     * Effect, Query
-     * or Binding it constructs — is collected by the scope. On success the whole
-     * set is adopted by
-     * the component the factory returned, so it is disposed with that component
-     * rather than
-     * dropped on the floor. If the factory throws, the scope destroys whatever it
-     * had created.
-     */
     private <T> C create(T item, Func<T, C> factory) {
         OwnershipScope scope = OwnershipScope.open();
         try {

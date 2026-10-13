@@ -14,10 +14,6 @@ import solim.reactive.Signal;
 
 import mindustrytool.components.WebStyles;
 
-/**
- * Search header with debounced text input, filter trigger button, refresh
- * button, and reactive active filter chips.
- */
 public class BrowserSearchHeader extends Component {
 
     private static final float DEBOUNCE_SECONDS = 0.5f;

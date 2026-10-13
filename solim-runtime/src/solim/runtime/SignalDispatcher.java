@@ -9,17 +9,6 @@ import mindustry.game.EventType.Trigger;
 import solim.core.SchedulableEffect;
 import solim.core.SolimAssert;
 
-/**
- * Internal single-threaded dispatcher that batches and deduplicates reactive
- * effect
- * invalidations to run at most once per Mindustry frame.
- *
- * <p>
- * All static entry points delegate to a singleton instance, so {@code Perf} can
- * install a
- * profiling-enabled subclass without the base class carrying flush
- * instrumentation.
- */
 public class SignalDispatcher {
 
     private static volatile SignalDispatcher INSTANCE = new SignalDispatcher();
@@ -42,10 +31,6 @@ public class SignalDispatcher {
         INSTANCE = dispatcher != null ? dispatcher : new SignalDispatcher();
     }
 
-    /**
-     * Registers the frame flush callback with Mindustry's {@link Trigger#update}
-     * event.
-     */
     public static void register() {
         if (registered)
             return;
@@ -57,18 +42,12 @@ public class SignalDispatcher {
         Events.run(Trigger.update, (Runnable) () -> flush());
     }
 
-    /**
-     * Ensures that the dispatcher is hooked into the frame lifecycle.
-     */
     public static void ensureRegistered() {
         if (!registered) {
             register();
         }
     }
 
-    /**
-     * Enqueues an invalidated effect for batched execution on the next frame flush.
-     */
     public static void enqueue(@Nullable SchedulableEffect effect) {
         if (effect == null || effect.isDisposed())
             return;
@@ -76,10 +55,6 @@ public class SignalDispatcher {
         INSTANCE.doEnqueue(effect);
     }
 
-    /**
-     * Flushes and executes all pending effects in FIFO order on the caller's
-     * thread.
-     */
     public static void flush() {
         INSTANCE.doFlush();
     }
@@ -96,9 +71,6 @@ public class SignalDispatcher {
         return registered;
     }
 
-    /**
-     * Resets dispatcher state for isolated test execution.
-     */
     public static void resetForTests() {
         INSTANCE.doResetForTests();
     }

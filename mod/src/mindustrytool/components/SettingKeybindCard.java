@@ -11,20 +11,11 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureKeybind;
 import solim.core.Component;
 
-/**
- * Reusable settings card displaying feature keybinds.
- * Conforms to the project layout and spacing standards.
- * Automatically hidden on mobile devices.
- */
 public final class SettingKeybindCard {
 
     private SettingKeybindCard() {
     }
 
-    /**
-     * Creates a standardized Keybinds section card for a single feature.
-     * If on mobile or if the feature has no registered keybinds, returns null.
-     */
     public static @Nullable Component forFeature(Feature feature) {
         if (Vars.mobile || feature == null || feature.getKeybinds().isEmpty()) {
             return null;
@@ -32,10 +23,6 @@ public final class SettingKeybindCard {
         return of(Core.bundle.get("setting.section.keybinds", "Keybinds"), feature.getKeybinds());
     }
 
-    /**
-     * Creates a standardized Keybinds section card for a custom collection of keybinds.
-     * If on mobile or if the keybind collection is empty, returns null.
-     */
     public static @Nullable Component of(String title, Seq<FeatureKeybind> keybinds) {
         if (Vars.mobile || keybinds == null || keybinds.isEmpty()) {
             return null;

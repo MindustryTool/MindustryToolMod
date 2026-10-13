@@ -13,11 +13,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import mindustrytool.utils.TimeZones;
 
-/**
- * Pure changelog formatting extracted from
- * {@code UpdateService.fetchReleasesAndShowDialog}. No
- * network, no Arc, no bundle dependency — pure Java for unit testing.
- */
 public final class ChangelogFormatter {
 
     private static final int MAX_RELEASES = 20;
@@ -99,9 +94,6 @@ public final class ChangelogFormatter {
         }
     }
 
-    /**
-     * Partitions releases into the target update release and remaining releases.
-     */
     public static PartitionedReleases partition(@Nullable String releasesJson, @Nullable String targetVersion,
             boolean includePrereleases) {
         if (releasesJson == null || releasesJson.trim().isEmpty()) {
@@ -167,11 +159,6 @@ public final class ChangelogFormatter {
         return new PartitionedReleases(null, list);
     }
 
-    /**
-     * Formats releases, optionally excluding prereleases.
-     * When {@code includePrereleases} is false, entries with
-     * {@code "prerelease": true} are skipped.
-     */
     public static String format(String releasesJson, boolean includePrereleases) {
         if (releasesJson == null || releasesJson.trim().isEmpty()) {
             return "Could not parse release notes.";
@@ -192,18 +179,6 @@ public final class ChangelogFormatter {
         return formatReleases(releases, TimeZones.systemDefaultOrUtc(), DATE_FORMATTER);
     }
 
-    /**
-     * Finds the maximum release tag over all entries in raw GitHub releases JSON.
-     * Pure and crash-proof: never throws, returns {@code null} for null/blank
-     * input,
-     * malformed JSON, non-array payloads, or when no entry carries a parseable tag.
-     * Entries with missing, blank, or version-unparseable {@code tag_name} are
-     * skipped.
-     *
-     * @param releasesJson raw GitHub releases array JSON (may be null)
-     * @return the raw winning tag (e.g. {@code v5.0.3-v8-beta}), or null when none
-     *         qualifies
-     */
     public static @Nullable String findLatestTag(@Nullable String releasesJson) {
         if (releasesJson == null || releasesJson.trim().isEmpty()) {
             return null;

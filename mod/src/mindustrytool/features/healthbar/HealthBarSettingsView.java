@@ -15,9 +15,6 @@ import mindustrytool.components.WebStyles;
 import solim.core.Component;
 import solim.reactive.Signal;
 
-/**
- * Modern declarative Solim settings view for Health Bar options.
- */
 public class HealthBarSettingsView extends Component {
 
     private final HealthBarFeature feature;

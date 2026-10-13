@@ -27,19 +27,6 @@ import solim.test.BuildScopeHost;
 import solim.test.ModifierScope;
 import solim.test.SolimEnv;
 
-/**
- * Method-by-method disposal proof for the reactive {@link TableConfig}
- * modifiers.
- *
- * <p>
- * The fixture is a bare {@link TableConfig} implementor, so these assertions
- * exercise the
- * mixin defaults themselves rather than an override some container happens to
- * provide. Every
- * reactive overload here mutates the underlying Arc {@link Table} directly,
- * which is what makes a
- * leaked effect visible after the owner is gone.
- */
 class TableConfigDisposalTest extends SolimEnv {
 
     private final List<RoundedDrawable> drawables = new ArrayList<>();

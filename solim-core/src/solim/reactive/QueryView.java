@@ -26,13 +26,6 @@ import solim.runtime.AttachmentStack;
 import solim.runtime.OwnershipScope;
 import solim.runtime.ReactiveContext;
 
-/**
- * Declarative reactive component that binds to a {@link Query} and dynamically
- * renders loading, error, and data states with stale-while-revalidate
- * awareness.
- *
- * @param <T> query data type
- */
 public final class QueryView<T> extends Component
         implements CellConfig<QueryView<T>>, TableConfig<QueryView<T>>, ElementConfig<QueryView<T>> {
 

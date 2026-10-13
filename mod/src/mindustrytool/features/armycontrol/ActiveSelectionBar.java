@@ -12,12 +12,6 @@ import mindustrytool.components.WebStyles;
 import solim.core.Component;
 import solim.reactive.Readable;
 
-/**
- * Renders the active unit selection bar. Displays one compact chip per selected
- * unit type with unit icon and count only (name moves to the tooltip).
- * Tapping a chip immediately deselects that unit type.
- * Renders nothing when nothing is selected.
- */
 public class ActiveSelectionBar extends Component {
 
     private final ArmyControlFeature feature;
@@ -52,7 +46,8 @@ public class ActiveSelectionBar extends Component {
                                 .children(() -> {
                                     for (UnitType type : types) {
                                         int count = map.get(type, 0);
-                                        String hint = Core.bundle.get("feature.army-control.hint.deselect-chip", "Tap to exclude from selection");
+                                        String hint = Core.bundle.get("feature.army-control.hint.deselect-chip",
+                                                "Tap to exclude from selection");
                                         button()
                                                 .style(WebStyles.actionChip())
                                                 .padding(unit(1))

@@ -2,10 +2,6 @@ package solim.performance;
 
 import arc.util.Nullable;
 
-/**
- * Immutable value describing a single hierarchical build span recorded while
- * flame tracing is enabled.
- */
 public final class TraceSpan {
     public final long traceId;
     public final int spanId;

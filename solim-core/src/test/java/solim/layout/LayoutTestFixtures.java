@@ -24,10 +24,6 @@ import solim.reactive.QueryView;
 import solim.reactive.Signal;
 import solim.reactive.When;
 
-/**
- * Fixture utilities and component supplier providers for unified layout
- * testing.
- */
 public final class LayoutTestFixtures {
 
     private LayoutTestFixtures() {

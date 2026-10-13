@@ -3,9 +3,6 @@ package mindustrytool.features.autoplay;
 import arc.Core;
 import solim.overlay.SolimDialog;
 
-/**
- * Settings dialog for Autoplay feature.
- */
 public class AutoplaySettingsDialog extends SolimDialog {
 
     public AutoplaySettingsDialog(AutoplayFeature feature) {

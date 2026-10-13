@@ -57,11 +57,6 @@ class SolimAssertTest {
                 "Off-main access must throw: there is no opt-out mode that downgrades this to a log");
     }
 
-    /**
-     * The flag that made the guard advisory. The spec requires that no reference
-     * survives
-     * outside archived change history and the legacy {@code old/} folder.
-     */
     @Test
     void advisoryThreadCheckFlagHasNoRemainingReferences() throws IOException {
         Path root = findRepoRoot();

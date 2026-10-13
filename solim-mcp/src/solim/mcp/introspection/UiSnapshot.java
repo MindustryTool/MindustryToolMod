@@ -18,26 +18,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * Captures a read-only snapshot of the current Solim/Arc UI state.
- *
- * <p>
- * Assembled from:
- *
- * <ul>
- * <li>the Arc element tree (public Scene2D API),
- * <li>reactive instances discovered by reflectively scanning each element plus
- * the ambient static
- * contexts ({@code OwnershipContext}, {@code AttachmentStack},
- * {@code ReactiveContext}),
- * <li>layout metrics for each element.
- * </ul>
- *
- * <p>
- * {@link #capture(Element)} runs the walk on the UI thread inside Mindustry,
- * and falls back to
- * direct execution when no {@code Core.app} is present (headless tests).
- */
 public final class UiSnapshot {
     public final ObjectNode tree;
     public final List<ReactiveRef> reactiveRefs;
@@ -52,12 +32,6 @@ public final class UiSnapshot {
         return new UiSnapshot(result.tree, result.refs);
     }
 
-    /**
-     * Captures the component tree only, scoped to a matching element subtree when
-     * {@code target} is
-     * non-empty. Matching is by element name, simple class name, or fully qualified
-     * class name.
-     */
     public static ObjectNode tree(@Nullable Element root, @Nullable String target) {
         return runOnUiThread(() -> {
             if (target == null || target.isEmpty()) {

@@ -13,9 +13,6 @@ import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import solim.core.Component;
 
-/**
- * Modern declarative Solim settings view for Wave Preview feature.
- */
 public class WavePreviewSettingsView extends Component {
 
     private final WavePreviewFeature feature;

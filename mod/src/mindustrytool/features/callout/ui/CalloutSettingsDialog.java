@@ -4,9 +4,6 @@ import arc.Core;
 import mindustrytool.features.callout.CalloutFeature;
 import solim.overlay.SolimDialog;
 
-/**
- * Solim settings dialog for Tactical Callout feature.
- */
 public class CalloutSettingsDialog extends SolimDialog {
 
     public CalloutSettingsDialog(CalloutFeature feature) {

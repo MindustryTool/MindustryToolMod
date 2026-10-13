@@ -36,11 +36,6 @@ import solim.reactive.QueryKey;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Filter dialog with sort selection, dynamic tag categories fetched from the
- * API, an optional block selector for schematics, and an optional planet
- * selector for maps that narrows the visible tags.
- */
 public class BrowserFilterDialog extends SolimDialog {
 
     public BrowserFilterDialog(BrowserState<?> state, String tagGroup, boolean useBlocks, boolean usePlanets) {
@@ -374,43 +369,43 @@ public class BrowserFilterDialog extends SolimDialog {
         }
 
         private void renderBlocks() {
-dynamic(filterText, query -> {
-                 final String loweredQuery = query != null ? query.toLowerCase() : "";
-                 Seq<Block> blocks = availableBlocks();
+            dynamic(filterText, query -> {
+                final String loweredQuery = query != null ? query.toLowerCase() : "";
+                Seq<Block> blocks = availableBlocks();
 
-                 if (blocks.isEmpty()) {
-                     text(Core.bundle.get("browser.filter.blocks.empty")).color(Color.gray).left();
-                 } else {
-                     wrap().left().gap(unit(1)).children(() -> {
-                    for (int i = 0; i < blocks.size; i++) {
-                        Block block = blocks.get(i);
-                        if (block == null || block.localizedName == null) {
-                            continue;
+                if (blocks.isEmpty()) {
+                    text(Core.bundle.get("browser.filter.blocks.empty")).color(Color.gray).left();
+                } else {
+                    wrap().left().gap(unit(1)).children(() -> {
+                        for (int i = 0; i < blocks.size; i++) {
+                            Block block = blocks.get(i);
+                            if (block == null || block.localizedName == null) {
+                                continue;
+                            }
+
+                            if (!loweredQuery.isEmpty()
+                                    && !block.localizedName.toLowerCase().contains(loweredQuery)) {
+                                continue;
+                            }
+
+                            String blockName = block.name;
+                            String chipLabel = block.localizedName;
+                            Readable<Boolean> checked = state.selectedBlocks().map(
+                                    selected -> selected != null && selected.contains(blockName));
+
+                            button(() -> state.toggleBlock(blockName))
+                                    .style(WebStyles.filterChipText())
+                                    .paddingX(unit(3))
+                                    .checked(checked)
+                                    .height(unit(9))
+                                    .gap(unit(1))
+                                    .children(() -> {
+                                        if (block.uiIcon != null) {
+                                            icon(new TextureRegionDrawable(block.uiIcon)).size(unit(6));
+                                        }
+                                        text(chipLabel).color(checked.map(c -> c ? Color.white : Color.gray));
+                                    });
                         }
-
-                        if (!loweredQuery.isEmpty()
-                                && !block.localizedName.toLowerCase().contains(loweredQuery)) {
-                            continue;
-                        }
-
-                        String blockName = block.name;
-                        String chipLabel = block.localizedName;
-                        Readable<Boolean> checked = state.selectedBlocks().map(
-                                selected -> selected != null && selected.contains(blockName));
-
-                        button(() -> state.toggleBlock(blockName))
-                                .style(WebStyles.filterChipText())
-                                .paddingX(unit(3))
-                                .checked(checked)
-                                .height(unit(9))
-                                .gap(unit(1))
-                                .children(() -> {
-                                    if (block.uiIcon != null) {
-                                        icon(new TextureRegionDrawable(block.uiIcon)).size(unit(6));
-                                    }
-                                    text(chipLabel).color(checked.map(c -> c ? Color.white : Color.gray));
-                                });
-                    }
                     });
                 }
             });

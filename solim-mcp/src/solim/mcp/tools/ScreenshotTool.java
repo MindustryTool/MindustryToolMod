@@ -15,19 +15,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-/**
- * Captures the live game framebuffer via {@link ScreenUtils} and returns it as
- * a base64 PNG.
- *
- * <p>
- * The PNG payload never exceeds {@code maxBytes} (default 1 MB): oversized
- * captures are
- * iteratively downscaled until they fit. An optional
- * {@code x}/{@code y}/{@code width}/{@code
- * height} region (framebuffer pixels, bottom-left origin) captures a screen
- * section instead of
- * the full frame.
- */
 public final class ScreenshotTool implements McpTool {
     static final int DEFAULT_MAX_BYTES = 1024 * 1024;
     static final int DEFAULT_MAX_WIDTH = 1280;

@@ -3,17 +3,6 @@ package solim.performance;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Immutable debug snapshot of a single {@code Computed}'s runtime metrics,
- * captured by the profiling
- * session when the report is written.
- *
- * <p>
- * Durations are nanoseconds. Dependency labels are truncated textual summaries
- * of the tracked
- * {@code ReactiveSource}s rather than references, so the snapshot stays
- * detached from the live graph.
- */
 public final class ComputedSnapshot {
 
     public final int id;

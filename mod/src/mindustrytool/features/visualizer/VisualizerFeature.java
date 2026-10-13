@@ -66,21 +66,6 @@ import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
 import solim.reactive.Signal;
 
-/**
- * Unified feature responsible for rendering real-time tactical visualizations:
- * - Items & fluids in motion across bridge conveyors, duct bridges, and liquid
- * bridges.
- * - Real in-game bridge throughput flow rate tracking.
- * - Turret tactical data: loaded ammo badges with fill gauge and target pointer
- * lines with health reticles.
- *
- * Optimized for 60 FPS real-time rendering:
- * - Zero allocations in draw() loop.
- * - Pre-allocated predicate and consumer delegates.
- * - Primitive configuration cache to eliminate boxing/unboxing and signal
- * overhead.
- * - Viewport frustum culling.
- */
 public class VisualizerFeature extends Feature {
 
     public final ConfigGroup config;
@@ -1320,10 +1305,6 @@ public class VisualizerFeature extends Feature {
         return 1f;
     }
 
-    /**
-     * Internal state per active bridge to track real-time flow rate using a rolling
-     * window.
-     */
     public static class BridgeFlowState implements Poolable {
         public static final int BUCKET_COUNT = 6;
         public static final float BUCKET_TICKS = 10f;

@@ -11,11 +11,6 @@ import mindustry.Vars;
 import mindustry.game.Rules;
 import mindustry.gen.Call;
 
-/**
- * Applies rule changes according to the current edit mode.
- * Continuous controls (sliders) are debounced so dragging applies once the
- * value settles instead of spamming mutations or network broadcasts.
- */
 public class RuleMutator {
 
     private static final float DEBOUNCE_SECONDS = 0.4f;
@@ -32,7 +27,7 @@ public class RuleMutator {
         if (resyncHandler == null) {
             return;
         }
-        float[] delays = new float[]{0.5f, 1.5f, 3f};
+        float[] delays = new float[] { 0.5f, 1.5f, 3f };
         for (int i = 0; i < delays.length; i++) {
             final float delay = delays[i];
             Timer.schedule(() -> {

@@ -19,9 +19,6 @@ import mindustrytool.components.WebStyles;
 import solim.overlay.SolimDialog;
 import solim.reactive.Signal;
 
-/**
- * Main rules dialog with save-map naming modal.
- */
 public class MapRulesDialog extends SolimDialog {
 
     private final MapRulesFeature feature;

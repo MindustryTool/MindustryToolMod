@@ -15,24 +15,6 @@ import solim.runtime.ReactiveContext;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
-/**
- * Verifies the {@code solim.debug.enabled} contract driven through
- * {@link Perf#init()}: the property
- * is the only supported external trigger, it defaults to off, an unrecognized
- * value is treated as
- * off, and {@code init()} is re-invocable.
- *
- * <p>
- * The class-load path itself is deliberately not covered. {@code Perf} used to
- * read the property
- * from a static initializer, which silently never ran because no shipped build
- * referenced the
- * class; every test here imports {@code Perf}, so it could load it and the
- * defect was invisible.
- * The invariant that {@code Main} calls {@code Perf.init()} is asserted by the
- * corrected
- * {@code solim-debug-runtime} bootstrap scenario, not by an executable check.
- */
 class PerfDebugFlagTest extends SolimEnv {
 
     private String previousProperty;

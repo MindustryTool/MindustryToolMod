@@ -21,10 +21,6 @@ import solim.reactive.Computed;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Solim picker for local schematics with search, tag filtering, and preview
- * cards.
- */
 public class SchematicPickerDialog extends SolimDialog {
 
     public static final int INITIAL_BATCH = 36;
@@ -256,13 +252,6 @@ public class SchematicPickerDialog extends SolimDialog {
         return tags;
     }
 
-    /**
-     * Schematic card showing preview thumbnail, title, dimensions, and selection
-     * callback.
-     * Shows a lightweight placeholder while the preview texture is generated
-     * through
-     * a throttled queue (at most 2 FrameBuffers per frame) to keep 60 FPS.
-     */
     public static class SchematicPickerCard extends Component {
 
         private final Schematic schematic;
@@ -336,11 +325,6 @@ public class SchematicPickerDialog extends SolimDialog {
         }
     }
 
-    /**
-     * Throttled FIFO queue for schematic preview generation.
-     * FrameBuffer creation must run on the main GL thread, so tasks are pumped
-     * via {@code Core.app.post()} at most 2 previews per frame.
-     */
     static final class PreviewQueue {
         private final Seq<PreviewTask> queue = new Seq<>();
         private boolean scheduled = false;

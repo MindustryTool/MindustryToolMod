@@ -8,20 +8,11 @@ import solim.core.Component;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Standardized settings slider following the unified modern settings layout:
- * - Header row placed strictly ABOVE the slider track (title left, value right).
- * - Formatted value readout rendered without background.
- * - Full-width slider track (.growX()).
- */
 public final class SettingSlider {
 
     private SettingSlider() {
     }
 
-    /**
-     * Creates a float setting slider with header and value readout above the track.
-     */
     public static Component of(
             String title,
             @Nullable String description,
@@ -53,9 +44,6 @@ public final class SettingSlider {
         });
     }
 
-    /**
-     * Creates a float setting slider without description.
-     */
     public static Component of(
             String title,
             Signal<Float> signal,
@@ -66,9 +54,6 @@ public final class SettingSlider {
         return of(title, null, signal, min, max, step, formattedValue);
     }
 
-    /**
-     * Creates an integer setting slider with header and value readout above the track.
-     */
     public static Component of(
             String title,
             @Nullable String description,
@@ -100,9 +85,6 @@ public final class SettingSlider {
         });
     }
 
-    /**
-     * Creates an integer setting slider without description.
-     */
     public static Component of(
             String title,
             Signal<Integer> signal,

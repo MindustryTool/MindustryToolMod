@@ -3,9 +3,6 @@ package mindustrytool.features.healthbar;
 import arc.Core;
 import solim.overlay.SolimDialog;
 
-/**
- * Settings dialog for configuring Health Bar options, using SolimDialog.
- */
 public class HealthBarSettingsDialog extends SolimDialog {
 
     public HealthBarSettingsDialog(HealthBarFeature feature) {

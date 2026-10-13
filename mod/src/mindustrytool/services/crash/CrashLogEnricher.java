@@ -12,12 +12,6 @@ public final class CrashLogEnricher {
         this.enabledFeatureNames = enabledFeatureNames;
     }
 
-    /**
-     * If log contains a double-newline separator, inserts enabled-feature list
-     * after first block.
-     * Otherwise returns log unchanged. Caller already verified the log contains
-     * "mindustry-tool".
-     */
     public String enrich(String log) {
         if (log == null)
             return "";

@@ -12,9 +12,6 @@ import rhino.NativeJavaObject;
 import rhino.Scriptable;
 import rhino.Undefined;
 
-/**
- * Executes arbitrary JavaScript code via Mindustry's Rhino script engine.
- */
 public final class ExecuteJsTool implements McpTool {
 
     @Override

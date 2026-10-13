@@ -28,13 +28,6 @@ import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Custom music loader. Backs up the game's ambient/dark/boss music lists and
- * rebuilds them in place with custom tracks and user-disabled entries removed.
- * Menu and editor music slots are replaced by reassigning {@link Musics}
- * fields.
- * Playback is driven by the game's SoundControl so state stays authoritative.
- */
 public class MusicFeature extends Feature {
 
     public static final Seq<String> VALID_EXTENSIONS = Seq.with("mp3", "ogg", "wav");
@@ -219,11 +212,6 @@ public class MusicFeature extends Feature {
         }
     }
 
-    /**
-     * Rebuilds the game's music for a type: originals plus valid custom files,
-     * minus
-     * disabled tracks. Also prunes disabled entries for missing custom files.
-     */
     public void loadMusicType(MusicType type) {
         if (type.isSlot()) {
             loadSlot(type);
@@ -286,11 +274,6 @@ public class MusicFeature extends Feature {
         targetList.addAll(playable);
     }
 
-    /**
-     * Loads a single-slot type (menu/editor): only custom tracks exist, and the
-     * slot
-     * is assigned a random enabled track or restored to vanilla.
-     */
     private void loadSlot(MusicType type) {
         Seq<String> paths = pathsFor(type);
         Seq<String> validPaths = new Seq<>();
@@ -346,11 +329,6 @@ public class MusicFeature extends Feature {
         assignSlot(type, trackSignals.get(type).peek());
     }
 
-    /**
-     * Picks a random playable track, avoiding the one already assigned when
-     * possible.
-     * Falls back to the vanilla track when nothing is playable.
-     */
     static Music pickSlotMusic(Seq<Music> playable, Music fallback, Music current) {
         if (playable == null || playable.isEmpty()) {
             return fallback;
@@ -368,11 +346,6 @@ public class MusicFeature extends Feature {
         return candidates.isEmpty() ? playable.first() : candidates.random();
     }
 
-    /**
-     * Removes disabled entries of the given type that refer to custom tracks which
-     * no
-     * longer exist. Original-track entries and entries of other types are kept.
-     */
     static Seq<String> pruneDisabled(Seq<String> disabled, MusicType type, Seq<String> validCustomKeys) {
         Seq<String> result = new Seq<>();
         String customPrefix = type.name() + "_c:";
@@ -396,12 +369,6 @@ public class MusicFeature extends Feature {
         }
     }
 
-    /**
-     * Checks if a file exists or is readable. On Android (SAF), {@link Fi#exists()}
-     * returns false because content URIs are not filesystem paths, but
-     * {@link Fi#read()}
-     * can successfully open an InputStream.
-     */
     static boolean isReadable(@Nullable Fi file) {
         if (file == null) {
             return false;
@@ -416,10 +383,6 @@ public class MusicFeature extends Feature {
         }
     }
 
-    /**
-     * Queries Android ContentResolver for the document's DISPLAY_NAME via
-     * reflection.
-     */
     @Nullable
     static String getAndroidDisplayName(Fi file) {
         if (!Vars.android) {
@@ -500,10 +463,6 @@ public class MusicFeature extends Feature {
         return sanitized.isEmpty() ? "track" : sanitized;
     }
 
-    /**
-     * Resolves the real or fallback track name for a chosen file, ensuring safe
-     * characters and an audio extension.
-     */
     static String resolveTrackName(Fi file) {
         String name = getAndroidDisplayName(file);
         if (name == null || name.trim().isEmpty()) {
@@ -518,10 +477,6 @@ public class MusicFeature extends Feature {
         return name;
     }
 
-    /**
-     * Imports a file into the mod's music directory and registers it for a music
-     * type.
-     */
     public void addTrack(MusicType type, @Nullable Fi file) {
         if (!isReadable(file)) {
             Vars.ui.showErrorMessage(Core.bundle.get("feature.music.error.invalid-file"));
@@ -549,9 +504,6 @@ public class MusicFeature extends Feature {
         }
     }
 
-    /**
-     * Shows a text input dialog prompting the user to rename a custom track.
-     */
     public void showRenameDialog(TrackState state) {
         if (!state.isCustom || state.music == null || state.music.file == null) {
             return;
@@ -563,9 +515,6 @@ public class MusicFeature extends Feature {
                 newName -> renameTrack(state.type, state, newName));
     }
 
-    /**
-     * Renames a custom track's file in storage and updates configuration.
-     */
     public void renameTrack(MusicType type, TrackState state, @Nullable String newName) {
         if (newName == null) {
             return;
@@ -628,10 +577,6 @@ public class MusicFeature extends Feature {
         }
     }
 
-    /**
-     * Picks a non-existing destination file, appending _1, _2, ... before the
-     * extension on conflicts.
-     */
     private Fi uniqueTarget(Fi target) {
         if (!target.exists()) {
             return target;
@@ -674,10 +619,6 @@ public class MusicFeature extends Feature {
         loadMusicType(type);
     }
 
-    /**
-     * Disables every original game track of a music type, leaving only custom
-     * tracks.
-     */
     public void disableAllOriginals(MusicType type) {
         Seq<Music> originals = originalMusic.get(type);
         if (originals == null) {
@@ -703,10 +644,6 @@ public class MusicFeature extends Feature {
         playRandom();
     }
 
-    /**
-     * Toggles a track's disabled state by adding or removing its key from the
-     * persisted disabled list, then rebuilds the music for its type.
-     */
     public void toggleDisabled(TrackState state) {
         Seq<String> disabled = disabledTracks.get();
         Seq<String> next = new Seq<>(disabled != null ? disabled : new Seq<>());

@@ -6,18 +6,6 @@ import arc.input.KeyCode;
 import arc.util.Log;
 import arc.util.Nullable;
 
-/**
- * Profiling-enabled {@link SignalDispatcher} variant that brackets each frame
- * flush in a
- * {@code flush} flame span and polls for the {@code Ctrl + D} profiling toggle.
- *
- * <p>
- * Input polling lives here rather than in {@code Perf} because this class only
- * exists while debug
- * services are installed, which is what keeps {@code Core.input} out of the
- * normal flush path
- * entirely.
- */
 public class DebugSignalDispatcher extends SignalDispatcher {
 
     private boolean keybindPolling = false;
@@ -53,12 +41,6 @@ public class DebugSignalDispatcher extends SignalDispatcher {
         }
     }
 
-    /**
-     * Polls {@code Ctrl + D} once per frame. Guarded against a null
-     * {@link Core#input} so headless
-     * and standalone-Solim environments — where no input backend is installed —
-     * behave normally.
-     */
     private void pollProfilingKeybind() {
         if (!keybindPolling) {
             return;

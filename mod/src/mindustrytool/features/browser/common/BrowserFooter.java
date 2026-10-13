@@ -10,10 +10,7 @@ import mindustry.gen.Icon;
 import solim.core.Component;
 
 import mindustrytool.components.WebStyles;
-/**
- * Footer with Previous/Next buttons, direct page jump, and external upload
- * shortcut. Pages are zero-based internally and displayed one-based.
- */
+
 public class BrowserFooter extends Component {
 
     private final BrowserState<?> state;
@@ -47,9 +44,9 @@ public class BrowserFooter extends Component {
 
             button(state.page().map(page -> Core.bundle.format("browser.footer.page", page != null ? page + 1 : 1)),
                     this::showPageJumpDialog)
-                            .style(WebStyles.outlineText())
-                            .height(unit(10))
-                            .tooltip(Core.bundle.get("browser.footer.page-jump.title"));
+                    .style(WebStyles.outlineText())
+                    .height(unit(10))
+                    .tooltip(Core.bundle.get("browser.footer.page-jump.title"));
 
             button(() -> state.nextPage())
                     .style(WebStyles.outlineText())

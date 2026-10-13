@@ -4,12 +4,6 @@ import arc.audio.Music;
 import arc.struct.Seq;
 import solim.reactive.Readable;
 
-/**
- * Reactive view over a single {@link Music} track shown in the settings UI.
- * Disabled and playing states are derived readables: the disabled set lives in
- * a
- * persisted config list, and playing state comes from the game's current track.
- */
 public class TrackState {
 
     public final Music music;

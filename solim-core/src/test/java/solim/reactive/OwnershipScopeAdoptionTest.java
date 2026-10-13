@@ -19,17 +19,8 @@ import solim.runtime.SignalDispatcher;
 import solim.runtime.StructuralReconciler;
 import solim.test.SolimCoreEnv;
 
-/**
- * Verifies that resources a factory creates are adopted by the component the
- * factory returned
- * instead of being dropped, and that a failed run leaves nothing alive.
- */
 class OwnershipScopeAdoptionTest extends SolimCoreEnv {
 
-    /**
-     * A component that records whatever the factory built around it so tests can
-     * inspect it.
-     */
     static final class Owner extends Component {
         final List<Disposable> created = new ArrayList<>();
 
@@ -45,11 +36,6 @@ class OwnershipScopeAdoptionTest extends SolimCoreEnv {
         }
     }
 
-    /**
-     * Mirrors a real factory: builds a derived value around the component.
-     * {@code get()} is
-     * called because {@link Computed} is lazy and only subscribes once evaluated.
-     */
     private static Owner factory(List<Computed<String>> built, Signal<Integer> source) {
         Owner owner = new Owner();
         built.add(Signal.computed(() -> "v" + source.get()));

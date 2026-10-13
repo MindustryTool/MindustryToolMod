@@ -23,18 +23,6 @@ import solim.reactive.Signal;
 import solim.test.BuildScopeHost;
 import solim.test.SolimEnv;
 
-/**
- * Disposal proof for every reactive modifier on {@link Button}.
- *
- * <p>
- * A {@link Button} writes each binding straight into its Arc widget, so a
- * surviving effect is
- * observable as a widget that keeps tracking a signal nobody is looking at any
- * more. Each case
- * therefore asserts the live behaviour first, then that disposal freezes it and
- * drains the
- * signal's observers.
- */
 class ButtonDisposalTest extends SolimEnv {
 
     @BeforeEach

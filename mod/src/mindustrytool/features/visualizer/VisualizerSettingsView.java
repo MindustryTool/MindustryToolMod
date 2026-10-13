@@ -24,9 +24,6 @@ import mindustrytool.components.WebStyles;
 import solim.core.Component;
 import solim.reactive.Signal;
 
-/**
- * Modern declarative Solim settings view for unified Visualizer options.
- */
 public class VisualizerSettingsView extends Component {
 
     private final VisualizerFeature feature;

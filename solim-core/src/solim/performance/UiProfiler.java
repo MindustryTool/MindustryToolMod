@@ -7,14 +7,6 @@ import arc.util.Nullable;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
-/**
- * Lightweight runtime profiler for Solim UI performance.
- * Tracks per-phase timing (act, layout, draw), layout invalidation counts,
- * element tree scale, and framerate.
- *
- * <p>
- * When disabled (the default), all recording hooks are zero-overhead no-ops.
- */
 public final class UiProfiler {
 
     public static volatile boolean enabled = false;

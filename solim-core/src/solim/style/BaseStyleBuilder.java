@@ -3,11 +3,6 @@ package solim.style;
 import arc.util.Nullable;
 import solim.reactive.Readable;
 
-/**
- * Base abstractions for Solim style builders providing common layout properties.
- * Supports both static values and reactive {@link Readable} signals for
- * {@code padding}, {@code margin} and {@code gap}.
- */
 public abstract class BaseStyleBuilder<S extends BaseStyleBuilder<S>> {
 
     protected @Nullable Float padding;

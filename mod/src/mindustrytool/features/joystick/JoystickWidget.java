@@ -15,15 +15,6 @@ import arc.util.Time;
 import mindustry.Vars;
 import static solim.UI.unit;
 
-/**
- * Custom on-screen joystick element: a fixed outer base with a movable inner
- * knob.
- * Touch input drives {@link JoystickFeature#moveVector}; double-tapping the
- * knob
- * snaps the camera onto the player unit. Direct Arc element because Solim has
- * no
- * joystick primitive.
- */
 public class JoystickWidget extends Element {
 
     private static final float BASE_SIZE = 28f;

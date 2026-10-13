@@ -17,11 +17,6 @@ import solim.overlay.Hud;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Floating frameless draggable HUD rendering the configured schematic grid with
- * a dedicated page tab column, subtle empty slot tiles, and screen clamping.
- */
-
 public class QuickSchematicGridHudView extends Component {
 
     public static final class SlotModel {

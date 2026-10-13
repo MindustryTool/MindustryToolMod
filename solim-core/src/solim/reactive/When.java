@@ -19,25 +19,6 @@ import solim.runtime.AttachmentStack;
 import solim.runtime.Fragment;
 import solim.runtime.ReactiveContext;
 
-/**
- * Structural reactive component for boolean conditional rendering with a
- * fluent chaining API.
- *
- * <p>
- * Declare branches with {@link #thenDo(Runnable)} and
- * {@link #elseDo(Runnable)}.
- * Both accept void runnables that create components declaratively without
- * returning a value. When the condition is {@code true} the then-branch mounts;
- * otherwise the else-branch mounts. A branch that creates nothing collapses,
- * exactly like {@link Dynamic} with an empty void factory.
- * </p>
- *
- * <p>
- * Branch actions should be chained before the first mount for efficiency,
- * but may also be updated after mounting: a post-mount update remounts the
- * current condition value immediately.
- * </p>
- */
 public final class When extends Component
         implements CellConfig<When>, TableConfig<When>, ElementConfig<When> {
     private static final Object SENTINEL = new Object();
@@ -61,10 +42,6 @@ public final class When extends Component
         return new When(condition);
     }
 
-    /**
-     * Sets the branch mounted when the condition is {@code true}.
-     * Returns this for chaining.
-     */
     public When thenDo(@Nullable Runnable action) {
         this.thenAction = action;
         if (isBuilt()) {
@@ -73,10 +50,6 @@ public final class When extends Component
         return this;
     }
 
-    /**
-     * Sets the branch mounted when the condition is not {@code true}
-     * (false or null). Returns this for chaining.
-     */
     public When elseDo(@Nullable Runnable action) {
         this.elseAction = action;
         if (isBuilt()) {

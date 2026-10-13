@@ -37,13 +37,6 @@ import solim.overlay.SolimDialog;
 
 import java.util.HashMap;
 
-/**
- * Smart Drill feature: calculates and places optimized drill configurations on
- * tapped ore tiles with connected distribution bridges or ducts.
- * <p>
- * Activated exclusively through Quick Access toggle so that normal touch/drag
- * building (such as conveyor placement) remains completely unaffected when off.
- */
 public class SmartDrillFeature extends Feature {
 
     public enum Direction {

@@ -14,10 +14,6 @@ import solim.modifier.ElementConfig;
 import solim.reactive.Readable;
 import solim.modifier.PendingCellConfig;
 
-/**
- * Divider line supporting horizontal (X) and vertical (Y) directions. Uses an
- * Image instead of a Table for lightweight rendering.
- */
 public final class Divider extends Component implements CellConfig<Divider>, ElementConfig<Divider> {
     private final SolimImage image;
     private final Direction direction;

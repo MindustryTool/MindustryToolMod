@@ -4,9 +4,6 @@ import arc.Core;
 import mindustrytool.features.prettychat.PrettyChatFeature;
 import solim.overlay.SolimDialog;
 
-/**
- * Solim settings dialog for Pretty Chat.
- */
 public class PrettyChatSettingsDialog extends SolimDialog {
 
     public PrettyChatSettingsDialog(PrettyChatFeature feature) {

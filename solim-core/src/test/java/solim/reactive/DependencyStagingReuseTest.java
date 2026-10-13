@@ -11,12 +11,6 @@ import solim.runtime.ReactiveContext;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
-/**
- * Verifies that a stable dependency set produces no observer churn. Both
- * primitives reuse one
- * staging buffer and diff it in place, so an unchanged set must reach neither
- * {@code addObserver} nor {@code removeObserver}.
- */
 class DependencyStagingReuseTest extends SolimEnv {
 
     static final class CountingSource implements ReactiveSource {

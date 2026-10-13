@@ -19,11 +19,6 @@ import solim.overlay.Hud;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Compact in-chat HUD pill attached above Mindustry's chat field.
- * Allows quick 1-tap toggle of outgoing translation and target language
- * switching in-game.
- */
 public class ChatTranslationPill extends Component {
 
     private final TranslationFeature feature;

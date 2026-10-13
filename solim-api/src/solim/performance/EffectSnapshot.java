@@ -3,15 +3,6 @@ package solim.performance;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Immutable debug snapshot of a single {@code Effect}'s runtime metrics,
- * captured by the profiling
- * session when the report is written.
- *
- * <p>
- * Durations are nanoseconds and count both the initial run and every
- * flush-triggered rerun.
- */
 public final class EffectSnapshot {
 
     public final int id;

@@ -22,10 +22,6 @@ import mindustry.gen.Groups;
 
 import java.util.Comparator;
 
-/**
- * Encapsulates game logic and state for tracking team resources, flow rates, units, and power grids.
- * Provides reactive signals for Solim UI bindings.
- */
 public class TeamResourceState {
     private final ObjectSet<Item> usedItems = new ObjectSet<>();
     private final ObjectSet<UnitType> usedUnits = new ObjectSet<>();
@@ -148,7 +144,9 @@ public class TeamResourceState {
             updateValidTeams();
         }
 
-        coreItems = (selectedTeam != null && Vars.state != null && selectedTeam.core() != null) ? selectedTeam.core().items : null;
+        coreItems = (selectedTeam != null && Vars.state != null && selectedTeam.core() != null)
+                ? selectedTeam.core().items
+                : null;
         if (coreItems != null && Vars.content != null) {
             boolean hideZeroItems = feature != null && Boolean.TRUE.equals(feature.hideZeroItemsConfig.get());
             boolean itemsChanged = false;

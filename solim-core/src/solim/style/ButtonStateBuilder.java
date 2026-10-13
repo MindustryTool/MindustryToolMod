@@ -5,12 +5,6 @@ import arc.scene.style.Drawable;
 import arc.util.Nullable;
 import solim.reactive.Readable;
 
-/**
- * State-specific visual configuration for a single button interaction state
- * ({@code up}, {@code over}, {@code down}, {@code disabled}, {@code checked}).
- * Supports static values and reactive signals. Unset properties inherit from
- * the root {@link SolimButtonStyleBuilder} at build time.
- */
 public final class ButtonStateBuilder {
 
     private @Nullable Color background;

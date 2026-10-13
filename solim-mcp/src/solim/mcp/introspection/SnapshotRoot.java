@@ -4,12 +4,6 @@ import arc.Core;
 import arc.scene.Element;
 import arc.util.Nullable;
 
-/**
- * Supplies the root {@link Element} for introspection. Defaults to
- * {@link Core#scene}'s root when
- * running inside Mindustry and can be overridden (e.g. in tests) with a fixed
- * root.
- */
 @FunctionalInterface
 public interface SnapshotRoot {
 

@@ -33,10 +33,6 @@ import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.reactive.Signals;
 
-/**
- * Feature providing RTS army selection (map/screen), control groups, and unit
- * type deselection.
- */
 public class ArmyControlFeature extends Feature {
 
     public static final String DISPLAY_POPUP = "popup";
@@ -149,10 +145,6 @@ public class ArmyControlFeature extends Feature {
         }
     }
 
-    /**
-     * Saves currently selected unit IDs to slot index 1..9 (creating or replacing
-     * the group).
-     */
     public void saveControlGroupSlot(int slot) {
         IntSeq selected = getSelectedUnitIds();
         Seq<ControlGroup> groups = controlGroupsSignal.peek();
@@ -185,9 +177,6 @@ public class ArmyControlFeature extends Feature {
         }
     }
 
-    /**
-     * Recalls group by slot index 1..9.
-     */
     public void recallControlGroupSlot(int slot) {
         Seq<ControlGroup> groups = controlGroupsSignal.peek();
         if (groups == null) {
@@ -325,11 +314,6 @@ public class ArmyControlFeature extends Feature {
         };
     }
 
-    /**
-     * Selects all living units on the player's team across the map, excluding the
-     * player's unit,
-     * and activates RTS Command Mode without moving the camera.
-     */
     public void selectAllMap() {
         if (Vars.control == null || Vars.control.input == null || Vars.player == null) {
             return;
@@ -348,11 +332,6 @@ public class ArmyControlFeature extends Feature {
         refreshActiveSelection();
     }
 
-    /**
-     * Selects all living units on the player's team within the camera viewport,
-     * excluding player's unit,
-     * and activates RTS Command Mode without moving the camera.
-     */
     public void selectScreen() {
         if (Vars.control == null || Vars.control.input == null || Vars.player == null || Core.camera == null) {
             return;
@@ -373,9 +352,6 @@ public class ArmyControlFeature extends Feature {
         refreshActiveSelection();
     }
 
-    /**
-     * Deselects all currently selected units.
-     */
     public void deselectAll() {
         if (Vars.control == null || Vars.control.input == null) {
             return;
@@ -384,12 +360,6 @@ public class ArmyControlFeature extends Feature {
         refreshActiveSelection();
     }
 
-    /**
-     * Deselects / excludes all units of the given UnitType from the current
-     * selection.
-     * Keeps RTS Command Mode active so the remaining selection stays commanded,
-     * matching select/recall behavior.
-     */
     public void deselectUnitType(UnitType type) {
         if (Vars.control == null || Vars.control.input == null || type == null) {
             return;
@@ -405,11 +375,6 @@ public class ArmyControlFeature extends Feature {
         refreshActiveSelection();
     }
 
-    /**
-     * Updates the reactive summary of currently selected units.
-     * Skips the signal update when nothing changed so the periodic poll
-     * never rebuilds the selection UI for an identical selection.
-     */
     public void refreshActiveSelection() {
         ObjectIntMap<UnitType> map = new ObjectIntMap<>();
         if (Vars.control != null && Vars.control.input != null) {
@@ -441,9 +406,6 @@ public class ArmyControlFeature extends Feature {
         return true;
     }
 
-    /**
-     * Creates a new control group from the current selection or candidate IDs.
-     */
     public @Nullable ControlGroup createGroup(String name, IntSeq unitIds) {
         Seq<ControlGroup> groups = controlGroupsSignal.peek();
         Seq<ControlGroup> next = groups != null ? new Seq<>(groups) : new Seq<>();
@@ -460,10 +422,6 @@ public class ArmyControlFeature extends Feature {
         return group;
     }
 
-    /**
-     * Recalls a saved control group: selects all living members and turns on RTS
-     * command mode.
-     */
     public void recallGroup(ControlGroup group) {
         if (Vars.control == null || Vars.control.input == null || group == null) {
             return;
@@ -482,9 +440,6 @@ public class ArmyControlFeature extends Feature {
         refreshActiveSelection();
     }
 
-    /**
-     * Deletes a control group.
-     */
     public void deleteGroup(ControlGroup group) {
         Seq<ControlGroup> groups = controlGroupsSignal.peek();
         if (groups == null || group == null) {
@@ -495,9 +450,6 @@ public class ArmyControlFeature extends Feature {
         controlGroupsSignal.set(next);
     }
 
-    /**
-     * Returns an IntSeq of unit IDs currently selected in Mindustry.
-     */
     public IntSeq getSelectedUnitIds() {
         IntSeq ids = new IntSeq();
         if (Vars.control != null && Vars.control.input != null) {

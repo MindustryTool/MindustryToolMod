@@ -3,9 +3,6 @@ package mindustrytool.features.logicvisualizer;
 import arc.Core;
 import solim.overlay.SolimDialog;
 
-/**
- * Settings dialog for configuring Logic Visualizer options, using SolimDialog.
- */
 public class LogicVisualizerSettingsDialog extends SolimDialog {
 
     public LogicVisualizerSettingsDialog(LogicVisualizerFeature feature) {

@@ -23,13 +23,6 @@ import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.input.ModMobileInput;
 
-/**
- * Provides an unconstrained free camera that stays detached from the player
- * unit.
- * On desktop, decouples WASD movement from camera snapping so players can scout
- * the map freely. On mobile, coordinates with the virtual joystick.
- * While enabled, a centered status label is drawn at the top of the view.
- */
 public class FreeCameraFeature extends Feature {
 
     private static final float SCALE_DIVISOR = 1000f;
@@ -70,9 +63,6 @@ public class FreeCameraFeature extends Feature {
         snapToPlayer();
     }
 
-    /**
-     * Centers the camera immediately onto the player unit's coordinates.
-     */
     public void snapToPlayer() {
         if (Core.camera == null || Core.camera.position == null
                 || Vars.player == null || Vars.player.dead()) {
@@ -97,9 +87,6 @@ public class FreeCameraFeature extends Feature {
         }
     }
 
-    /**
-     * Checks whether Free Camera is currently active.
-     */
     public static boolean isFreeCam() {
         FreeCameraFeature feat = FeatureManager.getFeature(FreeCameraFeature.class);
         return feat != null && feat.isEnabled();

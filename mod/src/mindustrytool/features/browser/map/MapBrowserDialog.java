@@ -25,10 +25,6 @@ import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
 import solim.reactive.Signal;
 
-/**
- * Main map browser dialog with reactive column reflow and a keyed reactive grid
- * of map cards.
- */
 public class MapBrowserDialog extends SolimDialog {
 
     private final BrowserState<MapData> state;

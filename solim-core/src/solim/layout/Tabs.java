@@ -1,4 +1,5 @@
 package solim.layout;
+
 import solim.modifier.CellConfig;
 
 import arc.graphics.Color;
@@ -21,10 +22,6 @@ import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.TableConfig;
 
-/**
- * Tabs layout component: provides a tab header button bar and switches between
- * tab content panels reactively.
- */
 public final class Tabs extends Component implements CellConfig<Tabs>, ElementConfig<Tabs>, TableConfig<Tabs> {
 
     private final Table root;
@@ -164,7 +161,6 @@ public final class Tabs extends Component implements CellConfig<Tabs>, ElementCo
     public Table headerBar() {
         return headerBar.table();
     }
-
 
     @Override
     public Table table() {

@@ -9,25 +9,6 @@ import solim.layout.GapContainer;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 
-/**
- * Mixin interface for operations that configure an Arc {@link Table}'s content
- * defaults and child spacing.
- *
- * <p>
- * Implementing components provide {@link #table()} to supply their underlying
- * Arc Table. All methods are default methods that operate on the table returned
- * by {@code table()}.
- *
- * <p>
- * Targets:
- * <ul>
- * <li>{@code align/top/bottom/left/right/center} — table content alignment</li>
- * <li>{@code padding*} — table inner padding</li>
- * <li>{@code gap/respace} — inter-child spacing</li>
- * </ul>
- *
- * @param <SELF> the concrete component type, enabling fluent chaining
- */
 public interface TableConfig<SELF extends TableConfig<SELF>> {
 
     Table table();

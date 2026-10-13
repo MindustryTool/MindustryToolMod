@@ -19,14 +19,6 @@ import solim.runtime.DebugReactiveContext;
 import solim.runtime.ReactiveContext;
 import solim.test.SolimEnv;
 
-/**
- * Verifies the unified flame timeline: component {@code build} spans and
- * reactive
- * {@code signal} / {@code computed} / {@code effect} / {@code flush} spans all
- * land in one
- * hierarchical trace with correct parent-child linkage, and that tracing costs
- * nothing when off.
- */
 class UnifiedFlameTraceTest extends SolimEnv {
 
     @BeforeEach

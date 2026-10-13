@@ -29,10 +29,6 @@ import solim.reactive.Computed;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Fully reactive and declarative Team Resource HUD overlay. Uses Solim HUD,
- * reactive bindings for scale, opacity, dimensions, position, and core stats.
- */
 public class TeamResourceHudView extends Component {
 
     private final TeamResourceFeature feature;

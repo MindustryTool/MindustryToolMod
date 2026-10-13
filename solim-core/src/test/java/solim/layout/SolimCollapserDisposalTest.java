@@ -16,18 +16,6 @@ import solim.reactive.Signal;
 import solim.runtime.AttachmentStack;
 import solim.test.SolimEnv;
 
-/**
- * Disposal proof for {@link SolimCollapser}.
- *
- * <p>
- * The collapser owns two very different things: reactive bindings that drive
- * the Arc
- * {@code Collapser}, and the child components declared through
- * {@code children(...)}. A leak in
- * either shows up differently — a surviving binding keeps animating a dead
- * widget, a surviving
- * child keeps observing signals a disposed subtree no longer renders.
- */
 class SolimCollapserDisposalTest extends SolimEnv {
 
     @BeforeEach

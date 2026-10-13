@@ -12,11 +12,6 @@ import arc.util.ScreenUtils;
 import arc.util.Threads;
 import mindustry.game.EventType.Trigger;
 
-/**
- * Schedules framebuffer captures on the render thread and encodes PNGs
- * on a background daemon thread so gameplay never stutters.
- * Without UI captures at uiDrawBegin, with UI captures at postDraw.
- */
 public class ScreenshotService {
 
     private static final long CAPTURE_COOLDOWN_MILLIS = 500L;
@@ -34,10 +29,6 @@ public class ScreenshotService {
         Events.run(Trigger.postDraw, this::onPostDraw);
     }
 
-    /**
-     * Queues a capture for the next suitable render trigger.
-     * Returns false when debounced to avoid flooding memory with pixmaps.
-     */
     public boolean capture(@Nullable Fi directory, @Nullable String filename, boolean includeUi,
             @Nullable Cons<Fi> onSuccess, @Nullable Cons<Exception> onError) {
         long now = System.currentTimeMillis();
@@ -98,11 +89,9 @@ public class ScreenshotService {
         }
     }
 
-    /**
-     * Encodes and writes the pixmap off the render thread, disposing it afterwards.
-     */
     public static void writeAsync(Fi target, Pixmap pixmap,
-            @Nullable Cons<Fi> onSuccess, @Nullable Cons<Exception> onError) {        Threads.daemon(() -> {
+            @Nullable Cons<Fi> onSuccess, @Nullable Cons<Exception> onError) {
+        Threads.daemon(() -> {
             try {
                 if (target.parent() != null) {
                     target.parent().mkdirs();

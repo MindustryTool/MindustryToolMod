@@ -21,10 +21,6 @@ import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Modern declarative Solim dialog for fast tactical callouts, resource requests,
- * and quick in-game communication.
- */
 public class CalloutDialog extends SolimDialog {
 
     private static class ActionDef {
@@ -151,11 +147,11 @@ public class CalloutDialog extends SolimDialog {
 
     private Component tacticalCard() {
         ActionDef[] actions = {
-            new ActionDef(Icon.warning, "feature.callout.action.attack", "Attack!"),
-            new ActionDef(Icon.left, "feature.callout.action.retreat", "Retreat!"),
-            new ActionDef(Icon.defense, "feature.callout.action.defend-core", "Defend the core!"),
-            new ActionDef(Icon.warning, "feature.callout.action.help", "Help!"),
-            new ActionDef(Icon.warning, "feature.callout.action.help-me", "Help me!")
+                new ActionDef(Icon.warning, "feature.callout.action.attack", "Attack!"),
+                new ActionDef(Icon.left, "feature.callout.action.retreat", "Retreat!"),
+                new ActionDef(Icon.defense, "feature.callout.action.defend-core", "Defend the core!"),
+                new ActionDef(Icon.warning, "feature.callout.action.help", "Help!"),
+                new ActionDef(Icon.warning, "feature.callout.action.help-me", "Help me!")
         };
 
         return sectionCard().children(() -> {
@@ -190,11 +186,11 @@ public class CalloutDialog extends SolimDialog {
 
     private Component communicationCard() {
         ActionDef[] comms = {
-            new ActionDef(Icon.ok, "feature.callout.comm.yes", "Yes"),
-            new ActionDef(Icon.cancel, "feature.callout.comm.no", "No"),
-            new ActionDef(Icon.play, "feature.callout.comm.ready", "Ready"),
-            new ActionDef(Icon.pause, "feature.callout.comm.wait", "Wait"),
-            new ActionDef(Icon.cancel, "feature.callout.comm.stop", "Stop")
+                new ActionDef(Icon.ok, "feature.callout.comm.yes", "Yes"),
+                new ActionDef(Icon.cancel, "feature.callout.comm.no", "No"),
+                new ActionDef(Icon.play, "feature.callout.comm.ready", "Ready"),
+                new ActionDef(Icon.pause, "feature.callout.comm.wait", "Wait"),
+                new ActionDef(Icon.cancel, "feature.callout.comm.stop", "Stop")
         };
 
         return sectionCard().children(() -> {
@@ -230,8 +226,8 @@ public class CalloutDialog extends SolimDialog {
     private Seq<Item> getCalloutItems() {
         Seq<Item> list = new Seq<>();
         Item[] defaults = {
-            Items.silicon, Items.thorium, Items.surgeAlloy, Items.plastanium, Items.phaseFabric,
-            Items.copper, Items.lead, Items.titanium, Items.graphite, Items.coal
+                Items.silicon, Items.thorium, Items.surgeAlloy, Items.plastanium, Items.phaseFabric,
+                Items.copper, Items.lead, Items.titanium, Items.graphite, Items.coal
         };
         for (Item item : defaults) {
             if (item != null) {
@@ -240,8 +236,8 @@ public class CalloutDialog extends SolimDialog {
         }
         if (list.isEmpty() && Vars.content != null) {
             String[] names = {
-                "silicon", "thorium", "surge-alloy", "plastanium", "phase-fabric",
-                "copper", "lead", "titanium", "graphite", "coal"
+                    "silicon", "thorium", "surge-alloy", "plastanium", "phase-fabric",
+                    "copper", "lead", "titanium", "graphite", "coal"
             };
             for (String n : names) {
                 Item it = Vars.content.item(n);

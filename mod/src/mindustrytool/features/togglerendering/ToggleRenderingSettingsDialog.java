@@ -3,9 +3,6 @@ package mindustrytool.features.togglerendering;
 import arc.Core;
 import solim.overlay.SolimDialog;
 
-/**
- * Settings dialog for configuring Toggle Rendering options using SolimDialog.
- */
 public class ToggleRenderingSettingsDialog extends SolimDialog {
 
     public ToggleRenderingSettingsDialog(ToggleRenderingFeature feature) {

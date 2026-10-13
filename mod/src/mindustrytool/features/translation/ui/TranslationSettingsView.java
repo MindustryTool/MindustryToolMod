@@ -155,7 +155,6 @@ public class TranslationSettingsView extends Component {
                                         .growX();
                             });
 
-                    // Outgoing Simulation Box
                     column().growX().padding(unit(2)).rounded(6, WebStyles.Colors.SECONDARY).gap(unit(1)).left()
                             .children(() -> {
                                 row().growX().gap(unit(1)).left().children(() -> {

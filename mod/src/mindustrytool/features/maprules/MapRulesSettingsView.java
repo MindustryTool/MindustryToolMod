@@ -11,9 +11,6 @@ import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.WebStyles;
 import solim.core.Component;
 
-/**
- * Settings view for Map Rules feature.
- */
 public class MapRulesSettingsView extends Component {
 
     private final MapRulesFeature feature;

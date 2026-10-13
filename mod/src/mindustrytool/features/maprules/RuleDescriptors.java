@@ -3,10 +3,6 @@ package mindustrytool.features.maprules;
 import arc.struct.Seq;
 import arc.util.Nullable;
 
-/**
- * Static descriptor table covering every rule shown in the dialog, in display
- * order. Adding a rule means adding one line here.
- */
 public class RuleDescriptors {
 
     public static final Seq<RuleDescriptor> ALL = Seq.with(
@@ -43,7 +39,8 @@ public class RuleDescriptors {
             RuleDescriptor.floatRule("unit-crash-damage", RuleDescriptor.CAT_MULTIPLIERS, "unitCrashDamageMultiplier",
                     0f, 10f, 0.1f, rules -> rules.unitCrashDamageMultiplier,
                     (rules, value) -> rules.unitCrashDamageMultiplier = value),
-            RuleDescriptor.floatRule("deconstruct-refund", RuleDescriptor.CAT_MULTIPLIERS, "deconstructRefundMultiplier",
+            RuleDescriptor.floatRule("deconstruct-refund", RuleDescriptor.CAT_MULTIPLIERS,
+                    "deconstructRefundMultiplier",
                     0f, 2f, 0.05f, rules -> rules.deconstructRefundMultiplier,
                     (rules, value) -> rules.deconstructRefundMultiplier = value),
             RuleDescriptor.floatRule("item-deposit-cooldown", RuleDescriptor.CAT_MULTIPLIERS, "itemDepositCooldown",
@@ -127,7 +124,8 @@ public class RuleDescriptors {
                     rules -> rules.coreDestroyClear, (rules, value) -> rules.coreDestroyClear = value),
             RuleDescriptor.boolRule("hide-banned-blocks", RuleDescriptor.CAT_MECHANICS, "hideBannedBlocks",
                     rules -> rules.hideBannedBlocks, (rules, value) -> rules.hideBannedBlocks = value),
-            RuleDescriptor.boolRule("allow-env-deconstruct", RuleDescriptor.CAT_MECHANICS, "allowEnvironmentDeconstruct",
+            RuleDescriptor.boolRule("allow-env-deconstruct", RuleDescriptor.CAT_MECHANICS,
+                    "allowEnvironmentDeconstruct",
                     rules -> rules.allowEnvironmentDeconstruct,
                     (rules, value) -> rules.allowEnvironmentDeconstruct = value),
             RuleDescriptor.boolRule("instant-build", RuleDescriptor.CAT_MECHANICS, "instantBuild",

@@ -23,13 +23,6 @@ import solim.test.FixedComponent;
 import solim.test.SolimEnv;
 import solim.test.TestDisposable;
 
-/**
- * Verifies that the component tree snapshot attributes creation-owned and
- * dependency-discovered
- * reactive nodes to the right component, and that the exported report embeds
- * all three interactive
- * views together with their payloads.
- */
 class ProfileReportTest extends SolimEnv {
 
     @TempDir

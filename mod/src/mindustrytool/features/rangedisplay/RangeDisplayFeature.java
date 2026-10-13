@@ -55,7 +55,7 @@ import solim.reactive.Signal;
 
 public class RangeDisplayFeature extends Feature {
 
-    private static  final Color ORANGE = Color.valueOf("#FFA500");
+    private static final Color ORANGE = Color.valueOf("#FFA500");
 
     public final ConfigGroup config;
     public final ConfigValue<Float> opacityConfig;
@@ -106,11 +106,9 @@ public class RangeDisplayFeature extends Feature {
 
     private static final Boolf<Unit> ANY_UNIT = u -> true;
 
-    
     private @Nullable BitSet blockEnabled;
     private final ObjectMap<String, Signal<Boolean>> blockSignals = new ObjectMap<>();
 
-    
     private float cachedOpacity = 1.0f;
     private float cachedStrokeWidth = 1.0f;
     private boolean cachedHoverOnly = false;
@@ -134,7 +132,6 @@ public class RangeDisplayFeature extends Feature {
     private boolean cachedDashed = true;
     private float cachedZoomThreshold = 0.5f;
 
-    
     private float frameOpacity = 1.0f;
     private float frameStrokeWidth = 1.0f;
     private boolean frameHoverOnly = false;
@@ -195,7 +192,6 @@ public class RangeDisplayFeature extends Feature {
         dashedConfig = config.boolValue("dashed", true);
         zoomThresholdConfig = config.floatValue("zoom-threshold", 0.5f);
 
-        
         opacityConfig.signal().subscribe(v -> cachedOpacity = v != null ? v : 1.0f);
         strokeWidthConfig.signal().subscribe(v -> cachedStrokeWidth = v != null ? v : 1.0f);
         hoverOnlyConfig.signal().subscribe(v -> cachedHoverOnly = v != null ? v : false);
@@ -298,9 +294,6 @@ public class RangeDisplayFeature extends Feature {
         return isTurretBlock(block) || isSupportBlock(block);
     }
 
-    /**
-     * Blocks whose range is rendered in the orange overdrive accent color.
-     */
     public boolean isOverdriveBlock(Block block) {
         return block instanceof OverdriveProjector;
     }
@@ -486,7 +479,6 @@ public class RangeDisplayFeature extends Feature {
         float z = Draw.z();
         Draw.z(Layer.overlayUI);
 
-        
         if (frameDrawSpawnerRange && Vars.spawner != null && Vars.spawner.getSpawns() != null
                 && Vars.state.rules != null) {
             float dropRadius = Vars.state.rules.dropZoneRadius;
@@ -507,7 +499,9 @@ public class RangeDisplayFeature extends Feature {
         }
 
         if (frameHoverOnly) {
-            Building hoveredBuilding = Vars.world != null ? Vars.world.buildWorld(Core.input.mouseWorldX(), Core.input.mouseWorldY()) : null;
+            Building hoveredBuilding = Vars.world != null
+                    ? Vars.world.buildWorld(Core.input.mouseWorldX(), Core.input.mouseWorldY())
+                    : null;
             if (hoveredBuilding != null && RANGE_BUILDING_PREDICATE.get(hoveredBuilding)) {
                 drawBuildingRange(hoveredBuilding);
             }
@@ -521,7 +515,7 @@ public class RangeDisplayFeature extends Feature {
                 drawUnitRange(hoveredUnit);
             }
         } else {
-            
+
             if (frameDrawUnitRangeAlly || frameDrawUnitRangeEnemy || frameDrawUnitRangePlayer) {
                 float margin = 1000f;
                 float cx = Core.camera.position.x;
@@ -532,7 +526,6 @@ public class RangeDisplayFeature extends Feature {
                         unitDrawer);
             }
 
-            
             if (frameDrawTurretRangeAlly || frameDrawTurretRangeEnemy
                     || frameDrawBlockRangeAlly || frameDrawBlockRangeEnemy) {
                 float cx = Core.camera.position.x;
@@ -750,19 +743,19 @@ public class RangeDisplayFeature extends Feature {
     }
 
     private Color resolveSpecialColor(Block block, Color teamColor) {
-        if(frameUseTeamColorForSpecial){
+        if (frameUseTeamColorForSpecial) {
             return teamColor;
         }
 
-        if(isOverdriveBlock(block)){
+        if (isOverdriveBlock(block)) {
             return ORANGE;
         }
 
-        if(isMenderBlock(block)){
+        if (isMenderBlock(block)) {
             return Pal.heal;
         }
 
-        if(isPointDefenseBlock(block)){
+        if (isPointDefenseBlock(block)) {
             return Color.white;
         }
 
@@ -789,4 +782,3 @@ public class RangeDisplayFeature extends Feature {
         }
     }
 }
-

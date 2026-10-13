@@ -7,11 +7,6 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import arc.func.Prov;
 
-/**
- * Single Responsibility: locate the latest crash file on disk. Filters out
- * crashes older than the
- * cutoff date (2026-01-25 UTC).
- */
 public final class CrashLocator {
 
     private static final long CUTOFF_EPOCH = LocalDate.of(2026, 1, 25).atStartOfDay(ZoneOffset.UTC).toEpochSecond()

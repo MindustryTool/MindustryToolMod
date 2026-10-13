@@ -38,11 +38,6 @@ public final class NetworkImage extends Component implements CellConfig<NetworkI
 
     private static final long CACHE_MAX_AGE = 30L * 24 * 60 * 60 * 1000;
 
-    /**
-     * Shared application-lifetime worker. It is intentionally not shut down:
-     * NetworkImage instances are short-lived, but the game process is the
-     * lifetime owner of this bounded decode executor.
-     */
     private static final ExecutorService DECODE_WORKER = Threads.unboundedExecutor("solim-img-decode", 2);
 
     private static volatile boolean cleanupDone = false;
@@ -129,9 +124,6 @@ public final class NetworkImage extends Component implements CellConfig<NetworkI
         return toTexture(decodePixmap(bytes, radius, targetW, targetH));
     }
 
-    /**
-     * CPU-only PNG decode plus rounded masking. Safe to call on any thread.
-     */
     public static Pixmap decodePixmap(byte[] bytes, int radius, float targetW, float targetH) {
         Pixmap pixmap = new Pixmap(bytes);
         if (radius > 0) {
@@ -362,10 +354,6 @@ public final class NetworkImage extends Component implements CellConfig<NetworkI
                 error -> applyFailure(gen, url));
     }
 
-    /**
-     * Single success path for every load: caches the result regardless of
-     * currency, then applies it only if this load is still the latest one.
-     */
     private void applyResult(String url, int radius, float targetW, long gen, TextureRegion region) {
         TextureRegionDrawable drawable = new TextureRegionDrawable(region);
         cache.put(cacheKey(url, radius, targetW), drawable);
@@ -375,10 +363,6 @@ public final class NetworkImage extends Component implements CellConfig<NetworkI
         }
     }
 
-    /**
-     * Single failure path for every load: marks the component failed and shows
-     * the fallback (or placeholder) only if this load is still the latest one.
-     */
     private void applyFailure(long gen, String url) {
         if (isCurrent(gen, url)) {
             this.failed = true;
@@ -390,12 +374,6 @@ public final class NetworkImage extends Component implements CellConfig<NetworkI
         return gen == loadGeneration && url.equals(currentUrl);
     }
 
-    /**
-     * Attempts to serve the load from the disk cache (component-level so it
-     * applies to every loader). Corrupt entries are deleted and the load falls
-     * back to the network within the same load call. Returns true when the
-     * load has been handed off to the disk path.
-     */
     private boolean loadFromDisk(String url, int radius, float targetW, float targetH, long gen) {
         final Fi file;
         try {

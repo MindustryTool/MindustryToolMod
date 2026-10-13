@@ -10,10 +10,6 @@ import mindustrytool.features.FeatureMetadata;
 import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
 
-/**
- * Feature for browsing, searching, previewing, and saving data patches from
- * the online library.
- */
 public class PatchBrowserFeature extends Feature {
 
     private @Nullable PatchBrowserDialog dialog;

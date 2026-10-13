@@ -26,10 +26,6 @@ import solim.overlay.SolimDialog;
 
 import java.util.List;
 
-/**
- * Pretty Chat feature: transforms outgoing chat messages with customizable
- * styles.
- */
 public class PrettyChatFeature extends Feature {
 
     private final PrettyChatConfig config;
@@ -164,13 +160,6 @@ public class PrettyChatFeature extends Feature {
         }
     }
 
-    /**
-     * Transforms an input message through the active prettier pipeline. Preserves
-     * server commands except /t and /a.
-     *
-     * @param message text to transform
-     * @return transformed text
-     */
     public String transform(String message) {
         if (message == null || message.isEmpty()) {
             return "";
@@ -211,9 +200,6 @@ public class PrettyChatFeature extends Feature {
         return cmd + result;
     }
 
-    /**
-     * Clamps text to max length without leaving incomplete color tags.
-     */
     public static String clampSafe(String text, int maxLength) {
         if (text == null || text.length() <= maxLength) {
             return text != null ? text : "";

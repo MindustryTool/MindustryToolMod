@@ -23,10 +23,6 @@ import arc.scene.ui.layout.Scl;
 import solim.reactive.Signal;
 import solim.reactive.Signals;
 
-/**
- * Feature responsible for registering and managing the Team Resource Tracker
- * overlay. Follows Solim architecture and ConfigGroup reactive configuration.
- */
 public class TeamResourceFeature extends Feature {
 
     public final ConfigGroup config;

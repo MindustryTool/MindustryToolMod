@@ -11,10 +11,6 @@ import solim.core.Component;
 import solim.overlay.Popup;
 import solim.reactive.Readable;
 
-/**
- * QuickAccess popup shell for GodMode. Reuses the shared icon-only horizontal
- * row layout from GodModeHudView inside a black rounded container.
- */
 public final class GodModePopup {
 
     private static @Nullable Popup<GodModeFeature> menu;

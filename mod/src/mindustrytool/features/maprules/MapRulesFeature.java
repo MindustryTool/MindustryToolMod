@@ -12,9 +12,6 @@ import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
 
-/**
- * Inspects and edits active map rules with role-based permissions.
- */
 public class MapRulesFeature extends Feature {
 
     public final ConfigGroup config;
@@ -87,7 +84,8 @@ public class MapRulesFeature extends Feature {
             return;
         }
         if (mode == RuleEditMode.CLIENT_ADMIN) {
-            mutator.mutateRemote("Vars.state.rules = Vars.state.map.applyRules(Vars.state.rules.mode()); Call.setRules(Vars.state.rules);");
+            mutator.mutateRemote(
+                    "Vars.state.rules = Vars.state.map.applyRules(Vars.state.rules.mode()); Call.setRules(Vars.state.rules);");
             return;
         }
         final Rules target = snapshot != null ? snapshot.copy() : new Rules();

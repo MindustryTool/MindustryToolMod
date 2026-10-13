@@ -6,10 +6,6 @@ import arc.util.Scaling;
 import mindustry.gen.Icon;
 import solim.overlay.SolimDialog;
 
-/**
- * Near-fullscreen preview dialog for a chat image message. Reuses the cached
- * native-resolution texture already loaded by the message thumbnail.
- */
 public class ChatImagePreviewDialog extends SolimDialog {
 
     public ChatImagePreviewDialog(String imageUrl) {

@@ -13,17 +13,8 @@ import solim.style.InputStyle;
 import solim.style.SolimButtonStyle;
 import solim.style.SolimButtonStyleBuilder;
 
-/**
- * Design system hub for browser UI with shadcn/ui-inspired semantic colors
- * and shared button variants with built-in padding.
- * Does not mutate global Arc styles.
- */
 public class WebStyles {
 
-    /**
-     * Semantic color tokens for browser UI, derived from the shadcn/ui dark
-     * theme (oklch converted to sRGB).
-     */
     public static final class Colors {
         public static final Color PRIMARY = new Color(0.420f, 0.310f, 0.890f, 1.0f);
         public static final Color PRIMARY_HOVER = new Color(0.490f, 0.390f, 0.960f, 1.0f);

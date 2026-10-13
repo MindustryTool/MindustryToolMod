@@ -6,11 +6,6 @@ import arc.scene.event.EventListener;
 import arc.scene.event.InputEvent;
 import arc.util.Nullable;
 
-/**
- * Marker click listener installed by {@link ElementConfig#onClick} on an
- * element. It carries the current handler and propagation flag so the generic
- * mixin can replace or update them without a global registry.
- */
 class ElementClickBinding extends ClickListener {
 
     @Nullable

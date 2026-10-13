@@ -12,9 +12,6 @@ import mindustrytool.components.WebStyles;
 import solim.core.Component;
 import solim.reactive.Signal;
 
-/**
- * Modern declarative Solim settings view for Logic Visualizer options.
- */
 public class LogicVisualizerSettingsView extends Component {
 
     private final LogicVisualizerFeature feature;

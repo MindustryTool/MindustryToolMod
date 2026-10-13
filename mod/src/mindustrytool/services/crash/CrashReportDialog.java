@@ -8,14 +8,6 @@ import arc.util.Log;
 import solim.overlay.SolimDialog;
 import solim.reactive.Signal;
 
-/**
- * UI dialog for crash report opt-in and submission. Single Responsibility:
- * render consent UI and
- * delegate sending to {@link CrashSender}. Uses the new API via {@link
- * mindustrytool.services.MindustryTool} through the injected sender, never
- * constructing {@code
- * HttpClient}/{@code HttpRequest} or {@code arc.util.Http} directly.
- */
 public class CrashReportDialog extends SolimDialog {
 
     private static final String KEY_SEND = "mindustrytool.crash-report.send";

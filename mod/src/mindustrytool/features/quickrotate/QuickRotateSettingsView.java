@@ -10,9 +10,6 @@ import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.WebStyles;
 import solim.core.Component;
 
-/**
- * Modern declarative Solim settings view for quick rotate options.
- */
 public class QuickRotateSettingsView extends Component {
 
     private final QuickRotateFeature feature;

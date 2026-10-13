@@ -14,10 +14,6 @@ import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Searchable browser for {@link Iconc} font glyphs. Typing filters entries by
- * field name; clicking a chip copies its glyph character to the clipboard.
- */
 public class EmojiDialog extends SolimDialog {
 
     private final Signal<String> searchQuery = Signal.of("");

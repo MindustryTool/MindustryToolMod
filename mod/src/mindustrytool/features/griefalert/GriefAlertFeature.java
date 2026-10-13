@@ -39,14 +39,6 @@ import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
 import solim.reactive.Signal;
 
-/**
- * Warns when another player starts building an explosive reactor near a core.
- * Alerts are surfaced as an interactive Solim HUD banner instead of chat
- * messages or
- * vanilla toasts: clicking it jumps the camera onto the offending tile and
- * paints a
- * temporary pulsing world marker there.
- */
 public class GriefAlertFeature extends Feature {
     public static final float DEFAULT_RADIUS = 10f;
     public static final float DEFAULT_DURATION = 15f;
@@ -186,10 +178,6 @@ public class GriefAlertFeature extends Feature {
         return activeAlert.peek() != null;
     }
 
-    /**
-     * Surfaces an alert on the HUD banner and restarts the auto-dismiss window.
-     * A newer alert replaces any banner that is still showing.
-     */
     public void raiseAlert(@Nullable GriefAlertInfo alert) {
         if (alert == null) {
             return;
@@ -206,11 +194,6 @@ public class GriefAlertFeature extends Feature {
         alertExpireMillis = 0L;
     }
 
-    /**
-     * Centers the camera onto the offending placement, keeps it detached from the
-     * player so it
-     * does not snap back, starts the world highlight marker and clears the banner.
-     */
     public void jumpToAlert(@Nullable GriefAlertInfo alert) {
         if (alert == null || Core.camera == null) {
             return;
@@ -237,11 +220,6 @@ public class GriefAlertFeature extends Feature {
         clearTransientState();
     }
 
-    /**
-     * Auto-dismisses the banner once its window elapsed. The current time is
-     * injected so the
-     * deadline can be exercised deterministically.
-     */
     void tick(long now) {
         if (isEnabled() && hasActiveAlert() && now >= alertExpireMillis) {
             dismissAlert();
@@ -386,11 +364,6 @@ public class GriefAlertFeature extends Feature {
                 nearestCore.tileY()));
     }
 
-    /**
-     * Draws a temporary pulsing ring at the tile the camera was last jumped to, so
-     * the player can
-     * immediately tell which placement triggered the alert.
-     */
     private void drawHighlight() {
         if (!isEnabled() || Vars.state == null || !Vars.state.isGame() || Core.camera == null) {
             return;

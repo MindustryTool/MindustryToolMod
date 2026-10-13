@@ -67,26 +67,14 @@ public final class Signals {
         return portrait;
     }
 
-    /**
-     * Whether any multiplayer session is active. Menu-inclusive mirror of
-     * {@code Vars.net.active()}.
-     */
     public static Signal<Boolean> netActive() {
         return netActive;
     }
 
-    /**
-     * Whether this client hosts the session. Menu-inclusive mirror of
-     * {@code Vars.net.server()}.
-     */
     public static Signal<Boolean> netServer() {
         return netServer;
     }
 
-    /**
-     * Whether this client joined someone else's session. Menu-inclusive mirror of
-     * {@code Vars.net.client()}.
-     */
     public static Signal<Boolean> netClient() {
         return netClient;
     }
@@ -107,10 +95,6 @@ public final class Signals {
         return state;
     }
 
-    /**
-     * Recomputes net signals from {@code Vars} on the app thread. Visible for
-     * testing; production invokes it via lifecycle events and the poll backstop.
-     */
     static void requestRefresh() {
         if (Core.app != null) {
             Core.app.post(Signals::refreshNetNow);

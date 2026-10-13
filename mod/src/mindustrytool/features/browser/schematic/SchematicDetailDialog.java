@@ -31,11 +31,6 @@ import solim.overlay.SolimDialog;
 import solim.reactive.Query;
 import solim.reactive.QueryKey;
 
-/**
- * Detail dialog showing a high-resolution preview, author, stats, tags, item
- * requirements, description, and copy/save actions. Stacks vertically in
- * portrait and side-by-side in landscape.
- */
 public class SchematicDetailDialog extends SolimDialog {
 
     public SchematicDetailDialog(SchematicDetailData detail, String itemId) {
@@ -63,9 +58,10 @@ public class SchematicDetailDialog extends SolimDialog {
                     ? Query.<String>builder()
                             .key(QueryKey.of("user", authorId))
                             .fetch(() -> MindustryTool.getUserBatch(Collections.singletonList(authorId))
-                                    .thenApply(users -> users != null && !users.isEmpty() && users.get(0) != null && users.get(0).getName() != null
-                                            ? users.get(0).getName()
-                                            : authorId))
+                                    .thenApply(users -> users != null && !users.isEmpty() && users.get(0) != null
+                                            && users.get(0).getName() != null
+                                                    ? users.get(0).getName()
+                                                    : authorId))
                             .staleTime(Duration.ofMinutes(10))
                             .build()
                     : null;
@@ -130,9 +126,11 @@ public class SchematicDetailDialog extends SolimDialog {
                         text(Core.bundle.get("browser.detail.author")).color(Color.lightGray).fontScale(1.3f);
                         if (authorQuery != null) {
                             query(authorQuery)
-                            .growX()
-                                    .loading(() -> text(authorId != null ? authorId : "").color(Color.white).fontScale(1.3f))
-                                    .error(err -> text(authorId != null ? authorId : "").color(Color.white).fontScale(1.3f))
+                                    .growX()
+                                    .loading(() -> text(authorId != null ? authorId : "").color(Color.white)
+                                            .fontScale(1.3f))
+                                    .error(err -> text(authorId != null ? authorId : "").color(Color.white)
+                                            .fontScale(1.3f))
                                     .data(name -> text(name).color(Color.white).fontScale(1.3f));
                         } else {
                             text(authorId != null ? authorId : "").color(Color.white).fontScale(1.3f);
@@ -167,15 +165,15 @@ public class SchematicDetailDialog extends SolimDialog {
                 row().growX().gap(unit(2)).children(() -> {
                     button(Core.bundle.get("browser.schematic.copy"),
                             () -> SchematicActions.copyToClipboard(itemId))
-                                    .style(WebStyles.primary())
-                                    .growX()
-                                    .height(unit(11));
+                            .style(WebStyles.primary())
+                            .growX()
+                            .height(unit(11));
 
                     button(Core.bundle.get("browser.schematic.save"),
                             () -> SchematicActions.saveToLocal(itemId))
-                                    .style(WebStyles.primary())
-                                    .growX()
-                                    .height(unit(11));
+                            .style(WebStyles.primary())
+                            .growX()
+                            .height(unit(11));
                 });
             });
         }

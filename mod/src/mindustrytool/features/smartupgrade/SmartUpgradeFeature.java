@@ -68,11 +68,6 @@ import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Smart Upgrade feature: bulk upgrades connected distribution chains
- * (conveyors, ducts), conduits, bridges, walls, and drills with an armed
- * single-click or keybind.
- */
 public class SmartUpgradeFeature extends Feature {
 
     public enum BlockGroup {
@@ -642,7 +637,8 @@ public class SmartUpgradeFeature extends Feature {
         return updates;
     }
 
-    private void expandNeighbors(Seq<Tile> queue, ObjectSet<Tile> visited, Building build, BlockGroup group, Team team) {
+    private void expandNeighbors(Seq<Tile> queue, ObjectSet<Tile> visited, Building build, BlockGroup group,
+            Team team) {
         if (build == null) {
             return;
         }

@@ -15,9 +15,6 @@ import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.WebStyles;
 import solim.core.Component;
 
-/**
- * Modern declarative Solim settings view for screenshot capture options.
- */
 public class ScreenshotSettingsView extends Component {
 
     private final ScreenshotFeature feature;

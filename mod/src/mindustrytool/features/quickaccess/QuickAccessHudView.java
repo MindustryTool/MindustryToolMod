@@ -25,10 +25,6 @@ import solim.reactive.Signal;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.settings.ModSettings;
 
-/**
- * Fully reactive and declarative QuickAccess HUD overlay. Uses reactive
- * bindings for opacity, scale, position, column reflow, and feature state.
- */
 public class QuickAccessHudView extends Component {
 
     private static class HudItem {

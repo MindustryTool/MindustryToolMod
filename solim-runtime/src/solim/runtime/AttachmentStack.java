@@ -20,25 +20,6 @@ import solim.core.SpacingAware;
 import solim.performance.PerfSpan;
 import solim.performance.TraceSpan;
 
-/**
- * Implicit parent stack for declarative UI construction with guaranteed
- * cleanup. Supports
- * customizable cell attachment strategies per container.
- *
- * <p>
- * The base class holds only structural state and declares empty profiling
- * hooks. All static
- * entry points delegate to a singleton instance, allowing a profiling-enabled
- * subclass to be
- * installed without the base class carrying any monitoring logic.
- *
- * <p>
- * Loading this class also publishes {@link AttachmentBridge}, the narrow seam
- * through which
- * {@link Component} — one module below — announces itself to the open parent
- * scope from its own
- * constructor and reports its build span to the tracer.
- */
 public class AttachmentStack {
 
     static {
@@ -140,44 +121,14 @@ public class AttachmentStack {
         return INSTANCE.doSize();
     }
 
-    /**
-     * Executes the given Prov in an isolated AttachmentStack context where no
-     * parent is on the stack.
-     */
     public static <T> T isolate(Prov<T> Prov) {
         return INSTANCE.doIsolate(Prov);
     }
 
-    /**
-     * Executes the given runnable in an isolated AttachmentStack context where no
-     * parent is on the stack.
-     */
     public static void isolate(Runnable runnable) {
         INSTANCE.doIsolate(runnable);
     }
 
-    /**
-     * Runs the given block in an isolated context and captures the components
-     * created inside it,
-     * in creation order, without attaching them to any live parent. Used by dynamic
-     * structural
-     * components to adopt void factories: the captured components become owned by
-     * the caller,
-     * which is responsible for mounting and disposing them.
-     *
-     * <p>
-     * Non-component resources created inside the block (Computed, Effect, Query,
-     * Binding) are
-     * collected too, but have no owner to hand them to through this entry point, so
-     * they are
-     * destroyed when the capture completes. Use {@link Fragment#capture(Runnable)}
-     * to keep them.
-     *
-     * <p>
-     * If the block throws, all partially created resources are disposed, ambient
-     * state is
-     * restored, and the exception propagates.
-     */
     public static List<Component> capture(Runnable runnable) {
         if (runnable == null) {
             return Collections.emptyList();
@@ -191,11 +142,6 @@ public class AttachmentStack {
         INSTANCE.doCapture(runnable, captured, sink);
     }
 
-    /**
-     * Registers a component to be attached when its parent is popped, ensuring the
-     * component is fully
-     * constructed before element() is invoked.
-     */
     public static void registerPendingComponent(Component component, Table parent) {
         INSTANCE.doRegisterPendingComponent(component, parent);
     }
@@ -272,27 +218,10 @@ public class AttachmentStack {
         INSTANCE.doSetTracingEnabled(enabled);
     }
 
-    /**
-     * Opens a named span on the shared trace timeline, nested under whatever span
-     * is currently
-     * open. Used by reactive operations ({@code signal}, {@code computed},
-     * {@code effect},
-     * {@code flush}) so they interleave with component {@code build} spans in one
-     * hierarchy.
-     *
-     * <p>
-     * A no-op on the base stack, and a no-op even on the debug stack while tracing
-     * is disabled.
-     */
     public static void beginSpan(@Nullable String name, @Nullable String phase) {
         INSTANCE.doBeginSpan(name, phase);
     }
 
-    /**
-     * Closes the innermost span opened by {@link #beginSpan(String, String)}.
-     * Callers must pair
-     * every begin with exactly one end, including on exceptional paths.
-     */
     public static void endSpan() {
         INSTANCE.doEndSpan();
     }

@@ -19,10 +19,6 @@ import mindustrytool.models.response.SchematicData;
 import solim.core.Component;
 import solim.reactive.Readable;
 
-/**
- * Image-first card layout showing a dedicated preview card with a centered
- * title strip and a compact row of interactive stat action buttons.
- */
 public class SchematicCard extends Component {
 
     public static final float CARD_SIZE = BrowserLayout.CARD_SIZE;

@@ -14,12 +14,6 @@ import mindustrytool.services.MindustryTool;
 import solim.core.Component;
 import solim.overlay.Popup;
 
-/**
- * Shared floating message-action menu (Copy, Reply, Translate) hosted once in
- * the chat overlay and driven by the native {@link Popup}. Message targeting
- * stays here; all floating-menu machinery (positioning, dismissal, listener
- * lifecycle) lives in Solim.
- */
 public final class ChatActionPopup {
 
     public static @Nullable Popup<ParsedChatMessage> menu;
@@ -32,10 +26,6 @@ public final class ChatActionPopup {
         menu.children(request -> menuRows(store, request)).rounded(2);
     }
 
-    /**
-     * Opens the shared menu for the given message anchored near the given stage
-     * coordinates.
-     */
     public static void showFor(@Nullable ParsedChatMessage message, float stageX, float stageY) {
         if (menu != null) {
             menu.show(message, stageX, stageY);

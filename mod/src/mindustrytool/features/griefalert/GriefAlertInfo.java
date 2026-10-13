@@ -2,12 +2,6 @@ package mindustrytool.features.griefalert;
 
 import arc.util.Time;
 
-/**
- * Immutable snapshot of an explosive reactor placement detected near an allied
- * core.
- * Drives the clickable HUD alert banner, the camera jump and the world
- * highlight marker.
- */
 public class GriefAlertInfo {
 
     public final String builderName;

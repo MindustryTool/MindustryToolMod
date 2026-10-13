@@ -23,10 +23,6 @@ import solim.overlay.SolimDialog;
 import solim.reactive.Query;
 import solim.reactive.QueryKey;
 
-/**
- * Detail dialog showing metadata, author, stats, tags, description,
- * and a scrollable mono-font viewer for the raw HJSON patch content.
- */
 public class PatchDetailDialog extends SolimDialog {
 
     public PatchDetailDialog(ContentPatchDetailData detail, String itemId) {
@@ -54,9 +50,10 @@ public class PatchDetailDialog extends SolimDialog {
                     ? Query.<String>builder()
                             .key(QueryKey.of("user", authorId))
                             .fetch(() -> MindustryTool.getUserBatch(Collections.singletonList(authorId))
-                                    .thenApply(users -> users != null && !users.isEmpty() && users.get(0) != null && users.get(0).getName() != null
-                                            ? users.get(0).getName()
-                                            : authorId))
+                                    .thenApply(users -> users != null && !users.isEmpty() && users.get(0) != null
+                                            && users.get(0).getName() != null
+                                                    ? users.get(0).getName()
+                                                    : authorId))
                             .staleTime(Duration.ofMinutes(10))
                             .build()
                     : null;
@@ -98,8 +95,10 @@ public class PatchDetailDialog extends SolimDialog {
                         if (authorQuery != null) {
                             query(authorQuery)
                                     .growX()
-                                    .loading(() -> text(authorId != null ? authorId : "").color(Color.white).fontScale(1.1f))
-                                    .error(err -> text(authorId != null ? authorId : "").color(Color.white).fontScale(1.1f))
+                                    .loading(() -> text(authorId != null ? authorId : "").color(Color.white)
+                                            .fontScale(1.1f))
+                                    .error(err -> text(authorId != null ? authorId : "").color(Color.white)
+                                            .fontScale(1.1f))
                                     .data(name -> text(name).color(Color.white).fontScale(1.1f));
                         } else {
                             text(authorId != null ? authorId : "").color(Color.white).fontScale(1.1f);
@@ -175,15 +174,15 @@ public class PatchDetailDialog extends SolimDialog {
             row().growX().gap(unit(2)).children(() -> {
                 button(Core.bundle.get("browser.patch.copy"),
                         () -> PatchActions.copyTextToClipboard(patchData))
-                                .style(WebStyles.primary())
-                                .growX()
-                                .height(unit(11));
+                        .style(WebStyles.primary())
+                        .growX()
+                        .height(unit(11));
 
                 button(Core.bundle.get("browser.patch.save"),
                         () -> PatchActions.saveTextToFile(patchData, patchName))
-                                .style(WebStyles.primary())
-                                .growX()
-                                .height(unit(11));
+                        .style(WebStyles.primary())
+                        .growX()
+                        .height(unit(11));
             });
         }
     }

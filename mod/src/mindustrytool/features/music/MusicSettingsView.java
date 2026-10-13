@@ -14,10 +14,6 @@ import mindustrytool.components.WebStyles;
 import solim.core.Component;
 import solim.reactive.Readable;
 
-/**
- * Settings view for the Custom Music feature: Ambient, Dark, and Boss sections,
- * each listing tracks with reactive play and disable toggles.
- */
 public class MusicSettingsView extends Component {
 
     private final MusicFeature feature;
@@ -96,11 +92,6 @@ public class MusicSettingsView extends Component {
         });
     }
 
-    /**
-     * A single track row: name label plus custom-remove, play/pause, and disable
-     * buttons. All buttons bind to the row's {@link TrackState} signals and update
-     * reactively.
-     */
     private static class TrackRow extends Component {
 
         private final MusicFeature feature;

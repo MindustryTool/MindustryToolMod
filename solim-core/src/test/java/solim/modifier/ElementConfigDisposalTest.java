@@ -20,18 +20,6 @@ import solim.test.BuildScopeHost;
 import solim.test.ModifierScope;
 import solim.test.SolimEnv;
 
-/**
- * Method-by-method disposal proof for the reactive {@link ElementConfig}
- * modifiers.
- *
- * <p>
- * Every reactive overload installs an {@code Effect} that writes into the
- * target Arc
- * {@link Element}. The contract is identical whichever ownership path installed
- * it: the element
- * follows the signal until the owning component is disposed, and freezes
- * afterwards.
- */
 class ElementConfigDisposalTest extends SolimEnv {
 
     @BeforeEach

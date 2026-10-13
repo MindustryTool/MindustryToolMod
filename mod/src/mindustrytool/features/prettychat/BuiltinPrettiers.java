@@ -8,10 +8,6 @@ import mindustry.Vars;
 
 import java.util.Locale;
 
-/**
- * Built-in text transformers for Pretty Chat.
- * Fully compatible with Java 8 and Android.
- */
 public final class BuiltinPrettiers {
 
     private BuiltinPrettiers() {
@@ -1021,11 +1017,6 @@ public final class BuiltinPrettiers {
         }
     }
 
-    /**
-     * Applies a mapping function only to text segments outside of square brackets
-     * [...].
-     * Preserves color tags and icon codes untouched.
-     */
     public static String mapTextOutsideTags(String input, TextMapper mapper) {
         if (input == null || !input.contains("[")) {
             return mapper.map(input != null ? input : "");

@@ -20,15 +20,6 @@ import mindustrytool.features.chat.models.ParsedChatMessage.RoomInviteMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.SchematicMessage;
 import mindustrytool.features.chat.models.ParsedChatMessage.TextMessage;
 
-/**
- * Calculates and caches layout heights for chat message items given a container
- * width.
- *
- * <p>
- * Uses static heights for fixed layout structures (headers, avatars, cards,
- * buttons)
- * and calculates wrapped text height using {@link GlyphLayout}.
- */
 public final class ChatMessageHeightCalculator {
 
     public static final float UNIT_1 = 4f;
@@ -54,9 +45,6 @@ public final class ChatMessageHeightCalculator {
     private ChatMessageHeightCalculator() {
     }
 
-    /**
-     * Calculates the height for a message group at the specified container width.
-     */
     public static float calculateHeight(MessageGroup group, float containerWidth) {
         if (group == null || group.getMessageCount() == 0) {
             return Scl.scl(24f);
@@ -146,9 +134,6 @@ public final class ChatMessageHeightCalculator {
         return height;
     }
 
-    /**
-     * Measures the height of wrapped text using Arc's {@link GlyphLayout}.
-     */
     public static float measureTextHeight(@Nullable String text, float wrapWidth, float fontScale) {
         Font font = null;
         try {

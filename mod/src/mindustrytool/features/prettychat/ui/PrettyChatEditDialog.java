@@ -13,9 +13,6 @@ import mindustrytool.features.prettychat.Prettier;
 import solim.core.Component;
 import solim.overlay.SolimDialog;
 
-/**
- * Dialog allowing users to customize an editable Prettier's script or template.
- */
 public class PrettyChatEditDialog extends SolimDialog {
 
     public PrettyChatEditDialog(Prettier prettier, Runnable onSave) {
@@ -41,22 +38,23 @@ public class PrettyChatEditDialog extends SolimDialog {
         }
 
         children(() -> {
-            column().grow().maxWidth(dvw(90f).map(w -> Math.min(w, 750f))).padding(unit(3)).gap(unit(2)).children(() -> {
-                text(hint)
-                        .color(Color.lightGray)
-                        .wrap()
-                        .growX();
+            column().grow().maxWidth(dvw(90f).map(w -> Math.min(w, 750f))).padding(unit(3)).gap(unit(2))
+                    .children(() -> {
+                        text(hint)
+                                .color(Color.lightGray)
+                                .wrap()
+                                .growX();
 
-                new Component() {
-                    @Override
-                    protected Element build() {
-                        Table table = new Table(Styles.black6);
-                        table.margin(8f);
-                        table.add(area).grow().minHeight(180f);
-                        return table;
-                    }
-                };
-            });
+                        new Component() {
+                            @Override
+                            protected Element build() {
+                                Table table = new Table(Styles.black6);
+                                table.margin(8f);
+                                table.add(area).grow().minHeight(180f);
+                                return table;
+                            }
+                        };
+                    });
         });
 
         actionButton(

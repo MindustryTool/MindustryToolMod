@@ -6,45 +6,8 @@ import arc.scene.Element;
 import solim.core.Component;
 import solim.core.SolimToken;
 
-/**
- * Parent-cell configuration mixin.
- *
- * <p>
- * Implemented by Solim layout containers ({@link Row}, {@link Column},
- * {@link Card}, {@link Grid}, {@link Scroll}, etc.). Each method configures how
- * this component behaves inside its <em>parent</em> layout cell.
- *
- * <p>
- * CellConfig provides ONLY parent-cell methods:
- * <ul>
- * <li><b>Grow</b>: {@code growX/growY/grow} — marks this component to grow in
- * its parent cell.</li>
- * <li><b>Min/Max Size</b>: {@code minWidth/minHeight/maxWidth/maxHeight} —
- * minimum and maximum size constraints applied to the parent cell.</li>
- * <li><b>Margin</b>: {@code margin/marginTop/...} — outer
- * spacing between this element and the parent cell boundary (applied as
- * {@code Cell.pad()}).</li>
- * </ul>
- *
- * <p>
- * Element-targeted operations (width/height/size, opacity,
- * rounded/border/background) come from {@link solim.modifier.ElementConfig}.
- * Table-targeted operations (alignment, margin, padding, gap) come from
- * {@link solim.modifier.TableConfig}.
- *
- * <p>
- * Every reactive sizing and margin method installs an {@code Effect} that calls
- * <b>only its own</b> {@code PendingCellConfig} applier, so each binding tracks
- * exactly one {@link Readable} instead of every constraint at once.
- *
- * @param <SELF> the concrete component type, enabling fluent chaining
- */
 public interface CellConfig<SELF extends CellConfig<SELF>> {
 
-    /**
-     * Returns the {@link solim.modifier.PendingCellConfig} owned by this
-     * component's root element.
-     */
     PendingCellConfig cellConfig();
 
     default SELF minWidth(float v) {
@@ -131,10 +94,6 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return self();
     }
 
-    /**
-     * Marks this component as wanting to grow on the X axis in its parent cell.
-     * Independent from {@code width()} — both can coexist (CSS flex-basis style).
-     */
     default SELF growX() {
         cellConfig().growX = true;
         if (this instanceof Component) {
@@ -147,10 +106,6 @@ public interface CellConfig<SELF extends CellConfig<SELF>> {
         return self();
     }
 
-    /**
-     * Marks this component as wanting to grow on the Y axis in its parent cell.
-     * Independent from {@code height()} — both can coexist.
-     */
     default SELF growY() {
         cellConfig().growY = true;
         if (this instanceof Component) {

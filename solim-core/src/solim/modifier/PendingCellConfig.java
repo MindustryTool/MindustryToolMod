@@ -15,13 +15,6 @@ import solim.reactive.Readable;
 import solim.layout.GapContainer;
 import arc.util.Align;
 
-/**
- * Deferred configuration buffer for parent Cell settings.
- *
- * <p>
- * Holds pending values that will be applied to a parent Cell when the element
- * is attached to a parent Table via {@link AttachmentStack}.
- */
 public final class PendingCellConfig {
 
     public static final AttachmentStack.CellConfigurator DEFAULT_CONFIGURATOR = (cell, child, comp) -> {
@@ -67,22 +60,12 @@ public final class PendingCellConfig {
     public @Nullable Readable<Float> padBottom;
     public @Nullable Readable<Float> padRight;
 
-    /**
-     * Alignment of this element within its parent cell. Null means use container
-     * default.
-     */
     public @Nullable Integer align;
 
-    /**
-     * Returns true if any explicit preferred or bounded width constraint is set.
-     */
     public boolean hasExplicitWidth() {
         return prefWidth != null || minWidth != null || maxWidth != null;
     }
 
-    /**
-     * Returns true if any explicit preferred or bounded height constraint is set.
-     */
     public boolean hasExplicitHeight() {
         return prefHeight != null || minHeight != null || maxHeight != null;
     }
@@ -136,14 +119,6 @@ public final class PendingCellConfig {
         return null;
     }
 
-    /**
-     * Applies all constraints to the given cell. Static values are applied
-     * immediately. Reactive values ({@code Signal}, {@code Computed}) install an
-     * {@code Effect} that re-applies the constraint whenever the source changes.
-     *
-     * @return a list of installed {@link Effect} instances — the caller must own
-     *         and dispose them when the component is disposed.
-     */
     public List<Disposable> applyToCell(Cell<?> cell) {
         List<Disposable> effects = new ArrayList<>();
 
@@ -205,15 +180,6 @@ public final class PendingCellConfig {
         return effects;
     }
 
-    /**
-     * Immediately applies size constraints to the element's parent cell if the
-     * element is already attached to a parent Table.
-     *
-     * <p>
-     * Prefer the per-property appliers: this aggregate reads every constraint, so a
-     * reactive
-     * caller using it would track all of them and re-run on any change.
-     */
     public void applySizeToParentCell(@Nullable Element element) {
         applyPrefWidth(element);
         applyPrefHeight(element);
@@ -247,14 +213,6 @@ public final class PendingCellConfig {
         applySize(element, maxHeight, Cell::maxHeight);
     }
 
-    /**
-     * Immediately applies margin constraints to the element's parent cell if the
-     * element is already attached to a parent Table.
-     *
-     * <p>
-     * Prefer the per-edge appliers for the same reason as
-     * {@link #applySizeToParentCell}.
-     */
     public void applyMarginToParentCell(@Nullable Element element) {
         applyPadTop(element);
         applyPadLeft(element);
@@ -278,10 +236,6 @@ public final class PendingCellConfig {
         applyMargin(element, padRight, Cell::padRight);
     }
 
-    /**
-     * Immediately applies grow constraints to the element's parent cell if the
-     * element is already attached to a parent Table.
-     */
     public void applyGrowToParentCell(@Nullable Element element) {
         if (element != null && element.parent instanceof Table) {
             Table parentTable = (Table) element.parent;
@@ -296,10 +250,6 @@ public final class PendingCellConfig {
         }
     }
 
-    /**
-     * Immediately applies alignment constraint to the element's parent cell if the
-     * element is already attached to a parent Table.
-     */
     public void applyAlignToParentCell(@Nullable Element element) {
         if (element != null && element.parent instanceof Table) {
             Table parentTable = (Table) element.parent;
@@ -311,13 +261,6 @@ public final class PendingCellConfig {
         }
     }
 
-    /**
-     * Applies one size constraint read from {@code source}, then invalidates the
-     * parent
-     * hierarchy exactly once. Reads {@code source} and nothing else, so an
-     * {@code Effect}
-     * wrapping this tracks a single constraint.
-     */
     private static void applySize(@Nullable Element element, @Nullable Readable<Float> source,
             SizeApplier applier) {
         if (source == null) {
@@ -335,12 +278,6 @@ public final class PendingCellConfig {
         cell.getTable().invalidateHierarchy();
     }
 
-    /**
-     * Applies one margin constraint read from {@code source}, then invalidates the
-     * parent
-     * exactly once. Gap containers re-space instead of padding, matching the
-     * aggregate applier.
-     */
     private static void applyMargin(@Nullable Element element, @Nullable Readable<Float> source,
             EdgeApplier applier) {
         if (source == null) {

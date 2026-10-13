@@ -23,11 +23,6 @@ import solim.overlay.SolimDialog;
 import solim.reactive.Query;
 import solim.reactive.QueryKey;
 
-/**
- * Detail dialog showing a full map preview, author, dimensions, stats, tags,
- * description, and download/play shortcuts. Stacks vertically in portrait and
- * side-by-side in landscape.
- */
 public class MapDetailDialog extends SolimDialog {
 
     public MapDetailDialog(MapDetailData detail, String itemId) {
@@ -155,15 +150,15 @@ public class MapDetailDialog extends SolimDialog {
                 row().growX().gap(unit(2)).children(() -> {
                     button(Core.bundle.get("browser.map.download"),
                             () -> MapActions.downloadAndImport(itemId))
-                                    .style(WebStyles.primary())
-                                    .growX()
-                                    .height(unit(11));
+                            .style(WebStyles.primary())
+                            .growX()
+                            .height(unit(11));
 
                     button(Core.bundle.get("browser.map.play"),
                             () -> MapActions.playMap(itemId))
-                                    .style(WebStyles.primary())
-                                    .growX()
-                                    .height(unit(11));
+                            .style(WebStyles.primary())
+                            .growX()
+                            .height(unit(11));
                 });
             });
         }

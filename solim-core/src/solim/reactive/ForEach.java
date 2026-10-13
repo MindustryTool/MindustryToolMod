@@ -16,10 +16,6 @@ import solim.modifier.PendingCellConfig;
 import solim.modifier.TableConfig;
 import solim.runtime.StructuralReconciler;
 
-/**
- * Keyed reactive list component that efficiently manages child components
- * without rebuilding unchanged items.
- */
 public final class ForEach<T> extends Component
         implements CellConfig<ForEach<T>>, ElementConfig<ForEach<T>>, TableConfig<ForEach<T>> {
     private final Table container = new Table();

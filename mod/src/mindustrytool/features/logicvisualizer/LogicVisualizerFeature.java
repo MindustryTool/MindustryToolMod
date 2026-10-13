@@ -24,11 +24,6 @@ import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
 
-/**
- * Tactical visualizer that draws lines from units controlled by a logic
- * processor block
- * to that logic processor. Integrated into DisplayGroup for direct toggling.
- */
 public class LogicVisualizerFeature extends Feature {
 
     public final ConfigGroup config;

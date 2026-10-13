@@ -30,11 +30,6 @@ public final class Signal<T> implements Readable<T>, ReactiveSource, DebugReacti
         return new Signal<>(initial);
     }
 
-    /**
-     * Creates a Signal initialized from the given Prov that recalculates whenever
-     * the callback
-     * registrar invokes the registered callback (e.g. {@code element::resized}).
-     */
     public static <T> Signal<T> fromCallback(Cons<Runnable> callbackRegistrar, Prov<T> Prov) {
         Signal<T> signal = Signal.of(Prov.get());
         if (callbackRegistrar != null) {

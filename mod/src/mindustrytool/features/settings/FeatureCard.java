@@ -24,12 +24,6 @@ import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Component responsible for building and managing a single feature's visual
- * card. Handles display of metadata, action shortcuts (help, settings, main
- * dialog), and state toggling with direct property reactivity using pure Solim
- * components.
- */
 public class FeatureCard extends Component {
 
     private final Feature feature;
@@ -68,7 +62,8 @@ public class FeatureCard extends Component {
         Prov<SolimDialog> settingDialog = feature.getSettingDialog();
 
         String id = metadata.getId();
-        Readable<Boolean> isFavorite = ModSettings.favoriteFeatures.signal().map(set -> set != null && set.contains(id));
+        Readable<Boolean> isFavorite = ModSettings.favoriteFeatures.signal()
+                .map(set -> set != null && set.contains(id));
         Readable<Color> starColor = isFavorite.map(fav -> Boolean.TRUE.equals(fav) ? Pal.accent : Color.gray);
         Readable<String> favoriteTooltip = isFavorite.map(fav -> Boolean.TRUE.equals(fav)
                 ? Core.bundle.get("feature.button.favorite.remove")

@@ -24,16 +24,6 @@ import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.TableConfig;
 
-/**
- * High-performance virtualized vertical list component.
- *
- * <p>
- * Only instantiates and mounts items that intersect the visible scroll viewport
- * plus a configurable overscan buffer.
- *
- * @param <T> the item type
- * @param <K> the item key type
- */
 public final class VirtualList<T> extends Component
         implements CellConfig<VirtualList<T>>, ElementConfig<VirtualList<T>>, TableConfig<VirtualList<T>> {
 

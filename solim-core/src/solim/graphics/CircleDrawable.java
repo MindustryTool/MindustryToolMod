@@ -3,9 +3,6 @@ package solim.graphics;
 import arc.graphics.g2d.Fill;
 import arc.scene.style.BaseDrawable;
 
-/**
- * Procedural solid circle drawable using Arc's {@link Fill#circle}.
- */
 public class CircleDrawable extends BaseDrawable {
     public static final CircleDrawable INSTANCE = new CircleDrawable();
 

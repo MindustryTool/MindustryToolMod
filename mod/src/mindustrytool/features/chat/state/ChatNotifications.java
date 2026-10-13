@@ -8,10 +8,6 @@ import java.util.Set;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * State container managing per-channel notification mute preferences.
- * Persists muted channel IDs to {@link Core#settings} and provides reactive bindings.
- */
 public final class ChatNotifications {
 
     public static final String SETTING_KEY = "mindustrytool.chat.muted-channels";

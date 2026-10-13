@@ -18,36 +18,6 @@ import solim.performance.ComputedSnapshot;
 import solim.performance.EffectSnapshot;
 import solim.performance.SignalSnapshot;
 
-/**
- * Profiling-enabled {@link ReactiveContext} variant recording metrics for every
- * reactive node that
- * runs while it is installed.
- *
- * <p>
- * Two kinds of component association are tracked, because neither alone is
- * sufficient:
- * <ul>
- * <li><b>Creation ownership</b> — a node constructed while
- * {@link OwnershipContext#current()} is a
- * {@link Component} is attributed to that component, capturing signals created
- * directly in
- * {@code build()}.</li>
- * <li><b>Dependency discovery</b> — at snapshot time, each component's owned
- * {@code Computed}s and
- * {@code Effect}s are walked transitively by {@link #reachableSources} so
- * external state driving a
- * component is attributed to it as well.</li>
- * </ul>
- *
- * <p>
- * Maps use access-order {@link LinkedHashMap} over identity semantics, because
- * reactive nodes do
- * not override {@code equals()}: the key is the node instance itself, so
- * ordering is by access for
- * stable hot-first reporting. Every registry is released by
- * {@link #clearState()}, which
- * {@code Perf} calls on disable and at the start of each profiling session.
- */
 public class DebugReactiveContext extends ReactiveContext {
 
     public static final int MAX_TRACKED_NODES = 4096;
@@ -153,12 +123,6 @@ public class DebugReactiveContext extends ReactiveContext {
         }
     }
 
-    /**
-     * Records one completed computed evaluation. Called by the primitive itself
-     * rather than derived
-     * from {@link #onComputedEnd} so the recorded duration covers only the producer
-     * body.
-     */
     public void recordComputedRun(@Nullable Object computed, long durationNs) {
         ComputedMetrics metrics = computedMetrics(computed);
         if (metrics == null) {
@@ -238,11 +202,6 @@ public class DebugReactiveContext extends ReactiveContext {
         return metrics;
     }
 
-    /**
-     * Registers a reactive node that was constructed before this context was
-     * installed, or whose
-     * creation hook was not reached, so it still appears in a report once it runs.
-     */
     public void observeComputed(@Nullable Object computed) {
         computedMetrics(computed);
     }
@@ -417,11 +376,6 @@ public class DebugReactiveContext extends ReactiveContext {
         return value.length() <= MAX_SUMMARY_CHARS ? value : value.substring(0, MAX_SUMMARY_CHARS) + "…";
     }
 
-    /**
-     * Walks the dependency graph of a reactive node transitively, returning every
-     * distinct node
-     * reachable through it. Cycles are handled by the visited set.
-     */
     public static Set<Object> reachableSources(@Nullable Object node) {
         Set<Object> visited = newIdentitySet();
         collectSources(node, visited);

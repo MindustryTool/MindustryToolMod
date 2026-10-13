@@ -3,9 +3,6 @@ package mindustrytool.features.visualizer;
 import arc.Core;
 import solim.overlay.SolimDialog;
 
-/**
- * Settings dialog for configuring unified Visualizer options, using SolimDialog.
- */
 public class VisualizerSettingsDialog extends SolimDialog {
 
     public VisualizerSettingsDialog(VisualizerFeature feature) {

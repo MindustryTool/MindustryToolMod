@@ -12,11 +12,6 @@ import solim.core.OwnershipContext;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 
-/**
- * Composite continuous-curvature rounded drawable supporting independent
- * background fill
- * and border strokes with zero extra draw calls.
- */
 public class RoundedDrawable implements Drawable, Disposable {
 
     private int radius;
@@ -37,17 +32,6 @@ public class RoundedDrawable implements Drawable, Disposable {
 
     private boolean disposed = false;
 
-    /**
-     * Reactive bindings this drawable installed, kept so {@link #dispose()} can
-     * stop them.
-     *
-     * <p>
-     * A drawable is not a component and has no ownership tree of its own, so it
-     * cannot inherit
-     * one. {@link OwnershipContext} already hands each binding to whatever
-     * component is building;
-     * this list is the fallback for a drawable configured outside any build scope.
-     */
     private final List<Disposable> bindings = new ArrayList<>();
 
     private <T extends Disposable> T own(T binding) {

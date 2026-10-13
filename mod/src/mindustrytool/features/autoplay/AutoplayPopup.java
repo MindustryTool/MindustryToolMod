@@ -10,12 +10,6 @@ import mindustrytool.features.quickaccess.QuickAccessPopupHelper;
 import solim.core.Component;
 import solim.overlay.Popup;
 
-/**
- * QuickAccess popup for Autoplay, opened from QuickAccess in popup display
- * mode. Reuses the shared horizontal task strip layout from AutoplayHudView
- * inside a black rounded container. Opening or closing the popup never changes
- * the feature enabled state.
- */
 public final class AutoplayPopup {
 
     private static @Nullable Popup<AutoplayFeature> menu;

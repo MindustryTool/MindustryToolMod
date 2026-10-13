@@ -14,11 +14,6 @@ import solim.core.Component;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Reactive grid of display overlay toggle buttons rendered inside
- * {@link DisplayGroupPopup}. Each button toggles its feature on tap and opens
- * that feature's settings on long-press, without closing the popup.
- */
 public class DisplayGroupPopupView extends Component {
 
     private final DisplayGroupFeature feature;

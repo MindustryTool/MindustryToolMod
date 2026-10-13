@@ -15,45 +15,8 @@ import solim.runtime.DebugSignalDispatcher;
 import solim.runtime.ReactiveContext;
 import solim.runtime.SignalDispatcher;
 
-/**
- * Public profiling facade for Solim UI. Delegates to the active runtime service
- * singletons so that
- * profiling can be enabled and queried without exposing the runtime module to
- * callers.
- *
- * <p>
- * {@link #setEnabled(boolean)} swaps all three runtime services —
- * {@link AttachmentStack},
- * {@link ReactiveContext}, and {@link SignalDispatcher} — between their normal
- * base implementations
- * and their debug subclasses as one operation, so debug state is always
- * installed and released
- * together.
- *
- * <p>
- * While enabled, {@code DebugSignalDispatcher} polls {@code Ctrl + D} each
- * frame to toggle a
- * profiling session. Starting enables unified flame tracing and clears session
- * counters; stopping
- * writes the interactive HTML report and opens it in the system browser.
- *
- * <p>
- * Debug mode can also be entered without a programmatic call by setting the
- * {@code solim.debug.enabled} JVM system property, mirroring how
- * {@code McpConfig} reads its own
- * {@code solim.mcp.*} properties. The property defaults to {@code "false"}, so
- * the only way into the
- * debug path is to set it explicitly — which is what keeps published builds at
- * zero cost. The
- * property is read by {@link #init()}, which the host calls during bootstrap.
- */
 public final class Perf {
 
-    /**
-     * System property enabling the debug runtime services at class load. Mirrors
-     * the
-     * {@code solim.mcp.*} naming convention.
-     */
     public static final String debugProperty = "solim.debug.enabled";
 
     private static boolean profilingRequested = false;
@@ -61,24 +24,6 @@ public final class Perf {
     private static float thresholdMs = 50f;
     private static boolean profiling = false;
 
-    /**
-     * Enters debug mode if {@link #debugProperty} opts this runtime into it,
-     * otherwise does nothing.
-     *
-     * <p>
-     * Called explicitly from the host's bootstrap. This is deliberately <b>not</b>
-     * a static
-     * initializer: nothing else in a shipped build references {@code Perf}, so a
-     * class-load-time
-     * block would never run and the property would be inert. An explicit call gives
-     * the enablement
-     * a trigger that is visible in the source of the thing being bootstrapped.
-     *
-     * <p>
-     * Invoking this more than once is harmless — {@link #setEnabled(boolean)} is
-     * idempotent for
-     * the debug stack and wholesale-replaces the other two services.
-     */
     public static void init() {
         if (!debugEnabledByProperty()) {
             return;
@@ -89,13 +34,6 @@ public final class Perf {
         setEnabled(true);
     }
 
-    /**
-     * Returns whether {@link #debugProperty} opts this runtime into debug mode.
-     *
-     * <p>
-     * Public so tests can assert the property's contract independently of whether
-     * {@link #init()} has been called.
-     */
     public static boolean debugEnabledByProperty() {
         return Boolean.parseBoolean(System.getProperty(debugProperty, "false"));
     }
@@ -103,18 +41,6 @@ public final class Perf {
     private Perf() {
     }
 
-    /**
-     * Enables or disables profiling. Enabling installs fresh debug instances of all
-     * three runtime
-     * services; disabling reverts every one of them to its base implementation and
-     * discards all
-     * recorded spans, reactive metrics, and creation-ownership state.
-     *
-     * <p>
-     * Explicit tracing via {@link #setTracingEnabled(boolean)} keeps the debug
-     * stack installed
-     * independently of this flag.
-     */
     public static void setEnabled(boolean state) {
         profilingRequested = state;
         if (tracingRequested) {
@@ -130,11 +56,6 @@ public final class Perf {
         }
     }
 
-    /**
-     * Installs the debug triple. All three are swapped together so a caller can
-     * never observe a
-     * partially-instrumented runtime.
-     */
     private static void installDebugServices() {
         if (!(AttachmentStack.instance() instanceof DebugAttachmentStack)) {
             AttachmentStack.install(new DebugAttachmentStack());
@@ -194,13 +115,6 @@ public final class Perf {
         return AttachmentStack.maxDepthObserved();
     }
 
-    /**
-     * Enables or disables hierarchical flame tracing. Enabling starts a fresh trace
-     * generation
-     * on the debug variant, preserving slow spans; disabling clears traces and
-     * reverts to
-     * profiling or base.
-     */
     public static void setTracingEnabled(boolean state) {
         tracingRequested = state;
         if (state) {
@@ -251,17 +165,6 @@ public final class Perf {
         return profiling;
     }
 
-    /**
-     * Starts a profiling session: enables unified flame tracing across component
-     * builds and
-     * reactive operations, clears all session counters, and shows a start
-     * notification.
-     *
-     * <p>
-     * Does nothing when profiling is disabled, since the debug services that drive
-     * tracing and
-     * input polling are not installed in that case.
-     */
     public static void startProfiling() {
         if (profiling || !isEnabled()) {
             return;
@@ -276,11 +179,6 @@ public final class Perf {
         notify("Solim profiling started (Ctrl+D to stop)");
     }
 
-    /**
-     * Stops the profiling session, writes the self-contained HTML report under
-     * {@code solim-profiles/}, notifies the player, and opens the report in the
-     * system browser.
-     */
     public static void stopProfiling() {
         if (!profiling) {
             return;
@@ -310,11 +208,6 @@ public final class Perf {
         }
     }
 
-    /**
-     * Writes the report to the default {@code solim-profiles} directory under the
-     * game's data
-     * directory, creating it if needed.
-     */
     private static File writeProfile(List<TraceSpan> spans, int dropped, long id,
             List<ComponentNodeSnapshot> components) {
         File file = defaultProfileFile().file();
@@ -327,11 +220,6 @@ public final class Perf {
         return file;
     }
 
-    /**
-     * Returns the default report path,
-     * {@code <data dir>/solim-profiles/profile-<timestamp>.html},
-     * creating the parent directory when it does not yet exist.
-     */
     private static Fi defaultProfileFile() {
         Fi dir = dataDirectory().child("solim-profiles");
         dir.mkdirs();

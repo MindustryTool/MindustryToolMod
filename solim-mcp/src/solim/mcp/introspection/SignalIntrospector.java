@@ -5,11 +5,6 @@ import java.lang.reflect.Method;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Reads the current state of a discovered reactive instance via reflection and
- * maps it to a stable
- * debug DTO. Never mutates the inspected instance.
- */
 public final class SignalIntrospector {
     private SignalIntrospector() {
     }

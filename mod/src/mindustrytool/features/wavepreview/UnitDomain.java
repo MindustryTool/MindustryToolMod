@@ -2,10 +2,6 @@ package mindustrytool.features.wavepreview;
 
 import mindustry.type.UnitType;
 
-/**
- * Domain categorization for units in wave previews.
- * Unmatched units fall back to GROUND.
- */
 public enum UnitDomain {
     GROUND,
     AIR,

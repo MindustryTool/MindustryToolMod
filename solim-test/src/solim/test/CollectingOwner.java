@@ -6,15 +6,6 @@ import java.util.List;
 import solim.core.Disposable;
 import solim.core.DisposableOwner;
 
-/**
- * An ownership scope that keeps whatever is registered with it instead of
- * handing it to a component.
- *
- * <p>
- * Lets a test install itself as the ambient owner and then inspect what was
- * registered, which is
- * what the ownership contract is really about.
- */
 public final class CollectingOwner implements DisposableOwner {
 
     private final List<Disposable> collected = new ArrayList<>();

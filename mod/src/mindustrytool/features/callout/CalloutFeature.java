@@ -15,10 +15,6 @@ import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
 
-/**
- * Tactical Callout feature providing instant in-game tactical alerts and resource
- * requests with a single click.
- */
 public class CalloutFeature extends Feature {
 
     public final ConfigGroup config;

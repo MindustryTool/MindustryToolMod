@@ -31,12 +31,6 @@ import arc.scene.event.EventListener;
 import arc.scene.ui.Button;
 import arc.scene.ui.layout.Scl;
 
-/**
- * Floating non-modal HUD overlay component. Root element defaults to
- * {@link Touchable#childrenOnly} so background touches pass through. Content
- * children are nested within an inner enabled container. Automatically adapts
- * to screen resize events via {@link #keepInScreen()}.
- */
 public class Hud extends Component implements CellConfig<Hud>, ElementConfig<Hud>, TableConfig<Hud> {
 
     private final Table root;

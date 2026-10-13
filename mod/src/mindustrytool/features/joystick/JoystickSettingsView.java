@@ -13,9 +13,6 @@ import mindustrytool.features.FeatureManager;
 import mindustrytool.features.freecamera.FreeCameraFeature;
 import solim.core.Component;
 
-/**
- * Modern declarative Solim settings view for the Virtual Joystick feature.
- */
 public class JoystickSettingsView extends Component {
 
     private final JoystickFeature feature;

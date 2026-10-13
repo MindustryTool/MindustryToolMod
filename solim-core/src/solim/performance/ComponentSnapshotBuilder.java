@@ -15,36 +15,6 @@ import solim.core.SessionRoot;
 import solim.runtime.DebugReactiveContext;
 import solim.runtime.ReactiveContext;
 
-/**
- * Assembles the component tree and reactive graph snapshot consumed by the
- * profile report.
- *
- * <p>
- * Each component is attributed the reactive nodes from two independent sources:
- * <ol>
- * <li>nodes created while that component was the active
- * {@code OwnershipContext} owner, recorded by
- * {@link DebugReactiveContext}, and</li>
- * <li>nodes reachable through the dependency graphs of the {@code Computed}s
- * and {@code Effect}s it
- * owns, which is what surfaces shared or external state driving the
- * component.</li>
- * </ol>
- *
- * <p>
- * Node types are discovered structurally rather than by concrete type: a
- * {@link DebugReactiveNode}
- * whose {@code debugLabel()} reports an effect or a computed is filed
- * accordingly. That keeps this
- * builder free of any dependency on the reactive package's concrete classes
- * while still separating
- * the three categories in the report.
- *
- * <p>
- * Layout bounds are read through {@link Component#peekElement()}, which never
- * triggers a build,
- * so capturing a profile does not mutate the tree being observed.
- */
 public final class ComponentSnapshotBuilder {
 
     private static final int MAX_DEPTH = 64;
@@ -52,12 +22,6 @@ public final class ComponentSnapshotBuilder {
     private ComponentSnapshotBuilder() {
     }
 
-    /**
-     * Captures the live component hierarchy rooted at {@link SessionRoot#get()}.
-     *
-     * @return one snapshot per session-root child; empty when no components are
-     *         live
-     */
     public static List<ComponentNodeSnapshot> capture() {
         List<ComponentNodeSnapshot> roots = new ArrayList<>();
         Map<Component, Boolean> visited = new IdentityHashMap<>();

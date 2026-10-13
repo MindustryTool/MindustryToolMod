@@ -12,15 +12,6 @@ import solim.mcp.transport.HttpFallbackServer;
 import solim.mcp.transport.McpWebSocketServer;
 import solim.mcp.transport.SubscriptionPoller;
 
-/**
- * Entry point for the Solim MCP debug server. Binds a WebSocket transport (and
- * optional HTTP
- * fallback) and streams change notifications to subscribed clients until
- * {@link #stop()} is called.
- *
- * <p>
- * Pure reflection-based inspection: no Solim source code is modified.
- */
 public final class SolimMcpServer {
     private final McpConfig config;
     private final SnapshotRoot snapshotRoot;
@@ -45,11 +36,6 @@ public final class SolimMcpServer {
         });
     }
 
-    /**
-     * Starts the server if {@code config.isEnabled()}; returns {@code null} when
-     * disabled (the
-     * default). When enabled, the port and token are validated at startup.
-     */
     public static @Nullable SolimMcpServer start(McpConfig config) {
         return start(config, SnapshotRoot.sceneRoot());
     }

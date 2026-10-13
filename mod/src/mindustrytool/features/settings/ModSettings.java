@@ -12,16 +12,14 @@ import solim.reactive.Computed;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Mod-wide settings backed by persistent {@link ConfigGroup}.
- * Holds global preferences that do not belong to any single feature.
- */
 public final class ModSettings {
 
     public static final ConfigGroup GROUP = ConfigGroup.of("mindustrytool.settings");
 
-    public static final ConfigValue<Seq<String>> featureOrder = GROUP.value("feature-order", Seq.with(), new OrderedSeqPersister());
-    public static final ConfigValue<Set<String>> favoriteFeatures = GROUP.setValue("favorites", String.class, Collections.emptySet());
+    public static final ConfigValue<Seq<String>> featureOrder = GROUP.value("feature-order", Seq.with(),
+            new OrderedSeqPersister());
+    public static final ConfigValue<Set<String>> favoriteFeatures = GROUP.setValue("favorites", String.class,
+            Collections.emptySet());
     public static final ConfigValue<Boolean> betaParticipate = GROUP.boolValue("betaParticipate", false);
     public static final ConfigValue<Boolean> sharePresence = GROUP.boolValue("share-presence", true);
     public static final ConfigValue<Float> universalScale = GROUP.floatValue("universal-scale",
@@ -41,5 +39,6 @@ public final class ModSettings {
         return (universal != null ? universal : 1f) * featureScale;
     }
 
-    private ModSettings() {}
+    private ModSettings() {
+    }
 }

@@ -18,12 +18,6 @@ import solim.reactive.Dynamic;
 import solim.reactive.Signal;
 import solim.test.SolimCoreEnv;
 
-/**
- * Verifies the shape of the ownership tree: components are nodes with parent
- * links,
- * adoption separates children from own resources, and disposal order is
- * {@code onDispose} → children → own resources.
- */
 class OwnershipTreeTest extends SolimCoreEnv {
 
     static class Probe extends Component {

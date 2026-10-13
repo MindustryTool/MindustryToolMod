@@ -10,18 +10,6 @@ import org.junit.jupiter.api.Test;
 import solim.reactive.Readable;
 import solim.test.SolimCoreEnv;
 
-/**
- * Verifies that each per-property cell applier reads exactly one constraint.
- *
- * <p>
- * This is what makes a reactive {@code CellConfig} binding track only its own
- * source. The
- * aggregate appliers read every constraint, so an {@code Effect} wrapping them
- * subscribes to all
- * of them and re-runs on any change. Counting {@code get()} calls on the
- * constraints is the
- * direct measurement of that claim.
- */
 class PendingCellConfigDependencyScopeTest extends SolimCoreEnv {
 
     static final class CountingReadable implements Readable<Float> {

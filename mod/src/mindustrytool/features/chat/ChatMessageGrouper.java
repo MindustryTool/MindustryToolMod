@@ -9,10 +9,6 @@ import mindustrytool.features.chat.models.MessageGroup;
 import mindustrytool.features.chat.models.ParsedChatMessage;
 import mindustrytool.models.response.ChatMessage;
 
-/**
- * Groups consecutive chat messages from the same author into composite {@link MessageGroup}
- * items for rendering.
- */
 public final class ChatMessageGrouper {
 
     private ChatMessageGrouper() {
@@ -35,7 +31,8 @@ public final class ChatMessageGrouper {
         }
         List<MessageGroup> result = new ArrayList<>();
         List<ParsedChatMessage> current = new ArrayList<>();
-        @Nullable String currentAuthor = null;
+        @Nullable
+        String currentAuthor = null;
 
         for (ParsedChatMessage cur : messages) {
             String author = cur.getCreatedBy();

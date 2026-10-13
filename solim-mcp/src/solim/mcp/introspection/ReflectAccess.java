@@ -9,16 +9,6 @@ import java.util.concurrent.ConcurrentMap;
 import arc.util.Log;
 import arc.util.Nullable;
 
-/**
- * Cached, gracefully-degrading reflective access to Solim internals.
- *
- * <p>
- * Every lookup is cached (including misses) so a failed lookup is resolved once
- * and degraded
- * to {@code null} on subsequent calls instead of throwing. This keeps the debug
- * server functional
- * if a Solim field or method is renamed, moved, or removed.
- */
 public final class ReflectAccess {
     private static final ConcurrentMap<String, Field> FIELD_CACHE = new ConcurrentHashMap<>();
     private static final ConcurrentMap<String, Method> METHOD_CACHE = new ConcurrentHashMap<>();
@@ -95,13 +85,6 @@ public final class ReflectAccess {
         return found;
     }
 
-    /**
-     * Safely reads a field value, returning {@code null} on any reflective failure.
-     * Static fields
-     * accept a {@code null} target. Falls back to {@code setAccessible} for
-     * package-private fields
-     * in other packages, which introspection must see through.
-     */
     public static Object read(Field field, Object target) {
         if (field == null || (target == null && !isStatic(field)))
             return null;

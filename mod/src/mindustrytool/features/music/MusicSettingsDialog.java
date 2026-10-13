@@ -3,9 +3,6 @@ package mindustrytool.features.music;
 import arc.Core;
 import solim.overlay.SolimDialog;
 
-/**
- * Settings dialog for the Custom Music feature.
- */
 public class MusicSettingsDialog extends SolimDialog {
 
     public MusicSettingsDialog(MusicFeature feature) {

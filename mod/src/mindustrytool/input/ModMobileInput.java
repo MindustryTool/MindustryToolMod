@@ -31,15 +31,6 @@ import mindustrytool.features.autoplay.AutoplayFeature;
 import mindustrytool.features.freecamera.FreeCameraFeature;
 import mindustrytool.features.joystick.JoystickFeature;
 
-/**
- * Unified mobile input handler for MindustryTool.
- * Drives unit movement purely from virtual joystick vector when JoystickFeature
- * is enabled,
- * falls back to camera-centered movement when disabled, suppresses camera lerp
- * when
- * FreeCameraFeature is active, and intercepts pinch gestures during joystick
- * holding.
- */
 public class ModMobileInput extends MobileInput {
 
     private static final float JOYSTICK_OFFSET = 80f;

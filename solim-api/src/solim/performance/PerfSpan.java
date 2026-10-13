@@ -2,10 +2,6 @@ package solim.performance;
 
 import arc.util.Nullable;
 
-/**
- * Immutable value describing a single slow structural span recorded by the
- * debug parent stack.
- */
 public final class PerfSpan {
     public final String component;
     public final String phase;

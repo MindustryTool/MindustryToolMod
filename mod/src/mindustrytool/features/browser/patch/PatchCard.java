@@ -22,10 +22,6 @@ import solim.input.Button;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Text and metadata focused card layout for content patches.
- * Displays title, type badge, description snippet, and action buttons.
- */
 public class PatchCard extends Component {
 
     public static final float CARD_SIZE = BrowserLayout.CARD_SIZE;
@@ -64,7 +60,8 @@ public class PatchCard extends Component {
         this.cardHeight = cardHeight;
         this.onClick = onClick;
         this.onCopy = () -> {
-            if (Boolean.TRUE.equals(busy.peek())) return;
+            if (Boolean.TRUE.equals(busy.peek()))
+                return;
             busy.set(true);
             CompletableFuture<?> future = onCopy.get();
             if (future != null) {
@@ -74,7 +71,8 @@ public class PatchCard extends Component {
             }
         };
         this.onSave = () -> {
-            if (Boolean.TRUE.equals(busy.peek())) return;
+            if (Boolean.TRUE.equals(busy.peek()))
+                return;
             busy.set(true);
             CompletableFuture<?> future = onSave.get();
             if (future != null) {

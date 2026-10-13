@@ -21,12 +21,8 @@ import solim.reactive.Signal;
 import solim.style.InputStyle;
 import solim.reactive.Binding;
 
-/**
- * TextField widget with two-way binding to a Signal&lt;String&gt;. Equality
- * guard prevents feedback loop. Automatically registers with the active
- * OwnershipContext if created during a component build.
- */
-public final class SolimTextField extends Component implements ElementConfig<SolimTextField>, CellConfig<SolimTextField> {
+public final class SolimTextField extends Component
+        implements ElementConfig<SolimTextField>, CellConfig<SolimTextField> {
 
     private final TextField field;
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -143,7 +139,6 @@ public final class SolimTextField extends Component implements ElementConfig<Sol
     public TextField field() {
         return field;
     }
-
 
     public SolimTextField rounded(int radius) {
         return rounded(radius, (Color) null);

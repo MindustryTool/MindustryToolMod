@@ -15,15 +15,6 @@ import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
 
-/**
- * Lets players customize how far the camera zooms out (min) and in (max)
- * while playing, including beyond vanilla limits. Vanilla derives its
- * effective in-game bounds every frame from the base {@code minZoom} /
- * {@code maxZoom} renderer fields, so this feature writes those base fields
- * (mapping through the vanilla zoom multiplier settings) and pulls the live
- * scale back into range. Disabling restores the previously observed vanilla
- * bounds.
- */
 public class CameraZoomFeature extends Feature {
 
     public static final float DEFAULT_MIN_ZOOM = 0.5f;

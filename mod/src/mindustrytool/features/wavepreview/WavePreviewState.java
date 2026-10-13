@@ -8,9 +8,6 @@ import mindustry.world.blocks.storage.CoreBlock.CoreBuild;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Reactive state holder for computed wave preview sections.
- */
 public class WavePreviewState {
     private final Signal<Seq<WaveSectionData>> waves = Signal.of(new Seq<>());
 
@@ -29,8 +26,8 @@ public class WavePreviewState {
                 && Vars.state.getPlanet() != null
                 && Vars.state.getPlanet().campaignRules != null
                 && Vars.state.getPlanet().campaignRules.difficulty != null
-                ? Vars.state.getPlanet().campaignRules.difficulty.enemySpawnMultiplier
-                : 1f;
+                        ? Vars.state.getPlanet().campaignRules.difficulty.enemySpawnMultiplier
+                        : 1f;
 
         int clampedDepth = Math.max(WavePreviewFeature.MIN_DEPTH, Math.min(depth, WavePreviewFeature.MAX_DEPTH));
         Seq<WaveSectionData> result = new Seq<>();

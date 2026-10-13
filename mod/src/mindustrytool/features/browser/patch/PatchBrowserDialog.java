@@ -26,10 +26,6 @@ import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
 import solim.reactive.Signal;
 
-/**
- * Main content patch browser dialog with reactive column reflow and a keyed
- * reactive grid of content patch cards.
- */
 public class PatchBrowserDialog extends SolimDialog {
 
     private final BrowserState<ContentPatchData> state;

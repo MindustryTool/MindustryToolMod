@@ -13,12 +13,6 @@ public final class IntrospectionJson {
     private IntrospectionJson() {
     }
 
-    /**
-     * Renders an arbitrary value to a JSON node. Scalars are converted directly;
-     * anything else falls
-     * back to {@code className.toString()} so cyclic or heavy objects never
-     * recurse.
-     */
     public static JsonNode renderValue(@Nullable Object value) {
         if (value == null)
             return NODES.nullNode();

@@ -12,10 +12,6 @@ import solim.modifier.TableConfig;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 
-/**
- * Compact pill-shaped badge component for notification counters and tag
- * indicators.
- */
 public final class Badge extends Component implements CellConfig<Badge>, TableConfig<Badge> {
 
     private final Table element;

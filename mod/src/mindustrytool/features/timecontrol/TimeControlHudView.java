@@ -20,12 +20,6 @@ import solim.overlay.Hud;
 import solim.reactive.Computed;
 import solim.reactive.Readable;
 
-/**
- * Standalone reactive TimeControl HUD overlay. Shows preset buttons or a slider
- * depending on the interaction mode; all state flows through the parent feature
- * signals with automatic bindings. Compact footprint at scale 1.0: ~320x40px
- * presets, ~280x40px slider; button, icon, and font sizes scale proportionally.
- */
 public class TimeControlHudView extends Component {
 
     private final TimeControlFeature feature;

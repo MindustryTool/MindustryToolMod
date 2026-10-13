@@ -11,9 +11,6 @@ import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import solim.core.Component;
 
-/**
- * Modern declarative Solim settings view for God Mode sandbox controls.
- */
 public class GodModeSettingsView extends Component {
 
     private final GodModeFeature feature;

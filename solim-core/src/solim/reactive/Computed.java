@@ -121,16 +121,6 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
         }
     }
 
-    /**
-     * Diffs the staging buffer against the recorded dependency set and reconciles
-     * subscriptions.
-     *
-     * <p>
-     * Allocation-free when nothing changed, which is the common case for a stable
-     * binding:
-     * the membership tests below never reach
-     * {@code removeObserver}/{@code addObserver}.
-     */
     private void updateDependencies(Set<ReactiveSource> newDeps) {
 
         for (ReactiveSource dep : dependencies) {

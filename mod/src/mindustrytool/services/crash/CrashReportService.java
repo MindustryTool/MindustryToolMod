@@ -5,24 +5,6 @@ import arc.files.Fi;
 import arc.util.Log;
 import mindustrytool.features.FeatureManager;
 
-/**
- * Crash detection orchestrator. SOLID:
- *
- * <ul>
- * <li>Single Responsibility — only orchestrates locate → dedupe → enrich → show
- * dialog
- * <li>Open/Closed — behaviour extended by replacing {@link CrashLocator}/{@link
- * CrashSender}/{@link CrashLogEnricher}
- * <li>Dependency Inversion — depends on abstractions ({@link CrashSender}) and
- * {@link
- * CrashLocator} facade
- * <li>Interface Segregation handled via focused collaborators
- * </ul>
- *
- * Not over-engineered: no Dagger/Guice, no extra modules — constructor
- * injection with a default
- * singleton.
- */
 public final class CrashReportService {
 
     private static final String KEY_LATEST = "mindustrytool.crash-report.latest";
@@ -55,11 +37,6 @@ public final class CrashReportService {
         this.enricher = enricher;
     }
 
-    /**
-     * No-arg production constructor — mirrors old {@code new CrashReportService()}
-     * usage in {@code
-     * Main}.
-     */
     public CrashReportService() {
         this(
                 new CrashLocator(() -> Core.settings.getDataDirectory().child("crashes")),
@@ -67,11 +44,6 @@ public final class CrashReportService {
                 new CrashLogEnricher(() -> FeatureManager.getEnableds().map(f -> f.getMetadata().getId())));
     }
 
-    /**
-     * Checks for a new crash file and shows the report dialog if needed.
-     *
-     * @return true if a dialog was shown (caller may disable features)
-     */
     public boolean checkForCrashes() {
         try {
             Fi latest = locator.findLatest();

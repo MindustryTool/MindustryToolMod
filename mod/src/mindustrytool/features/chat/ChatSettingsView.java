@@ -12,10 +12,6 @@ import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import solim.core.Component;
 
-/**
- * Modern declarative Solim settings view for Chat overlay layout and
- * appearance.
- */
 public class ChatSettingsView extends Component {
 
     private final ChatFeature feature;

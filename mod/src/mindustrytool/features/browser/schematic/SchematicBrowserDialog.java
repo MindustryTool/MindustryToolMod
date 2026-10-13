@@ -26,10 +26,6 @@ import solim.reactive.Computed;
 import solim.reactive.Signal;
 import java.util.Collections;
 
-/**
- * Main schematic browser dialog with reactive column reflow and a keyed
- * reactive grid of schematic cards.
- */
 public class SchematicBrowserDialog extends SolimDialog {
 
     private final BrowserState<SchematicData> state;

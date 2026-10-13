@@ -23,11 +23,6 @@ import arc.scene.style.TextureRegionDrawable;
 import mindustry.Vars;
 import solim.test.SolimEnv;
 
-/**
- * Regression coverage for the asynchronous NetworkImage decode path: the most
- * recent load must win regardless of worker completion order, decode parameters
- * must stay consistent per load, and corrupt disk entries must retry the network.
- */
 class NetworkImageDecodeDeterminismTest extends SolimEnv {
 
     private static final String URL = "https://example.com/card.png";
@@ -55,7 +50,6 @@ class NetworkImageDecodeDeterminismTest extends SolimEnv {
             }
         }
     }
-
 
     @BeforeEach
     void setUp() {

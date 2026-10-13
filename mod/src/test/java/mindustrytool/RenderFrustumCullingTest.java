@@ -25,11 +25,6 @@ import mindustry.game.Rules;
 import mindustry.ui.fragments.HudFragment;
 import mindustrytool.test.MindustryTestEnv;
 
-/**
- * Headless E2E test suite asserting viewport frustum culling correctness.
- * Verifies that off-screen entities outside {@code Core.camera.bounds}
- * produce 0 draw calls and are skipped immediately.
- */
 class RenderFrustumCullingTest extends MindustryTestEnv {
 
     private UI prevUi;

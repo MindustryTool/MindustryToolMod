@@ -9,10 +9,6 @@ import solim.core.Component;
 import solim.core.SolimToken;
 import solim.modifier.PendingCellConfig;
 
-/**
- * Interface implemented by layout containers that support sibling-aware,
- * directional gap spacing along their primary axis.
- */
 public interface GapContainer {
 
     Direction direction();
@@ -39,11 +35,6 @@ public interface GapContainer {
         }
     }
 
-    /**
-     * Incrementally spaces a newly attached cell along the given direction. Only
-     * subsequent visible cells receive leading gap; first visible cell receives 0.
-     * Avoids full O(N) rescans on every element attachment.
-     */
     static void spaceAttachedCell(@Nullable Table table, @Nullable Cell<?> cell, Direction direction, float gap) {
         if (table == null || cell == null || gap <= 0f)
             return;
@@ -73,12 +64,6 @@ public interface GapContainer {
         }
     }
 
-    /**
-     * Applies directional spacing to all cells of a Table along the given
-     * direction. The first visible element receives 0 gap padding; subsequent
-     * visible elements receive gap. Cross-axis padding and outer boundaries remain
-     * untouched.
-     */
     @SuppressWarnings("rawtypes")
     static void applySpacing(@Nullable Table table, Direction direction, float gap) {
         if (table == null)
@@ -124,10 +109,6 @@ public interface GapContainer {
         table.invalidate();
     }
 
-    /**
-     * Applies 2D directional spacing to all cells in a Grid layout. Columns after
-     * the first receive horizontal gap; rows after the first receive vertical gap.
-     */
     @SuppressWarnings("rawtypes")
     static void applyGridSpacing(@Nullable Table table, int columns, float gap) {
         if (table == null)

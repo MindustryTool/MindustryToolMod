@@ -7,11 +7,6 @@ import arc.scene.ui.layout.Table;
 import org.junit.jupiter.api.Test;
 import solim.runtime.AttachmentStack;
 
-/**
- * Verifies the strict teardown contract: leaked solim ambient state must fail
- * teardown with a clear assertion, and cleanup must still happen so following
- * tests are not contaminated.
- */
 class SolimEnvLeakTest {
 
     @Test

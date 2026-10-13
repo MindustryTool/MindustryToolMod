@@ -10,12 +10,6 @@ import mindustrytool.features.quickaccess.QuickAccessPopupHelper;
 import solim.core.Component;
 import solim.overlay.Popup;
 
-/**
- * QuickAccess popup for DisplayGroup, opened from QuickAccess. Renders the
- * configurable reactive grid of display overlay toggles from
- * {@link DisplayGroupPopupView} inside a black rounded container. Opening or
- * closing the popup never changes any feature enabled state.
- */
 public final class DisplayGroupPopup {
 
     private static @Nullable Popup<DisplayGroupFeature> menu;

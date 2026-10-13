@@ -11,12 +11,6 @@ import solim.layout.Column;
 import solim.layout.SolimStack;
 import solim.reactive.Readable;
 
-/**
- * Fixed-size user avatar: network photo on top of a deterministic
- * initial-letter fallback. Renders with continuous-curvature (Apple-style L4
- * superellipse) rounded corners on both the fallback badge and the network
- * image layer.
- */
 public class ChatAvatar extends Component {
 
     private static final Color[] PALETTE = {

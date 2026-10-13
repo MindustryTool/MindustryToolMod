@@ -22,19 +22,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 
-/**
- * Base test environment for pure Arc-dependent tests.
- *
- * Statics are initialized idempotently once per JVM and snapshotted per class
- * ({@code @BeforeAll}) and per test ({@code @BeforeEach}); every snapshot is
- * restored at teardown. This makes reused worker JVMs safe: neither a class's
- * nor a single test's mutations of {@code Core.*} can leak into other classes
- * or modules.
- *
- * {@code Core.scene} is reset to {@code null} per test (headless fallback
- * contract). Extend {@link SolimEnv} instead for tests that exercise the
- * solim runtime (ambient state, signals, components).
- */
 public class ArcTestEnv {
 
     private static Application classApp;
@@ -154,10 +141,6 @@ public class ArcTestEnv {
         prevSettings = null;
     }
 
-    /**
-     * Creates a fresh Scene with the minimal styles registered and installs it
-     * as {@code Core.scene}. Teardown restores the pre-setup value.
-     */
     public static Scene newScene() {
         Scene scene = new Scene();
         installMinimalStyles(scene);
@@ -165,10 +148,6 @@ public class ArcTestEnv {
         return scene;
     }
 
-    /**
-     * Registers the minimal styles required to construct basic Arc widgets in a
-     * scene. Tests needing additional styles register them locally on top of this.
-     */
     public static void installMinimalStyles(Scene scene) {
         Font font = new Font(new FontData() {
             @Override

@@ -5,11 +5,6 @@ import arc.func.Func;
 import arc.util.Nullable;
 import mindustry.game.Rules;
 
-/**
- * Single source of truth for one map rule: its identity, category, control
- * range, and typed accessors. Diff, dispatch, reset, rows, and search all
- * derive from these descriptors instead of repeating per-field code.
- */
 public class RuleDescriptor {
 
     public static final String CAT_ALL = "all";

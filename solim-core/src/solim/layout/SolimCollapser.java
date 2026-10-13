@@ -15,11 +15,8 @@ import solim.reactive.Readable;
 import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 
-/**
- * Animated collapsible container wrapping an Arc {@link Collapser} around a content {@link Table}.
- * When collapsed, its preferred and minimum heights become zero, preventing empty whitespace allocation.
- */
-public final class SolimCollapser extends Component implements CellConfig<SolimCollapser>, ElementConfig<SolimCollapser>, TableConfig<SolimCollapser>, GapContainer {
+public final class SolimCollapser extends Component implements CellConfig<SolimCollapser>,
+        ElementConfig<SolimCollapser>, TableConfig<SolimCollapser>, GapContainer {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -76,7 +73,6 @@ public final class SolimCollapser extends Component implements CellConfig<SolimC
         return content;
     }
 
-
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
@@ -104,7 +100,7 @@ public final class SolimCollapser extends Component implements CellConfig<SolimC
 
     public SolimCollapser collapsed(@Nullable Readable<Boolean> collapsed) {
         if (collapsed != null) {
-        own(Effect.of(() -> {
+            own(Effect.of(() -> {
                 Boolean col = collapsed.get();
                 if (col != null) {
                     boolean anim = initialized && animated;
@@ -122,7 +118,7 @@ public final class SolimCollapser extends Component implements CellConfig<SolimC
 
     public SolimCollapser expanded(@Nullable Readable<Boolean> expanded) {
         if (expanded != null) {
-        own(Effect.of(() -> {
+            own(Effect.of(() -> {
                 Boolean exp = expanded.get();
                 if (exp != null) {
                     boolean anim = initialized && animated;
@@ -170,8 +166,6 @@ public final class SolimCollapser extends Component implements CellConfig<SolimC
     public void respace() {
         GapContainer.applySpacing(content, Direction.VERTICAL, gap);
     }
-
-
 
     @Override
     public SolimCollapser align(int align) {

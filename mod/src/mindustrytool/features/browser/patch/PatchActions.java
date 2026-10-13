@@ -6,17 +6,11 @@ import java.util.concurrent.CompletableFuture;
 import mindustry.Vars;
 import mindustrytool.services.MindustryTool;
 
-/**
- * Utility actions for content patch operations: clipboard copy and local file export.
- */
 public final class PatchActions {
 
     private PatchActions() {
     }
 
-    /**
-     * Downloads raw patch text and copies it to the clipboard.
-     */
     public static CompletableFuture<Void> copyToClipboard(String itemId) {
         return MindustryTool.downloadContentPatch(itemId).thenAccept(data -> {
             Core.app.post(() -> {
@@ -30,27 +24,17 @@ public final class PatchActions {
         }).exceptionally(PatchActions::notifyDownloadError);
     }
 
-    /**
-     * Directly copies provided HJSON patch text to clipboard.
-     */
     public static void copyTextToClipboard(String data) {
         Core.app.setClipboardText(data != null ? data : "");
         Vars.ui.showInfoFade(Core.bundle.get("browser.patch.copied"));
     }
 
-    /**
-     * Downloads the patch and saves it as a .hjson file in the patches folder.
-     */
     public static CompletableFuture<Void> saveToFile(String itemId, String patchName) {
         return MindustryTool.downloadContentPatch(itemId).thenAccept(data -> {
             saveTextToFile(data, patchName);
         }).exceptionally(PatchActions::notifyDownloadError);
     }
 
-    /**
-     * Saves raw HJSON string directly to the local game patches directory.
-     * File write runs on the caller's worker thread; toasts are dispatched to the main thread.
-     */
     public static void saveTextToFile(String data, String patchName) {
         try {
             String safeName = (patchName != null && !patchName.trim().isEmpty())

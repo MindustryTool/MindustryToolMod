@@ -7,9 +7,6 @@ import arc.scene.Element;
 import arc.util.Nullable;
 import solim.overlay.Popup;
 
-/**
- * Shared positioning helper for feature popups anchored to the QuickAccess bar.
- */
 public final class QuickAccessPopupHelper {
 
     public static final float DEFAULT_GAP = unit(1f);
@@ -21,10 +18,6 @@ public final class QuickAccessPopupHelper {
         show(menu, data, quickAccessBar, DEFAULT_GAP);
     }
 
-    /**
-     * Half rule shared with popup pinning: a bar centered at or above stage
-     * midpoint counts as upper half (popup hangs below it).
-     */
     public static boolean isUpperHalf(float barY, float barH, float stageH) {
         float barCenterY = barY + barH / 2f;
         return stageH > 0f && barCenterY >= stageH / 2f;
@@ -44,7 +37,7 @@ public final class QuickAccessPopupHelper {
             barW = quickAccessBar.getWidth();
             barH = quickAccessBar.getHeight();
         }
-        
+
         float barCenterX = barX + barW / 2f;
         float barTop = barY + barH;
         boolean upperHalf = isUpperHalf(barY, barH, stageH);

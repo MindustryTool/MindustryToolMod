@@ -12,10 +12,6 @@ import solim.layout.Grid;
 import solim.layout.Row;
 import solim.layout.Wrap;
 
-/**
- * Package-private generic gap container for tables that don't have a dedicated
- * GapContainer implementation (Row, Column, Grid, etc.).
- */
 final class GenericGapContainer extends Component implements GapContainer {
     private final Table table;
     private float gap;
@@ -27,7 +23,8 @@ final class GenericGapContainer extends Component implements GapContainer {
     }
 
     static void setGap(Table table, float gap) {
-        if (table == null) return;
+        if (table == null)
+            return;
         GapContainer gc = GapContainer.find(table);
         if (gc != null) {
             if (gc instanceof Row) {
@@ -59,7 +56,6 @@ final class GenericGapContainer extends Component implements GapContainer {
         this.gap = gap;
         respace();
     }
-
 
     @Override
     public Direction direction() {
