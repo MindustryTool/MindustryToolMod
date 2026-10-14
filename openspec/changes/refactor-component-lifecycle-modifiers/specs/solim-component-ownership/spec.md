@@ -22,7 +22,7 @@ A reactive primitive SHALL be registered with the component that configures it, 
 
 #### Scenario: A component declares its reactive state in one place
 - **WHEN** a component needs a reactive binding
-- **THEN** it is created in `build()`, and the component is its owner for the component's whole lifetime
+- **THEN** it is created inside an ownership window, and the component is its owner for the component's whole lifetime
 
 ## REMOVED Requirements
 
@@ -31,7 +31,7 @@ A reactive primitive SHALL be registered with the component that configures it, 
 
 ### Requirement: Component is the ambient owner of its own construction
 **Reason**: A component is not the ambient owner while its own constructor runs, so making it one was rejected in favour of confining all owned state to `build()`. Construction-time self-ownership would have left two windows in which a component can own resources, which is the ambiguity this change removes.
-**Migration**: Move every constructor-created `Effect`, `Computed`, `TwoWayBinding`, and owned child component into `build()`. Constructors allocate plain values only.
+**Migration**: Move every constructor-created `Effect`, `Computed`, `TwoWayBinding`, and owned child component into an ownership window. Constructors allocate plain values only.
 
 ## ADDED Requirements
 
@@ -46,24 +46,28 @@ A reactive primitive SHALL be registered with the component that configures it, 
 - **WHEN** a modifier in `CellConfig`, `ElementConfig`, or `TableConfig` installs a reactive `Effect`
 - **THEN** the modifier contains no self-registration call, because the owning component is already the active ambient owner
 
-### Requirement: Reactive primitives are constructed only in build()
-An `Effect` or a `Computed` SHALL only be constructed while a `Component` is executing its `build()`. Construction at any other site SHALL throw `IllegalStateException` rather than silently binding the primitive to whichever scope happens to be ambient. Because `Signal.map()` and `Readable.map()` return a `Computed`, deriving a value is likewise legal only in `build()`.
+### Requirement: Reactive primitives are constructed only in an ownership window
+An `Effect` or a `Computed` SHALL only be constructed while a component is the active ambient owner, that is inside its `build()` or inside a `children()` block. Construction at any other site SHALL throw `IllegalStateException` rather than silently binding the primitive to whichever scope happens to be ambient. Because `Signal.map()` and `Readable.map()` return a `Computed`, deriving a value is likewise legal only inside an ownership window. An ownership window is used rather than `build()` alone because eagerly constructed components such as `Column`, `Row`, and `Card` never execute `build()`.
 
 #### Scenario: Creating an Effect in a constructor fails loudly
 - **WHEN** a component constructor calls `Effect.of(...)`
-- **THEN** construction throws `IllegalStateException` identifying that reactive primitives must be created in `build()`
+- **THEN** construction throws `IllegalStateException` identifying that reactive primitives must be created inside an ownership window
 
 #### Scenario: Creating a Computed in a modifier fails loudly
-- **WHEN** a component modifier derives a value with `.map(...)` outside `build()`
+- **WHEN** a component modifier derives a value with `.map(...)` outside an ownership window
 - **THEN** construction throws `IllegalStateException` rather than producing a `Computed` owned by an ambient scope
 
-#### Scenario: Creation inside build() is the sanctioned path
-- **WHEN** a component's `build()` creates an `Effect`, a `Computed`, or a `.map(...)` derivation
+#### Scenario: Creation inside a children block is legal
+- **WHEN** an eagerly constructed component's `children()` block creates an `Effect`, a `Computed`, or a `.map(...)` derivation
+- **THEN** the component is the active ambient owner and adopts the primitive, with no manual registration
+
+#### Scenario: Creation inside build() is legal
+- **WHEN** a lazily constructed component's `build()` creates an `Effect`, a `Computed`, or a `.map(...)` derivation
 - **THEN** the component is the active ambient owner and adopts the primitive, with no manual registration
 
 #### Scenario: The guard does not depend on the runtime module
 - **WHEN** the `Effect` and `Computed` creation guards are evaluated
-- **THEN** they read build-phase state exposed by `Component` itself, so neither `solim-core` reactive primitives nor `solim-api` depend on the internal `solim-runtime` module
+- **THEN** they read window state exposed by `Component` itself, so neither `solim-core` reactive primitives nor `solim-api` depend on the internal `solim-runtime` module
 
 ### Requirement: Strict single ownership for all Disposables
 A `Disposable` SHALL only ever be owned by at most one `DisposableOwner` at any given time. Multi-owner DAGs or concurrent adoptions of the same `Disposable` SHALL NOT be permitted.
@@ -72,3 +76,11 @@ A `Disposable` SHALL only ever be owned by at most one `DisposableOwner` at any 
 - **WHEN** a `Disposable` is already adopted by an active `DisposableOwner`
 - **AND** another `DisposableOwner` attempts to adopt the same `Disposable`
 - **THEN** the adoption SHALL either be rejected / disallow multiple concurrent owners or cleanly detach from the previous owner, ensuring the resource is disposed exactly once when its true owner is destroyed.
+
+#### Scenario: A reactive resource is not registered with two owners
+- **WHEN** a reconciler produces a binding for a reconciled item
+- **THEN** the binding is adopted by exactly one component, rather than being registered in both a reconciler-owned binding list and the item component
+
+#### Scenario: Non-component helpers do not allocate reactive primitives
+- **WHEN** a static helper outside the component model would return a `Computed`
+- **THEN** it is re-expressed as a plain value helper, so no reactive primitive is allocated at a call site that has no ownership window

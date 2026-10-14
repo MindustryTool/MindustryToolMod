@@ -16,11 +16,15 @@ Layouts and parents SHALL accept children that are `Element` or `Component`; `Co
 - **THEN** the element is attached exactly once; no duplicate child is added
 
 ### Requirement: Ambient Lifecycle Ownership in Component Build
-The Solim framework SHALL automatically track child components, disposables, and Solim controls instantiated or attached during a component's `build()` execution without requiring explicit ownership invocations. Ambient ownership SHALL be the only ownership path for application code and framework code alike. A component's constructor SHALL allocate plain values only, because the component is not the active ambient owner while its own constructor runs.
+The Solim framework SHALL automatically track child components, disposables, and Solim controls instantiated or attached while a component is the active ambient owner — inside its `build()` or inside a `children()` block — without requiring explicit ownership invocations. Ambient ownership SHALL be the only ownership path for application code and framework code alike. A component's constructor SHALL allocate plain values only, because the component is not the active ambient owner while its own constructor runs.
 
 #### Scenario: Child component created in build context
 - **WHEN** a component instantiates child components or Solim controls within its `build()` method
 - **THEN** the child components and controls are automatically registered with the parent component's disposable registry and disposed when the parent is disposed
+
+#### Scenario: Child component created in a children block
+- **WHEN** a component instantiates child components or Solim controls within its own `children()` block
+- **THEN** the children are registered against that component, not against the enclosing scope
 
 #### Scenario: Constructor allocates plain values only
 - **WHEN** a component's constructor body runs
@@ -39,7 +43,7 @@ The Solim framework SHALL automatically track child components, disposables, and
 
 #### Scenario: No ownership method resolves
 - **WHEN** any module attempts to call `own(...)`, `ownChild(...)`, or `registerDisposable(...)`
-- **THEN** compilation fails with a missing symbol, and the author binds the resource by creating it inside the component's `build()` scope
+- **THEN** compilation fails with a missing symbol, and the author binds the resource by creating it inside an ownership window
 
 #### Scenario: No deprecation warning stands in for removal
 - **WHEN** code calls a legacy ownership alias
@@ -49,11 +53,11 @@ The Solim framework SHALL automatically track child components, disposables, and
 
 ### Requirement: Internal-only ownership primitive
 **Reason**: Superseded by outright removal. Hiding `own()` behind package access was an intermediate step; the method is now deleted entirely, so there is no visibility level left to confine.
-**Migration**: Bind resources by creating them inside a component's `build()`, where the component is already the active ambient owner.
+**Migration**: Bind resources by creating them inside an ownership window, where the component is already the active ambient owner.
 
 ### Requirement: Single own() method on BaseComponent
 **Reason**: This requirement mandates the existence of `own(T extends Disposable)` and its return-the-disposable contract, which directly contradicts the removal of `own()`.
-**Migration**: Use `Effect.of(...)` or `OwnershipContext.register(...)` inside the component's `build()`; both return the created resource, so field assignment still works without an ownership wrapper.
+**Migration**: Use `Effect.of(...)` or `OwnershipContext.register(...)` inside an ownership window; both return the created resource, so field assignment still works without an ownership wrapper.
 
 ## ADDED Requirements
 
@@ -79,17 +83,21 @@ Component `element()` SHALL be invoked lazily when the component is attached to 
 - **WHEN** `ElementResolver` resolves a `Component` child to an `Element`
 - **THEN** it resolves the element without moving the component to a different owner.
 
-### Requirement: Build ownership frame is unwound deterministically
-A component SHALL install itself as the active ambient owner for exactly the duration of its `build()` and SHALL unwind that frame deterministically when `build()` returns or throws, so the enclosing scope is restored and the `OwnershipContext` LIFO invariant holds.
+#### Scenario: Reconciled items do not reparent
+- **WHEN** a reconciler mounts an item component
+- **THEN** the item is attached through the attachment pipeline and is never moved to a different owner to make it attach.
+
+### Requirement: Ownership window is unwound deterministically
+A component SHALL install itself as the active ambient owner for exactly the duration of each ownership window — its `build()` and each `children()` block — and SHALL unwind that frame deterministically when the window ends or throws, so the enclosing scope is restored and the `OwnershipContext` LIFO invariant holds.
 
 #### Scenario: Scope teardown stays balanced
-- **WHEN** a `build()` returns
+- **WHEN** a `build()` or `children()` block returns
 - **THEN** the enclosing owner is the active ambient owner again and the stack is not left holding an orphan frame
 
-#### Scenario: A throwing build still unwinds
-- **WHEN** a `build()` throws
-- **THEN** the ambient frame and the build-phase marker are both cleared, and the exception propagates to the caller
+#### Scenario: A throwing window still unwinds
+- **WHEN** a `build()` or `children()` block throws
+- **THEN** the ambient frame and the window marker are both cleared, and the exception propagates to the caller
 
-#### Scenario: The component is the owner only during build
-- **WHEN** a resource is created before or after the `build()` window for that component
+#### Scenario: The component is the owner only inside a window
+- **WHEN** a resource is created before or after every window for that component
 - **THEN** the component does not claim ownership of it, so the resource belongs to the scope that was actually ambient at creation time
