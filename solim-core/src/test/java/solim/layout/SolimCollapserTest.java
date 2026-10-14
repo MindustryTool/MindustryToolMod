@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
+import arc.math.Interp;
 import arc.scene.Element;
 import solim.reactive.Signal;
 import solim.runtime.AttachmentStack;
@@ -92,5 +93,29 @@ class SolimCollapserTest extends SolimEnv {
         SignalDispatcher.flush();
 
         assertTrue(collapser.isCollapsed());
+    }
+
+    @Test
+    void horizontalDirectionCollapsesWidthAndAnimatesWithInterp() {
+        Signal<Boolean> expanded = Signal.of(false);
+        SolimCollapser collapser = new SolimCollapser()
+                .direction(Direction.HORIZONTAL)
+                .duration(0.3f, Interp.pow3Out)
+                .expanded(expanded)
+                .padding(10f);
+
+        assertEquals(Direction.HORIZONTAL, collapser.direction());
+        assertEquals(0f, collapser.collapser().getPrefWidth(), 0.001f);
+
+        expanded.set(true);
+        SignalDispatcher.flush();
+        collapser.collapser().act(0.1f);
+        float midWidth = collapser.collapser().getPrefWidth();
+        assertTrue(midWidth > 0f && midWidth < 20f);
+
+        collapser.collapser().act(0.3f);
+        assertEquals(20f, collapser.collapser().getPrefWidth(), 0.001f);
+
+        collapser.dispose();
     }
 }
