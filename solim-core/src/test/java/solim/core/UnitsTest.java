@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import arc.Core;
 import arc.Events;
 import arc.mock.MockGraphics;
-import mindustry.game.EventType.ResizeEvent;
 import mindustry.game.EventType.Trigger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;

@@ -2,6 +2,8 @@ package solim.core;
 
 import arc.util.Nullable;
 
+import java.util.Collections;
+
 /**
  * Detects a resource that is already held by a live owner.
  *
@@ -62,7 +64,7 @@ public final class OwnershipGuard {
     private static Iterable<Component> childrenOf(DisposableOwner owner) {
         return owner instanceof Component ? ((Component) owner).children()
                 : owner instanceof SessionRoot ? ((SessionRoot) owner).children()
-                : java.util.Collections.<Component>emptyList();
+                : Collections.<Component>emptyList();
     }
 
     private static Iterable<Disposable> disposablesOf(DisposableOwner owner) {
@@ -72,7 +74,7 @@ public final class OwnershipGuard {
         if (owner instanceof SessionRoot) {
             return ((SessionRoot) owner).disposables();
         }
-        return java.util.Collections.<Disposable>emptyList();
+        return Collections.<Disposable>emptyList();
     }
 
     public static void rejectDuplicate(@Nullable Disposable resource, DisposableOwner newOwner) {

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import arc.func.Prov;
 import arc.scene.ui.Label;
 import solim.core.Component;
 import solim.core.OwnershipContext;
@@ -28,7 +29,7 @@ class FeedbackDisposalTest extends OwnershipEnv {
 	private static final class Holder extends Component {
 	}
 
-	private static <T> T insideWindow(arc.func.Prov<T> factory) {
+	private static <T> T insideWindow(Prov<T> factory) {
 		Holder holder = new Holder();
 		OwnershipContext.push(holder);
 		try {

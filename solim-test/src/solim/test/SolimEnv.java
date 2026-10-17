@@ -4,8 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import arc.func.Prov;
 import arc.scene.Element;
 import arc.util.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import solim.core.Component;
@@ -20,7 +24,7 @@ import solim.runtime.SignalDispatcher;
 public class SolimEnv extends ArcTestEnv {
 
     static final class Holder implements solim.core.DisposableOwner {
-        final java.util.List<solim.core.Disposable> owned = new java.util.ArrayList<>();
+        final List<solim.core.Disposable> owned = new ArrayList<>();
 
         @Override
         public void adopt(solim.core.Disposable resource) {
@@ -54,7 +58,7 @@ public class SolimEnv extends ArcTestEnv {
         });
     }
 
-    public static <T> T inOwnershipWindow(arc.func.Prov<T> factory) {
+    public static <T> T inOwnershipWindow(Prov<T> factory) {
         Holder holder = new Holder();
         OwnershipContext.push(holder);
         try {

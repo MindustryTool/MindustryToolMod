@@ -19,6 +19,7 @@ import solim.feedback.ProgressBar;
 import solim.feedback.Spinner;
 import solim.reactive.Computed;
 import solim.reactive.Signal;
+import arc.func.Prov;
 import arc.scene.ui.Image;
 import arc.scene.ui.Label;
 import java.util.ArrayList;
@@ -30,7 +31,7 @@ class OverlayFeedbackTest extends SolimEnv {
     private static final class Holder extends Component {
     }
 
-    private static <T> T insideWindow(arc.func.Prov<T> factory) {
+    private static <T> T insideWindow(Prov<T> factory) {
         Holder holder = new Holder();
         solim.core.OwnershipContext.push(holder);
         try {

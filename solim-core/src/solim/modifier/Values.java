@@ -10,6 +10,7 @@ import arc.scene.ui.Label;
 import arc.scene.ui.Label.LabelStyle;
 import arc.scene.ui.ScrollPane.ScrollPaneStyle;
 import arc.scene.ui.Tooltip;
+import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.scene.style.Drawable;
 import arc.util.Align;
@@ -339,7 +340,7 @@ public final class Values {
         table.align(a);
         constraints.applyAlignToParentCell(element);
         table.defaults().align(a);
-        for (arc.scene.ui.layout.Cell<?> c : table.getCells()) {
+        for (Cell<?> c : table.getCells()) {
             if (c != null) {
                 c.align(a);
             }
