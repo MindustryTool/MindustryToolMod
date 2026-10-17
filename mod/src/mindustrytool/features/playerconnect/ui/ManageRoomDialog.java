@@ -58,7 +58,7 @@ public class ManageRoomDialog extends SolimDialog {
             Computed<String> pingText = feature.pingSignal().map(p -> (p != null ? p : 0) + "ms");
 
             return column()
-                    .props(growX(), Values.maxWidth(Units.dvw.map(w -> Math.min(w * 90f, 900f))), maxHeight(Units.dvh.map(h -> Math.min(h * 85f, 800f))), margin(unit(5)), gap(unit(4)), center())
+                    .props(growX(), Values.maxWidth(Units.dvw.map(w -> Math.min(w * 0.9f, 900f))), maxHeight(Units.dvh.map(h -> Math.min(h * 0.85f, 800f))), margin(unit(5)), gap(unit(4)), center())
                     .children(() -> {
                         text(Core.bundle.get("feature.player-connect.room-active",
                                 "Your room is live on the relay network!"))

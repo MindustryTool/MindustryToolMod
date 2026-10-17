@@ -19,7 +19,7 @@ public class ChatImagePreviewDialog extends SolimDialog {
                     .placeholder(Icon.image)
                     .fallback(Icon.cancel)
                     .scaling(Scaling.fit)
-                    .size(dvw(95), dvh(80));
+                    .size(dvw(95f), dvh(80f));
         });
     }
 }

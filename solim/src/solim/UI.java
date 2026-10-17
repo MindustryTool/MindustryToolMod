@@ -455,12 +455,20 @@ public final class UI {
         return Units.unit(value);
     }
 
-    public static float dvw(float percentage) {
-        return Units.width() * percentage / 100f;
+    public static Computed<Float> dvw(float percentage) {
+        return Units.dvw(percentage);
     }
 
-    public static float dvh(float percentage) {
-        return Units.height() * percentage / 100f;
+    public static Computed<Float> dvh(float percentage) {
+        return Units.dvh(percentage);
+    }
+
+    public static Computed<Float> dvw(Readable<Float> percentage) {
+        return Units.dvw(percentage);
+    }
+
+    public static Computed<Float> dvh(Readable<Float> percentage) {
+        return Units.dvh(percentage);
     }
 
     public static <T> Disposable listen(Class<T> type, Cons<T> listener) {

@@ -335,7 +335,29 @@ public final class NetworkImage extends Component implements Configurable<Networ
         return this;
     }
 
+    public NetworkImage size(Readable<Float> width, Readable<Float> height) {
+        constraints.prefWidth = width;
+        constraints.prefHeight = height;
+        Effect.of(() -> {
+            Float w = width != null ? width.get() : null;
+            Float h = height != null ? height.get() : null;
+            if (w != null && h != null) {
+                element.setWidth(Math.max(0f, w));
+                element.setHeight(Math.max(0f, h));
+                element.invalidateHierarchy();
+                if (cornerRadius > 0 && currentUrl != null) {
+                    loadUrl(currentUrl);
+                }
+            }
+        });
+        return this;
+    }
+
     public NetworkImage size(float size) {
+        return size(size, size);
+    }
+
+    public NetworkImage size(Readable<Float> size) {
         return size(size, size);
     }
 

@@ -95,12 +95,12 @@ public class SchematicBrowserDialog extends SolimDialog {
             Signal<Float> viewportWidth = Units.dvw;
             Signal<Float> viewportHeight = Units.dvh;
             Computed<Integer> columnCount = new Computed<>(() -> {
-                Float width = viewportWidth.get() * 100;
+                Float width = viewportWidth.get();
                 return BrowserLayout.calculateColumns(width != null ? width : 800f);
             });
 
             Computed<Float> cardsWidth = new Computed<>(() -> {
-                Float width = viewportWidth.get() * 100;
+                Float width = viewportWidth.get();
                 return BrowserLayout.calculateCardsWidth(width != null ? width : 800f);
             });
 
@@ -110,8 +110,8 @@ public class SchematicBrowserDialog extends SolimDialog {
             Computed<Float> cardSize = cardsWidth.map(w -> Math.min(BrowserLayout.CARD_SIZE, w));
 
             Computed<Integer> calculatedPageSize = new Computed<>(() -> {
-                Float width = viewportWidth.get() * 100;
-                Float height = viewportHeight.get() * 100;
+                Float width = viewportWidth.get();
+                Float height = viewportHeight.get();
                 return BrowserLayout.calculatePageSize(
                         width != null ? width : 800f,
                         height != null ? height : 600f);

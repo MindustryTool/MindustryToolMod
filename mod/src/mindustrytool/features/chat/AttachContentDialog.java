@@ -35,7 +35,7 @@ public class AttachContentDialog extends SolimDialog {
         this.callback = callback;
 
         addCloseButton();
-        maxWidth(Vars.mobile ? dvh(80) : dvh(40));
+        maxWidth(dvh(Vars.mobile ? 80f : 40f));
 
         children(() -> {
             column().props(grow(), padding(unit(3)), gap(unit(2))).children(() -> {

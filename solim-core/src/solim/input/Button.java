@@ -225,6 +225,7 @@ public final class Button
         return this;
     }
 
+    // TODO: use prop
     public Button enabled(@Nullable Readable<Boolean> signal) {
         if (signal != null) {
             withinOwnership(() -> Effect.of(() -> button.setDisabled(!Boolean.TRUE.equals(signal.get()))));

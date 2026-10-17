@@ -73,7 +73,7 @@ public class HostRoomDialog extends SolimDialog {
         @Override
         protected Element build() {
             return column()
-                    .props(growX(), Values.maxWidth(Units.dvw.map(w -> Math.min(w * 90f, 1100f))), maxHeight(Units.dvh.map(h -> Math.min(h * 85f, 1200f))), gap(unit(3)), center())
+                    .props(growX(), Values.maxWidth(Units.dvw.map(w -> Math.min(w * 0.9f, 1100f))), maxHeight(Units.dvh.map(h -> Math.min(h * 0.85f, 1200f))), gap(unit(3)), center())
                     .children(() -> {
                         dynamic(step, currentStep -> {
                             if (currentStep == Step.CONFIG) {
@@ -212,7 +212,7 @@ public class HostRoomDialog extends SolimDialog {
             Signal<String> pingSignal = getOrCreatePingSignal(provider.getAddress());
             Computed<Boolean> isSelected = selectedProvider
                     .map(sel -> sel != null && sel.getAddress().equals(provider.getAddress()));
-            Computed<Boolean> showAddress = Units.dvw.map(w -> w * 100f >= 700f);
+            Computed<Boolean> showAddress = Units.dvw.map(w -> w >= 700f);
 
             return card()
                     .props(background(WebStyles.Colors.SECONDARY), Values.border(1.5f, isSelected.map(s -> s ? Pal.accent : WebStyles.Colors.BORDER_INPUT)), growX(), minHeight(unit(12)), padding(unit(2), unit(3), unit(2), unit(3)), onClick(() -> selectedProvider.set(provider)))

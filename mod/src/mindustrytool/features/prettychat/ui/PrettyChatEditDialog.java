@@ -42,7 +42,7 @@ public class PrettyChatEditDialog extends SolimDialog {
         }
 
         children(() -> {
-            column().props(grow(), Values.maxWidth(Units.dvw.map(w -> Math.min(w * 90f, 750f))), padding(unit(3)), gap(unit(2)))
+            column().props(grow(), Values.maxWidth(Units.dvw.map(w -> Math.min(w * 0.9f, 750f))), padding(unit(3)), gap(unit(2)))
                     .children(() -> {
                         text(hint)
                                 .color(Color.lightGray)

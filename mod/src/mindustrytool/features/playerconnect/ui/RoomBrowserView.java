@@ -68,7 +68,7 @@ public class RoomBrowserView extends Component {
     private final PlayerConnectFeature feature;
     private final Signal<String> searchQuery = Signal.of("");
     private final Signal<Boolean> collapsed = Signal.of(false);
-    private final Computed<Integer> columnCount = Units.dvw.map(w -> Mathf.clamp((int) (w * 90f / 550f), 1, 4));
+    private final Computed<Integer> columnCount = Units.dvw.map(w -> Mathf.clamp((int) (w * 0.9f / 550f), 1, 4));
 
     public RoomBrowserView(PlayerConnectFeature feature) {
         this.feature = feature;

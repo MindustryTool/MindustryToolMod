@@ -88,7 +88,7 @@ public class JoinRoomDialog extends SolimDialog {
                                     .orElse(true));
 
             return column()
-                    .props(growX(), Values.maxWidth(Units.dvw.map(w -> Math.min(w * 90f, 1000f))), maxHeight(Units.dvh.map(h -> Math.min(h * 85f, 800f))), margin(unit(5)), gap(unit(4)), center())
+                    .props(growX(), Values.maxWidth(Units.dvw.map(w -> Math.min(w * 0.9f, 1000f))), maxHeight(Units.dvh.map(h -> Math.min(h * 0.85f, 800f))), margin(unit(5)), gap(unit(4)), center())
                     .children(() -> {
 
                         column().props(growX(), gap(unit(1.5f)), left()).children(() -> {

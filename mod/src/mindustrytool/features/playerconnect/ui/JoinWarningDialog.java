@@ -65,7 +65,7 @@ public class JoinWarningDialog extends SolimDialog {
         @Override
         protected Element build() {
             return column()
-                    .props(growX(), Values.maxWidth(Units.dvw.map(w -> Math.min(w * 90f, 900f))), maxHeight(Units.dvh.map(h -> Math.min(h * 85f, 900f))), margin(unit(5)), gap(unit(3.5f)), center())
+                    .props(growX(), Values.maxWidth(Units.dvw.map(w -> Math.min(w * 0.9f, 900f))), maxHeight(Units.dvh.map(h -> Math.min(h * 0.85f, 900f))), margin(unit(5)), gap(unit(3.5f)), center())
                     .children(() -> {
                         if (!missingMods.isEmpty()) {
                             text(Core.bundle.get("feature.player-connect.missing-mods", "Missing mods (may cause crashes):"))

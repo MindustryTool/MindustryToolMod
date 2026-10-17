@@ -4,6 +4,8 @@ import arc.Core;
 import arc.Events;
 import arc.scene.ui.layout.Scl;
 import mindustry.game.EventType.Trigger;
+import solim.reactive.Computed;
+import solim.reactive.Readable;
 import solim.reactive.Signal;
 
 public final class Units {
@@ -34,11 +36,11 @@ public final class Units {
     }
 
     public static float calcDvw() {
-        return screenWidth() / 100f;
+        return screenWidth();
     }
 
     public static float calcDvh() {
-        return screenHeight() / 100f;
+        return screenHeight();
     }
 
     public static float screenWidth() {
@@ -55,12 +57,20 @@ public final class Units {
         return scl > 0f ? Core.graphics.getHeight() / scl : Core.graphics.getHeight();
     }
 
-    public static float dvw(float percentage) {
-        return dvw.get() * percentage;
+    public static Computed<Float> dvw(float percentage) {
+        return new Computed<>(() -> dvw.get() * (percentage / 100f));
     }
 
-    public static float dvh(float percentage) {
-        return dvh.get() * percentage;
+    public static Computed<Float> dvh(float percentage) {
+        return new Computed<>(() -> dvh.get() * (percentage / 100f));
+    }
+
+    public static Computed<Float> dvw(Readable<Float> percentage) {
+        return new Computed<>(() -> dvw.get() * (percentage.get() / 100f));
+    }
+
+    public static Computed<Float> dvh(Readable<Float> percentage) {
+        return new Computed<>(() -> dvh.get() * (percentage.get() / 100f));
     }
 
     public static float width() {

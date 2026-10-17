@@ -439,11 +439,11 @@ The `ElementConfig` and `TableConfig` interfaces SHALL NOT provide `margin(Eleme
 Reactive viewport unit signals (`dvw`, `dvh`) and percentage calculation utilities that automatically synchronize with window resize events.
 
 ### Requirement: Reactive Viewport Signals
-The `Units` class SHALL expose reactive signals `dvw` and `dvh` representing 1% of the dynamic viewport width and 1% of the dynamic viewport height in Arc scene coordinates (`(Core.graphics.getWidth() / Scl.scl()) / 100f` and `(Core.graphics.getHeight() / Scl.scl()) / 100f`).
+The `Units` class SHALL expose reactive signals `dvw` and `dvh` representing 100% of the dynamic viewport width and 100% of the dynamic viewport height in Arc scene coordinates (`Core.graphics.getWidth() / Scl.scl()` and `Core.graphics.getHeight() / Scl.scl()`).
 
 #### Scenario: Reading initial dvw and dvh
 - **WHEN** `Units.dvw` and `Units.dvh` signals are queried
-- **THEN** they return 1% of current screen width and height in scene coordinates
+- **THEN** they return the current screen width and height in scene coordinates
 
 ### Requirement: Auto Update on ResizeEvent
 The `Units` class SHALL automatically listen to Mindustry's `EventType.ResizeEvent` and update both `dvw` and `dvh` signals when the event fires.

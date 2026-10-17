@@ -138,7 +138,7 @@ public class ChatOverlayHudView extends Component {
         });
 
         Readable<Boolean> isConnected = store.session().connected();
-        Readable<Boolean> isDesktop = Units.dvw.map(w -> w * 100f >= 1200f);
+        Readable<Boolean> isDesktop = Units.dvw.map(w -> w >= 1200f);
         Readable<String> channelTitle = store.channels().active().map(c -> {
             if (c != null && c.getName() != null && !c.getName().trim().isEmpty()) {
                 return "# " + c.getName().trim();
@@ -218,7 +218,7 @@ public class ChatOverlayHudView extends Component {
 
                         divider();
 
-                        dynamic(Units.dvw.map(w -> w * 100f), width -> {
+                        dynamic(Units.dvw, width -> {
                             if (width < 1200) {
                                 buildMobileBody();
                             } else {

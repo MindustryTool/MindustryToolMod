@@ -39,7 +39,7 @@ public final class FeatureSettingsView extends Component {
     @Override
     protected Element build() {
 
-        Computed<Float> contentWidth = Units.dvw.map(w -> w * 90f - unit(10));
+        Computed<Float> contentWidth = Units.dvw.map(w -> w * 0.9f - unit(10));
         Computed<Integer> columnCount = contentWidth.map(w -> Math.max(1, (int) (w / 400f)));
 
         Computed<Seq<Feature>> filteredFeatures = Signal.computed(() -> {

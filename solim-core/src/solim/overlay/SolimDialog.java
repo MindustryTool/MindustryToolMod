@@ -251,6 +251,18 @@ public class SolimDialog extends Component implements Configurable<SolimDialog> 
         return this;
     }
 
+    public SolimDialog maxWidth(Readable<Float> maxWidth) {
+        if (maxWidth != null) {
+            Effect.of(() -> {
+                Float w = maxWidth.get();
+                if (w != null) {
+                    wrapped.cont.defaults().maxWidth(w);
+                }
+            });
+        }
+        return this;
+    }
+
     public SolimDialog show(Scene scene) {
         ensureContentBuilt();
         isShown = true;
