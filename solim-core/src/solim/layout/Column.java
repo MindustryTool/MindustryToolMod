@@ -8,14 +8,18 @@ import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.SolimToken;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
 import solim.modifier.Props;
+import solim.modifier.TableCapability;
 import solim.runtime.AttachmentStack;
 import solim.modifier.PendingCellConfig;
 import solim.core.OwnershipContext;
 
 public final class Column extends Component
-        implements GapContainer, Configurable<Column> {
+        implements GapContainer, Configurable<Column>, TableCapability, CellCapability, ContainerCapability<Column>, AlignmentCapability {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);

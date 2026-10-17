@@ -5,6 +5,7 @@ import arc.graphics.Color;
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
+import arc.util.Align;
 import arc.util.Nullable;
 import java.util.Objects;
 import arc.func.Func2;
@@ -16,14 +17,18 @@ import solim.core.SolimToken;
 import solim.display.Text;
 import solim.input.Button;
 import solim.layout.CollapseHelper;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.TableCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.runtime.AttachmentStack;
 import solim.runtime.OwnershipScope;
 
 public final class QueryView<T> extends Component
-        implements Configurable<QueryView<T>> {
+        implements Configurable<QueryView<T>>, TableCapability, CellCapability, ContainerCapability<QueryView<T>>, AlignmentCapability {
 
     private enum ViewState {
         NONE,
@@ -160,7 +165,7 @@ public final class QueryView<T> extends Component
         return container;
     }
 
-    @Override
+    
     public QueryView<T> children(@Nullable Runnable block) {
         applyPendingProps();
         OwnershipContext.push(this);

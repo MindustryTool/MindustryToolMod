@@ -11,13 +11,20 @@ import arc.func.Cons;
 import solim.core.Component;
 import solim.core.DisposableAction;
 import solim.core.OwnershipContext;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
+import solim.modifier.CheckableCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
+import solim.modifier.WrappableCapability;
+import solim.reactive.Effect;
+import solim.reactive.Readable;
 import solim.reactive.Signal;
 
 public final class Checkbox extends Component
-        implements Configurable<Checkbox> {
+        implements Configurable<Checkbox>, ElementCapability, CellCapability, AlignmentCapability, CheckableCapability, WrappableCapability {
 
     private final CheckBox checkBox;
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -26,19 +33,6 @@ public final class Checkbox extends Component
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
-    }
-
-    @Override
-    public Checkbox children(@Nullable Runnable block) {
-        OwnershipContext.push(this);
-        try {
-            if (block != null) {
-                block.run();
-            }
-        } finally {
-            OwnershipContext.pop();
-        }
-        return this;
     }
 
     @Override
@@ -140,6 +134,22 @@ public final class Checkbox extends Component
             checkBox.getLabelCell().growX().minWidth(0f);
         }
         return this;
+    }
+
+    public Checkbox checked(@Nullable Readable<Boolean> source) {
+        if (source != null) {
+            OwnershipContext.push(this);
+            try {
+                Effect.of(() -> checkBox.setChecked(Boolean.TRUE.equals(source.get())));
+            } finally {
+                OwnershipContext.pop();
+            }
+        }
+        return this;
+    }
+
+    public boolean isChecked() {
+        return checkBox.isChecked();
     }
 
     @Override

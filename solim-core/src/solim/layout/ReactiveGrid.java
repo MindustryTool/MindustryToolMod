@@ -17,14 +17,19 @@ import solim.runtime.StructuralReconciler;
 import solim.reactive.Computed;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
-import solim.reactive.Signal;
 import solim.core.Units;
+import solim.reactive.Signal;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.Prop;
 import solim.modifier.Props;
+import solim.modifier.TableCapability;
 
 public final class ReactiveGrid<T> extends Component
-        implements GapContainer, Configurable<ReactiveGrid<T>> {
+        implements GapContainer, Configurable<ReactiveGrid<T>>, TableCapability, CellCapability, ContainerCapability<ReactiveGrid<T>>, AlignmentCapability {
     private final Signal<Float> tableWidth = Signal.of(0f);
     private final Signal<Float> gapSignal = Signal.of(0f);
     private @Nullable Computed<Float> itemWidth;
@@ -175,7 +180,7 @@ public final class ReactiveGrid<T> extends Component
         return table;
     }
 
-    @Override
+    
     public ReactiveGrid<T> children(@Nullable Runnable block) {
         applyPendingProps();
         OwnershipContext.push(this);

@@ -8,14 +8,17 @@ import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.DisposableAction;
 import solim.core.OwnershipContext;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.reactive.Signal;
 import java.util.Objects;
 
 public final class SolimSlider extends Component
-        implements Configurable<SolimSlider> {
+        implements Configurable<SolimSlider>, ElementCapability, CellCapability, AlignmentCapability {
     private final Slider slider;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private @Nullable Props<SolimSlider> pending;
@@ -28,20 +31,6 @@ public final class SolimSlider extends Component
     @Override
     public @Nullable Table table() {
         return null;
-    }
-
-    @Override
-    public SolimSlider children(@Nullable Runnable block) {
-        applyPendingProps();
-        OwnershipContext.push(this);
-        try {
-            if (block != null) {
-                block.run();
-            }
-        } finally {
-            OwnershipContext.pop();
-        }
-        return this;
     }
 
     @Override

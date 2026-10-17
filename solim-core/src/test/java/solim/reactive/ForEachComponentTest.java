@@ -31,23 +31,30 @@ import solim.core.Component;
 import solim.core.SolimToken;
 import arc.util.Nullable;
 import solim.core.OwnershipContext;
+import solim.modifier.CellCapability;
+import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.PendingCellConfig;
+import solim.modifier.Props;
+import solim.modifier.TableCapability;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimCoreEnv;
 
 class ForEachComponentTest extends SolimCoreEnv {
 
-    static class TestComponent extends Component implements solim.modifier.Configurable<TestComponent> {
+    static class TestComponent extends Component
+            implements Configurable<TestComponent>, TableCapability, CellCapability, ContainerCapability<TestComponent> {
         final String id;
         boolean wasDisposed = false;
-        private final solim.modifier.PendingCellConfig constraints = new solim.modifier.PendingCellConfig();
-        private @Nullable solim.modifier.Props<TestComponent> pending;
+        private final PendingCellConfig constraints = new PendingCellConfig();
+        private @Nullable Props<TestComponent> pending;
 
         TestComponent(String id) {
             this.id = id;
         }
 
         @Override
-        public solim.modifier.PendingCellConfig cellConfig() {
+        public PendingCellConfig cellConfig() {
             return constraints;
         }
 
@@ -56,7 +63,7 @@ class ForEachComponentTest extends SolimCoreEnv {
             return null;
         }
 
-        @Override
+        
         public TestComponent children(@Nullable Runnable block) {
             applyPendingProps();
             OwnershipContext.push(this);

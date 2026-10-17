@@ -14,14 +14,20 @@ import solim.core.Component;
 import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.core.SpacingAware;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ElementCapability;
+import solim.modifier.LabelCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
+import solim.modifier.TextCapability;
+import solim.modifier.WrappableCapability;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 
 public final class Text extends Component
-        implements SpacingAware, Configurable<Text> {
+        implements SpacingAware, Configurable<Text>, ElementCapability, CellCapability, AlignmentCapability, TextCapability, LabelCapability, WrappableCapability {
 
     private final Label label;
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -379,18 +385,6 @@ public final class Text extends Component
         return label;
     }
 
-    @Override
-    public Text children(@Nullable Runnable block) {
-        OwnershipContext.push(this);
-        try {
-            if (block != null) {
-                block.run();
-            }
-        } finally {
-            OwnershipContext.pop();
-        }
-        return this;
-    }
 
     @Override
     public Table table() {
@@ -419,7 +413,14 @@ public final class Text extends Component
     }
 
     @Override
+    public void alignCoordinated(@Nullable Integer explicit, int named) {
+        AlignmentCapability.coordinateCell(constraints, label, explicit, named);
+        int a = explicit != null ? explicit : constraints.align != null ? constraints.align : named;
+        label.setAlignment(a);
+    }
+
+    @Override
     public Text self() {
         return this;
     }
-}
+}

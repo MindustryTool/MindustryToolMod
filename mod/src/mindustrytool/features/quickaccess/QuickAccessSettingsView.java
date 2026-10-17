@@ -84,7 +84,9 @@ public class QuickAccessSettingsView extends Component {
                 Core.bundle.get("feature.quick-access.settings.visible-features"), () -> {
                     Readable<List<Feature>> orderedRows = feature.orderedFeaturesSignal();
 
-                    reactiveGrid(orderedRows).key(f -> f.getMetadata().getId()).props(growX(), gap(unit(2)))
+                    reactiveGrid(orderedRows)
+                            .key(f -> f.getMetadata().getId())
+                            .props(growX(), gap(unit(2)))
                             .items(f -> new FeatureOrderRow(feature, f));
                 });
     }

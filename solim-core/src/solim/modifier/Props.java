@@ -1,35 +1,37 @@
 package solim.modifier;
 
+import arc.func.Cons;
 import arc.scene.Element;
+import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import solim.core.DisposableOwner;
+import solim.core.HostCapability;
 import solim.reactive.Effect;
 
-/**
- * Recorded property list bound to a host. Building one is pure: no Arc type is
- * resolved and no {@link Effect} is created. Properties are drained inside an
- * ownership window so reactive ones auto-register with the host.
- */
 public final class Props<T extends Configurable<T> & DisposableOwner> {
 
     private final T host;
-    private final List<Prop> props;
+    private final List<Prop<? super T, ?>> props;
 
-    public Props(T host, Prop[] props) {
+    public Props(T host, Prop<? super T, ?>[] props) {
         this.host = host;
         this.props = new ArrayList<>(Arrays.asList(props));
     }
 
-    /**
-     * Appends further properties to a still-pending list, so consecutive {@code props(...)}
-     * calls on a not-yet-realized host accumulate in call order instead of the later call
-     * discarding the earlier one.
-     */
-    public void append(Prop[] more) {
+    public Props(T host, List<Prop<? super T, ?>> props) {
+        this.host = host;
+        this.props = new ArrayList<>(props);
+    }
+
+    public void append(Prop<? super T, ?>[] more) {
         props.addAll(Arrays.asList(more));
+    }
+
+    public void append(List<Prop<? super T, ?>> more) {
+        props.addAll(more);
     }
 
     public T host() {
@@ -40,11 +42,6 @@ public final class Props<T extends Configurable<T> & DisposableOwner> {
         return props.size();
     }
 
-    public T children(@Nullable Runnable block) {
-        applyAll();
-        return host.children(block);
-    }
-
     public T apply() {
         applyAll();
         return host;
@@ -52,7 +49,7 @@ public final class Props<T extends Configurable<T> & DisposableOwner> {
 
     public void applyAll() {
         for (int i = 0; i < props.size(); i++) {
-            Prop prop = props.get(i);
+            Prop<? super T, ?> prop = props.get(i);
             if (prop.isReactive()) {
                 Effect.of(() -> applyOne(prop));
             } else {
@@ -62,62 +59,34 @@ public final class Props<T extends Configurable<T> & DisposableOwner> {
         props.clear();
     }
 
-    /**
-     * Records the cell-kind properties into the host's pending cell configuration immediately,
-     * without a window and without installing any binding. Cell records are pure data, so a
-     * {@code props(...)} call on a not-yet-built host is observable through {@code cellConfig()}
-     * right away, exactly like the old chained modifiers. Element and table properties, and
-     * the live bindings of reactive cell properties, still drain inside an ownership window.
-     */
     public void applyCellRecords() {
-        PendingCellConfig config = host.cellConfig();
-        if (config == null) {
-            return;
-        }
+        Prop.HostView view = hostView();
         for (int i = 0; i < props.size(); i++) {
-            Prop prop = props.get(i);
+            Prop<?, ?> prop = props.get(i);
+            if (!prop.requiredCapability().isInstance(host)) {
+                throw new IllegalArgumentException(
+                        "Property '" + prop.label() + "' requires " + prop.requiredCapability().getSimpleName()
+                                + " but host " + host.getClass().getSimpleName() + " does not provide it");
+            }
             if (prop.kind() == Prop.Kind.CELL) {
-                prop.writeTo(config);
-            } else {
-                applyAlignCellRecord(config, prop);
+                prop.writeTo(view);
             }
         }
     }
 
-    private void applyAlignCellRecord(PendingCellConfig config, Prop prop) {
-        String label = prop.label();
-        if ("align".equals(label)) {
-            Object val = prop.resolve();
-            if (val instanceof Integer) {
-                config.align = (Integer) val;
-            }
-        } else if ("top".equals(label)) {
-            config.alignTop();
-        } else if ("bottom".equals(label)) {
-            config.alignBottom();
-        } else if ("left".equals(label)) {
-            config.alignLeft();
-        } else if ("right".equals(label)) {
-            config.alignRight();
-        } else if ("center".equals(label)) {
-            config.alignCenter();
+    private void applyOne(Prop<?, ?> prop) {
+        if (!prop.requiredCapability().isInstance(host)) {
+            throw new IllegalArgumentException(
+                    "Property '" + prop.label() + "' requires " + prop.requiredCapability().getSimpleName()
+                            + " but host " + host.getClass().getSimpleName() + " does not provide it");
+        }
+        PendingCellConfig config = host.cellConfig();
+        prop.writeTo(hostView());
+        if (prop.kind() == Prop.Kind.CELL && config != null) {
+            applyToLiveParentCell(config);
         }
     }
 
-    private void applyOne(Prop prop) {
-        Object target = targetFor(prop);
-        prop.writeTo(target);
-        if (prop.kind() == Prop.Kind.CELL && target instanceof PendingCellConfig) {
-            applyToLiveParentCell((PendingCellConfig) target);
-        }
-    }
-
-    /**
-     * Mirrors the old mixin behavior of applying a cell constraint to the live parent cell
-     * when the host element is already attached. Before attachment every helper below is a
-     * no-op, and the recorded configuration reaches the cell through the attachment
-     * configurator instead.
-     */
     private void applyToLiveParentCell(PendingCellConfig config) {
         Element element = host.element();
         config.applySizeToParentCell(element);
@@ -126,15 +95,38 @@ public final class Props<T extends Configurable<T> & DisposableOwner> {
         config.applyAlignToParentCell(element);
     }
 
-    private @Nullable Object targetFor(Prop prop) {
-        switch (prop.kind()) {
-            case ELEMENT:
-                return host.element();
-            case TABLE:
-                return host.table();
-            case CELL:
-            default:
-                return host.cellConfig();
-        }
+    private Prop.HostView hostView() {
+        return new Prop.HostView() {
+            @Override
+            public void withElement(Cons<Element> action) {
+                Element element = host.element();
+                if (element != null) {
+                    action.get(element);
+                }
+            }
+
+            @Override
+            public void withTable(Cons<Table> action) {
+                Table table = host.table();
+                if (table != null) {
+                    action.get(table);
+                }
+            }
+
+            @Override
+            public void withCell(Cons<PendingCellConfig> action) {
+                PendingCellConfig config = host.cellConfig();
+                if (config != null) {
+                    action.get(config);
+                }
+            }
+
+            @Override
+            public <H extends HostCapability> void withCapability(Class<H> capabilityClass, Cons<H> action) {
+                if (capabilityClass.isInstance(host)) {
+                    action.get(capabilityClass.cast(host));
+                }
+            }
+        };
     }
-}
+}

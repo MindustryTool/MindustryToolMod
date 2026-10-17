@@ -20,12 +20,17 @@ import solim.runtime.OwnershipScope;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.TableCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.modifier.Values;
 
-public final class Tabs extends Component implements Configurable<Tabs>, GapHost {
+public final class Tabs extends Component
+        implements Configurable<Tabs>, GapHost, TableCapability, CellCapability, ContainerCapability<Tabs>, AlignmentCapability {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);

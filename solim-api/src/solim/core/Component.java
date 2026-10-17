@@ -15,7 +15,7 @@ import mindustry.Vars;
 import solim.instrumentation.Dispose;
 import solim.instrumentation.Instrumentation;
 
-public abstract class Component implements DisposableOwner {
+public abstract class Component implements DisposableOwner, HostCapability {
 
     private @Nullable Element cached;
     private @Nullable String componentName;
@@ -68,7 +68,6 @@ public abstract class Component implements DisposableOwner {
      * Runs {@code block} with this component as the ambient owner, so every resource it creates
      * is adopted by this component and disposed with it.
      */
-    // TODO: Remove
     public final void withinOwnership(Runnable block) {
         openSelfWindow();
         try {

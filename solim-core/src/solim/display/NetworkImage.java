@@ -13,7 +13,6 @@ import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.Image;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
-import arc.scene.ui.layout.Table;
 import arc.util.Log;
 import arc.util.Nullable;
 import arc.util.Scaling;
@@ -29,13 +28,17 @@ import solim.core.Disposable;
 import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.graphics.RoundedGenerator;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 
-public final class NetworkImage extends Component implements Configurable<NetworkImage> {
+public final class NetworkImage extends Component
+        implements Configurable<NetworkImage>, ElementCapability, CellCapability, AlignmentCapability {
 
     private static final Map<String, TextureRegionDrawable> cache = new ConcurrentHashMap<>();
 
@@ -208,20 +211,6 @@ public final class NetworkImage extends Component implements Configurable<Networ
     @Override
     public @Nullable Table table() {
         return null;
-    }
-
-    @Override
-    public NetworkImage children(@Nullable Runnable block) {
-        applyPendingProps();
-        OwnershipContext.push(this);
-        try {
-            if (block != null) {
-                block.run();
-            }
-        } finally {
-            OwnershipContext.pop();
-        }
-        return this;
     }
 
     @Override

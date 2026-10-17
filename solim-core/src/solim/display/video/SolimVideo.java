@@ -25,7 +25,10 @@ import solim.core.Units;
 import solim.display.Text;
 import solim.input.Button;
 import solim.input.SolimSlider;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.modifier.Values;
@@ -36,7 +39,7 @@ import solim.reactive.Signal;
 import solim.runtime.AttachmentStack;
 
 public final class SolimVideo extends Component
-        implements Configurable<SolimVideo> {
+        implements Configurable<SolimVideo>, ElementCapability, CellCapability, AlignmentCapability {
 
     private static final long OVERLAY_HIDE_DELAY = 2500;
 
@@ -591,20 +594,6 @@ public final class SolimVideo extends Component
     @Override
     public @Nullable Table table() {
         return null;
-    }
-
-    @Override
-    public SolimVideo children(@Nullable Runnable block) {
-        applyPendingProps();
-        OwnershipContext.push(this);
-        try {
-            if (block != null) {
-                block.run();
-            }
-        } finally {
-            OwnershipContext.pop();
-        }
-        return this;
     }
 
     @Override

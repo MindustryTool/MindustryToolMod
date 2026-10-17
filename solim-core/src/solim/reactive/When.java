@@ -3,13 +3,18 @@ package solim.reactive;
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
+import arc.util.Align;
 import arc.util.Nullable;
 import java.util.Objects;
 import solim.core.Component;
 import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.layout.CollapseHelper;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.TableCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.runtime.AttachmentStack;
@@ -17,7 +22,7 @@ import solim.runtime.Fragment;
 import solim.runtime.ReactiveContext;
 
 public final class When extends Component
-        implements Configurable<When> {
+        implements Configurable<When>, TableCapability, CellCapability, ContainerCapability<When>, AlignmentCapability {
     private static final Object SENTINEL = new Object();
     private final Table container = new Table();
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -64,7 +69,7 @@ public final class When extends Component
         return container;
     }
 
-    @Override
+    
     public When children(@Nullable Runnable block) {
         applyPendingProps();
         OwnershipContext.push(this);

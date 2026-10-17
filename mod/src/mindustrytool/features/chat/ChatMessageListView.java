@@ -272,10 +272,12 @@ public class ChatMessageListView extends Component {
 
                         when(hasMessages)
                                 .thenDo(() -> {
-                                    VirtualList<MessageGroup> list = virtualList(
+                                    virtualList = virtualList(
                                             groupedMessages,
-                                            ChatMessageHeightCalculator::calculateHeight);
-                                    list.key(MessageGroup::getKey).props(grow(), gap(unit(0.75f))).overscan(3)
+                                            ChatMessageHeightCalculator::calculateHeight)
+                                            .key(MessageGroup::getKey)
+                                            .props(grow(), gap(unit(0.75f)), marginBottom(unit(2)))
+                                            .overscan(3)
                                             .onReachTop(50f, () -> {
                                                 String activeId = store.channels().currentActiveId();
                                                 List<ChatMessage> msgs = store.messages().currentActive();
@@ -285,9 +287,8 @@ public class ChatMessageListView extends Component {
                                                         && !store.messages().isFullyLoaded(activeId)) {
                                                     service.fetchOlderMessages(activeId);
                                                 }
-                                            }).props(marginBottom(unit(2)));
-                                    list.items(item -> new MessageGroupView(item, store, service));
-                                    virtualList = list;
+                                            })
+                                            .items(item -> new MessageGroupView(item, store, service));
                                 })
                                 .elseDo(() -> {
                                     when(store.messages().activeLoadingInitial())

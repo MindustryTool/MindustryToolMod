@@ -266,7 +266,8 @@ class TableConfigDisposalTest extends OwnershipEnv {
         assertMargins(built, 9f, "Host disposal must freeze build-scoped padding");
     }
 
-    private static final class TableTarget extends Component implements Configurable<TableTarget> {
+    private static final class TableTarget extends Component
+            implements Configurable<TableTarget>, TableCapability, CellCapability, ContainerCapability<TableTarget> {
 
         private final Table table;
         private final PendingCellConfig constraints = new PendingCellConfig();
@@ -353,7 +354,7 @@ class TableConfigDisposalTest extends OwnershipEnv {
             return constraints;
         }
 
-        @Override
+        
         public TableTarget children(@Nullable Runnable block) {
             applyPendingProps();
             OwnershipContext.push(this);

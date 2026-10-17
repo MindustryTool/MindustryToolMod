@@ -52,7 +52,8 @@ public class ChatChannelListView extends Component {
                     .props(grow())
                     .loading(Loader::centered)
                     .error(err -> column().props(grow(), padding(unit(2)), center(), gap(unit(2))).children(() -> {
-                        icon(Icon.warning).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))).color(Color.scarlet);
+                        icon(Icon.warning).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)))
+                                .color(Color.scarlet);
                         text(Core.bundle.get("feature.chat.ui.error.channels", "Failed to load channels."))
                                 .color(Color.scarlet)
                                 .fontScale(0.95f)
@@ -80,7 +81,9 @@ public class ChatChannelListView extends Component {
                     .data(channelList -> scroll().props(grow()).children(() -> {
                         column().props(growX(), gap(unit(1))).children(() -> {
                             if (channelList != null && !channelList.isEmpty()) {
-                                forEach(store.channels().all()).key(ChannelDto::getId).props(growX())
+                                forEach(store.channels().all())
+                                        .key(ChannelDto::getId)
+                                        .props(growX())
                                         .items(channel -> new ChannelItem(channel, store));
                             } else {
                                 column().props(padding(unit(2))).children(() -> {
@@ -177,14 +180,18 @@ public class ChatChannelListView extends Component {
                                     button(() -> store.notifications().toggleMuted(channel.getId()))
                                             .stopClickPropagation(true)
                                             .style(WebStyles.ghost())
-                                            .props(size(unit(8)), prefWidth(unit(8)), prefHeight(unit(8)), tooltip(bellTooltip))
+                                            .props(size(unit(8)), prefWidth(unit(8)), prefHeight(unit(8)),
+                                                    tooltip(bellTooltip))
                                             .visible(isSelected)
-                                            .children(() -> icon(bellIcon).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4))).color(Color.white));
+                                            .children(() -> icon(bellIcon)
+                                                    .props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)))
+                                                    .color(Color.white));
 
                                     image(FileIcon.of("bell-off.png"))
                                             .props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)))
                                             .color(Color.lightGray)
-                                            .props(tooltip(Core.bundle.get("feature.chat.channel.notifications.muted", "Muted")), visible(showUnselectedMuted));
+                                            .props(tooltip(Core.bundle.get("feature.chat.channel.notifications.muted",
+                                                    "Muted")), visible(showUnselectedMuted));
 
                                     image(circle())
                                             .props(size(unit(3)), prefWidth(unit(3)), prefHeight(unit(3)))

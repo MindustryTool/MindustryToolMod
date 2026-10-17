@@ -10,14 +10,18 @@ import solim.core.SolimToken;
 import solim.graphics.RoundedDrawable;
 import solim.layout.Row;
 import solim.modifier.RoundedHelper;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
+import solim.modifier.TableCapability;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.runtime.AttachmentStack;
 
-public final class Badge extends Component implements Configurable<Badge> {
+public final class Badge extends Component implements Configurable<Badge>, TableCapability, CellCapability, AlignmentCapability {
 
     private final Table element;
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -149,23 +153,6 @@ public final class Badge extends Component implements Configurable<Badge> {
     @Override
     public Table table() {
         return element;
-    }
-
-    @Override
-    public Badge children(@Nullable Runnable block) {
-        applyPendingProps();
-        OwnershipContext.push(this);
-        AttachmentStack.push(element, Row.ATTACHER);
-        try {
-            if (block != null) {
-                block.run();
-            }
-        } finally {
-            AttachmentStack.pop();
-            OwnershipContext.pop();
-        }
-        element.pack();
-        return this;
     }
 
     @Override

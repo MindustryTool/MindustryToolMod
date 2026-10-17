@@ -1,7 +1,11 @@
 package solim.layout;
 
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
 import solim.modifier.Props;
+import solim.modifier.TableCapability;
 
 import arc.scene.Element;
 import arc.scene.style.Drawable;
@@ -15,7 +19,8 @@ import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.modifier.PendingCellConfig;
 
-public final class Wrap extends Component implements GapContainer, Configurable<Wrap> {
+public final class Wrap extends Component
+        implements GapContainer, Configurable<Wrap>, TableCapability, CellCapability, ContainerCapability<Wrap>, AlignmentCapability {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);

@@ -18,6 +18,7 @@ import arc.scene.ui.layout.Table;
 import arc.util.Align;
 import solim.core.Component;
 import solim.layout.LayoutTestFixtures.ComponentAdapter;
+import solim.modifier.AlignmentCapability;
 import solim.modifier.PendingCellConfig;
 import solim.test.SolimEnv;
 
@@ -28,25 +29,25 @@ public class UnifiedComponentAlignmentTest extends SolimEnv {
     }
 
     private static void invokeAlignment(Component comp, String methodName) {
-        if (!(comp instanceof solim.modifier.Configurable)) {
-            throw new IllegalArgumentException("Component is not Configurable: " + comp.getClass().getSimpleName());
+        if (!(comp instanceof AlignmentCapability)) {
+            throw new IllegalArgumentException("Component is not AlignmentCapability: " + comp.getClass().getSimpleName());
         }
-        solim.modifier.Configurable<?> configurable = (solim.modifier.Configurable<?>) comp;
+        AlignmentCapability alignable = (AlignmentCapability) comp;
         switch (methodName) {
             case "top":
-                configurable.props(solim.modifier.Values.top());
+                alignable.alignCoordinated(null, Align.top);
                 break;
             case "bottom":
-                configurable.props(solim.modifier.Values.bottom());
+                alignable.alignCoordinated(null, Align.bottom);
                 break;
             case "left":
-                configurable.props(solim.modifier.Values.left());
+                alignable.alignCoordinated(null, Align.left);
                 break;
             case "right":
-                configurable.props(solim.modifier.Values.right());
+                alignable.alignCoordinated(null, Align.right);
                 break;
             case "center":
-                configurable.props(solim.modifier.Values.center());
+                alignable.alignCoordinated(null, Align.center);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown alignment method: " + methodName);

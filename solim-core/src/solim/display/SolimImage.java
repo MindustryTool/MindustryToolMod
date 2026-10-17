@@ -11,7 +11,10 @@ import solim.core.Component;
 import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.core.SpacingAware;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.reactive.Effect;
@@ -19,7 +22,7 @@ import solim.reactive.Readable;
 import solim.reactive.Signal;
 
 public final class SolimImage extends Component
-        implements SpacingAware, Configurable<SolimImage> {
+        implements SpacingAware, Configurable<SolimImage>, ElementCapability, CellCapability, AlignmentCapability {
 
     private final Image element;
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -242,20 +245,6 @@ public final class SolimImage extends Component
     @Override
     public @Nullable Table table() {
         return null;
-    }
-
-    @Override
-    public SolimImage children(@Nullable Runnable block) {
-        applyPendingProps();
-        OwnershipContext.push(this);
-        try {
-            if (block != null) {
-                block.run();
-            }
-        } finally {
-            OwnershipContext.pop();
-        }
-        return this;
     }
 
     @Override

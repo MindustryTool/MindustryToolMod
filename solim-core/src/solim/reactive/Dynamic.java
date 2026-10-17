@@ -3,13 +3,18 @@ package solim.reactive;
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
+import arc.util.Align;
 import arc.util.Nullable;
 import java.util.Objects;
 import arc.func.Cons;
 import solim.core.Component;
 import solim.core.OwnershipContext;
 import solim.core.SolimToken;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.TableCapability;
 import solim.layout.CollapseHelper;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
@@ -18,7 +23,7 @@ import solim.runtime.Fragment;
 import solim.runtime.ReactiveContext;
 
 public final class Dynamic<T> extends Component
-        implements Configurable<Dynamic<T>> {
+        implements Configurable<Dynamic<T>>, TableCapability, CellCapability, ContainerCapability<Dynamic<T>>, AlignmentCapability {
     private final Table container = new Table();
     private final PendingCellConfig constraints = new PendingCellConfig();
     private final Readable<T> source;
@@ -49,7 +54,7 @@ public final class Dynamic<T> extends Component
         return container;
     }
 
-    @Override
+    
     public Dynamic<T> children(@Nullable Runnable block) {
         applyPendingProps();
         OwnershipContext.push(this);

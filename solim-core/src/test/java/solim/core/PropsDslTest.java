@@ -52,6 +52,8 @@ import solim.input.Switch;
 import solim.layout.Column;
 import solim.layout.Divider;
 import solim.layout.Scroll;
+import solim.modifier.ContainerCapability;
+import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Prop;
 import solim.modifier.Values;
@@ -69,12 +71,13 @@ class PropsDslTest extends SolimCoreEnv {
         OwnershipContext.clear();
     }
 
-    private static Prop width(Object value) {
-        return Prop.element("width", value, (element, v) -> element.setWidth(((Number) v).floatValue()));
+    private static Prop<ElementCapability, Float> width(float value) {
+        return Prop.element(ElementCapability.class, "width", value, (element, v) -> element.setWidth(v != null ? v : 0f));
     }
 
-    private static Prop width(Signal<Float> source) {
-        return Prop.element("width", source, (element, v) -> element.setWidth(((Number) v).floatValue()));
+    private static Prop<ElementCapability, Float> width(Signal<Float> source) {
+        return Prop.elementSource(ElementCapability.class, "width", source,
+                (element, v) -> element.setWidth(v != null ? v : 0f));
     }
 
     @Test
@@ -89,7 +92,7 @@ class PropsDslTest extends SolimCoreEnv {
     void rawPropRunsAgainstTheRealizedTarget() {
         StringBuilder touched = new StringBuilder();
         Text text = new Text("hi");
-        text.props(Prop.raw("touch", Prop.Kind.ELEMENT, target -> touched.append(target.getClass().getSimpleName())));
+        text.props(Prop.raw(ElementCapability.class, "touch", Prop.Kind.ELEMENT, target -> touched.append(target.getClass().getSimpleName())));
 
         assertEquals("Label", touched.toString());
     }
@@ -117,7 +120,7 @@ class PropsDslTest extends SolimCoreEnv {
     void propsApplyAtMostOnce() {
         float[] calls = new float[1];
         Text text = new Text("hi");
-        text.props(Prop.raw("count", Prop.Kind.ELEMENT, target -> calls[0]++));
+        text.props(Prop.raw(ElementCapability.class, "count", Prop.Kind.ELEMENT, target -> calls[0]++));
         text.applyPendingProps();
 
         assertEquals(1f, calls[0], "applyPendingProps must not re-apply an already drained Props");
@@ -349,9 +352,9 @@ class PropsDslTest extends SolimCoreEnv {
         SolimSlider slider = new SolimSlider(Signal.of(5f), 0f, 10f, 1f);
         Switch toggle = new Switch(Signal.of(false));
 
-        field.props(growX(), padding(unit(3)));
-        slider.props(growX(), padding(unit(4)));
-        toggle.props(growX(), padding(unit(5)));
+        field.props(growX(), margin(unit(3)));
+        slider.props(growX(), margin(unit(4)));
+        toggle.props(growX(), margin(unit(5)));
 
         assertTrue(field.cellConfig().growX, "a widget without a table still records cell props");
         assertTrue(slider.cellConfig().growX);
@@ -362,14 +365,16 @@ class PropsDslTest extends SolimCoreEnv {
     }
 
     @Test
-    void singleWidgetChildrenBlockOpensAWindowWithoutAttaching() {
+    void containerChildrenBlockOpensAWindow() {
         newScene();
-        SolimTextField field = new SolimTextField(Signal.of(""));
+        Column col = new Column();
         boolean[] insideWindow = new boolean[1];
 
-        field.children(() -> insideWindow[0] = (OwnershipContext.size() > 0));
+        col.children(() -> insideWindow[0] = (OwnershipContext.size() > 0));
 
         assertTrue(insideWindow[0], "children() must open an ownership window");
+        assertFalse(ContainerCapability.class.isAssignableFrom(SolimTextField.class),
+                "leaf widgets must not implement ContainerCapability");
     }
 
     @Test
@@ -401,9 +406,9 @@ class PropsDslTest extends SolimCoreEnv {
         SolimImage image = new SolimImage();
         Badge badge = new Badge("1");
 
-        divider.props(growX(), padding(unit(1)));
-        image.props(growX(), padding(unit(1)));
-        badge.props(growX(), padding(unit(1)));
+        divider.props(growX(), margin(unit(1)));
+        image.props(growX(), margin(unit(1)));
+        badge.props(growX(), margin(unit(1)));
 
         assertTrue(divider.cellConfig().growX);
         assertTrue(image.cellConfig().growX);
@@ -534,5 +539,31 @@ class PropsDslTest extends SolimCoreEnv {
 
         assertEquals(64f, holder[0].element().getWidth(), 0.01f,
                 "a prefWidth recorded by a prop must be honoured by the cell configurator");
+    }
+
+    @Test
+    void fixedArityPropsOverloadsApplyCorrectly() {
+        Column column = new Column();
+        column.props(
+                Values.growX(),
+                Values.growY(),
+                Values.gap(4f),
+                Values.padding(8f),
+                Values.top(),
+                Values.left(),
+                Values.minWidth(10f),
+                Values.minHeight(12f),
+                Values.maxWidth(100f),
+                Values.maxHeight(120f)
+        );
+
+        PendingCellConfig config = column.cellConfig();
+        assertTrue(config.growX);
+        assertTrue(config.growY);
+        assertEquals(4f, column.gap());
+        assertEquals(10f, config.minWidth.get());
+        assertEquals(12f, config.minHeight.get());
+        assertEquals(100f, config.maxWidth.get());
+        assertEquals(120f, config.maxHeight.get());
     }
 }

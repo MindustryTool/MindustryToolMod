@@ -125,7 +125,8 @@ class ElementConfigTooltipTest extends SolimEnv {
         return null;
     }
 
-    private static final class TestTarget extends Component implements Configurable<TestTarget> {
+    private static final class TestTarget extends Component
+            implements Configurable<TestTarget>, ElementCapability, CellCapability {
         private final Table table = new Table();
         private final PendingCellConfig constraints = new PendingCellConfig();
         private @Nullable Props<TestTarget> pending;
@@ -159,7 +160,7 @@ class ElementConfigTooltipTest extends SolimEnv {
             return constraints;
         }
 
-        @Override
+        
         public TestTarget children(@Nullable Runnable block) {
             applyPendingProps();
             OwnershipContext.push(this);

@@ -47,7 +47,10 @@ import solim.layout.Spacer;
 import solim.layout.Tabs;
 import solim.layout.VirtualList;
 import solim.layout.ItemHeightProvider;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Prop;
+import solim.modifier.TableCapability;
 import solim.modifier.Values;
 import solim.overlay.Hud;
 import solim.overlay.Popup;
@@ -503,75 +506,75 @@ public final class UI {
         return Drawables.scalable(drawable);
     }
 
-    public static Prop grow() {
+    public static Prop<CellCapability, Boolean> grow() {
         return Values.grow();
     }
 
-    public static Prop growX() {
+    public static Prop<CellCapability, Boolean> growX() {
         return Values.growX();
     }
 
-    public static Prop growY() {
+    public static Prop<CellCapability, Boolean> growY() {
         return Values.growY();
     }
 
-    public static Prop center() {
+    public static Prop<AlignmentCapability, Void> center() {
         return Values.center();
     }
 
-    public static Prop top() {
+    public static Prop<AlignmentCapability, Void> top() {
         return Values.top();
     }
 
-    public static Prop bottom() {
+    public static Prop<AlignmentCapability, Void> bottom() {
         return Values.bottom();
     }
 
-    public static Prop left() {
+    public static Prop<AlignmentCapability, Void> left() {
         return Values.left();
     }
 
-    public static Prop right() {
+    public static Prop<AlignmentCapability, Void> right() {
         return Values.right();
     }
 
-    public static Prop align(int align) {
+    public static Prop<AlignmentCapability, Integer> align(int align) {
         return Values.align(align);
     }
 
-    public static Prop gap(float v) {
+    public static Prop<TableCapability, Float> gap(float v) {
         return Values.gap(v);
     }
 
-    public static Prop gap(Readable<Float> v) {
+    public static Prop<TableCapability, Float> gap(Readable<Float> v) {
         return Values.gap(v);
     }
 
-    public static Prop padding(float p) {
+    public static Prop<TableCapability, Float> padding(float p) {
         return Values.padding(p);
     }
 
-    public static Prop padding(Readable<Float> p) {
+    public static Prop<TableCapability, Float> padding(Readable<Float> p) {
         return Values.padding(p);
     }
 
-    public static Prop padding(float top, float left, float bottom, float right) {
+    public static Prop<TableCapability, Void> padding(float top, float left, float bottom, float right) {
         return Values.padding(top, left, bottom, right);
     }
 
-    public static Prop paddingX(float v) {
+    public static Prop<TableCapability, Float> paddingX(float v) {
         return Values.paddingX(v);
     }
 
-    public static Prop paddingX(@Nullable Readable<Float> x) {
+    public static Prop<TableCapability, Float> paddingX(@Nullable Readable<Float> x) {
         return Values.paddingX(x);
     }
 
-    public static Prop paddingY(float v) {
+    public static Prop<TableCapability, Float> paddingY(float v) {
         return Values.paddingY(v);
     }
 
-    public static Prop paddingY(@Nullable Readable<Float> y) {
+    public static Prop<TableCapability, Float> paddingY(@Nullable Readable<Float> y) {
         return Values.paddingY(y);
     }
 }

@@ -13,6 +13,7 @@ import arc.scene.ui.Label;
 import arc.scene.ui.Label.LabelStyle;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
+import arc.util.Align;
 import arc.util.Log;
 import arc.util.Nullable;
 import arc.util.Scaling;
@@ -34,15 +35,25 @@ import solim.reactive.Readable;
 import solim.style.SolimButtonStyle;
 import solim.style.SolimButtonStyleBuilder;
 import arc.scene.style.Drawable;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.modifier.RoundedHelper;
+import solim.modifier.TableCapability;
 import solim.modifier.Values;
 import arc.util.Time;
 
+import solim.modifier.ButtonCapability;
+import solim.modifier.CheckableCapability;
+import solim.modifier.IconCapability;
+import solim.modifier.TextCapability;
+import solim.modifier.WrappableCapability;
+
 public final class Button
-        extends Component implements GapContainer, Configurable<Button> {
+        extends Component implements GapContainer, Configurable<Button>, TableCapability, CellCapability, ContainerCapability<Button>, AlignmentCapability, ButtonCapability, CheckableCapability, IconCapability, TextCapability, WrappableCapability {
 
     private final arc.scene.ui.Button button;
     private final PendingCellConfig constraints = new PendingCellConfig();

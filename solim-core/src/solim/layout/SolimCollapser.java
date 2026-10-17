@@ -6,15 +6,20 @@ import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.SolimToken;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
+import solim.modifier.TableCapability;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 
-public final class SolimCollapser extends Component implements GapContainer, Configurable<SolimCollapser> {
+public final class SolimCollapser extends Component
+        implements GapContainer, Configurable<SolimCollapser>, TableCapability, CellCapability, ContainerCapability<SolimCollapser>, AlignmentCapability {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);

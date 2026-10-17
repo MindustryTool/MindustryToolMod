@@ -11,12 +11,18 @@ import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.OwnershipContext;
 import solim.core.SolimToken;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
+import java.util.List;
 import solim.runtime.OwnershipScope;
 
-public final class SolimStack extends Component implements Configurable<SolimStack> {
+public final class SolimStack extends Component
+        implements Configurable<SolimStack>, ElementCapability, CellCapability, ContainerCapability<SolimStack>, AlignmentCapability {
     private final Stack stack;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private @Nullable Props<SolimStack> pending;
@@ -105,9 +111,11 @@ public final class SolimStack extends Component implements Configurable<SolimSta
         return null;
     }
 
+    
     @Override
     public SolimStack children(@Nullable Runnable block) {
         applyPendingProps();
+        int before = children().size();
         OwnershipContext.push(this);
         try {
             if (block != null) {
@@ -115,6 +123,13 @@ public final class SolimStack extends Component implements Configurable<SolimSta
             }
         } finally {
             OwnershipContext.pop();
+        }
+        List<Component> kids = children();
+        for (int i = before; i < kids.size(); i++) {
+            Element el = kids.get(i).element();
+            if (el != null && el.parent != stack) {
+                stack.add(el);
+            }
         }
         return this;
     }

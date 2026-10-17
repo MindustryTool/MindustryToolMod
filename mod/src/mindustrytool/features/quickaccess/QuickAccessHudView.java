@@ -138,7 +138,8 @@ public class QuickAccessHudView extends Component {
                         return Math.max(1, Math.min(maxCols, count));
                     });
 
-                    reactiveGrid(items).key(HudItem::id)
+                    reactiveGrid(items)
+                            .key(HudItem::id)
                             .columns(columns)
                             .props(gap(unit(1)))
                             .items(item -> createItemButton(feature, item, buttonSize, iconSize));

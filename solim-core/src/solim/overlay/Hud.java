@@ -19,6 +19,7 @@ import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.layout.Row;
 import solim.modifier.Configurable;
+import solim.modifier.TableCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.runtime.AttachmentStack;
@@ -29,8 +30,12 @@ import arc.scene.event.ClickListener;
 import arc.scene.event.EventListener;
 import arc.scene.ui.Button;
 import arc.scene.ui.layout.Scl;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
+import solim.modifier.ContainerCapability;
 
-public class Hud extends Component implements Configurable<Hud> {
+public class Hud extends Component
+        implements Configurable<Hud>, TableCapability, CellCapability, ContainerCapability<Hud>, AlignmentCapability {
 
     private final Table root;
     private final Table container;

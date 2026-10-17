@@ -109,7 +109,8 @@ class ElementConfigClickTest extends SolimEnv {
         return count;
     }
 
-    private static final class Clickable extends Component implements Configurable<Clickable> {
+    private static final class Clickable extends Component
+            implements Configurable<Clickable>, ElementCapability, CellCapability {
         private final Table table = new Table();
         private final PendingCellConfig constraints = new PendingCellConfig();
         private @Nullable Props<Clickable> pending;
@@ -138,7 +139,7 @@ class ElementConfigClickTest extends SolimEnv {
             return constraints;
         }
 
-        @Override
+        
         public Clickable children(@Nullable Runnable block) {
             applyPendingProps();
             OwnershipContext.push(this);

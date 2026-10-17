@@ -9,12 +9,17 @@ import solim.core.Component;
 import solim.core.DisposableAction;
 import solim.core.OwnershipContext;
 import solim.reactive.Signal;
+import solim.modifier.CellCapability;
+import solim.modifier.CheckableCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
+import solim.reactive.Effect;
+import solim.reactive.Readable;
 
 public final class Switch extends Component
-        implements Configurable<Switch> {
+        implements Configurable<Switch>, ElementCapability, CellCapability, AlignmentCapability, CheckableCapability {
     private final TextButton button;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private @Nullable Props<Switch> pending;
@@ -28,20 +33,6 @@ public final class Switch extends Component
     @Override
     public @Nullable Table table() {
         return null;
-    }
-
-    @Override
-    public Switch children(@Nullable Runnable block) {
-        applyPendingProps();
-        OwnershipContext.push(this);
-        try {
-            if (block != null) {
-                block.run();
-            }
-        } finally {
-            OwnershipContext.pop();
-        }
-        return this;
     }
 
     @Override
@@ -96,6 +87,26 @@ public final class Switch extends Component
     public Switch name(String name) {
         setName(name);
         return this;
+    }
+
+    public Switch checked(@Nullable Readable<Boolean> source) {
+        if (source != null) {
+            OwnershipContext.push(this);
+            try {
+                Effect.of(() -> {
+                    state = Boolean.TRUE.equals(source.get());
+                    button.setText(state ? "ON" : "OFF");
+                    button.setChecked(state);
+                });
+            } finally {
+                OwnershipContext.pop();
+            }
+        }
+        return this;
+    }
+
+    public boolean isChecked() {
+        return state;
     }
 
     @Override

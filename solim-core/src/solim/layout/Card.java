@@ -1,7 +1,11 @@
 package solim.layout;
 
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
 import solim.modifier.Props;
+import solim.modifier.TableCapability;
 
 import arc.graphics.Color;
 import arc.scene.style.Drawable;
@@ -17,7 +21,7 @@ import solim.reactive.Readable;
 import solim.modifier.PendingCellConfig;
 
 public final class Card extends Component
-        implements GapContainer, Configurable<Card> {
+        implements GapContainer, Configurable<Card>, TableCapability, CellCapability, ContainerCapability<Card>, AlignmentCapability {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);

@@ -11,13 +11,17 @@ import arc.util.Scaling;
 import solim.core.Component;
 import solim.core.OwnershipContext;
 import solim.display.SolimImage;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
-import solim.reactive.Readable;
+import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.modifier.Values;
+import solim.reactive.Readable;
 
-public final class Divider extends Component implements Configurable<Divider> {
+public final class Divider extends Component
+        implements Configurable<Divider>, ElementCapability, CellCapability, AlignmentCapability {
     private final SolimImage image;
     private final Direction direction;
     private @Nullable Props<Divider> pending;
@@ -117,20 +121,6 @@ public final class Divider extends Component implements Configurable<Divider> {
     @Override
     public @Nullable Table table() {
         return null;
-    }
-
-    @Override
-    public Divider children(@Nullable Runnable block) {
-        applyPendingProps();
-        OwnershipContext.push(this);
-        try {
-            if (block != null) {
-                block.run();
-            }
-        } finally {
-            OwnershipContext.pop();
-        }
-        return this;
     }
 
     @Override

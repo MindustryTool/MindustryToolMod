@@ -19,7 +19,11 @@ import solim.core.Disposable;
 import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.graphics.RoundedDrawable;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.TableCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.modifier.RoundedHelper;
@@ -27,7 +31,8 @@ import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
 
-public class SolimDialog extends Component implements Configurable<SolimDialog> {
+public class SolimDialog extends Component
+        implements Configurable<SolimDialog>, TableCapability, CellCapability, ContainerCapability<SolimDialog>, AlignmentCapability {
 
     private final BaseDialog wrapped;
     private final PendingCellConfig constraints = new PendingCellConfig();

@@ -14,16 +14,22 @@ import arc.func.Boolf;
 import solim.core.Component;
 import solim.core.DisposableAction;
 import solim.core.OwnershipContext;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ElementCapability;
+import solim.modifier.FieldCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
+import solim.modifier.TextCapability;
+import solim.modifier.WrappableCapability;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.style.InputStyle;
 
 public final class SolimTextField extends Component
-        implements Configurable<SolimTextField> {
+        implements Configurable<SolimTextField>, ElementCapability, CellCapability, AlignmentCapability, FieldCapability, TextCapability, WrappableCapability {
 
     private final TextField field;
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -138,6 +144,13 @@ public final class SolimTextField extends Component
         return this;
     }
 
+    public SolimTextField style(@Nullable TextField.TextFieldStyle style) {
+        if (style != null) {
+            field.setStyle(style);
+        }
+        return this;
+    }
+
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
@@ -146,20 +159,6 @@ public final class SolimTextField extends Component
     @Override
     public @Nullable Table table() {
         return null;
-    }
-
-    @Override
-    public SolimTextField children(@Nullable Runnable block) {
-        applyPendingProps();
-        OwnershipContext.push(this);
-        try {
-            if (block != null) {
-                block.run();
-            }
-        } finally {
-            OwnershipContext.pop();
-        }
-        return this;
     }
 
     @Override

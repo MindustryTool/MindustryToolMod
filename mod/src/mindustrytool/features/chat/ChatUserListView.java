@@ -107,11 +107,12 @@ public class ChatUserListView extends Component {
                             if (users != null && !users.isEmpty()) {
                                 return scroll().props(grow(), left()).children(() -> {
                                     column().props(growX(), top(), left(), gap(unit(1))).children(() -> {
-                                        forEach(store.members().active()).key(ChatUser::getName)
+                                        forEach(store.members().active())
+                                                .key(ChatUser::getName)
                                                 .items(UserItem::new);
                                     });
                                 });
-                            }
+                             }
 
                             return column()
                                     .props(padding(unit(2)), top(), left())

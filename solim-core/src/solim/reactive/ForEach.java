@@ -3,6 +3,7 @@ package solim.reactive;
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
+import arc.util.Align;
 import arc.util.Nullable;
 import java.util.*;
 import arc.func.Func;
@@ -10,14 +11,18 @@ import solim.core.Component;
 import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.TableCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.runtime.AttachmentStack;
 import solim.runtime.StructuralReconciler;
 
 public final class ForEach<T> extends Component
-        implements Configurable<ForEach<T>> {
+        implements Configurable<ForEach<T>>, TableCapability, CellCapability, ContainerCapability<ForEach<T>>, AlignmentCapability {
     private final Table container = new Table();
     private final PendingCellConfig constraints = new PendingCellConfig();
     private final Readable<? extends Iterable<T>> collection;
@@ -63,7 +68,7 @@ public final class ForEach<T> extends Component
         return container;
     }
 
-    @Override
+    
     public ForEach<T> children(@Nullable Runnable block) {
         applyPendingProps();
         OwnershipContext.push(this);

@@ -5,11 +5,15 @@ import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.OwnershipContext;
 import solim.core.SolimToken;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 
-public final class Spacer extends Component implements Configurable<Spacer> {
+public final class Spacer extends Component
+        implements Configurable<Spacer>, ElementCapability, CellCapability, AlignmentCapability {
 
     private final Table table;
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -32,19 +36,6 @@ public final class Spacer extends Component implements Configurable<Spacer> {
 
     public Spacer name(String name) {
         table.name = name;
-        return this;
-    }
-
-    @Override
-    public Spacer children(@Nullable Runnable block) {
-        OwnershipContext.push(this);
-        try {
-            if (block != null) {
-                block.run();
-            }
-        } finally {
-            OwnershipContext.pop();
-        }
         return this;
     }
 

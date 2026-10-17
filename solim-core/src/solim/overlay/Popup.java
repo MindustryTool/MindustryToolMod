@@ -20,7 +20,11 @@ import solim.core.Component;
 import solim.core.SolimToken;
 import solim.graphics.RoundedDrawable;
 import solim.layout.Spacer;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.TableCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.modifier.RoundedHelper;
@@ -30,7 +34,8 @@ import solim.runtime.OwnershipScope;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 
-public final class Popup<T> extends Component implements Configurable<Popup<T>> {
+public final class Popup<T> extends Component
+        implements Configurable<Popup<T>>, TableCapability, CellCapability, ContainerCapability<Popup<T>>, AlignmentCapability {
 
     public enum Edge {
         TOP,

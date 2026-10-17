@@ -14,16 +14,22 @@ import arc.scene.ui.ScrollPane;
 import arc.scene.ui.ScrollPane.ScrollPaneStyle;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
+import arc.util.Align;
 import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.SolimToken;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.TableCapability;
 import solim.modifier.Props;
 import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.modifier.PendingCellConfig;
 
-public final class Scroll extends Component implements Configurable<Scroll> {
+public final class Scroll extends Component
+        implements Configurable<Scroll>, TableCapability, CellCapability, ContainerCapability<Scroll>, AlignmentCapability {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -427,8 +433,19 @@ public final class Scroll extends Component implements Configurable<Scroll> {
     }
 
     @Override
+    public void alignCoordinated(@Nullable Integer explicit, int named) {
+        if (named == Align.center || (explicit != null && explicit == Align.center)) {
+            this.centered = true;
+        }
+        AlignmentCapability.coordinateTable(content, constraints, explicit, named);
+        int a = constraints.align != null ? constraints.align : named;
+        table().align(a);
+        outer.align(a);
+        constraints.applyAlignToParentCell(element());
+    }
+
+    @Override
     public Scroll self() {
         return this;
     }
-
 }

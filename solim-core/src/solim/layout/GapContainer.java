@@ -8,8 +8,9 @@ import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.SolimToken;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.TableCapability;
 
-public interface GapContainer extends GapHost {
+public interface GapContainer extends GapHost, TableCapability {
 
     Direction direction();
 

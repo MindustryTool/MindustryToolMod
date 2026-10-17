@@ -16,30 +16,28 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
 import solim.core.Component;
+import solim.core.DisposableOwner;
 import solim.display.Text;
 import solim.input.Button;
-import solim.layout.LayoutTestFixtures.ComponentAdapter;
+import solim.layout.Card;
+import solim.layout.Column;
+import solim.layout.Grid;
+import solim.layout.Row;
+import solim.layout.Scroll;
+import solim.layout.SolimCollapser;
+import solim.layout.Wrap;
+import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.TableCapability;
 import solim.modifier.Values;
 import solim.test.SolimEnv;
 
 public class UnifiedSpacingCompositionTest extends SolimEnv {
 
-    static List<ComponentAdapter> containers() {
-        return LayoutTestFixtures.containers();
-    }
+    private static <T extends Configurable<T> & DisposableOwner & TableCapability> void applyPaddingAndAssert(T comp) {
+        comp.props(Values.padding(12f, 15f, 18f, 21f));
 
-    @ParameterizedTest(name = "{0} - padding inner insets isolation")
-    @MethodSource("containers")
-    void testPaddingInnerInsetsIsolation(ComponentAdapter adapter) {
-        Component comp = adapter.create();
-        if (!(comp instanceof Configurable))
-            return;
-        Configurable<?> tc = (Configurable<?>) comp;
-
-        tc.props(Values.padding(12f, 15f, 18f, 21f));
-
-        Table t = tc.table();
+        Table t = comp.table();
         assertNotNull(t);
         assertEquals(12f, t.getMarginTop(), 0.01f);
         assertEquals(15f, t.getMarginLeft(), 0.01f);
@@ -54,42 +52,43 @@ public class UnifiedSpacingCompositionTest extends SolimEnv {
         assertEquals(0f, CellAccess.padRight(cell), 0.01f);
     }
 
+    private static <T extends Configurable<T> & DisposableOwner & CellCapability> void applyMarginAndAssert(T comp) {
+        Table parent = new Table();
+        Cell<?> cell = parent.add(comp.element());
+        comp.props(Values.margin(5f, 10f, 15f, 20f));
+
+        assertEquals(5f, CellAccess.padTop(cell), 0.01f, comp.getClass().getSimpleName() + " padTop");
+        assertEquals(10f, CellAccess.padLeft(cell), 0.01f, comp.getClass().getSimpleName() + " padLeft");
+        assertEquals(15f, CellAccess.padBottom(cell), 0.01f, comp.getClass().getSimpleName() + " padBottom");
+        assertEquals(20f, CellAccess.padRight(cell), 0.01f, comp.getClass().getSimpleName() + " padRight");
+
+        Table inner = comp.table();
+        if (inner != null) {
+            assertEquals(0f, inner.getMarginTop(), 0.01f);
+            assertEquals(0f, inner.getMarginLeft(), 0.01f);
+            assertEquals(0f, inner.getMarginBottom(), 0.01f);
+            assertEquals(0f, inner.getMarginRight(), 0.01f);
+        }
+    }
+
+    @Test
+    void testPaddingInnerInsetsIsolation() {
+        applyPaddingAndAssert(new Column());
+        applyPaddingAndAssert(new Row());
+        applyPaddingAndAssert(new Card());
+        applyPaddingAndAssert(new Grid(2));
+        applyPaddingAndAssert(new Wrap());
+        applyPaddingAndAssert(new SolimCollapser());
+        applyPaddingAndAssert(new Scroll());
+    }
+
     @Test
     void testMarginOuterPaddingIsolation() {
-
-        Component[] components = new Component[] {
-                new Column(),
-                new Row(),
-                new Card(),
-                new Button(),
-                new Text("label")
-        };
-
-        for (Component comp : components) {
-            Table parent = new Table();
-            Cell<?> cell = parent.add(comp.element());
-
-            if (comp instanceof Configurable) {
-                ((Configurable<?>) comp).props(Values.margin(5f, 10f, 15f, 20f));
-            } else if (comp instanceof Text) {
-                ((Text) comp).margin(5f, 10f, 15f, 20f);
-            }
-
-            assertEquals(5f, CellAccess.padTop(cell), 0.01f, comp.getClass().getSimpleName() + " padTop");
-            assertEquals(10f, CellAccess.padLeft(cell), 0.01f, comp.getClass().getSimpleName() + " padLeft");
-            assertEquals(15f, CellAccess.padBottom(cell), 0.01f, comp.getClass().getSimpleName() + " padBottom");
-            assertEquals(20f, CellAccess.padRight(cell), 0.01f, comp.getClass().getSimpleName() + " padRight");
-
-            if (comp instanceof Configurable) {
-                Table inner = ((Configurable<?>) comp).table();
-                if (inner != null) {
-                    assertEquals(0f, inner.getMarginTop(), 0.01f);
-                    assertEquals(0f, inner.getMarginLeft(), 0.01f);
-                    assertEquals(0f, inner.getMarginBottom(), 0.01f);
-                    assertEquals(0f, inner.getMarginRight(), 0.01f);
-                }
-            }
-        }
+        applyMarginAndAssert(new Column());
+        applyMarginAndAssert(new Row());
+        applyMarginAndAssert(new Card());
+        applyMarginAndAssert(new Button());
+        applyMarginAndAssert(new Text("label"));
     }
 
     @Test

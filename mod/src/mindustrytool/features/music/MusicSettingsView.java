@@ -76,7 +76,9 @@ public class MusicSettingsView extends Component {
                 }
             });
 
-            reactiveGrid(feature.trackSignal(type)).key(state -> state.disabledKey()).props(growX(), gap(unit(2)))
+            reactiveGrid(feature.trackSignal(type))
+                    .key(state -> state.disabledKey())
+                    .props(growX(), gap(unit(2)))
                     .items(state -> new TrackRow(feature, state));
         });
     }

@@ -49,9 +49,9 @@ public class DisplayGroupPopupView extends Component {
                 .props(gap(unit(1)), center())
                 .children(() -> {
                     reactiveGrid(items)
-                            .props(gap(unit(1)))
                             .key(f -> f.getMetadata().getId())
                             .columns(columns)
+                            .props(gap(unit(1)))
                             .items(this::itemButton);
                 })
                 .element();
