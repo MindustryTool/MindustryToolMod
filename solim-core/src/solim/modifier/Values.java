@@ -43,7 +43,7 @@ import solim.style.SolimButtonStyle;
 import solim.style.SolimButtonStyleBuilder;
 
 public final class Values {
-
+    // TODO: Move prop def into UI.java
     private Values() {
     }
 
@@ -721,36 +721,29 @@ public final class Values {
         });
     }
 
-    // Element
+    // Sizing
+    // Length values are design units. A cell records them unchanged and Arc applies Scl.scl()
+    // when it lays the cell out, so width(232) renders at 232 * Scl.scl() scene pixels (162 at the
+    // default 70% UI scale). A host with no parent cell falls back to element.setWidth/Height(
+    // Scl.scl(value)). element.getWidth()/getHeight() report the rendered scene pixels, so read
+    // those, never the design value, when the actual size matters.
 
     public static Prop width(Object v) {
-        return Prop.element("width", (Object) num(v),
-                (element, val) -> { if (val != null) setWidth(element, num(val)); });
+        return Prop.cell("width", (Object) Readable.of(Math.max(0f, num(v))),
+                (config, val) -> config.prefWidth = (Readable<Float>) val);
     }
 
     public static Prop width(Readable<Float> v) {
-        return Prop.element("width", v,
-                (element, val) -> { if (val != null) setWidth(element, num(val)); });
+        return Prop.cellSource("width", v, (config, source) -> config.prefWidth = (Readable<Float>) source);
     }
 
     public static Prop height(Object v) {
-        return Prop.element("height", (Object) num(v),
-                (element, val) -> { if (val != null) setHeight(element, num(val)); });
+        return Prop.cell("height", (Object) Readable.of(Math.max(0f, num(v))),
+                (config, val) -> config.prefHeight = (Readable<Float>) val);
     }
 
     public static Prop height(Readable<Float> v) {
-        return Prop.element("height", v,
-                (element, val) -> { if (val != null) setHeight(element, num(val)); });
-    }
-
-    private static void setWidth(Element element, float value) {
-        element.setWidth(Math.max(0f, value));
-        element.invalidateHierarchy();
-    }
-
-    private static void setHeight(Element element, float value) {
-        element.setHeight(Math.max(0f, value));
-        element.invalidateHierarchy();
+        return Prop.cellSource("height", v, (config, source) -> config.prefHeight = (Readable<Float>) source);
     }
 
     public static Prop size(Object v) {
@@ -758,9 +751,9 @@ public final class Values {
     }
 
     public static Prop size(Object width, Object height) {
-        return Prop.element("size", Boolean.TRUE, (element, val) -> {
-            setWidth(element, num(width));
-            setHeight(element, num(height));
+        return Prop.cell("size", (Object) Readable.of(Math.max(0f, num(width))), (config, val) -> {
+            config.prefWidth = (Readable<Float>) val;
+            config.prefHeight = Readable.of(Math.max(0f, num(height)));
         });
     }
 
@@ -770,28 +763,15 @@ public final class Values {
 
     public static Prop size(@Nullable Readable<Float> width, @Nullable Readable<Float> height) {
         if (width != null) {
-            return Prop.element("size", width, (element, val) -> {
-                if (val == null) {
-                    return;
-                }
-                setWidth(element, num(val));
-                if (height != null) {
-                    Float h = height.get();
-                    if (h != null) {
-                        setHeight(element, h);
-                    }
-                }
+            return Prop.cellSource("size", width, (config, source) -> {
+                config.prefWidth = (Readable<Float>) source;
+                config.prefHeight = height;
             });
         }
         if (height != null) {
-            return Prop.element("size", height, (element, val) -> {
-                if (val == null) {
-                    return;
-                }
-                setHeight(element, num(val));
-            });
+            return Prop.cellSource("size", height, (config, source) -> config.prefHeight = (Readable<Float>) source);
         }
-        return Prop.element("size", Boolean.TRUE, (element, val) -> {
+        return Prop.cell("size", Boolean.TRUE, (config, val) -> {
         });
     }
 

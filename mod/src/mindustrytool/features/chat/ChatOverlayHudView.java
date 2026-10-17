@@ -6,16 +6,13 @@ import static solim.modifier.Values.draggable;
 import static solim.modifier.Values.grow;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.growY;
-import static solim.modifier.Values.height;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.position;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.rounded;
-import static solim.modifier.Values.size;
 import static solim.modifier.Values.tooltip;
 import static solim.modifier.Values.visible;
-import static solim.modifier.Values.width;
 
 import arc.Core;
 import arc.func.Prov;
@@ -98,21 +95,21 @@ public class ChatOverlayHudView extends Component {
                             store.unread().markAsRead(activeId);
                         }
                     })
-                            .props(size(unit(12)), prefWidth(unit(12)), prefHeight(unit(12)), draggable(hud, feature.xSignal, feature.ySignal))
+                            .props(prefWidth(unit(12)), prefHeight(unit(12)), draggable(hud, feature.xSignal, feature.ySignal))
                             .children(() -> {
                                 stack()
                                         .grow()
                                         .center()
                                         .layer(() -> row().props(padding(unit(2)))
                                                 .children(() -> icon(FileIcon.of("message-circle.png"))
-                                                        .props(size(unit(8)), prefWidth(unit(8)), prefHeight(unit(8)))
+                                                        .props(prefWidth(unit(8)), prefHeight(unit(8)))
                                                         .center()
                                                         .props(grow())
                                                         .color(Color.white)))
                                         .layer(() -> row().props(top(), right(), grow(), visible(hasUnread)).children(() -> {
                                             image(circle())
                                                     .margin(unit(1))
-                                                    .props(size(unit(3)), prefWidth(unit(3)), prefHeight(unit(3)))
+                                                    .props(prefWidth(unit(3)), prefHeight(unit(3)))
                                                     .color(Color.scarlet);
                                         }));
                             });
@@ -171,7 +168,7 @@ public class ChatOverlayHudView extends Component {
                         row().props(growX(), background(colored(new Color(0.45f, 0.35f, 0.9f, 0.3f), Tex.whiteui)), padding(unit(1), unit(2), unit(1), unit(2)), gap(unit(2)), draggable(hud, feature.xSignal, feature.ySignal), center())
                                 .children(() -> {
                                     image(circle())
-                                            .props(size(unit(3)), prefWidth(unit(3)), prefHeight(unit(3)))
+                                            .props(prefWidth(unit(3)), prefHeight(unit(3)))
                                             .color(isConnected.map(c -> c ? Pal.heal : Color.scarlet));
 
                                     text(channelTitle)
@@ -183,22 +180,22 @@ public class ChatOverlayHudView extends Component {
 
                                     button(store.ui()::toggleChannelsCollapsed)
                                             .style(WebStyles.ghost())
-                                            .props(size(unit(10)), prefWidth(unit(10)), prefHeight(unit(10)))
+                                            .props(prefWidth(unit(10)), prefHeight(unit(10)))
                                             .visible(isDesktop)
                                             .props(tooltip(channelsTooltip))
-                                            .children(() -> icon(channelsIcon).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
+                                            .children(() -> icon(channelsIcon).props(prefWidth(unit(6)), prefHeight(unit(6))));
 
                                     button(store.ui()::toggleUsersCollapsed)
                                             .style(WebStyles.ghost())
-                                            .props(size(unit(10)), prefWidth(unit(10)), prefHeight(unit(10)))
+                                            .props(prefWidth(unit(10)), prefHeight(unit(10)))
                                             .visible(isDesktop)
                                             .props(tooltip(usersTooltip))
-                                            .children(() -> icon(usersIcon).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
+                                            .children(() -> icon(usersIcon).props(prefWidth(unit(6)), prefHeight(unit(6))));
 
                                     button(() -> service.refresh(store.channels().activeId().peek()))
                                             .style(WebStyles.ghost())
-                                            .props(size(unit(10)), prefWidth(unit(10)), prefHeight(unit(10)))
-                                            .children(() -> icon(Icon.refresh).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))));
+                                            .props(prefWidth(unit(10)), prefHeight(unit(10)))
+                                            .children(() -> icon(Icon.refresh).props(prefWidth(unit(5)), prefHeight(unit(5))));
 
                                     button(() -> {
                                         Prov<SolimDialog> dialog = feature.getSettingDialog();
@@ -207,13 +204,13 @@ public class ChatOverlayHudView extends Component {
                                         }
                                     })
                                             .style(WebStyles.ghost())
-                                            .props(size(unit(10)), prefWidth(unit(10)), prefHeight(unit(10)), tooltip(Core.bundle.get("feature.chat.ui.settings", "Settings")))
-                                            .children(() -> icon(Icon.settings).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))));
+                                            .props(prefWidth(unit(10)), prefHeight(unit(10)), tooltip(Core.bundle.get("feature.chat.ui.settings", "Settings")))
+                                            .children(() -> icon(Icon.settings).props(prefWidth(unit(5)), prefHeight(unit(5))));
 
                                     button(() -> feature.collapsedConfig.set(true))
                                             .style(WebStyles.ghost())
-                                            .props(size(unit(10)), prefWidth(unit(10)), prefHeight(unit(10)), tooltip(Core.bundle.get("feature.chat.ui.collapse", "Collapse")))
-                                            .children(() -> icon(Icon.cancel).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))));
+                                            .props(prefWidth(unit(10)), prefHeight(unit(10)), tooltip(Core.bundle.get("feature.chat.ui.collapse", "Collapse")))
+                                            .children(() -> icon(Icon.cancel).props(prefWidth(unit(5)), prefHeight(unit(5))));
                                 });
 
                         divider();
@@ -225,7 +222,7 @@ public class ChatOverlayHudView extends Component {
                                 buildDesktopBody();
                             }
                         })
-                                .props(width(winWidth), prefWidth(winWidth), height(winHeight), prefHeight(winHeight), grow());
+                                .props(prefWidth(winWidth), prefHeight(winHeight), grow());
                     });
                 });
     }
@@ -235,7 +232,7 @@ public class ChatOverlayHudView extends Component {
 
             when(store.ui().channelsCollapsed())
                     .elseDo(() -> row().props(growY()).children(() -> {
-                        row().props(width(unit(80)), prefWidth(unit(80)), growY()).children(() -> {
+                        row().props(prefWidth(unit(80)), growY()).children(() -> {
                             new ChatChannelListView(store, service);
                         });
                         divider(Direction.Y);
@@ -251,7 +248,7 @@ public class ChatOverlayHudView extends Component {
             when(store.ui().usersCollapsed())
                     .elseDo(() -> row().props(growY()).children(() -> {
                         divider(Direction.Y);
-                        row().props(width(unit(80)), prefWidth(unit(80)), growY()).children(() -> {
+                        row().props(prefWidth(unit(80)), growY()).children(() -> {
                             new ChatUserListView(store, service);
                         });
                     }))

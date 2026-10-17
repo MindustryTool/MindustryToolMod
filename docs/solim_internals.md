@@ -525,6 +525,31 @@ High-performance virtualized vertical list:
 
 ---
 
+### 5.5 Design Units & The Sizing Contract
+
+Every length a modifier accepts is a **design unit**, a scale-independent number. Arc then converts it to scene pixels through `Scl.scl(value)` when it lays the cell out, so the same UI renders proportionally on any display.
+
+```
+width(232)  ──recorded as──▶  PendingCellConfig.prefWidth = 232
+                                 │
+                                 ▼  AttachmentStack cell configurator
+                            Cell.width(232) = min = max = Scl.scl(232)
+                                 │
+                                 ▼  Table.layout()
+                            element.width = 232 * Scl.scl()
+                            (162px at the default 70% UI scale)
+```
+
+#### Rules
+- `width` / `height` / `size` are **cell-driving synonyms of `prefWidth` / `prefHeight`**: they fix the parent cell (`min = max = Scl.scl(value)`), not the raw element size. Use either vocabulary; `width(x)` and `prefWidth(x)` produce the same constraint and the same rendered size.
+- Do **not** pair `width(x)` with a different `prefWidth(y)`: both write the cell, and the last one wins. Pick one value.
+- A cell-less host (a `Hud` root added straight to `Core.scene`, a detached widget) has no parent cell to drive, so `PendingCellConfig` falls back to `element.setWidth/Height(Scl.scl(value))` directly. The fallback keeps the same scale contract; it never writes raw design units.
+- `element.getWidth()` / `element.getHeight()` return **rendered scene pixels** — the truth to read at runtime. `cellConfig().prefWidth.get()` returns the design-unit value the cell was built from. A design value of `232` rendering as `162px` at UI scale 70% is correct, not a bug.
+- `minWidth` / `maxWidth` (and the height pair) are bounds, not sizes: they never write the element directly and only constrain the cell.
+- `grow` / `growX` expand a cell but never weaken an explicit width: the floor a `width(x)` / `prefWidth(x)` pinned survives, so the cell still packs to `Scl.scl(x)` instead of collapsing to the child's content width. With no explicit width or `minWidth`, a growing cell keeps a floor of `0`.
+
+---
+
 ## 6. Base Component Model (`Component`)
 
 Every custom Solim component extends `Component`.

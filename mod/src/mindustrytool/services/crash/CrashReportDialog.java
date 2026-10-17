@@ -4,7 +4,6 @@ import static solim.UI.*;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.width;
 
 import arc.Core;
 import arc.files.Fi;
@@ -32,7 +31,7 @@ public class CrashReportDialog extends SolimDialog {
         children(() -> {
             Effect.of(sendSignal, value -> Core.settings.put(KEY_SEND, Boolean.TRUE.equals(value)));
 
-            column().props(growX(), padding(unit(2)), width(500f), prefWidth(500f), gap(unit(2))).children(() -> {
+            column().props(growX(), padding(unit(2)), prefWidth(500f), gap(unit(2))).children(() -> {
                 text(Core.bundle.get("crash-report.content"))
                         .wrap();
 

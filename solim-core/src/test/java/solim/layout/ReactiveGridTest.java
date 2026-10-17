@@ -182,6 +182,7 @@ class ReactiveGridTest extends SolimEnv {
         grid.table().setSize(300f, 300f);
         grid.table().layout();
         SignalDispatcher.flush();
+        grid.table().layout();
 
         float calculatedWidth = grid.context().itemWidth().get();
         for (Element child : childElements) {

@@ -4,6 +4,7 @@ import solim.runtime.ReactiveContext;
 
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
+import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import java.util.ArrayList;
@@ -196,12 +197,9 @@ public final class PendingCellConfig {
 
         if (growX) {
             cell.growX();
-            Float floor = ReactiveContext.untracked(() -> minWidth != null ? minWidth.peek() : null);
-            if (floor != null) {
-                cell.minWidth(Math.max(0f, floor));
-            } else if (minWidth == null) {
-                cell.minWidth(0f);
-            }
+            Float floor = ReactiveContext.untracked(
+                    () -> minWidth != null ? minWidth.peek() : prefWidth != null ? prefWidth.peek() : null);
+            cell.minWidth(floor != null ? Math.max(0f, floor) : 0f);
         }
         if (growY)
             cell.growY();
@@ -258,27 +256,27 @@ public final class PendingCellConfig {
     }
 
     public void applyPrefWidth(@Nullable Element element) {
-        applySize(element, prefWidth, Cell::width);
+        applySize(element, prefWidth, Cell::width, (target, value) -> target.setWidth(Scl.scl(value)));
     }
 
     public void applyPrefHeight(@Nullable Element element) {
-        applySize(element, prefHeight, Cell::height);
+        applySize(element, prefHeight, Cell::height, (target, value) -> target.setHeight(Scl.scl(value)));
     }
 
     public void applyMinWidth(@Nullable Element element) {
-        applySize(element, minWidth, Cell::minWidth);
+        applySize(element, minWidth, Cell::minWidth, null);
     }
 
     public void applyMinHeight(@Nullable Element element) {
-        applySize(element, minHeight, Cell::minHeight);
+        applySize(element, minHeight, Cell::minHeight, null);
     }
 
     public void applyMaxWidth(@Nullable Element element) {
-        applySize(element, maxWidth, Cell::maxWidth);
+        applySize(element, maxWidth, Cell::maxWidth, null);
     }
 
     public void applyMaxHeight(@Nullable Element element) {
-        applySize(element, maxHeight, Cell::maxHeight);
+        applySize(element, maxHeight, Cell::maxHeight, null);
     }
 
     public void applyMarginToParentCell(@Nullable Element element) {
@@ -330,20 +328,25 @@ public final class PendingCellConfig {
     }
 
     private static void applySize(@Nullable Element element, @Nullable Readable<Float> source,
-            SizeApplier applier) {
+            SizeApplier applier, @Nullable ElementSizeApplier elementApplier) {
         if (source == null) {
-            return;
-        }
-        Cell<?> cell = parentCell(element);
-        if (cell == null) {
             return;
         }
         Float value = source.get();
         if (value == null) {
             return;
         }
-        applier.apply(cell, Math.max(0f, value));
-        cell.getTable().invalidateHierarchy();
+        float size = Math.max(0f, value);
+        Cell<?> cell = parentCell(element);
+        if (cell != null) {
+            applier.apply(cell, size);
+            cell.getTable().invalidateHierarchy();
+            return;
+        }
+        if (element != null && elementApplier != null) {
+            elementApplier.apply(element, size);
+            element.invalidateHierarchy();
+        }
     }
 
     private static void applyMargin(@Nullable Element element, @Nullable Readable<Float> source,
@@ -432,6 +435,11 @@ public final class PendingCellConfig {
     @FunctionalInterface
     private interface SizeApplier {
         void apply(Cell<?> cell, float value);
+    }
+
+    @FunctionalInterface
+    private interface ElementSizeApplier {
+        void apply(Element element, float value);
     }
 
     @FunctionalInterface

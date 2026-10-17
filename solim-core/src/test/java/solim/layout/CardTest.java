@@ -602,7 +602,7 @@ class CardTest extends SolimEnv {
     @Test
     void heightBeforeAttachSetsParentCellFixedSlot() {
         Row parent = new Row();
-        Card card = new Card().props(height(70f), prefHeight(70f));
+        Card card = new Card().props(height(70f));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 20f));
@@ -620,7 +620,7 @@ class CardTest extends SolimEnv {
     @Test
     void heightAfterAttachMatchesBeforeAttach() {
         Row beforeParent = new Row();
-        Card before = new Card().props(height(70f), prefHeight(70f));
+        Card before = new Card().props(height(70f));
         beforeParent.children(() -> {
             before.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 20f));
@@ -634,7 +634,7 @@ class CardTest extends SolimEnv {
                 AttachmentStack.add(fixedSize(20f, 20f));
             });
         });
-        after.props(height(70f), prefHeight(70f));
+        after.props(height(70f));
 
         beforeParent.table().validate();
         beforeParent.table().layout();
@@ -650,7 +650,7 @@ class CardTest extends SolimEnv {
     @Test
     void heightLiftsShortContentToFixedSlot() {
         Row parent = new Row();
-        Card card = new Card().props(height(70f), prefHeight(70f));
+        Card card = new Card().props(height(70f));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 20f));
@@ -666,7 +666,7 @@ class CardTest extends SolimEnv {
     @Test
     void heightClampsTallContentToFixedSlot() {
         Row parent = new Row();
-        Card card = new Card().props(height(70f), prefHeight(70f));
+        Card card = new Card().props(height(70f));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 300f));
@@ -683,7 +683,7 @@ class CardTest extends SolimEnv {
     @Test
     void heightInColumnParentMatchesRow() {
         Column parent = new Column();
-        Card card = new Card().props(height(70f), prefHeight(70f));
+        Card card = new Card().props(height(70f));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 20f));

@@ -178,6 +178,10 @@ class NetworkImageComponentTest extends SolimEnv {
         img.size(45f, 35f);
         assertEquals(45f, CellAccess.minWidth(cell), 0.01f);
         assertEquals(35f, CellAccess.minHeight(cell), 0.01f);
+        assertEquals(45f, CellAccess.maxWidth(cell), 0.01f,
+                "size(w, h) must fix the cell width, not merely bound it");
+        assertEquals(35f, CellAccess.maxHeight(cell), 0.01f,
+                "size(w, h) must fix the cell height, not merely bound it");
 
         img.dispose();
     }

@@ -322,8 +322,6 @@ public final class NetworkImage extends Component implements Configurable<Networ
     public NetworkImage size(float width, float height) {
         float w = Math.max(0f, width);
         float h = Math.max(0f, height);
-        element.setWidth(w);
-        element.setHeight(h);
         constraints.prefWidth = Readable.of(w);
         constraints.prefHeight = Readable.of(h);
         constraints.applyPrefWidth(element);
@@ -341,13 +339,17 @@ public final class NetworkImage extends Component implements Configurable<Networ
         Effect.of(() -> {
             Float w = width != null ? width.get() : null;
             Float h = height != null ? height.get() : null;
-            if (w != null && h != null) {
-                element.setWidth(Math.max(0f, w));
-                element.setHeight(Math.max(0f, h));
-                element.invalidateHierarchy();
-                if (cornerRadius > 0 && currentUrl != null) {
-                    loadUrl(currentUrl);
-                }
+            if (w == null && h == null) {
+                return;
+            }
+            if (width != null) {
+                constraints.applyPrefWidth(element);
+            }
+            if (height != null) {
+                constraints.applyPrefHeight(element);
+            }
+            if (w != null && h != null && cornerRadius > 0 && currentUrl != null) {
+                loadUrl(currentUrl);
             }
         });
         return this;

@@ -4,6 +4,7 @@ import static solim.UI.*;
 import static solim.modifier.Values.align;
 
 import arc.scene.Element;
+import arc.scene.ui.layout.Scl;
 import arc.util.Align;
 import arc.util.Nullable;
 import arc.util.Scaling;
@@ -47,7 +48,7 @@ final class BoundedSchematicImage extends SolimElement {
 
     private float bound() {
         Float value = size != null ? size.peek() : null;
-        return value != null ? value : fallback;
+        return Scl.scl(value != null ? value : fallback);
     }
 
     private final class FixedPreview extends SchematicImage {
