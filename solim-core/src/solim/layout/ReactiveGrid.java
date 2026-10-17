@@ -5,7 +5,6 @@ import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
-import java.util.*;
 import arc.func.Func2;
 import arc.func.Func;
 import arc.func.Prov;
@@ -324,6 +323,9 @@ public final class ReactiveGrid<T> extends Component
             }
             cell.top().left();
             PendingCellConfig sc = PendingCellConfig.find(comp);
+            if (sc == null) {
+                sc = PendingCellConfig.find(el);
+            }
             if (sc == null || sc.growX || !sc.hasExplicitWidth()) {
                 cell.growX().uniformX();
             }
