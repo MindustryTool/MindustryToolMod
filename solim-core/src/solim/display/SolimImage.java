@@ -15,6 +15,7 @@ import solim.modifier.AlignmentCapability;
 import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.ElementCapability;
+import solim.modifier.IconCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.reactive.Effect;
@@ -22,7 +23,7 @@ import solim.reactive.Readable;
 import solim.reactive.Signal;
 
 public final class SolimImage extends Component
-        implements SpacingAware, Configurable<SolimImage>, ElementCapability, CellCapability, AlignmentCapability {
+        implements SpacingAware, Configurable<SolimImage>, ElementCapability, CellCapability, AlignmentCapability, IconCapability {
 
     private final Image element;
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -94,6 +95,14 @@ public final class SolimImage extends Component
             withinOwnership(() -> Effect.of(() -> element.setDrawable(d.get())));
         }
         return this;
+    }
+
+    public SolimImage icon(@Nullable Drawable d) {
+        return drawable(d);
+    }
+
+    public SolimImage icon(@Nullable Readable<Drawable> d) {
+        return drawable(d);
     }
 
     public SolimImage scaling(Scaling scaling) {

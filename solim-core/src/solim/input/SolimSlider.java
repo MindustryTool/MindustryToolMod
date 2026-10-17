@@ -14,11 +14,12 @@ import solim.modifier.Configurable;
 import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
+import solim.modifier.SliderCapability;
 import solim.reactive.Signal;
 import java.util.Objects;
 
 public final class SolimSlider extends Component
-        implements Configurable<SolimSlider>, ElementCapability, CellCapability, AlignmentCapability {
+        implements Configurable<SolimSlider>, ElementCapability, CellCapability, AlignmentCapability, SliderCapability {
     private final Slider slider;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private @Nullable Props<SolimSlider> pending;
@@ -111,6 +112,13 @@ public final class SolimSlider extends Component
 
     public SolimSlider name(String name) {
         setName(name);
+        return this;
+    }
+
+    public SolimSlider style(@Nullable Slider.SliderStyle style) {
+        if (style != null) {
+            slider.setStyle(style);
+        }
         return this;
     }
 

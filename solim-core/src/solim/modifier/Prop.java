@@ -39,6 +39,10 @@ public final class Prop<Requires extends HostCapability, V> {
         return requiredCapability;
     }
 
+    public Class<? extends HostCapability> requires() {
+        return requiredCapability;
+    }
+
     public static <Req extends HostCapability, V> Prop<Req, V> element(Class<Req> requires, String label, @Nullable V value,
             Cons2<Element, V> setter) {
         return new Prop<>(Kind.ELEMENT, requires, label, (view, v) -> view.withElement(element -> setter.get(element, v)),

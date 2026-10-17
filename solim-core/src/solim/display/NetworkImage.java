@@ -32,13 +32,14 @@ import solim.modifier.AlignmentCapability;
 import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.ElementCapability;
+import solim.modifier.IconCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 
 public final class NetworkImage extends Component
-        implements Configurable<NetworkImage>, ElementCapability, CellCapability, AlignmentCapability {
+        implements Configurable<NetworkImage>, ElementCapability, CellCapability, AlignmentCapability, IconCapability {
 
     private static final Map<String, TextureRegionDrawable> cache = new ConcurrentHashMap<>();
 

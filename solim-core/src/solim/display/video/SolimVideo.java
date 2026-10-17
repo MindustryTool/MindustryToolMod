@@ -29,9 +29,11 @@ import solim.modifier.AlignmentCapability;
 import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.ElementCapability;
+import solim.modifier.IconCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.modifier.Values;
+import solim.modifier.VideoCapability;
 import solim.reactive.Computed;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
@@ -39,7 +41,7 @@ import solim.reactive.Signal;
 import solim.runtime.AttachmentStack;
 
 public final class SolimVideo extends Component
-        implements Configurable<SolimVideo>, ElementCapability, CellCapability, AlignmentCapability {
+        implements Configurable<SolimVideo>, ElementCapability, CellCapability, AlignmentCapability, VideoCapability, IconCapability {
 
     private static final long OVERLAY_HIDE_DELAY = 2500;
 

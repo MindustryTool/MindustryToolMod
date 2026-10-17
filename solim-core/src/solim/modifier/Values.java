@@ -10,19 +10,27 @@ import arc.scene.ui.Button.ButtonStyle;
 import arc.scene.ui.Label;
 import arc.scene.ui.Label.LabelStyle;
 import arc.scene.ui.ScrollPane.ScrollPaneStyle;
+import arc.scene.ui.Slider.SliderStyle;
+import arc.scene.ui.TextField.TextFieldStyle;
 import arc.scene.ui.Tooltip;
 import arc.scene.ui.layout.Table;
 import arc.util.Align;
 import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.HostCapability;
+import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.display.Badge;
+import solim.display.NetworkImage;
+import solim.display.SolimImage;
 import solim.display.Text;
+import solim.display.video.SolimVideo;
 import solim.graphics.RoundedDrawable;
 import solim.input.Button;
 import solim.input.Checkbox;
+import solim.input.SolimSlider;
 import solim.input.SolimTextField;
+import solim.input.Switch;
 import solim.layout.GapContainer;
 import solim.layout.Scroll;
 import solim.overlay.Hud;
@@ -846,73 +854,218 @@ public final class Values {
         return hostProp("color", null, source, Values::paint);
     }
 
-    public static Prop<ElementCapability, Cons<SolimButtonStyleBuilder>> buttonStyle(
+    public static Prop<ButtonCapability, Cons<SolimButtonStyleBuilder>> buttonStyle(
             @Nullable Cons<SolimButtonStyleBuilder> config) {
-        return Prop.raw(ElementCapability.class, "buttonStyle", Prop.Kind.ELEMENT, target -> {
+        return Prop.raw(ButtonCapability.class, "buttonStyle", Prop.Kind.ELEMENT, target -> {
+            if (config == null) {
+                return;
+            }
             Component owner = hostOf(target);
             if (owner instanceof Button) {
                 ((Button) owner).style(config);
+            } else if (owner != null) {
+                throw new IllegalArgumentException("Host " + owner.getClass().getName() + " cannot accept buttonStyle");
             }
         });
     }
 
-    public static <S> Prop<ElementCapability, S> style(@Nullable S value) {
-        return hostProp("style", value, Values::restyle);
+    public static Prop<LabelCapability, LabelStyle> style(@Nullable LabelStyle value) {
+        return hostProp(LabelCapability.class, "style", value, (element, v, host) -> {
+            if (v == null) {
+                return;
+            }
+            if (host instanceof Text) {
+                ((Text) host).style(v);
+            } else {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept " + v.getClass().getName());
+            }
+        });
+    }
+
+    public static Prop<ButtonCapability, SolimButtonStyle> style(@Nullable SolimButtonStyle value) {
+        return hostProp(ButtonCapability.class, "style", value, (element, v, host) -> {
+            if (v == null) {
+                return;
+            }
+            if (host instanceof Button) {
+                ((Button) host).style(v);
+            } else {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept " + v.getClass().getName());
+            }
+        });
+    }
+
+    public static Prop<ButtonCapability, ButtonStyle> style(@Nullable ButtonStyle value) {
+        return hostProp(ButtonCapability.class, "style", value, (element, v, host) -> {
+            if (v == null) {
+                return;
+            }
+            if (host instanceof Button) {
+                ((Button) host).style(v);
+            } else {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept " + v.getClass().getName());
+            }
+        });
+    }
+
+    public static Prop<FieldCapability, TextFieldStyle> style(@Nullable TextFieldStyle value) {
+        return hostProp(FieldCapability.class, "style", value, (element, v, host) -> {
+            if (v == null) {
+                return;
+            }
+            if (host instanceof SolimTextField) {
+                ((SolimTextField) host).style(v);
+            } else {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept " + v.getClass().getName());
+            }
+        });
+    }
+
+    public static Prop<FieldCapability, InputStyle> style(@Nullable InputStyle value) {
+        return hostProp(FieldCapability.class, "style", value, (element, v, host) -> {
+            if (v == null) {
+                return;
+            }
+            if (host instanceof SolimTextField) {
+                ((SolimTextField) host).style(v);
+            } else {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept " + v.getClass().getName());
+            }
+        });
+    }
+
+    public static Prop<ScrollCapability, ScrollPaneStyle> style(@Nullable ScrollPaneStyle value) {
+        return hostProp(ScrollCapability.class, "style", value, (element, v, host) -> {
+            if (v == null) {
+                return;
+            }
+            if (host instanceof Scroll) {
+                ((Scroll) host).style(v);
+            } else {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept " + v.getClass().getName());
+            }
+        });
+    }
+
+    public static Prop<SliderCapability, SliderStyle> style(@Nullable SliderStyle value) {
+        return hostProp(SliderCapability.class, "style", value, (element, v, host) -> {
+            if (v == null) {
+                return;
+            }
+            if (host instanceof SolimSlider) {
+                ((SolimSlider) host).style(v);
+            } else {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept " + v.getClass().getName());
+            }
+        });
     }
 
     public static <S> Prop<ElementCapability, S> style(@Nullable Readable<S> source) {
-        return hostProp("style", null, source, Values::restyle);
+        return hostProp(ElementCapability.class, "style", null, source, Values::restyle);
     }
 
-    public static Prop<ElementCapability, String> text(@Nullable String value) {
-        return hostProp("text", value, (element, v, host) -> {
+    public static Prop<TextCapability, String> text(@Nullable String value) {
+        return hostProp(TextCapability.class, "text", value, (element, v, host) -> {
+            if (v == null) {
+                return;
+            }
             if (host instanceof Button) {
                 ((Button) host).text(v);
             } else if (host instanceof Text) {
                 ((Text) host).text(v);
+            } else if (host instanceof SolimTextField) {
+                ((SolimTextField) host).placeholder(v);
+            } else {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept text prop");
             }
         });
     }
 
-    public static Prop<ElementCapability, String> text(@Nullable Readable<String> source) {
-        return hostOwnedProp("text", target -> {
+    public static Prop<TextCapability, String> text(@Nullable Readable<String> source) {
+        return hostOwnedProp(TextCapability.class, "text", target -> {
+            if (source == null) {
+                return;
+            }
             Component host = hostOf(target);
             if (host instanceof Button) {
                 ((Button) host).text(source);
             } else if (host instanceof Text) {
                 ((Text) host).text(source);
+            } else if (host instanceof SolimTextField) {
+                OwnershipContext.push(host);
+                try {
+                    Effect.of(() -> ((SolimTextField) host).placeholder(source.get()));
+                } finally {
+                    OwnershipContext.pop();
+                }
+            } else if (host != null) {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept text prop");
             }
         });
     }
 
-    public static Prop<ElementCapability, Drawable> icon(@Nullable Drawable value) {
-        return hostProp("icon", value, (element, v, host) -> {
-            if (host instanceof Button && v != null) {
+    public static Prop<IconCapability, Drawable> icon(@Nullable Drawable value) {
+        return hostProp(IconCapability.class, "icon", value, (element, v, host) -> {
+            if (v == null) {
+                return;
+            }
+            if (host instanceof Button) {
                 ((Button) host).icon(v);
+            } else if (host instanceof SolimImage) {
+                ((SolimImage) host).icon(v);
+            } else if (host instanceof NetworkImage) {
+                ((NetworkImage) host).placeholder(v);
+            } else if (host instanceof SolimVideo) {
+                ((SolimVideo) host).fallback(v);
+            } else {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept icon prop");
             }
         });
     }
 
-    public static Prop<ElementCapability, Drawable> icon(@Nullable Readable<Drawable> source) {
-        return hostOwnedProp("icon", target -> {
+    public static Prop<IconCapability, Drawable> icon(@Nullable Readable<Drawable> source) {
+        return hostOwnedProp(IconCapability.class, "icon", target -> {
+            if (source == null) {
+                return;
+            }
             Component host = hostOf(target);
             if (host instanceof Button) {
                 ((Button) host).icon(source);
+            } else if (host instanceof SolimImage) {
+                ((SolimImage) host).icon(source);
+            } else if (host != null) {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept icon prop");
             }
         });
     }
 
-    public static Prop<ElementCapability, Boolean> checked(@Nullable Readable<Boolean> source) {
-        return hostOwnedProp("checked", target -> {
+    public static Prop<CheckableCapability, Boolean> checked(@Nullable Readable<Boolean> source) {
+        return hostOwnedProp(CheckableCapability.class, "checked", target -> {
+            if (source == null) {
+                return;
+            }
             Component host = hostOf(target);
             if (host instanceof Button) {
                 ((Button) host).checked(source);
+            } else if (host instanceof Checkbox) {
+                ((Checkbox) host).checked(source);
+            } else if (host instanceof Switch) {
+                ((Switch) host).checked(source);
+            } else if (host != null) {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept checked prop");
             }
         });
     }
 
+    public static Prop<CheckableCapability, Boolean> checked(boolean value) {
+        return checked(Readable.of(value));
+    }
+
     public static Prop<ElementCapability, Boolean> enabled(@Nullable Readable<Boolean> source) {
-        return hostOwnedProp("enabled", target -> {
+        return hostOwnedProp(ElementCapability.class, "enabled", target -> {
+            if (source == null) {
+                return;
+            }
             Component host = hostOf(target);
             if (host instanceof Button) {
                 ((Button) host).enabled(source);
@@ -933,6 +1086,9 @@ public final class Values {
 
     public static Prop<ElementCapability, Boolean> disabled(@Nullable Readable<Boolean> source) {
         return hostOwnedProp("disabled", target -> {
+            if (source == null) {
+                return;
+            }
             Component host = hostOf(target);
             if (host instanceof SolimTextField) {
                 ((SolimTextField) host).disabled(source);
@@ -942,45 +1098,136 @@ public final class Values {
         });
     }
 
-    public static Prop<ElementCapability, Boolean> wrap(boolean value) {
-        return hostProp("wrap", value, (element, v, host) -> {
-            boolean wrap = Boolean.TRUE.equals(v);
+    public static Prop<WrappableCapability, Boolean> wrap(boolean value) {
+        return hostProp(WrappableCapability.class, "wrap", value, (element, v, host) -> {
+            if (v == null) {
+                return;
+            }
+            boolean wrap = v;
             if (host instanceof Text) {
                 ((Text) host).wrap(wrap);
             } else if (host instanceof Checkbox) {
                 ((Checkbox) host).wrap(wrap);
+            } else {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept wrap prop");
             }
         });
     }
 
-    public static Prop<ElementCapability, Boolean> wrap() {
+    public static Prop<WrappableCapability, Boolean> wrap() {
         return wrap(true);
     }
 
-    public static Prop<ElementCapability, Boolean> ellipsis(boolean value) {
-        return hostProp("ellipsis", value, (element, v, host) -> {
+    public static Prop<WrappableCapability, Boolean> ellipsis(boolean value) {
+        return hostProp(WrappableCapability.class, "ellipsis", value, (element, v, host) -> {
+            if (v == null) {
+                return;
+            }
             if (host instanceof Text) {
-                ((Text) host).ellipsis(Boolean.TRUE.equals(v));
+                ((Text) host).ellipsis(v);
+            } else {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept ellipsis prop");
             }
         });
     }
 
-    public static Prop<ElementCapability, Boolean> ellipsis() {
+    public static Prop<WrappableCapability, Boolean> ellipsis() {
         return ellipsis(true);
     }
 
-    public static Prop<ElementCapability, Float> fontScale(float value) {
-        return hostProp("fontScale", value, (element, v, host) -> {
-            if (host instanceof Text && v != null) {
+    public static Prop<WrappableCapability, Float> fontScale(float value) {
+        return hostProp(WrappableCapability.class, "fontScale", value, (element, v, host) -> {
+            if (v == null) {
+                return;
+            }
+            if (host instanceof Text) {
                 ((Text) host).fontScale(v);
+            } else {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept fontScale prop");
             }
         });
     }
 
-    public static Prop<ElementCapability, Float> fontScale(@Nullable Readable<Float> source) {
-        return hostProp("fontScale", null, source, (element, v, host) -> {
-            if (host instanceof Text && v != null) {
+    public static Prop<WrappableCapability, Float> fontScale(@Nullable Readable<Float> source) {
+        return hostProp(WrappableCapability.class, "fontScale", null, source, (element, v, host) -> {
+            if (v == null) {
+                return;
+            }
+            if (host instanceof Text) {
                 ((Text) host).fontScale(v);
+            } else {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept fontScale prop");
+            }
+        });
+    }
+
+    public static Prop<IconCapability, String> url(@Nullable String value) {
+        return hostProp(IconCapability.class, "url", value, (element, v, host) -> {
+            if (v == null) {
+                return;
+            }
+            if (host instanceof NetworkImage) {
+                ((NetworkImage) host).url(v);
+            } else if (host instanceof SolimVideo) {
+                ((SolimVideo) host).url(v);
+            } else {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept url prop");
+            }
+        });
+    }
+
+    public static Prop<IconCapability, String> url(@Nullable Readable<String> source) {
+        return hostProp(IconCapability.class, "url", null, source, (element, v, host) -> {
+            if (v == null) {
+                return;
+            }
+            if (host instanceof NetworkImage) {
+                ((NetworkImage) host).url(v);
+            } else if (host instanceof SolimVideo) {
+                ((SolimVideo) host).url(v);
+            } else {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept url prop");
+            }
+        });
+    }
+
+    public static Prop<IconCapability, Drawable> placeholder(@Nullable Drawable value) {
+        return hostProp(IconCapability.class, "placeholder", value, (element, v, host) -> {
+            if (v == null) {
+                return;
+            }
+            if (host instanceof NetworkImage) {
+                ((NetworkImage) host).placeholder(v);
+            } else {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept placeholder prop");
+            }
+        });
+    }
+
+    public static Prop<IconCapability, Drawable> fallback(@Nullable Drawable value) {
+        return hostProp(IconCapability.class, "fallback", value, (element, v, host) -> {
+            if (v == null) {
+                return;
+            }
+            if (host instanceof NetworkImage) {
+                ((NetworkImage) host).fallback(v);
+            } else if (host instanceof SolimVideo) {
+                ((SolimVideo) host).fallback(v);
+            } else {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept fallback prop");
+            }
+        });
+    }
+
+    public static Prop<VideoCapability, Boolean> autoplay(boolean value) {
+        return hostProp(VideoCapability.class, "autoplay", value, (element, v, host) -> {
+            if (v == null) {
+                return;
+            }
+            if (host instanceof SolimVideo) {
+                ((SolimVideo) host).autoplay(v);
+            } else {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept autoplay prop");
             }
         });
     }
@@ -1001,32 +1248,45 @@ public final class Values {
     }
 
     private static <S> void restyle(Element element, @Nullable S value, Component host) {
+        if (value == null) {
+            return;
+        }
         if (value instanceof SolimButtonStyle && host instanceof Button) {
             ((Button) host).style((SolimButtonStyle) value);
         } else if (value instanceof ButtonStyle && host instanceof Button) {
             ((Button) host).style((ButtonStyle) value);
         } else if (value instanceof InputStyle && host instanceof SolimTextField) {
             ((SolimTextField) host).style((InputStyle) value);
+        } else if (value instanceof TextFieldStyle && host instanceof SolimTextField) {
+            ((SolimTextField) host).style((TextFieldStyle) value);
         } else if (value instanceof ScrollPaneStyle && host instanceof Scroll) {
             ((Scroll) host).style((ScrollPaneStyle) value);
+        } else if (value instanceof SliderStyle && host instanceof SolimSlider) {
+            ((SolimSlider) host).style((SliderStyle) value);
         } else if (value instanceof LabelStyle && host instanceof Text) {
             ((Text) host).style((LabelStyle) value);
+        } else {
+            throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept style value of type " + value.getClass().getName());
         }
     }
 
+    private static <Req extends HostCapability, V> Prop<Req, V> hostOwnedProp(Class<Req> requires, String label, Cons<Object> action) {
+        return Prop.raw(requires, label, Prop.Kind.ELEMENT, action);
+    }
+
     private static <V> Prop<ElementCapability, V> hostOwnedProp(String label, Cons<Object> action) {
-        return Prop.raw(ElementCapability.class, label, Prop.Kind.ELEMENT, action);
+        return hostOwnedProp(ElementCapability.class, label, action);
     }
 
     private static @Nullable Component hostOf(@Nullable Object target) {
         return target instanceof Element ? SolimToken.getComponent((Element) target) : null;
     }
 
-    private static <V> Prop<ElementCapability, V> hostProp(String label, @Nullable V value, HostAction<V> action) {
-        return hostProp(label, value, null, action);
+    private static <Req extends HostCapability, V> Prop<Req, V> hostProp(Class<Req> requires, String label, @Nullable V value, HostAction<V> action) {
+        return hostProp(requires, label, value, null, action);
     }
 
-    private static <V> Prop<ElementCapability, V> hostProp(String label, @Nullable V value, @Nullable Readable<V> source,
+    private static <Req extends HostCapability, V> Prop<Req, V> hostProp(Class<Req> requires, String label, @Nullable V value, @Nullable Readable<V> source,
             HostAction<V> action) {
         Cons2<Element, V> setter = (element, resolved) -> {
             Component host = SolimToken.getComponent(element);
@@ -1034,8 +1294,17 @@ public final class Values {
                 action.apply(element, resolved, host);
             }
         };
-        return source != null ? Prop.elementSource(ElementCapability.class, label, source, setter)
-                : Prop.element(ElementCapability.class, label, value, setter);
+        return source != null ? Prop.elementSource(requires, label, source, setter)
+                : Prop.element(requires, label, value, setter);
+    }
+
+    private static <V> Prop<ElementCapability, V> hostProp(String label, @Nullable V value, HostAction<V> action) {
+        return hostProp(ElementCapability.class, label, value, null, action);
+    }
+
+    private static <V> Prop<ElementCapability, V> hostProp(String label, @Nullable V value, @Nullable Readable<V> source,
+            HostAction<V> action) {
+        return hostProp(ElementCapability.class, label, value, source, action);
     }
 
     @FunctionalInterface

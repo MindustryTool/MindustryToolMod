@@ -24,12 +24,13 @@ import solim.modifier.Configurable;
 import solim.modifier.ContainerCapability;
 import solim.modifier.TableCapability;
 import solim.modifier.Props;
+import solim.modifier.ScrollCapability;
 import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.modifier.PendingCellConfig;
 
 public final class Scroll extends Component
-        implements Configurable<Scroll>, TableCapability, CellCapability, ContainerCapability<Scroll>, AlignmentCapability {
+        implements Configurable<Scroll>, TableCapability, CellCapability, ContainerCapability<Scroll>, AlignmentCapability, ScrollCapability {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);

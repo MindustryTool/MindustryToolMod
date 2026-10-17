@@ -9,6 +9,7 @@ import solim.core.Component;
 import solim.core.DisposableAction;
 import solim.core.OwnershipContext;
 import solim.reactive.Signal;
+import solim.modifier.AlignmentCapability;
 import solim.modifier.CellCapability;
 import solim.modifier.CheckableCapability;
 import solim.modifier.Configurable;
