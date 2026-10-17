@@ -7,10 +7,12 @@ import arc.graphics.Pixmap;
 import arc.graphics.Texture;
 import arc.graphics.Texture.TextureFilter;
 import arc.graphics.g2d.TextureRegion;
+import arc.scene.Element;
 import arc.scene.style.Drawable;
 import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.Image;
 import arc.scene.ui.layout.Cell;
+import arc.scene.ui.layout.Table;
 import arc.scene.ui.layout.Table;
 import arc.util.Log;
 import arc.util.Nullable;
@@ -24,15 +26,16 @@ import java.util.concurrent.ExecutorService;
 import mindustry.Vars;
 import solim.core.Component;
 import solim.core.Disposable;
+import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.graphics.RoundedGenerator;
-import solim.modifier.CellConfig;
-import solim.modifier.ElementConfig;
+import solim.modifier.Configurable;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.Props;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 
-public final class NetworkImage extends Component implements CellConfig<NetworkImage>, ElementConfig<NetworkImage> {
+public final class NetworkImage extends Component implements Configurable<NetworkImage> {
 
     private static final Map<String, TextureRegionDrawable> cache = new ConcurrentHashMap<>();
 
@@ -178,6 +181,7 @@ public final class NetworkImage extends Component implements CellConfig<NetworkI
     private @Nullable Drawable fallback;
     private final Image element;
     private final PendingCellConfig constraints = new PendingCellConfig();
+    private @Nullable Props<NetworkImage> pending;
     private @Nullable Disposable binding;
     private @Nullable String currentUrl;
     private boolean failed = false;
@@ -202,6 +206,39 @@ public final class NetworkImage extends Component implements CellConfig<NetworkI
     }
 
     @Override
+    public @Nullable Table table() {
+        return null;
+    }
+
+    @Override
+    public NetworkImage children(@Nullable Runnable block) {
+        applyPendingProps();
+        OwnershipContext.push(this);
+        try {
+            if (block != null) {
+                block.run();
+            }
+        } finally {
+            OwnershipContext.pop();
+        }
+        return this;
+    }
+
+    @Override
+    public @Nullable Props<NetworkImage> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<NetworkImage> props) {
+        this.pending = props;
+    }
+
+    @Override
+    protected void onRealized(Element element) {
+        applyPendingProps();
+    }
+
     public NetworkImage name(@Nullable String name) {
         setName(name);
         return this;
@@ -283,8 +320,15 @@ public final class NetworkImage extends Component implements CellConfig<NetworkI
     }
 
     public NetworkImage size(float width, float height) {
-        width(width);
-        height(height);
+        float w = Math.max(0f, width);
+        float h = Math.max(0f, height);
+        element.setWidth(w);
+        element.setHeight(h);
+        constraints.prefWidth = Readable.of(w);
+        constraints.prefHeight = Readable.of(h);
+        constraints.applyPrefWidth(element);
+        constraints.applyPrefHeight(element);
+        element.invalidateHierarchy();
         if (cornerRadius > 0 && currentUrl != null) {
             loadUrl(currentUrl);
         }
@@ -310,7 +354,7 @@ public final class NetworkImage extends Component implements CellConfig<NetworkI
             binding = null;
         }
         if (url != null) {
-            binding = own(Effect.of(() -> loadUrl(url.get())));
+            withinOwnership(() -> binding = Effect.of(() -> loadUrl(url.get())));
         }
         return this;
     }
@@ -534,7 +578,7 @@ public final class NetworkImage extends Component implements CellConfig<NetworkI
 
     public NetworkImage color(Readable<Color> color) {
         if (color != null) {
-            own(Effect.of(() -> {
+            withinOwnership(() -> Effect.of(() -> {
                 Color c = color.get();
                 if (c != null)
                     element.setColor(c);

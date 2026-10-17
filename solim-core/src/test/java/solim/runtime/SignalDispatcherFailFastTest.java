@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
 
-class SignalDispatcherFailFastTest {
+class SignalDispatcherFailFastTest extends solim.test.SolimCoreEnv {
 
     @BeforeEach
     @AfterEach

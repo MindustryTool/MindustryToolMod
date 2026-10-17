@@ -1,6 +1,9 @@
 package mindustrytool.features.togglerendering;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.prefHeight;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -41,8 +44,8 @@ public class ToggleRenderingSettingsView extends Component {
     private Component layersCard() {
         return SettingCard.section(Icon.eye, Core.bundle.get("feature.toggle-rendering.settings.layers"), () -> {
 
-            row().growX().gap(unit(2)).center().children(() -> {
-                column().growX().gap(unit(1.5f)).left().children(() -> {
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
+                column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                     text(Core.bundle.get("feature.toggle-rendering.settings.draw-units-allies"))
                             .color(Color.white)
                             .left();
@@ -58,8 +61,8 @@ public class ToggleRenderingSettingsView extends Component {
 
             divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            row().growX().gap(unit(2)).center().children(() -> {
-                column().growX().gap(unit(1.5f)).left().children(() -> {
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
+                column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                     text(Core.bundle.get("feature.toggle-rendering.settings.draw-units-enemies"))
                             .color(Color.white)
                             .left();
@@ -75,8 +78,8 @@ public class ToggleRenderingSettingsView extends Component {
 
             divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            row().growX().gap(unit(2)).center().children(() -> {
-                column().growX().gap(unit(1.5f)).left().children(() -> {
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
+                column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                     text(Core.bundle.get("feature.toggle-rendering.settings.draw-blocks"))
                             .color(Color.white)
                             .left();
@@ -97,8 +100,7 @@ public class ToggleRenderingSettingsView extends Component {
             button(Core.bundle.get("feature.toggle-rendering.settings.reset"),
                     feature::resetToDefaults)
                     .style(WebStyles.outlineText())
-                    .height(unit(11))
-                    .growX();
+                    .props(height(unit(11)), prefHeight(unit(11)), growX());
         });
     }
 }

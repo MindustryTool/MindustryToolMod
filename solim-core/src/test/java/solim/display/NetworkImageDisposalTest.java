@@ -22,9 +22,9 @@ import arc.graphics.GL20;
 import arc.graphics.g2d.TextureRegion;
 import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
-import solim.test.SolimEnv;
+import solim.test.OwnershipEnv;
 
-class NetworkImageDisposalTest extends SolimEnv {
+class NetworkImageDisposalTest extends OwnershipEnv {
 
 	static Application prevApp;
 	static Graphics prevGraphics;

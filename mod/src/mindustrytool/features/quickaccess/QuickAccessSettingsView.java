@@ -1,6 +1,15 @@
 package mindustrytool.features.quickaccess;
 
 import static solim.UI.*;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.maxWidth;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.scene.Element;
@@ -25,9 +34,9 @@ public class QuickAccessSettingsView extends Component {
     @Override
     protected Element build() {
 
-        return column().grow().top().center().maxWidth(750f).children(() -> {
-            scroll().grow().scrollX(false).children(() -> {
-                column().growX().top().center().gap(unit(3)).padding(unit(2)).children(() -> {
+        return column().props(grow(), maxWidth(750f), top(), center()).children(() -> {
+            scroll().props(grow()).scrollX(false).children(() -> {
+                column().props(growX(), padding(unit(2)), top(), center(), gap(unit(3))).children(() -> {
                     headerCard();
                     appearanceCard();
                     featuresCard();
@@ -63,10 +72,10 @@ public class QuickAccessSettingsView extends Component {
                             feature.colsConfig.signal().map(v -> String.valueOf(v)));
 
                     checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle"),
-                            feature.hideDragHandleConfig.signal()).growX();
+                            feature.hideDragHandleConfig.signal()).props(growX());
 
                     checkbox(Core.bundle.get("feature.quick-access.settings.collapsible"),
-                            feature.collapsibleConfig.signal()).growX();
+                            feature.collapsibleConfig.signal()).props(growX());
                 });
     }
 
@@ -75,8 +84,8 @@ public class QuickAccessSettingsView extends Component {
                 Core.bundle.get("feature.quick-access.settings.visible-features"), () -> {
                     Readable<List<Feature>> orderedRows = feature.orderedFeaturesSignal();
 
-                    reactiveGrid(orderedRows).key(f -> f.getMetadata().getId()).growX().gap(unit(2))
-                            .children(f -> new FeatureOrderRow(feature, f));
+                    reactiveGrid(orderedRows).key(f -> f.getMetadata().getId()).props(growX(), gap(unit(2)))
+                            .items(f -> new FeatureOrderRow(feature, f));
                 });
     }
 
@@ -85,8 +94,7 @@ public class QuickAccessSettingsView extends Component {
             button(Core.bundle.get("feature.quick-access.settings.reset-position"),
                     feature::resetPosition)
                     .style(WebStyles.outlineText())
-                    .height(unit(11))
-                    .growX();
+                    .props(height(unit(11)), prefHeight(unit(11)), growX());
         });
     }
 
@@ -105,24 +113,22 @@ public class QuickAccessSettingsView extends Component {
             Readable<Boolean> canMoveUp = feature.canMoveUpSignal(id);
             Readable<Boolean> canMoveDown = feature.canMoveDownSignal(id);
 
-            return row().growX().gap(unit(2)).children(() -> {
+            return row().props(growX(), gap(unit(2))).children(() -> {
                 checkbox(f.getName(), feature.isFeatureVisible(id),
                         visible -> feature.setFeatureVisible(id, visible))
-                        .growX();
+                        .props(growX());
 
                 button(() -> feature.moveUp(id))
                         .style(WebStyles.ghost())
-                        .size(unit(11))
-                        .tooltip(Core.bundle.get("feature.quick-access.settings.move-up"))
+                        .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.quick-access.settings.move-up")))
                         .disabled(() -> !canMoveUp.peek())
-                        .children(() -> icon(FileIcon.of("chevron-up.png")).size(unit(6)));
+                        .children(() -> icon(FileIcon.of("chevron-up.png")).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
 
                 button(() -> feature.moveDown(id))
                         .style(WebStyles.ghost())
-                        .size(unit(11))
-                        .tooltip(Core.bundle.get("feature.quick-access.settings.move-down"))
+                        .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.quick-access.settings.move-down")))
                         .disabled(() -> !canMoveDown.peek())
-                        .children(() -> icon(FileIcon.of("chevron-down.png")).size(unit(6)));
+                        .children(() -> icon(FileIcon.of("chevron-down.png")).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
             }).element();
         }
     }

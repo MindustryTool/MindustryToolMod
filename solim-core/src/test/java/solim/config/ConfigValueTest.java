@@ -53,7 +53,7 @@ class ConfigValueTest extends SolimEnv {
                 ConfigPersister.INTEGER);
 
         AtomicInteger listenerValue = new AtomicInteger(-1);
-        Effect sub = Effect.of(config.signal(), listenerValue::set);
+        Effect sub = inOwnershipWindow(() -> Effect.of(config.signal(), listenerValue::set));
 
         config.set(42);
         SignalDispatcher.flush();

@@ -1,6 +1,15 @@
 package mindustrytool.features.music;
 
 import static solim.UI.*;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.maxWidth;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
+import static solim.modifier.Values.update;
 
 import arc.Core;
 import arc.files.Fi;
@@ -28,9 +37,9 @@ public class MusicSettingsView extends Component {
                 ? Core.bundle.get("feature.music.now-playing.none")
                 : Core.bundle.format("feature.music.now-playing", music.file.nameWithoutExtension()));
 
-        return column().grow().top().center().maxWidth(750f).children(() -> {
-            scroll().grow().scrollX(false).children(() -> {
-                column().growX().top().center().gap(unit(3)).padding(unit(2)).children(() -> {
+        return column().props(grow(), maxWidth(750f), top(), center()).children(() -> {
+            scroll().props(grow()).scrollX(false).children(() -> {
+                column().props(growX(), padding(unit(2)), top(), center(), gap(unit(3))).children(() -> {
                     headerCard();
 
                     text(nowPlaying).growX().left().color(WebStyles.Colors.GHOST_FG);
@@ -49,28 +58,26 @@ public class MusicSettingsView extends Component {
 
     private Component section(MusicType type) {
         return SettingCard.section(Icon.play, Core.bundle.get(type.labelKey()), () -> {
-            row().growX().gap(unit(1)).center().children(() -> {
+            row().props(growX(), gap(unit(1)), center()).children(() -> {
                 spacer();
 
                 button()
                         .style(WebStyles.ghost())
-                        .size(unit(11))
-                        .tooltip(Core.bundle.get("feature.music.tooltip.add"))
+                        .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.add")))
                         .onClick(() -> openPicker(type))
-                        .children(() -> icon(Icon.add).size(unit(6)));
+                        .children(() -> icon(Icon.add).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
 
                 if (!type.isSlot()) {
                     button()
                             .style(WebStyles.ghost())
-                            .size(unit(11))
-                            .tooltip(Core.bundle.get("feature.music.tooltip.disable-originals"))
+                            .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.disable-originals")))
                             .onClick(() -> feature.disableAllOriginals(type))
-                            .children(() -> icon(Icon.trash).size(unit(6)));
+                            .children(() -> icon(Icon.trash).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
                 }
             });
 
-            reactiveGrid(feature.trackSignal(type)).key(state -> state.disabledKey()).gap(unit(2)).growX()
-                    .children(state -> new TrackRow(feature, state));
+            reactiveGrid(feature.trackSignal(type)).key(state -> state.disabledKey()).props(growX(), gap(unit(2)))
+                    .items(state -> new TrackRow(feature, state));
         });
     }
 
@@ -114,50 +121,46 @@ public class MusicSettingsView extends Component {
                     ? Color.gray
                     : Color.white);
 
-            return row().growX().gap(unit(1)).center()
+            return row().props(growX(), gap(unit(1)), center())
                     .children(() -> {
-                        column().growX().gap(unit(2)).children(() -> {
+                        column().props(growX(), gap(unit(2))).children(() -> {
                             text(state.name).growX().left().ellipsis(true).color(labelColor);
 
                             when(state.isPlaying())
                                     .thenDo(() -> stack().growX()
-                                            .layer(() -> divider().color(Color.white).growX().height(4))
-                                            .layer(parent -> divider().color(Color.green).height(4).update(div -> {
+                                            .layer(() -> divider().color(Color.white).props(growX()).height(4))
+                                            .layer(parent -> divider().color(Color.green).height(4).props(update(div -> {
                                                 div.setWidth(state.music.getPosition() / state.music.getLength()
                                                         * parent.getWidth());
-                                            })))
-                                    .growX();
+                                            }))))
+                                    .props(growX());
                         });
 
                         if (state.isCustom) {
                             button()
                                     .style(WebStyles.ghost())
-                                    .size(unit(11))
-                                    .tooltip(Core.bundle.get("feature.music.tooltip.rename-custom"))
+                                    .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.rename-custom")))
                                     .onClick(() -> feature.showRenameDialog(state))
-                                    .children(() -> icon(Icon.edit).size(unit(6)).color(labelColor));
+                                    .children(() -> icon(Icon.edit).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))).color(labelColor));
 
                             button()
                                     .style(WebStyles.ghost())
-                                    .size(unit(11))
-                                    .tooltip(Core.bundle.get("feature.music.tooltip.remove-custom"))
+                                    .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.remove-custom")))
                                     .onClick(() -> feature.removeTrack(state.type, state))
-                                    .children(() -> icon(Icon.trash).size(unit(6)).color(labelColor));
+                                    .children(() -> icon(Icon.trash).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))).color(labelColor));
                         }
 
                         button()
                                 .style(WebStyles.ghost())
-                                .size(unit(11))
-                                .tooltip(Core.bundle.get("feature.music.tooltip.play-stop"))
+                                .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.play-stop")))
                                 .onClick(() -> feature.togglePlay(state))
-                                .children(() -> icon(playIcon).size(unit(6)).color(labelColor));
+                                .children(() -> icon(playIcon).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))).color(labelColor));
 
                         button()
                                 .style(WebStyles.ghost())
-                                .size(unit(11))
-                                .tooltip(Core.bundle.get("feature.music.tooltip.toggle-disabled"))
+                                .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.toggle-disabled")))
                                 .onClick(() -> feature.toggleDisabled(state))
-                                .children(() -> icon(disableIcon).size(unit(6)).color(labelColor));
+                                .children(() -> icon(disableIcon).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))).color(labelColor));
                     }).element();
         }
     }

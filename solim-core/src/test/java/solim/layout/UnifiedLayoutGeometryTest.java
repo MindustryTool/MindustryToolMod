@@ -1,6 +1,12 @@
 package solim.layout;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.marginTop;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.width;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -91,10 +97,10 @@ public class UnifiedLayoutGeometryTest extends SolimEnv {
         container.setSize(200f, 200f);
         container.margin(10f);
 
-        Button btn1 = new Button().height(30f).width(100f).marginTop(4f);
-        Button btn2 = new Button().height(30f).width(100f).marginTop(4f);
+        Button btn1 = new Button().props(height(30f), prefHeight(30f), width(100f), prefWidth(100f), marginTop(4f));
+        Button btn2 = new Button().props(height(30f), prefHeight(30f), width(100f), prefWidth(100f), marginTop(4f));
 
-        Column col = new Column().gap(8f);
+        Column col = new Column().props(gap(8f));
         col.children(() -> {
             col.table().add(btn1.element()).size(100f, 30f);
             col.table().row();

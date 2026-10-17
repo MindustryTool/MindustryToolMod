@@ -1,6 +1,7 @@
 package mindustrytool.features.autoplay.tasks;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
 
 import arc.Core;
 import arc.math.geom.Position;
@@ -94,9 +95,9 @@ public class FleeTask implements AutoplayTask {
         Readable<String> thresholdLabel = fleeThreshold.signal().map(val ->
                 Core.bundle.format("feature.autoplay.settings.flee.threshold", Math.round((val != null ? val : 0.4f) * 100)));
 
-        column().growX().gap(unit(1)).children(() -> {
+        column().props(growX(), gap(unit(1))).children(() -> {
             text(thresholdLabel).growX().left().color(WebStyles.Colors.GHOST_FG);
-            slider(fleeThreshold.signal(), 0.1f, 0.7f, 0.05f).growX();
+            slider(fleeThreshold.signal(), 0.1f, 0.7f, 0.05f).props(growX());
         });
     }
 

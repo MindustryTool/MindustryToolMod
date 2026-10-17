@@ -1,6 +1,12 @@
 package mindustrytool.features.griefalert;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
 
 import arc.Core;
 import arc.graphics.g2d.TextureRegion;
@@ -70,21 +76,19 @@ public class GriefAlertSettingsView extends Component {
     private Component monitoredBlocksCard() {
         return SettingCard.section(Icon.warning, Core.bundle.get("feature.grief-alert.settings.monitored-blocks"),
                 () -> {
-                    row().growX().gap(unit(2)).center().children(() -> {
+                    row().props(growX(), gap(unit(2)), center()).children(() -> {
                         text(Core.bundle.get("feature.grief-alert.settings.monitored-blocks")).left();
                         spacer();
-                        row().gap(unit(1)).children(() -> {
+                        row().props(gap(unit(1))).children(() -> {
                             button(Core.bundle.get("feature.grief-alert.settings.all"),
                                     () -> feature.setAllBlocksEnabled(true))
                                     .style(WebStyles.outlineText())
-                                    .height(unit(8))
-                                    .padding(unit(1), unit(2.5f), unit(1), unit(2.5f));
+                                    .props(height(unit(8)), prefHeight(unit(8)), padding(unit(1), unit(2.5f), unit(1), unit(2.5f)));
 
                             button(Core.bundle.get("feature.grief-alert.settings.none"),
                                     () -> feature.setAllBlocksEnabled(false))
                                     .style(WebStyles.ghostText())
-                                    .height(unit(8))
-                                    .padding(unit(1), unit(2.5f), unit(1), unit(2.5f));
+                                    .props(height(unit(8)), prefHeight(unit(8)), padding(unit(1), unit(2.5f), unit(1), unit(2.5f)));
                         });
                     });
 
@@ -106,9 +110,9 @@ public class GriefAlertSettingsView extends Component {
                         + ")"
                 : block.localizedName;
 
-        row().growX().gap(unit(2)).center().children(() -> {
-            icon(drawable).size(unit(6));
-            checkbox(label, feature.getBlockSignal(block)).growX();
+        row().props(growX(), gap(unit(2)), center()).children(() -> {
+            icon(drawable).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
+            checkbox(label, feature.getBlockSignal(block)).props(growX());
         });
     }
 }

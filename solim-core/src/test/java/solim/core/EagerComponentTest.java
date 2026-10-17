@@ -2,6 +2,8 @@ package solim.core;
 
 import solim.test.CollectingOwner;
 import static org.junit.jupiter.api.Assertions.*;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.minWidth;
 
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
@@ -53,7 +55,7 @@ class EagerComponentTest extends SolimEnv {
         AttachmentStack.push(root);
 
         SolimImage leaf = new SolimImage();
-        leaf.minWidth(80f).growX();
+        leaf.props(minWidth(80f), growX());
 
         AttachmentStack.pop();
 
@@ -81,9 +83,9 @@ class EagerComponentTest extends SolimEnv {
         SolimImage leaf = new SolimImage();
         List<Integer> order = new ArrayList<>();
 
-        leaf.own(DisposableAction.of(() -> order.add(1)));
-        leaf.own(DisposableAction.of(() -> order.add(2)));
-        leaf.own(DisposableAction.of(() -> order.add(3)));
+        leaf.adopt(DisposableAction.of(() -> order.add(1)));
+        leaf.adopt(DisposableAction.of(() -> order.add(2)));
+        leaf.adopt(DisposableAction.of(() -> order.add(3)));
 
         assertFalse(leaf.isDisposed());
         leaf.dispose();
@@ -99,7 +101,7 @@ class EagerComponentTest extends SolimEnv {
     void disposalIsIdempotentAndForbidsElementAccess() {
         SolimImage leaf = new SolimImage();
         AtomicBoolean disposed = new AtomicBoolean(false);
-        leaf.own(DisposableAction.of(() -> disposed.set(true)));
+        leaf.adopt(DisposableAction.of(() -> disposed.set(true)));
 
         leaf.dispose();
         assertTrue(leaf.isDisposed());

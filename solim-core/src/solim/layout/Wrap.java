@@ -1,6 +1,7 @@
 package solim.layout;
 
-import solim.modifier.CellConfig;
+import solim.modifier.Configurable;
+import solim.modifier.Props;
 
 import arc.scene.Element;
 import arc.scene.style.Drawable;
@@ -10,14 +11,11 @@ import arc.scene.ui.layout.WrapTable;
 import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.SolimToken;
-import solim.modifier.ElementConfig;
-import solim.modifier.TableConfig;
 import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.modifier.PendingCellConfig;
 
-public final class Wrap extends Component implements CellConfig<Wrap>, ElementConfig<Wrap>, TableConfig<Wrap>,
-        GapContainer {
+public final class Wrap extends Component implements GapContainer, Configurable<Wrap> {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -29,6 +27,7 @@ public final class Wrap extends Component implements CellConfig<Wrap>, ElementCo
 
     private final WrapTable table;
     private final PendingCellConfig constraints = new PendingCellConfig();
+    private @Nullable Props<Wrap> pending;
     private float gap = 4f;
     private boolean attached = false;
 
@@ -75,109 +74,28 @@ public final class Wrap extends Component implements CellConfig<Wrap>, ElementCo
     }
 
     @Override
-    public Wrap gap(float g) {
+    public void setGap(float g) {
         this.gap = g;
         respace();
-        return this;
     }
 
-    @Override
     public Wrap background(@Nullable Drawable bg) {
         table.background(bg);
         return this;
     }
 
-    @Override
     public Wrap padding(float p) {
         table.margin(p);
         return this;
     }
 
-    @Override
     public Wrap padding(float top, float left, float bottom, float right) {
         table.margin(top, left, bottom, right);
         return this;
     }
 
-    @Override
-    public Wrap align(int align) {
-        TableConfig.super.align(align);
-        constraints.align = align;
-        constraints.applyAlignToParentCell(element());
-        table.defaults().align(align);
-        for (Cell<?> c : table.getCells()) {
-            if (c != null)
-                c.align(align);
-        }
-        return this;
-    }
-
-    @Override
-    public Wrap top() {
-        TableConfig.super.top();
-        constraints.alignTop();
-        constraints.applyAlignToParentCell(element());
-        table.defaults().top();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null)
-                c.top();
-        }
-        return this;
-    }
-
-    @Override
-    public Wrap bottom() {
-        TableConfig.super.bottom();
-        constraints.alignBottom();
-        constraints.applyAlignToParentCell(element());
-        table.defaults().bottom();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null)
-                c.bottom();
-        }
-        return this;
-    }
-
-    @Override
-    public Wrap left() {
-        TableConfig.super.left();
-        constraints.alignLeft();
-        constraints.applyAlignToParentCell(element());
-        table.defaults().left();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null)
-                c.left();
-        }
-        return this;
-    }
-
-    @Override
-    public Wrap right() {
-        TableConfig.super.right();
-        constraints.alignRight();
-        constraints.applyAlignToParentCell(element());
-        table.defaults().right();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null)
-                c.right();
-        }
-        return this;
-    }
-
-    @Override
-    public Wrap center() {
-        TableConfig.super.center();
-        constraints.alignCenter();
-        constraints.applyAlignToParentCell(element());
-        table.defaults().center();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null)
-                c.center();
-        }
-        return this;
-    }
-
     public Wrap children(@Nullable Runnable r) {
+        applyPendingProps();
         OwnershipContext.push(this);
         AttachmentStack.push(table, ATTACHER);
         try {
@@ -213,6 +131,15 @@ public final class Wrap extends Component implements CellConfig<Wrap>, ElementCo
     }
 
     @Override
+    public @Nullable Props<Wrap> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<Wrap> props) {
+        this.pending = props;
+    }
+
     public Wrap self() {
         return this;
     }

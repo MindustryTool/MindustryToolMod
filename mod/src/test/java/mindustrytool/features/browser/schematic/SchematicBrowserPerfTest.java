@@ -131,7 +131,7 @@ class SchematicBrowserPerfTest extends MindustryTestEnv {
     private static ReactiveGrid<SchematicData> grid(List<SchematicData> items) {
         ReactiveGrid<SchematicData> grid = new ReactiveGrid<>(Signal.of(items));
         grid.columns(4).key(SchematicData::getItemId);
-        grid.children(item -> new SchematicCard(item, NOOP, NOOP, NOOP, NOOP));
+        grid.items(item -> new SchematicCard(item, NOOP, NOOP, NOOP, NOOP));
         return grid;
     }
 
@@ -320,7 +320,7 @@ class SchematicBrowserPerfTest extends MindustryTestEnv {
         }
         ReactiveGrid<MapData> grid = new ReactiveGrid<>(Signal.of(maps));
         grid.columns(4).key(MapData::getItemId);
-        grid.children(item -> new MapCard(item, NOOP, NOOP, NOOP, NOOP));
+        grid.items(item -> new MapCard(item, NOOP, NOOP, NOOP, NOOP));
         grid.element();
         List<PerfSpan> spans = Perf.snapshot(256);
         System.out.printf("SchematicBrowserPerf [maps 3 cards]: cards=%d cardMs=%.3f%n",

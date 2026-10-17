@@ -44,7 +44,6 @@ import mindustrytool.features.browser.schematic.SchematicBrowserFeature;
 import mindustrytool.features.browser.map.MapBrowserFeature;
 import mindustrytool.test.MindustryTestEnv;
 import solim.core.Component;
-import solim.core.SolimToken;
 import solim.overlay.SolimDialog;
 
 class QuickAccessClickDelegationTest extends MindustryTestEnv {
@@ -402,7 +401,7 @@ class QuickAccessClickDelegationTest extends MindustryTestEnv {
     }
 
     private static void fireLongClick(Button button) throws Exception {
-        Component comp = SolimToken.getComponent(button);
+        Component comp = componentOf(button);
         assertTrue(comp instanceof solim.input.Button,
                 "HUD buttons must be Solim buttons");
         Field field = solim.input.Button.class.getDeclaredField("onLongClick");

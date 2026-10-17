@@ -2,6 +2,9 @@ package solim.layout;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.marginLeft;
+import static solim.modifier.Values.marginTop;
 
 import java.util.List;
 
@@ -16,8 +19,8 @@ import solim.core.Component;
 import solim.display.Text;
 import solim.input.Button;
 import solim.layout.LayoutTestFixtures.ComponentAdapter;
-import solim.modifier.CellConfig;
-import solim.modifier.TableConfig;
+import solim.modifier.Configurable;
+import solim.modifier.Values;
 import solim.test.SolimEnv;
 
 public class UnifiedSpacingCompositionTest extends SolimEnv {
@@ -30,11 +33,11 @@ public class UnifiedSpacingCompositionTest extends SolimEnv {
     @MethodSource("containers")
     void testPaddingInnerInsetsIsolation(ComponentAdapter adapter) {
         Component comp = adapter.create();
-        if (!(comp instanceof TableConfig))
+        if (!(comp instanceof Configurable))
             return;
-        TableConfig<?> tc = (TableConfig<?>) comp;
+        Configurable<?> tc = (Configurable<?>) comp;
 
-        tc.padding(12f, 15f, 18f, 21f);
+        tc.props(Values.padding(12f, 15f, 18f, 21f));
 
         Table t = tc.table();
         assertNotNull(t);
@@ -66,8 +69,8 @@ public class UnifiedSpacingCompositionTest extends SolimEnv {
             Table parent = new Table();
             Cell<?> cell = parent.add(comp.element());
 
-            if (comp instanceof CellConfig) {
-                ((CellConfig<?>) comp).margin(5f, 10f, 15f, 20f);
+            if (comp instanceof Configurable) {
+                ((Configurable<?>) comp).props(Values.margin(5f, 10f, 15f, 20f));
             } else if (comp instanceof Text) {
                 ((Text) comp).margin(5f, 10f, 15f, 20f);
             }
@@ -77,8 +80,8 @@ public class UnifiedSpacingCompositionTest extends SolimEnv {
             assertEquals(15f, CellAccess.padBottom(cell), 0.01f, comp.getClass().getSimpleName() + " padBottom");
             assertEquals(20f, CellAccess.padRight(cell), 0.01f, comp.getClass().getSimpleName() + " padRight");
 
-            if (comp instanceof TableConfig) {
-                Table inner = ((TableConfig<?>) comp).table();
+            if (comp instanceof Configurable) {
+                Table inner = ((Configurable<?>) comp).table();
                 if (inner != null) {
                     assertEquals(0f, inner.getMarginTop(), 0.01f);
                     assertEquals(0f, inner.getMarginLeft(), 0.01f);
@@ -91,9 +94,9 @@ public class UnifiedSpacingCompositionTest extends SolimEnv {
 
     @Test
     void testGapAndMarginCoexistenceInColumn() {
-        Column col = new Column().gap(12f);
-        Button btn1 = new Button().marginTop(4f).marginLeft(6f);
-        Button btn2 = new Button().marginTop(4f).marginLeft(6f);
+        Column col = new Column().props(gap(12f));
+        Button btn1 = new Button().props(marginTop(4f), marginLeft(6f));
+        Button btn2 = new Button().props(marginTop(4f), marginLeft(6f));
 
         col.children(() -> {
             col.table().add(btn1.element());
@@ -113,9 +116,9 @@ public class UnifiedSpacingCompositionTest extends SolimEnv {
 
     @Test
     void testGapAndMarginCoexistenceInRow() {
-        Row row = new Row().gap(10f);
-        Button btn1 = new Button().marginLeft(3f).marginTop(7f);
-        Button btn2 = new Button().marginLeft(3f).marginTop(7f);
+        Row row = new Row().props(gap(10f));
+        Button btn1 = new Button().props(marginLeft(3f), marginTop(7f));
+        Button btn2 = new Button().props(marginLeft(3f), marginTop(7f));
 
         row.children(() -> {
             row.table().add(btn1.element());
@@ -134,9 +137,9 @@ public class UnifiedSpacingCompositionTest extends SolimEnv {
 
     @Test
     void testDynamicVisibilityTogglingShiftsGapOffset() {
-        Column col = new Column().gap(14f);
-        Button btn1 = new Button().marginTop(5f);
-        Button btn2 = new Button().marginTop(5f);
+        Column col = new Column().props(gap(14f));
+        Button btn1 = new Button().props(marginTop(5f));
+        Button btn2 = new Button().props(marginTop(5f));
 
         col.children(() -> {
             col.table().add(btn1.element());

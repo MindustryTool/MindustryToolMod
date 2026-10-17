@@ -5,6 +5,8 @@ import arc.struct.Seq;
 import arc.util.Nullable;
 
 public class OrderedSeqPersister implements ConfigPersister<Seq<String>> {
+    // Arc's Settings.getJson(String, Class<T>, Class<?>, Prov<T>) takes the element type as a separate Class and
+    // derives T from the container Class, so Seq.class can only yield a raw Seq.
     @SuppressWarnings("unchecked")
     @Override
     public @Nullable Seq<String> load(String key, @Nullable Seq<String> defaultValue) {

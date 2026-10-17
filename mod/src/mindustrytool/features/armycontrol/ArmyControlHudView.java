@@ -1,6 +1,16 @@
 package mindustrytool.features.armycontrol;
 
 import static solim.UI.*;
+import static solim.modifier.Values.border;
+import static solim.modifier.Values.draggable;
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.position;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.rounded;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.width;
 
 import arc.scene.Element;
 import arc.util.Nullable;
@@ -32,19 +42,14 @@ public class ArmyControlHudView extends Component {
             when(feature.hideDragHandleConfig.signal())
                     .elseDo(() -> button()
                             .style(WebStyles.ghost())
-                            .size(buttonSize)
-                            .children(() -> icon(Icon.move).size(dragIconSize))
-                            .draggable(feature.xSignal, feature.ySignal));
+                            .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize))
+                            .children(() -> icon(Icon.move).props(size(dragIconSize), prefWidth(dragIconSize), prefHeight(dragIconSize)))
+                            .props(draggable(feature.xSignal, feature.ySignal)));
 
-            column().width(scale.map(s -> unit(65) * (s != null ? s : 1f))).gap(unit(2)).children(() -> {
+            column().props(width(scale.map(s -> unit(65) * (s != null ? s : 1f))), prefWidth(scale.map(s -> unit(65) * (s != null ? s : 1f))), gap(unit(2))).children(() -> {
                 new ArmyControlCompactContent(feature, scale);
             });
-        }).gap(unit(1.5f));
-
-        hud.position(feature.xSignal, feature.ySignal)
-                .padding(unit(2.5f))
-                .rounded(unit(2), WebStyles.Colors.SECTION_BG)
-                .border(1.5f, WebStyles.Colors.BORDER);
+        }).props(gap(unit(1.5f)), position(feature.xSignal, feature.ySignal), padding(unit(2.5f)), rounded(unit(2), WebStyles.Colors.SECTION_BG), border(1.5f, WebStyles.Colors.BORDER));
 
         listen(ResizeEvent.class, e -> {
             if (hud != null) {

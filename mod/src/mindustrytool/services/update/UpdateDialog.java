@@ -1,6 +1,9 @@
 package mindustrytool.services.update;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.maxHeight;
+import static solim.modifier.Values.padding;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -9,6 +12,7 @@ import arc.util.Nullable;
 import arc.util.Timer;
 import mindustry.Vars;
 import mindustrytool.Config;
+import solim.modifier.Values;
 import solim.overlay.SolimDialog;
 
 public class UpdateDialog extends SolimDialog {
@@ -44,7 +48,7 @@ public class UpdateDialog extends SolimDialog {
                 "[#" + Color.green.toString() + "]" + latestVer);
 
         children(() -> {
-            column().growX().gap(unit(2)).left().maxWidth(800f).children(() -> {
+            column().props(growX(), Values.maxWidth(800f), gap(unit(2)), left()).children(() -> {
                 text(newVersionText)
                         .wrap();
 
@@ -54,10 +58,10 @@ public class UpdateDialog extends SolimDialog {
 
                 divider();
 
-                scroll().maxHeight(800f).maxWidth(800f).growX().scrollX(false).children(() -> {
-                    column().growX().gap(unit(2)).left().children(() -> {
+                scroll().props(maxHeight(800f), Values.maxWidth(800f), growX()).scrollX(false).children(() -> {
+                    column().props(growX(), gap(unit(2)), left()).children(() -> {
                         if (partitioned != null && partitioned.targetRelease != null) {
-                            card().growX().padding(unit(2)).children(() -> {
+                            card().props(growX(), padding(unit(2))).children(() -> {
                                 text(ChangelogFormatter.formatTargetRelease(partitioned.targetRelease))
                                         .wrap()
                                         .left();

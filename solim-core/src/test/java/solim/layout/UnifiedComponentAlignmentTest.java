@@ -29,11 +29,28 @@ public class UnifiedComponentAlignmentTest extends SolimEnv {
     }
 
     private static void invokeAlignment(Component comp, String methodName) {
-        try {
-            Method m = comp.getClass().getMethod(methodName);
-            m.invoke(comp);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed invoking " + methodName + " on " + comp.getClass().getSimpleName(), e);
+        if (!(comp instanceof solim.modifier.Configurable)) {
+            throw new IllegalArgumentException("Component is not Configurable: " + comp.getClass().getSimpleName());
+        }
+        solim.modifier.Configurable<?> configurable = (solim.modifier.Configurable<?>) comp;
+        switch (methodName) {
+            case "top":
+                configurable.props(solim.modifier.Values.top());
+                break;
+            case "bottom":
+                configurable.props(solim.modifier.Values.bottom());
+                break;
+            case "left":
+                configurable.props(solim.modifier.Values.left());
+                break;
+            case "right":
+                configurable.props(solim.modifier.Values.right());
+                break;
+            case "center":
+                configurable.props(solim.modifier.Values.center());
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown alignment method: " + methodName);
         }
     }
 

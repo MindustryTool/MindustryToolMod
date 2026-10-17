@@ -1,6 +1,10 @@
 package mindustrytool.features.displaygroup;
 
 import static solim.UI.*;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
 
 import arc.graphics.Color;
 import arc.scene.Element;
@@ -42,14 +46,13 @@ public class DisplayGroupPopupView extends Component {
         });
 
         return row()
-                .gap(unit(1))
-                .center()
+                .props(gap(unit(1)), center())
                 .children(() -> {
                     reactiveGrid(items)
+                            .props(gap(unit(1)))
                             .key(f -> f.getMetadata().getId())
                             .columns(columns)
-                            .gap(unit(1))
-                            .children(this::itemButton);
+                            .items(this::itemButton);
                 })
                 .element();
     }
@@ -59,11 +62,10 @@ public class DisplayGroupPopupView extends Component {
 
         return button()
                 .style(WebStyles.ghost())
-                .size(unit(11))
-                .tooltip(f.getName())
+                .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(f.getName()))
                 .onClick(() -> f.setEnabled(!f.isEnabled()))
                 .onLongClick(300L, () -> f.onQuickAccessLongClick(null))
-                .children(() -> icon(meta.getIcon()).size(unit(6))
+                .children(() -> icon(meta.getIcon()).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)))
                         .color(f.enabled().map(en -> Boolean.TRUE.equals(en) ? Color.white : Color.darkGray)));
     }
 }

@@ -1,6 +1,20 @@
 package mindustrytool.features.teamresource;
 
 import static solim.UI.*;
+import static solim.modifier.Values.border;
+import static solim.modifier.Values.draggable;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.margin;
+import static solim.modifier.Values.maxWidth;
+import static solim.modifier.Values.onClick;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.position;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.rounded;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -80,48 +94,48 @@ public class TeamResourceHudView extends Component {
 
         hud = hud();
         hud.children(() -> {
-            column().maxWidth(hudWidth).left().gap(unit(1.5f)).padding(unit(1.5f)).children(() -> {
+            column().props(maxWidth(hudWidth), padding(unit(1.5f)), left(), gap(unit(1.5f))).children(() -> {
 
                 when(feature.hideHeaderConfig.signal())
-                        .elseDo(() -> row().growX().gap(unit(1)).children(() -> {
+                        .elseDo(() -> row().props(growX(), gap(unit(1))).children(() -> {
 
                             when(feature.hideDragHandleConfig.signal())
                                     .elseDo(() -> button()
                                             .style(WebStyles.ghost())
-                                            .size(buttonSize)
-                                            .children(() -> icon(Icon.move).size(iconSize))
-                                            .draggable(hud, feature.xSignal, feature.ySignal));
+                                            .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize))
+                                            .children(() -> icon(Icon.move).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)))
+                                            .props(draggable(hud, feature.xSignal, feature.ySignal)));
 
                             button()
                                     .style(WebStyles.ghost())
-                                    .size(buttonSize)
+                                    .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize))
                                     .onClick(() -> feature.expandedConfig
                                             .set(!Boolean.TRUE.equals(feature.expandedConfig.get())))
-                                    .tooltip(expanded.map(exp -> Core.bundle.get(
+                                    .props(tooltip(expanded.map(exp -> Core.bundle.get(
                                             Boolean.TRUE.equals(exp) ? "team-resources.collapse"
                                                     : "team-resources.expand",
-                                            "Toggle Expand")))
+                                            "Toggle Expand"))))
                                     .children(() -> icon(
                                             expanded.map(exp -> Boolean.TRUE.equals(exp) ? Icon.down : Icon.right))
-                                            .size(iconSize));
+                                            .props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)));
 
-                            dynamic(state.validTeamsSignal, teams -> row().gap(unit(1)).children(() -> {
+                            dynamic(state.validTeamsSignal, teams -> row().props(gap(unit(1))).children(() -> {
                                 if (teams != null) {
                                     int limit = Math.min(teams.size, 5);
                                     for (int i = 0; i < limit; i++) {
                                         Team team = teams.get(i);
                                         button()
                                                 .style(WebStyles.filterChip())
-                                                .size(buttonSize)
+                                                .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize))
                                                 .onClick(() -> state.setSelectedTeam(team))
                                                 .checked(state.selectedTeamSignal.map(sel -> sel == team))
-                                                .tooltip(team.localized())
-                                                .children(() -> image(Tex.whiteui).size(iconSize).color(team.color));
+                                                .props(tooltip(team.localized()))
+                                                .children(() -> image(Tex.whiteui).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)).color(team.color));
                                     }
                                     if (teams.size > 5) {
                                         button("...", () -> new TeamResourceAllTeamsDialog(state).show())
                                                 .style(WebStyles.outlineText())
-                                                .size(buttonSize);
+                                                .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize));
                                     }
                                 }
                             }));
@@ -130,10 +144,9 @@ public class TeamResourceHudView extends Component {
 
                             button()
                                     .style(WebStyles.ghost())
-                                    .size(buttonSize)
-                                    .tooltip(Core.bundle.get("team-resources.settings.title", "Settings"))
+                                    .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(Core.bundle.get("team-resources.settings.title", "Settings")))
                                     .onClick(() -> feature.getSettingDialog().get().show())
-                                    .children(() -> icon(Icon.settings).size(iconSize));
+                                    .children(() -> icon(Icon.settings).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)));
                         }));
 
                 Readable<Boolean> showContent = new Computed<>(
@@ -143,14 +156,14 @@ public class TeamResourceHudView extends Component {
                 when(showContent)
                         .thenDo(() -> buildExpandedContent(scale, itemCols))
                         .elseDo(() -> row())
-                        .growX();
+                        .props(growX());
             });
         });
 
-        hud.rounded(unit(2), bgColor);
-        hud.border(1.5f, borderColor);
+        hud.props(rounded(unit(2), bgColor));
+        hud.props(border(1.5f, borderColor));
         hud.opacity(feature.opacityConfig.signal());
-        hud.position(feature.xSignal, feature.ySignal);
+        hud.props(position(feature.xSignal, feature.ySignal));
         hud.toFrontOnTouch();
 
         listen(ResizeEvent.class, e -> {
@@ -192,61 +205,55 @@ public class TeamResourceHudView extends Component {
         Readable<Float> unitCardHeight = scale.map(s -> 22f * (s != null ? s : 1f));
         Readable<Float> iconSize = scale.map(s -> 16f * (s != null ? s : 1f));
 
-        return column().growX().gap(unit(1)).children(() -> {
+        return column().props(growX(), gap(unit(1))).children(() -> {
             when(feature.hideHeaderConfig.signal())
                     .elseDo(() -> divider());
 
             when(feature.showItemsConfig.signal())
-                    .thenDo(() -> column().growX().children(() -> {
+                    .thenDo(() -> column().props(growX()).children(() -> {
                         when(state.usedItemsSignal.map(items -> items == null || items.isEmpty()))
-                                .thenDo(() -> row().left().children(
+                                .thenDo(() -> row().props(left()).children(
                                         () -> text(Core.bundle.get("team-resources.no-items", "No core items"))
                                                 .color(Color.gray).style(Styles.outlineLabel)))
-                                .growX();
+                                .props(growX());
 
                         reactiveGrid(state.usedItemsSignal).columns(itemCols)
-                                .key(item -> item.name).growX().gap(unit(1))
-                                .children(item -> createItemCard(item, itemCardHeight, iconSize, scale));
+                                .key(item -> item.name).props(growX(), gap(unit(1)))
+                                .items(item -> createItemCard(item, itemCardHeight, iconSize, scale));
                     }))
                     .elseDo(() -> row())
-                    .growX();
+                    .props(growX());
 
             when(feature.showUnitsConfig.signal())
-                    .thenDo(() -> column().growX().children(() -> {
+                    .thenDo(() -> column().props(growX()).children(() -> {
                         when(state.usedUnitsSignal.map(units -> units == null || units.isEmpty()))
-                                .thenDo(() -> row().left().children(
+                                .thenDo(() -> row().props(left()).children(
                                         () -> text(Core.bundle.get("team-resources.no-units", "No active units"))
                                                 .color(Color.gray).style(Styles.outlineLabel)))
-                                .growX();
+                                .props(growX());
 
                         reactiveGrid(state.usedUnitsSignal).columns(itemCols)
-                                .key(unit -> unit.name).growX().gap(unit(1))
-                                .children(unit -> createUnitCard(unit, unitCardHeight, iconSize, scale));
+                                .key(unit -> unit.name).props(growX(), gap(unit(1)))
+                                .items(unit -> createUnitCard(unit, unitCardHeight, iconSize, scale));
                     }))
                     .elseDo(() -> row())
-                    .growX();
+                    .props(growX());
 
             when(feature.showPowerConfig.signal())
                     .thenDo(() -> createPowerSection(scale))
                     .elseDo(() -> row())
-                    .growX();
+                    .props(growX());
         });
     }
 
     private Component createItemCard(Item item, Readable<Float> cardHeight, Readable<Float> iconSize,
             Readable<Float> scale) {
         Card card = card()
-                .padding(unit(1f))
-                .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
-                .border(1f, WebStyles.Colors.BORDER)
-                .growX()
-                .height(cardHeight)
-                .margin(scale.map(s -> 2f * (s != null ? s : 1f)))
-                .onClick(() -> state.setViewingStats(!state.isViewingStats()))
+                .props(padding(unit(1f)), rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1f, WebStyles.Colors.BORDER), growX(), height(cardHeight), prefHeight(cardHeight), margin(scale.map(s -> 2f * (s != null ? s : 1f))), onClick(() -> state.setViewingStats(!state.isViewingStats())))
                 .children(() -> {
-                    row().growX().gap(unit(1)).children(() -> {
-                        image(new TextureRegionDrawable(item.uiIcon)).size(iconSize).scaling(Scaling.fit);
-                        column().left().children(() -> {
+                    row().props(growX(), gap(unit(1))).children(() -> {
+                        image(new TextureRegionDrawable(item.uiIcon)).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)).scaling(Scaling.fit);
+                        column().props(left()).children(() -> {
                             text(state.tickSignal.map(t -> state.getFormattedAmount(item)))
                                     .style(Styles.outlineLabel)
                                     .fontScale(scale.map(s -> 0.72f * (s != null ? s : 1f)));
@@ -290,15 +297,10 @@ public class TeamResourceHudView extends Component {
     private Component createUnitCard(UnitType type, Readable<Float> cardHeight, Readable<Float> iconSize,
             Readable<Float> scale) {
         return card()
-                .padding(unit(1f))
-                .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
-                .border(1f, WebStyles.Colors.BORDER)
-                .growX()
-                .height(cardHeight)
-                .margin(scale.map(s -> 2f * (s != null ? s : 1f)))
+                .props(padding(unit(1f)), rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1f, WebStyles.Colors.BORDER), growX(), height(cardHeight), prefHeight(cardHeight), margin(scale.map(s -> 2f * (s != null ? s : 1f))))
                 .children(() -> {
-                    row().growX().gap(unit(1)).children(() -> {
-                        image(new TextureRegionDrawable(type.uiIcon)).size(iconSize).scaling(Scaling.fit);
+                    row().props(growX(), gap(unit(1))).children(() -> {
+                        image(new TextureRegionDrawable(type.uiIcon)).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)).scaling(Scaling.fit);
                         text(state.tickSignal.map(t -> state.getUnitCountText(type)))
                                 .style(Styles.outlineLabel)
                                 .fontScale(scale.map(s -> 0.72f * (s != null ? s : 1f)));
@@ -310,14 +312,10 @@ public class TeamResourceHudView extends Component {
         Readable<Float> iconSize = scale.map(s -> 14f * (s != null ? s : 1f));
 
         return card()
-                .padding(unit(1.5f))
-                .gap(unit(1))
-                .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
-                .border(1f, WebStyles.Colors.BORDER)
-                .growX()
+                .props(padding(unit(1.5f)), gap(unit(1)), rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1f, WebStyles.Colors.BORDER), growX())
                 .children(() -> {
-                    row().left().growX().gap(unit(1)).center().children(() -> {
-                        icon(Icon.power).size(iconSize).color(state.tickSignal
+                    row().props(left(), growX(), gap(unit(1)), center()).children(() -> {
+                        icon(Icon.power).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)).color(state.tickSignal
                                 .map(t -> state.getTeamGraphs().isEmpty() ? Color.gray : state.getPowerBalanceColor()));
                         text(state.tickSignal.map(t -> {
                             if (state.getTeamGraphs().isEmpty()) {
@@ -332,29 +330,27 @@ public class TeamResourceHudView extends Component {
                                 .fontScale(scale.map(s -> 0.82f * (s != null ? s : 1f)));
                     });
 
-                    SplitBar satisfactionBar = new SplitBar(state.getTeamGraphs(), SplitBar.Mode.SATISFACTION,
-                            () -> scale.peek() != null ? scale.peek() : 1f);
-                    row().growX().height(scale.map(s -> 20f * (s != null ? s : 1f)))
-                            .children(() -> arc(satisfactionBar));
+                    row().props(growX(), height(scale.map(s -> 20f * (s != null ? s : 1f))), prefHeight(scale.map(s -> 20f * (s != null ? s : 1f))))
+                            .children(() -> new SplitBar(state.getTeamGraphs(), SplitBar.Mode.SATISFACTION,
+                                    () -> scale.peek() != null ? scale.peek() : 1f));
 
                     when(feature.showStoredPowerConfig.signal())
                             .thenDo(() -> column(() -> {
-                                row().left().growX().gap(unit(1)).center().children(() -> {
-                                    icon(Icon.powerSmall).size(iconSize);
+                                row().props(left(), growX(), gap(unit(1)), center()).children(() -> {
+                                    icon(Icon.powerSmall).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize));
                                     text(state.tickSignal
-                                            .map(t -> Core.bundle.get("team-resources.stored-prefix", "Stored: ")
-                                                    + state.getFormattedStoredPower()))
-                                            .style(Styles.outlineLabel)
-                                            .fontScale(scale.map(s -> 0.80f * (s != null ? s : 1f)));
+                                             .map(t -> Core.bundle.get("team-resources.stored-prefix", "Stored: ")
+                                                     + state.getFormattedStoredPower()))
+                                             .style(Styles.outlineLabel)
+                                             .fontScale(scale.map(s -> 0.80f * (s != null ? s : 1f)));
                                 });
 
-                                SplitBar storedBar = new SplitBar(state.getTeamGraphs(), SplitBar.Mode.STORED,
-                                        () -> scale.peek() != null ? scale.peek() : 1f);
-                                row().growX().height(scale.map(s -> 20f * (s != null ? s : 1f)))
-                                        .children(() -> arc(storedBar));
-                            }).growX().gap(unit(1)))
+                                row().props(growX(), height(scale.map(s -> 20f * (s != null ? s : 1f))), prefHeight(scale.map(s -> 20f * (s != null ? s : 1f))))
+                                        .children(() -> new SplitBar(state.getTeamGraphs(), SplitBar.Mode.STORED,
+                                                () -> scale.peek() != null ? scale.peek() : 1f));
+                            }).props(growX(), gap(unit(1))))
                             .elseDo(() -> row())
-                            .growX();
+                            .props(growX());
                 });
     }
 

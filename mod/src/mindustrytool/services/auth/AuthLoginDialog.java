@@ -1,6 +1,8 @@
 package mindustrytool.services.auth;
 
 import static solim.UI.*;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.padding;
 
 import arc.Core;
 import mindustry.Vars;
@@ -22,7 +24,7 @@ public class AuthLoginDialog extends SolimDialog {
 		Readable<Boolean> hasUrl = loginUrlSignal.map(url -> url != null && !url.trim().isEmpty());
 
 		children(() -> {
-			column().grow().padding(unit(4)).center().children(() -> {
+			column().props(grow(), padding(unit(4)), center()).children(() -> {
 				when(hasUrl)
 						.thenDo(() -> UI.button(() -> {
 							Core.app.setClipboardText(loginUrlSignal.peek());

@@ -5,13 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import arc.Core;
 import arc.Events;
 import arc.mock.MockGraphics;
-import solim.test.SolimEnv;
 import mindustry.game.EventType.ResizeEvent;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.reactive.Computed;
 import solim.reactive.Signal;
+import solim.test.SolimEnv;
 
 class UnitsTest extends SolimEnv {
 
@@ -49,23 +49,20 @@ class UnitsTest extends SolimEnv {
     void testInitialUnits() {
         assertEquals(10f, Units.dvw.get(), 0.001f);
         assertEquals(5f, Units.dvh.get(), 0.001f);
-        assertEquals(1000f, Units.width().get(), 0.001f);
-        assertEquals(500f, Units.height().get(), 0.001f);
+        assertEquals(1000f, Units.width(), 0.001f);
+        assertEquals(500f, Units.height(), 0.001f);
     }
 
     @Test
-    void testPercentageHelpers() {
-        Computed<Float> halfWidth = Units.dvw(50f);
-        Computed<Float> eightyHeight = Units.dvh(80f);
-
-        assertEquals(500f, halfWidth.get(), 0.001f);
-        assertEquals(400f, eightyHeight.get(), 0.001f);
+    void testPercentageHelpersReturnPlainValues() {
+        assertEquals(500f, Units.dvw(50f), 0.001f);
+        assertEquals(400f, Units.dvh(80f), 0.001f);
     }
 
     @Test
-    void testDynamicPercentageHelper() {
+    void testReactiveDerivationGoesThroughASignal() {
         Signal<Float> pct = Signal.of(20f);
-        Computed<Float> dynamicW = Units.dvw(pct);
+        Computed<Float> dynamicW = inOwnershipWindow(() -> Units.dvw.map(v -> v * pct.get()));
 
         assertEquals(200f, dynamicW.get(), 0.001f);
 
@@ -75,7 +72,8 @@ class UnitsTest extends SolimEnv {
 
     @Test
     void testAutoUpdateOnResizeEvent() {
-        Computed<Float> halfWidth = Units.dvw(50f);
+        Computed<Float> halfWidth = inOwnershipWindow(() -> Units.dvw.map(v -> v * 50f));
+
         assertEquals(500f, halfWidth.get(), 0.001f);
 
         mockGraphics.width = 1600;
@@ -85,16 +83,7 @@ class UnitsTest extends SolimEnv {
         assertEquals(16f, Units.dvw.get(), 0.001f);
         assertEquals(9f, Units.dvh.get(), 0.001f);
         assertEquals(800f, halfWidth.get(), 0.001f);
-        assertEquals(1600f, Units.width().get(), 0.001f);
-        assertEquals(900f, Units.height().get(), 0.001f);
-    }
-
-    @Test
-    void testUiFacadeMethods() {
-        Computed<Float> w = Units.dvw(25f);
-        Computed<Float> h = Units.dvh(10f);
-
-        assertEquals(250f, w.get(), 0.001f);
-        assertEquals(50f, h.get(), 0.001f);
+        assertEquals(1600f, Units.width(), 0.001f);
+        assertEquals(900f, Units.height(), 0.001f);
     }
 }

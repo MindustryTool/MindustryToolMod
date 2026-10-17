@@ -1,6 +1,9 @@
 package mindustrytool.features.godmode;
 
 import static solim.UI.*;
+import static solim.modifier.Values.border;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.rounded;
 
 import arc.scene.Element;
 import arc.util.Nullable;
@@ -36,7 +39,7 @@ public final class GodModePopup {
         }
         if (menu == null) {
             menu = popup();
-            menu.children(GodModePopup::buildContent);
+            menu.items(GodModePopup::buildContent);
         }
         QuickAccessPopupHelper.show(menu, feature, quickAccessBar);
     }
@@ -54,11 +57,7 @@ public final class GodModePopup {
         Readable<Boolean> canEdit = feature.enabled();
 
         return row()
-                .padding(unit(1))
-                .rounded(unit(2), WebStyles.Colors.SECTION_BG)
-                .border(1.5f, WebStyles.Colors.BORDER)
-                .gap(unit(1))
-                .center()
+                .props(padding(unit(1)), rounded(unit(2), WebStyles.Colors.SECTION_BG), border(1.5f, WebStyles.Colors.BORDER), gap(unit(1)), center())
                 .children(() -> GodModeHudView.buildControls(feature, canEdit));
     }
 }

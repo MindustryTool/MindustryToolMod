@@ -1,6 +1,9 @@
 package mindustrytool.features.translation.ui;
 
 import static solim.UI.*;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
 
 import arc.Core;
 import java.util.Locale;
@@ -23,8 +26,8 @@ public class OutgoingLanguageDialog extends SolimDialog {
         maxWidth(500f);
 
         children(() -> {
-            scroll().center().children(() -> {
-                column().center().children(() -> {
+            scroll().props(center()).children(() -> {
+                column().props(center()).children(() -> {
                     for (Locale loc : Vars.locales) {
                         String displayName = LanguageDialog.getDisplayName(loc);
                         Readable<Boolean> isSelected = feature.outgoingTargetLangConfig.signal()
@@ -36,7 +39,7 @@ public class OutgoingLanguageDialog extends SolimDialog {
                         })
                                 .style(Styles.flatTogglet)
                                 .checked(isSelected)
-                                .size(400f, 50f);
+                                .props(size(400f, 50f), prefWidth(400f), prefHeight(50f));
                     }
                 });
             });

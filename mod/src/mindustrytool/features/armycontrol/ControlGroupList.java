@@ -1,6 +1,12 @@
 package mindustrytool.features.armycontrol;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.scene.Element;
@@ -27,8 +33,7 @@ public class ControlGroupList extends Component {
         Readable<Seq<ControlGroup>> groupsSignal = feature.controlGroupsSignal();
 
         return column()
-                .growX()
-                .gap(unit(1.5f))
+                .props(growX(), gap(unit(1.5f)))
                 .children(() -> {
                     dynamic(groupsSignal, groups -> {
                         if (groups == null || groups.size == 0) {
@@ -36,8 +41,7 @@ public class ControlGroupList extends Component {
                         }
 
                         column()
-                                .growX()
-                                .gap(unit(1.5f))
+                                .props(growX(), gap(unit(1.5f)))
                                 .children(() -> {
                                     for (ControlGroup group : groups) {
                                         buildGroupRow(group);
@@ -56,21 +60,18 @@ public class ControlGroupList extends Component {
         final int livingTotal = living;
 
         row()
-                .growX()
-                .gap(unit(2))
-                .center()
+                .props(growX(), gap(unit(2)), center())
                 .children(() -> {
 
                     button()
                             .style(WebStyles.secondary())
-                            .growX()
-                            .padding(unit(1.5f))
+                            .props(growX(), padding(unit(1.5f)))
                             .onClick(() -> feature.recallGroup(group))
-                            .children(() -> row().growX().gap(unit(1.5f)).center().children(() -> {
+                            .children(() -> row().props(growX(), gap(unit(1.5f)), center()).children(() -> {
 
-                                row().gap(unit(1)).growX().left().children(() -> {
+                                row().props(growX(), gap(unit(1)), left()).children(() -> {
                                     for (UnitType ut : summary.keys()) {
-                                        image(new TextureRegionDrawable(ut.uiIcon)).size(unit(4));
+                                        image(new TextureRegionDrawable(ut.uiIcon)).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)));
                                     }
                                 });
 
@@ -81,10 +82,10 @@ public class ControlGroupList extends Component {
 
                     button()
                             .style(WebStyles.danger())
-                            .size(unit(9), unit(9))
+                            .props(size(unit(9), unit(9)), prefWidth(unit(9)), prefHeight(unit(9)))
                             .onClick(() -> feature.deleteGroup(group))
-                            .tooltip(Core.bundle.get("button.delete", "Delete"))
-                            .children(() -> icon(Icon.trash).size(unit(5)).color(WebStyles.Colors.DANGER_FG));
+                            .props(tooltip(Core.bundle.get("button.delete", "Delete")))
+                            .children(() -> icon(Icon.trash).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))).color(WebStyles.Colors.DANGER_FG));
                 });
     }
 }

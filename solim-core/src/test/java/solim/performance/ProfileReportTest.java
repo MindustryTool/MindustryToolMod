@@ -20,10 +20,11 @@ import solim.core.Component;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
 import solim.test.FixedComponent;
-import solim.test.SolimEnv;
+import solim.test.OwnershipEnv;
 import solim.test.TestDisposable;
 
-class ProfileReportTest extends SolimEnv {
+class ProfileReportTest extends OwnershipEnv {
+
 
     @TempDir
     File tempDir;
@@ -343,7 +344,7 @@ class ProfileReportTest extends SolimEnv {
     static class DisposableHostComponent extends Component {
         @Override
         protected Element build() {
-            own(new TestDisposable());
+            adopt(new TestDisposable());
             return new Element();
         }
     }

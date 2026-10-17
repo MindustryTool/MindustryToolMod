@@ -15,9 +15,9 @@ import solim.core.OwnershipContext;
 import solim.runtime.SignalDispatcher;
 
 import static org.junit.jupiter.api.Assertions.*;
-import solim.test.SolimEnv;
+import solim.test.OwnershipEnv;
 
-class QueryTest extends SolimEnv {
+class QueryTest extends OwnershipEnv {
 
     private QueryCache cache;
 

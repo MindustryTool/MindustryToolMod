@@ -90,7 +90,7 @@ class ComponentContractTest extends SolimEnv {
         Component comp = new Component() {
             @Override
             protected Element build() {
-                own(DisposableAction.of(disposeCount::incrementAndGet));
+                adopt(DisposableAction.of(disposeCount::incrementAndGet));
                 return new Element();
             }
         };
@@ -106,7 +106,7 @@ class ComponentContractTest extends SolimEnv {
         Component comp = new Component() {
             @Override
             protected Element build() {
-                own(DisposableAction.of(() -> disposed.set(true)));
+                adopt(DisposableAction.of(() -> disposed.set(true)));
                 return new Element();
             }
         };
@@ -122,9 +122,9 @@ class ComponentContractTest extends SolimEnv {
         Component comp = new Component() {
             @Override
             protected Element build() {
-                own(DisposableAction.of(() -> order.add("first")));
-                own(DisposableAction.of(() -> order.add("second")));
-                own(DisposableAction.of(() -> order.add("third")));
+                adopt(DisposableAction.of(() -> order.add("first")));
+                adopt(DisposableAction.of(() -> order.add("second")));
+                adopt(DisposableAction.of(() -> order.add("third")));
                 return new Element();
             }
         };
@@ -139,7 +139,7 @@ class ComponentContractTest extends SolimEnv {
         Component comp = new Component() {
             @Override
             protected Element build() {
-                own(DisposableAction.of(() -> disposed.set(true)));
+                adopt(DisposableAction.of(() -> disposed.set(true)));
                 throw new RuntimeException("build failed");
             }
         };
@@ -154,7 +154,7 @@ class ComponentContractTest extends SolimEnv {
         Component comp = new Component() {
             @Override
             protected Element build() {
-                own(DisposableAction.of(() -> disposed.set(true)));
+                adopt(DisposableAction.of(() -> disposed.set(true)));
                 return null;
             }
         };

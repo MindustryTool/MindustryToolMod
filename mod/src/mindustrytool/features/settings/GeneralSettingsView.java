@@ -1,6 +1,12 @@
 package mindustrytool.features.settings;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.files.Fi;
@@ -53,8 +59,8 @@ public class GeneralSettingsView extends Component {
     private Component preferencesCard() {
         return SettingCard.section(Icon.settings, Core.bundle.get("setting.section.preferences"), () -> {
 
-            row().growX().gap(unit(2)).center().children(() -> {
-                column().growX().gap(unit(1.5f)).left().children(() -> {
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
+                column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                     text(Core.bundle.get("setting.beta.participate"))
                             .color(Color.white)
                             .left();
@@ -70,8 +76,8 @@ public class GeneralSettingsView extends Component {
 
             divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            row().growX().gap(unit(2)).center().children(() -> {
-                column().growX().gap(unit(1.5f)).left().children(() -> {
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
+                column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                     text(Core.bundle.get("setting.share-presence"))
                             .color(Color.white)
                             .left();
@@ -99,23 +105,17 @@ public class GeneralSettingsView extends Component {
         return SettingCard.section(Icon.infoCircle, Core.bundle.get("setting.section.diagnostics"), () -> {
             button(this::copyLastLog)
                     .style(WebStyles.outline())
-                    .growX()
-                    .height(unit(11))
-                    .gap(unit(2))
-                    .tooltip(Core.bundle.get("setting.button.copy-log.tooltip"))
+                    .props(growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)), tooltip(Core.bundle.get("setting.button.copy-log.tooltip")))
                     .children(() -> {
-                        icon(Icon.copy).size(unit(6));
+                        icon(Icon.copy).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                         text(Core.bundle.get("setting.button.copy-log"));
                     });
 
             button(this::copyLastCrash)
                     .style(WebStyles.outline())
-                    .growX()
-                    .height(unit(11))
-                    .gap(unit(2))
-                    .tooltip(Core.bundle.get("setting.button.copy-crash.tooltip"))
+                    .props(growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)), tooltip(Core.bundle.get("setting.button.copy-crash.tooltip")))
                     .children(() -> {
-                        icon(Icon.warning).size(unit(6));
+                        icon(Icon.warning).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                         text(Core.bundle.get("setting.button.copy-crash"));
                     });
         });

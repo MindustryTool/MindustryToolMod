@@ -146,6 +146,8 @@ public class ToggleRenderingFeature extends Feature {
 
         if (!drawBlocksConfig.get() && tileviewField != null && Vars.renderer != null && Vars.renderer.blocks != null) {
             try {
+                // java.lang.reflect.Field.get returns Object, and the Seq<Tile> type argument of the renderer's
+                // tileview field is not reifiable, so reflection cannot recover the element type here.
                 @SuppressWarnings("unchecked")
                 Seq<Tile> tileview = (Seq<Tile>) tileviewField.get(Vars.renderer.blocks);
                 if (tileview != null && !tileview.isEmpty()) {

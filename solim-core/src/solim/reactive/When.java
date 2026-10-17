@@ -4,23 +4,20 @@ import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import solim.core.Component;
-import solim.core.Disposable;
+import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.layout.CollapseHelper;
-import solim.modifier.CellConfig;
-import solim.modifier.ElementConfig;
+import solim.modifier.Configurable;
 import solim.modifier.PendingCellConfig;
-import solim.modifier.TableConfig;
+import solim.modifier.Props;
 import solim.runtime.AttachmentStack;
 import solim.runtime.Fragment;
 import solim.runtime.ReactiveContext;
 
 public final class When extends Component
-        implements CellConfig<When>, TableConfig<When>, ElementConfig<When> {
+        implements Configurable<When> {
     private static final Object SENTINEL = new Object();
     private final Table container = new Table();
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -28,8 +25,8 @@ public final class When extends Component
     private @Nullable Runnable thenAction;
     private @Nullable Runnable elseAction;
     private Component currentComponent;
+    private @Nullable Props<When> pending;
     private Object lastValue = SENTINEL;
-    private final List<Disposable> currentBindings = new ArrayList<>();
 
     private When(Readable<Boolean> condition) {
         this.condition = Objects.requireNonNull(condition, "condition must not be null");
@@ -68,6 +65,35 @@ public final class When extends Component
     }
 
     @Override
+    public When children(@Nullable Runnable block) {
+        applyPendingProps();
+        OwnershipContext.push(this);
+        try {
+            if (block != null) {
+                block.run();
+            }
+        } finally {
+            OwnershipContext.pop();
+        }
+        return this;
+    }
+
+    @Override
+    public @Nullable Props<When> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<When> props) {
+        this.pending = props;
+    }
+
+    @Override
+    protected void onRealized(Element element) {
+        applyPendingProps();
+    }
+
+    @Override
     public When name(@Nullable String name) {
         setName(name);
         return this;
@@ -78,9 +104,8 @@ public final class When extends Component
         return constraints;
     }
 
-    @Override
     public When align(int align) {
-        TableConfig.super.align(align);
+        table().align(align);
         constraints.align = align;
         constraints.applyAlignToParentCell(element());
         container.defaults().align(align);
@@ -92,9 +117,8 @@ public final class When extends Component
         return this;
     }
 
-    @Override
     public When center() {
-        TableConfig.super.center();
+        table().center();
         constraints.alignCenter();
         constraints.applyAlignToParentCell(element());
         container.defaults().center();
@@ -106,9 +130,8 @@ public final class When extends Component
         return this;
     }
 
-    @Override
     public When top() {
-        TableConfig.super.top();
+        table().top();
         constraints.alignTop();
         constraints.applyAlignToParentCell(element());
         container.defaults().top();
@@ -120,9 +143,8 @@ public final class When extends Component
         return this;
     }
 
-    @Override
     public When bottom() {
-        TableConfig.super.bottom();
+        table().bottom();
         constraints.alignBottom();
         constraints.applyAlignToParentCell(element());
         container.defaults().bottom();
@@ -134,9 +156,8 @@ public final class When extends Component
         return this;
     }
 
-    @Override
     public When left() {
-        TableConfig.super.left();
+        table().left();
         constraints.alignLeft();
         constraints.applyAlignToParentCell(element());
         container.defaults().left();
@@ -148,9 +169,8 @@ public final class When extends Component
         return this;
     }
 
-    @Override
     public When right() {
-        TableConfig.super.right();
+        table().right();
         constraints.alignRight();
         constraints.applyAlignToParentCell(element());
         container.defaults().right();
@@ -186,10 +206,6 @@ public final class When extends Component
             currentComponent.dispose();
             currentComponent = null;
         }
-        for (Disposable d : currentBindings) {
-            d.dispose();
-        }
-        currentBindings.clear();
         container.clearChildren();
         mount(condition.get());
         applyContainerAlign();
@@ -229,26 +245,20 @@ public final class When extends Component
             if (el.parent != null) {
                 continue;
             }
-            Cell<?> cell = container.add(el);
+            Cell<?> cell = AttachmentStack.attach(container, el, null, root);
+            if (cell == null) {
+                continue;
+            }
             cell.minWidth(0f);
-            applyRootCellConfig(root, el, cell);
+            if (PendingCellConfig.find(root) == null && PendingCellConfig.find(el) == null
+                    && SolimToken.isExpandingChild(el)) {
+                cell.growX();
+            }
             mounted++;
         }
         if (mounted == 0) {
             currentComponent.dispose();
             currentComponent = null;
-        }
-    }
-
-    private void applyRootCellConfig(Component root, Element el, Cell<?> cell) {
-        PendingCellConfig sc = PendingCellConfig.find(root);
-        if (sc == null) {
-            sc = PendingCellConfig.find(el);
-        }
-        if (sc != null) {
-            currentBindings.addAll(sc.applyToCell(cell));
-        } else if (SolimToken.isExpandingChild(el)) {
-            cell.growX();
         }
     }
 
@@ -261,7 +271,7 @@ public final class When extends Component
     }
 
     private void updateParentCell() {
-        CollapseHelper.updateParentCell(container, currentComponent != null, constraints);
+        CollapseHelper.updateParentCell(container, currentComponent != null, constraints, this);
     }
 
     @Override
@@ -270,10 +280,6 @@ public final class When extends Component
             currentComponent.dispose();
             currentComponent = null;
         }
-        for (Disposable d : currentBindings) {
-            d.dispose();
-        }
-        currentBindings.clear();
         container.clearChildren();
     }
 

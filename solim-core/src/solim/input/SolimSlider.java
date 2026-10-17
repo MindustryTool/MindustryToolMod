@@ -3,21 +3,55 @@ package solim.input;
 import solim.reactive.TwoWayBinding;
 
 import arc.scene.ui.Slider;
+import arc.scene.ui.layout.Table;
+import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.DisposableAction;
-import solim.modifier.ElementConfig;
-import solim.modifier.CellConfig;
+import solim.core.OwnershipContext;
+import solim.modifier.Configurable;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.Props;
 import solim.reactive.Signal;
 import java.util.Objects;
 
-public final class SolimSlider extends Component implements ElementConfig<SolimSlider>, CellConfig<SolimSlider> {
+public final class SolimSlider extends Component
+        implements Configurable<SolimSlider> {
     private final Slider slider;
     private final PendingCellConfig constraints = new PendingCellConfig();
+    private @Nullable Props<SolimSlider> pending;
 
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
+    }
+
+    @Override
+    public @Nullable Table table() {
+        return null;
+    }
+
+    @Override
+    public SolimSlider children(@Nullable Runnable block) {
+        applyPendingProps();
+        OwnershipContext.push(this);
+        try {
+            if (block != null) {
+                block.run();
+            }
+        } finally {
+            OwnershipContext.pop();
+        }
+        return this;
+    }
+
+    @Override
+    public @Nullable Props<SolimSlider> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<SolimSlider> props) {
+        this.pending = props;
     }
 
     public SolimSlider(Signal<Float> signal, float min, float max, float step) {
@@ -31,15 +65,20 @@ public final class SolimSlider extends Component implements ElementConfig<SolimS
         slider.setRange(min, max);
         slider.setStepSize(step);
         slider.setValue(signal.peek());
-        own(new TwoWayBinding<>(
-                signal,
-                slider::getValue,
-                slider::setValue,
-                onChange -> {
-                    slider.changed(onChange::run);
-                    return DisposableAction.empty();
-                },
-                (a, b) -> a != null && b != null && Math.abs(a - b) <= 0.0001f));
+        OwnershipContext.push(this);
+        try {
+            new TwoWayBinding<>(
+                    signal,
+                    slider::getValue,
+                    slider::setValue,
+                    onChange -> {
+                        slider.changed(onChange::run);
+                        return DisposableAction.empty();
+                    },
+                    (a, b) -> a != null && b != null && Math.abs(a - b) <= 0.0001f);
+        } finally {
+            OwnershipContext.pop();
+        }
     }
 
     public SolimSlider(Signal<Integer> signal, int min, int max, int step) {
@@ -53,15 +92,20 @@ public final class SolimSlider extends Component implements ElementConfig<SolimS
         slider.setRange(min, max);
         slider.setStepSize(step);
         slider.setValue(signal.peek());
-        own(new TwoWayBinding<>(
-                signal,
-                () -> Math.round(slider.getValue()),
-                val -> slider.setValue(val != null ? val : 0),
-                onChange -> {
-                    slider.changed(onChange::run);
-                    return DisposableAction.empty();
-                },
-                Objects::equals));
+        OwnershipContext.push(this);
+        try {
+            new TwoWayBinding<>(
+                    signal,
+                    () -> Math.round(slider.getValue()),
+                    val -> slider.setValue(val != null ? val : 0),
+                    onChange -> {
+                        slider.changed(onChange::run);
+                        return DisposableAction.empty();
+                    },
+                    Objects::equals);
+        } finally {
+            OwnershipContext.pop();
+        }
     }
 
     public static SolimSlider of(Signal<Float> signal, float min, float max, float step) {

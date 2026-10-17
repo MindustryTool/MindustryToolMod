@@ -1,6 +1,13 @@
 package mindustrytool.features.visualizer;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -57,21 +64,21 @@ public class VisualizerSettingsView extends Component {
         return SettingCard.section(Icon.waves,
                 Core.bundle.get("feature.visualizer.settings.section.bridges", "Bridges"), () -> {
                     checkbox(Core.bundle.get("feature.visualizer.settings.show-item-bridges", "Show Item Bridges"),
-                            feature.showItemBridgesConfig.signal()).growX();
+                            feature.showItemBridgesConfig.signal()).props(growX());
 
                     checkbox(Core.bundle.get("feature.visualizer.settings.show-duct-bridges", "Show Duct Bridges"),
-                            feature.showDuctBridgesConfig.signal()).growX();
+                            feature.showDuctBridgesConfig.signal()).props(growX());
 
                     checkbox(Core.bundle.get("feature.visualizer.settings.show-liquid-bridges", "Show Liquid Bridges"),
-                            feature.showLiquidBridgesConfig.signal()).growX();
+                            feature.showLiquidBridgesConfig.signal()).props(growX());
 
                     checkbox(
                             Core.bundle.get("feature.visualizer.settings.show-bridge-flow-rate",
                                     "Show Bridge Flow Rate"),
-                            feature.showBridgeFlowRateConfig.signal()).growX();
+                            feature.showBridgeFlowRateConfig.signal()).props(growX());
 
                     checkbox(Core.bundle.get("feature.visualizer.settings.hide-idle-bridge-flow", "Hide When Idle"),
-                            feature.hideIdleBridgeFlowConfig.signal()).growX();
+                            feature.hideIdleBridgeFlowConfig.signal()).props(growX());
 
                     divider().color(WebStyles.Colors.SECTION_BORDER);
 
@@ -109,21 +116,21 @@ public class VisualizerSettingsView extends Component {
         return SettingCard.section(Icon.turret,
                 Core.bundle.get("feature.visualizer.settings.section.turrets", "Turrets"), () -> {
                     checkbox(Core.bundle.get("feature.visualizer.settings.show-ammo-badge", "Show Ammo Badge"),
-                            feature.showAmmoBadgeConfig.signal()).growX();
+                            feature.showAmmoBadgeConfig.signal()).props(growX());
 
                     checkbox(Core.bundle.get("feature.visualizer.settings.show-target-line", "Show Target Line"),
-                            feature.showTargetLineConfig.signal()).growX();
+                            feature.showTargetLineConfig.signal()).props(growX());
 
                     checkbox(
                             Core.bundle.get("feature.visualizer.settings.target-line-ally", "Show Allied Turret Lines"),
-                            feature.targetLineAllyConfig.signal()).growX();
+                            feature.targetLineAllyConfig.signal()).props(growX());
 
                     checkbox(
                             Core.bundle.get("feature.visualizer.settings.target-line-enemy", "Show Enemy Turret Lines"),
-                            feature.targetLineEnemyConfig.signal()).growX();
+                            feature.targetLineEnemyConfig.signal()).props(growX());
 
                     checkbox(Core.bundle.get("feature.visualizer.settings.only-when-shooting", "Only When Shooting"),
-                            feature.onlyWhenShootingConfig.signal()).growX();
+                            feature.onlyWhenShootingConfig.signal()).props(growX());
 
                     divider().color(WebStyles.Colors.SECTION_BORDER);
 
@@ -149,30 +156,28 @@ public class VisualizerSettingsView extends Component {
 
     private Component turretFilterCard() {
         return SettingCard.card().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
-                icon(Icon.filter).size(unit(5)).color(Pal.accent);
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
+                icon(Icon.filter).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))).color(Pal.accent);
                 text(Core.bundle.get("feature.visualizer.settings.turret-filter", "Turret Filter"))
                         .color(Pal.accent)
                         .growX()
                         .left();
 
-                row().gap(unit(1)).children(() -> {
+                row().props(gap(unit(1))).children(() -> {
                     button(Core.bundle.get("feature.visualizer.settings.all", "All"),
                             () -> feature.setAllTurretsEnabled(true))
                             .style(WebStyles.outlineText())
-                            .height(unit(8))
-                            .padding(unit(1), unit(2.5f), unit(1), unit(2.5f));
+                            .props(height(unit(8)), prefHeight(unit(8)), padding(unit(1), unit(2.5f), unit(1), unit(2.5f)));
 
                     button(Core.bundle.get("feature.visualizer.settings.none", "None"),
                             () -> feature.setAllTurretsEnabled(false))
                             .style(WebStyles.ghostText())
-                            .height(unit(8))
-                            .padding(unit(1), unit(2.5f), unit(1), unit(2.5f));
+                            .props(height(unit(8)), prefHeight(unit(8)), padding(unit(1), unit(2.5f), unit(1), unit(2.5f)));
                 });
             });
 
             if (Vars.state != null && Vars.state.isGame()) {
-                row().growX().gap(unit(1.5f)).left().children(() -> {
+                row().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                     button(Core.bundle.get("feature.visualizer.settings.filter.all", "All"),
                             () -> turretActiveOnMapOnly.set(false))
                             .style(WebStyles.filterChipText())
@@ -192,13 +197,13 @@ public class VisualizerSettingsView extends Component {
                             .color(WebStyles.Colors.GHOST_FG)
                             .padding(unit(2));
                 } else {
-                    wrap().growX().left().gap(unit(1.5f)).children(() -> {
+                    wrap().props(growX(), left(), gap(unit(1.5f))).children(() -> {
                         for (Block block : blocks) {
                             turretChip(block);
                         }
                     });
                 }
-            }).growX();
+            }).props(growX());
         });
     }
 
@@ -238,8 +243,7 @@ public class VisualizerSettingsView extends Component {
             button(Core.bundle.get("feature.visualizer.settings.reset", "Reset to Defaults"),
                     feature::resetToDefaults)
                     .style(WebStyles.outlineText())
-                    .height(unit(11))
-                    .growX();
+                    .props(height(unit(11)), prefHeight(unit(11)), growX());
         });
     }
 
@@ -250,14 +254,12 @@ public class VisualizerSettingsView extends Component {
 
         button()
                 .style(WebStyles.filterChip())
-                .size(unit(11))
-                .padding(unit(1))
-                .tooltip(block.localizedName)
+                .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), padding(unit(1)), tooltip(block.localizedName))
                 .checked(signal)
                 .onClick(() -> feature.setTurretEnabled(block, !feature.isTurretEnabled(block)))
                 .children(() -> {
                     icon(drawable)
-                            .size(unit(6))
+                            .props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)))
                             .color(signal.map(enabled -> Boolean.TRUE.equals(enabled) ? Color.white
                                     : new Color(1f, 1f, 1f, 0.35f)));
                 });

@@ -1,6 +1,15 @@
 package mindustrytool.features.griefalert;
 
 import static solim.UI.*;
+import static solim.modifier.Values.border;
+import static solim.modifier.Values.maxWidth;
+import static solim.modifier.Values.onClick;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.rounded;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -37,15 +46,9 @@ public class GriefAlertHudView extends Component {
                 .map(alert -> alert != null ? alertText(alert) : "");
 
         Row banner = row()
-                .padding(unit(1.5f))
-                .gap(unit(2))
-                .center()
-                .rounded(unit(2), WebStyles.Colors.DARK_90)
-                .border(1.5f, WebStyles.Colors.DANGER)
-                .tooltip(Core.bundle.get("feature.grief-alert.hud.jump"))
-                .onClick(this::jump)
+                .props(padding(unit(1.5f)), rounded(unit(2), WebStyles.Colors.DARK_90), border(1.5f, WebStyles.Colors.DANGER), tooltip(Core.bundle.get("feature.grief-alert.hud.jump")), onClick(this::jump), gap(unit(2)), center())
                 .children(() -> {
-                    icon(Icon.warning).size(unit(6)).color(WebStyles.Colors.DANGER);
+                    icon(Icon.warning).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))).color(WebStyles.Colors.DANGER);
 
                     text(message)
                             .wrap()
@@ -55,15 +58,14 @@ public class GriefAlertHudView extends Component {
 
                     button()
                             .style(WebStyles.ghost())
-                            .size(unit(11))
-                            .tooltip(Core.bundle.get("feature.grief-alert.hud.dismiss"))
+                            .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.grief-alert.hud.dismiss")))
                             .onClick(feature::dismissAlert)
                             .stopClickPropagation(true)
-                            .children(() -> icon(Icon.cancel).size(unit(6)));
+                            .children(() -> icon(Icon.cancel).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
                 });
 
         root.add(banner.element()).padTop(TOP_INSET);
-        banner.maxWidth(dvw(90f));
+        banner.props(maxWidth(dvw(90f)));
 
         return root;
     }

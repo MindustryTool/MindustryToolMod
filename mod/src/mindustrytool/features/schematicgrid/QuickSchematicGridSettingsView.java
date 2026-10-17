@@ -1,6 +1,14 @@
 package mindustrytool.features.schematicgrid;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.minWidth;
+import static solim.modifier.Values.paddingX;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -44,28 +52,26 @@ public class QuickSchematicGridSettingsView extends Component {
         return SettingCard.section(Icon.settings, Core.bundle.get("team-resources.settings.section.layout", "Layout"),
                 () -> {
 
-                    row().growX().gap(unit(2)).center().children(() -> {
+                    row().props(growX(), gap(unit(2)), center()).children(() -> {
                         text(Core.bundle.get("feature.quick-schematic-grid.settings.display-mode"))
                                 .color(Color.white)
                                 .left();
 
                         spacer();
-                        row().gap(unit(1.5f)).children(() -> {
+                        row().props(gap(unit(1.5f))).children(() -> {
                             button(Core.bundle.get("feature.quick-schematic-grid.settings.display-mode.hud"),
                                     () -> feature.displayModeConfig.set(QuickSchematicGridFeature.DISPLAY_HUD))
                                     .style(WebStyles.filterChipText())
                                     .checked(feature.displayModeConfig.signal()
                                             .map(QuickSchematicGridFeature.DISPLAY_HUD::equals))
-                                    .height(unit(8))
-                                    .paddingX(unit(2.5f));
+                                    .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
 
                             button(Core.bundle.get("feature.quick-schematic-grid.settings.display-mode.popup"),
                                     () -> feature.displayModeConfig.set(QuickSchematicGridFeature.DISPLAY_POPUP))
                                     .style(WebStyles.filterChipText())
                                     .checked(feature.displayModeConfig.signal()
                                             .map(QuickSchematicGridFeature.DISPLAY_POPUP::equals))
-                                    .height(unit(8))
-                                    .paddingX(unit(2.5f));
+                                    .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
                         });
                     });
 
@@ -115,56 +121,52 @@ public class QuickSchematicGridSettingsView extends Component {
 
                     divider().color(WebStyles.Colors.SECTION_BORDER);
 
-                    column().growX().gap(unit(1.5f)).left().children(() -> {
+                    column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                         text(Core.bundle.get("feature.quick-schematic-grid.settings.page-position"))
                                 .color(Color.white)
                                 .left();
 
-                        row().gap(unit(1.5f)).children(() -> {
+                        row().props(gap(unit(1.5f))).children(() -> {
                             button(Core.bundle.get("feature.quick-schematic-grid.settings.page-position.left"),
                                     () -> feature.pagePositionConfig.set(QuickSchematicGridFeature.PAGE_LEFT))
                                     .style(WebStyles.filterChipText())
                                     .checked(feature.pagePositionConfig.signal()
                                             .map(QuickSchematicGridFeature.PAGE_LEFT::equals))
-                                    .height(unit(8))
-                                    .paddingX(unit(2f));
+                                    .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2f)));
 
                             button(Core.bundle.get("feature.quick-schematic-grid.settings.page-position.right"),
                                     () -> feature.pagePositionConfig.set(QuickSchematicGridFeature.PAGE_RIGHT))
                                     .style(WebStyles.filterChipText())
                                     .checked(feature.pagePositionConfig.signal()
                                             .map(QuickSchematicGridFeature.PAGE_RIGHT::equals))
-                                    .height(unit(8))
-                                    .paddingX(unit(2f));
+                                    .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2f)));
 
                             button(Core.bundle.get("feature.quick-schematic-grid.settings.page-position.top"),
                                     () -> feature.pagePositionConfig.set(QuickSchematicGridFeature.PAGE_TOP))
                                     .style(WebStyles.filterChipText())
                                     .checked(feature.pagePositionConfig.signal()
                                             .map(QuickSchematicGridFeature.PAGE_TOP::equals))
-                                    .height(unit(8))
-                                    .paddingX(unit(2f));
+                                    .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2f)));
 
                             button(Core.bundle.get("feature.quick-schematic-grid.settings.page-position.bottom"),
                                     () -> feature.pagePositionConfig.set(QuickSchematicGridFeature.PAGE_BOTTOM))
                                     .style(WebStyles.filterChipText())
                                     .checked(feature.pagePositionConfig.signal()
                                             .map(QuickSchematicGridFeature.PAGE_BOTTOM::equals))
-                                    .height(unit(8))
-                                    .paddingX(unit(2f));
+                                    .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2f)));
                         });
                     });
 
                     divider().color(WebStyles.Colors.SECTION_BORDER);
 
                     checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle"),
-                            feature.hideDragHandleConfig.signal()).growX();
+                            feature.hideDragHandleConfig.signal()).props(growX());
                 });
     }
 
     private Component pagesCard() {
         return SettingCard.section(Icon.list, Core.bundle.get("feature.quick-schematic-grid.settings.pages"), () -> {
-            row().growX().gap(unit(2)).center().children(() -> {
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
                 text(Core.bundle.get("feature.quick-schematic-grid.settings.pages")).left().color(Color.white);
 
                 spacer();
@@ -173,14 +175,14 @@ public class QuickSchematicGridSettingsView extends Component {
                         .style(WebStyles.secondary())
                         .enabled(feature.pageCountConfig.signal()
                                 .map(count -> count != null && count < QuickSchematicGridFeature.MAX_PAGES))
-                        .height(unit(8.5f));
+                        .props(height(unit(8.5f)), prefHeight(unit(8.5f)));
 
                 button(Core.bundle.get("feature.quick-schematic-grid.settings.delete-page"),
                         this::confirmDeletePage)
                         .style(WebStyles.ghost())
                         .enabled(feature.pageCountConfig.signal()
                                 .map(count -> count != null && count > QuickSchematicGridFeature.MIN_PAGES))
-                        .height(unit(8.5f));
+                        .props(height(unit(8.5f)), prefHeight(unit(8.5f)));
             });
 
             Readable<List<Integer>> pagesList = Signal.computed(() -> {
@@ -195,7 +197,7 @@ public class QuickSchematicGridSettingsView extends Component {
                 return list;
             });
 
-            dynamic(pagesList, pages -> wrap().growX().gap(unit(1)).children(() -> {
+            dynamic(pagesList, pages -> wrap().props(growX(), gap(unit(1))).children(() -> {
                 if (pages != null) {
                     for (int pageIndex : pages) {
                         String icon = feature.getPageIcon(pageIndex);
@@ -207,16 +209,14 @@ public class QuickSchematicGridSettingsView extends Component {
                         button(label, () -> feature.setActivePage(pageIndex))
                                 .style(WebStyles.filterChipText())
                                 .checked(feature.activePage.map(p -> p != null && p.intValue() == pageIndex))
-                                .tooltip(tooltip)
-                                .height(unit(8.5f))
-                                .minWidth(unit(14f));
+                                .props(tooltip(tooltip), height(unit(8.5f)), prefHeight(unit(8.5f)), minWidth(unit(14f)));
                     }
                 }
             }));
 
             divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            row().growX().gap(unit(2)).center().children(() -> {
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
                 text(Core.bundle.get("feature.quick-schematic-grid.settings.page-icon"))
                         .left()
                         .color(WebStyles.Colors.GHOST_FG);
@@ -241,14 +241,14 @@ public class QuickSchematicGridSettingsView extends Component {
                 button(Core.bundle.get("feature.quick-schematic-grid.settings.page-icon.pick"),
                         this::pickPageIcon)
                         .style(WebStyles.secondary())
-                        .height(unit(8.5f));
+                        .props(height(unit(8.5f)), prefHeight(unit(8.5f)));
 
                 dynamic(activeIcon, icon -> {
                     if (icon != null && !icon.trim().isEmpty()) {
                         button(Core.bundle.get("feature.quick-schematic-grid.settings.page-icon.clear"),
                                 this::clearPageIcon)
                                 .style(WebStyles.ghost())
-                                .height(unit(8.5f));
+                                .props(height(unit(8.5f)), prefHeight(unit(8.5f)));
                     }
                 });
             });
@@ -288,12 +288,11 @@ public class QuickSchematicGridSettingsView extends Component {
             return list;
         });
 
-        scroll().growX().scrollX(true).scrollY(true).center().children(() -> {
+        scroll().props(growX(), center()).scrollX(true).scrollY(true).children(() -> {
             reactiveGrid(slots).columns(feature.colsConfig.signal())
                     .key(QuickSchematicGridHudView.SlotModel::key)
-                    .gap(gap)
-                    .growX()
-                    .children(this::settingsSlotComponent);
+                    .props(growX(), gap(gap))
+                    .items(this::settingsSlotComponent);
         });
     }
 
@@ -302,9 +301,8 @@ public class QuickSchematicGridSettingsView extends Component {
         if (slot.entry == null) {
             return button(() -> openSlotPicker(slot.page, slot.row, slot.col))
                     .style(WebStyles.secondary())
-                    .size(buttonSize)
-                    .tooltip(Core.bundle.get("feature.quick-schematic-grid.settings.add"))
-                    .children(() -> icon(Icon.add).size(buttonSize.map(s -> (s != null ? s : 48f) * 0.4f))
+                    .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(Core.bundle.get("feature.quick-schematic-grid.settings.add")))
+                    .children(() -> icon(Icon.add).props(size(buttonSize.map(s -> (s != null ? s : 48f) * 0.4f)), prefWidth(buttonSize.map(s -> (s != null ? s : 48f) * 0.4f)), prefHeight(buttonSize.map(s -> (s != null ? s : 48f) * 0.4f)))
                             .color(Color.lightGray));
         }
 
@@ -315,8 +313,7 @@ public class QuickSchematicGridSettingsView extends Component {
             String glyph = slot.entry.customIcon;
             return button(() -> openSlotDialog(slot.entry.id))
                     .style(WebStyles.ghost())
-                    .size(buttonSize)
-                    .tooltip(tooltip)
+                    .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(tooltip))
                     .children(() -> text(glyph != null ? glyph : "")
                             .fontScale(buttonSize.map(s -> (s != null ? s : 48f) / 32f))
                             .center());
@@ -325,16 +322,14 @@ public class QuickSchematicGridSettingsView extends Component {
         if (schematic == null) {
             return button(() -> openSlotDialog(slot.entry.id))
                     .style(WebStyles.ghost())
-                    .size(buttonSize)
-                    .tooltip(Core.bundle.format("feature.quick-schematic-grid.tooltip.missing", tooltip))
-                    .children(() -> icon(Icon.warning).size(buttonSize.map(s -> (s != null ? s : 48f) * 0.5f))
+                    .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(Core.bundle.format("feature.quick-schematic-grid.tooltip.missing", tooltip)))
+                    .children(() -> icon(Icon.warning).props(size(buttonSize.map(s -> (s != null ? s : 48f) * 0.5f)), prefWidth(buttonSize.map(s -> (s != null ? s : 48f) * 0.5f)), prefHeight(buttonSize.map(s -> (s != null ? s : 48f) * 0.5f)))
                             .color(Color.scarlet));
         }
 
         return button(() -> openSlotDialog(slot.entry.id))
                 .style(WebStyles.ghost())
-                .size(buttonSize)
-                .tooltip(tooltip)
+                .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(tooltip))
                 .children(() -> new BoundedSchematicImage(schematic, buttonSize, 48f));
     }
 
@@ -371,8 +366,7 @@ public class QuickSchematicGridSettingsView extends Component {
             button(Core.bundle.get("feature.quick-schematic-grid.settings.reset-position"),
                     feature::resetPosition)
                     .style(WebStyles.outlineText())
-                    .height(unit(11))
-                    .growX();
+                    .props(height(unit(11)), prefHeight(unit(11)), growX());
         });
     }
 }

@@ -29,6 +29,7 @@ import mindustrytool.test.MindustryTestEnv;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import solim.core.Component;
 import solim.reactive.Readable;
 
 class AutoplayHudPopupTest extends MindustryTestEnv {
@@ -221,7 +222,7 @@ class AutoplayHudPopupTest extends MindustryTestEnv {
     }
 
     private static void fireLongClick(Button button) throws Exception {
-        solim.core.Component comp = solim.core.SolimToken.getComponent(button);
+        Component comp = componentOf(button);
         assertTrue(comp instanceof solim.input.Button, "Controls strip button must be Solim button");
         Field field = solim.input.Button.class.getDeclaredField("onLongClick");
         field.setAccessible(true);

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import solim.runtime.ReactiveContext;
 import solim.runtime.SignalDispatcher;
@@ -156,21 +157,20 @@ public class ReactivePrimitivesRegressionTest extends SolimEnv {
         choice.dispose();
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void computedCycleDetectionDirectAndTransitive() {
 
-        Computed<Integer>[] self = new Computed[1];
-        self[0] = Signal.computed(() -> self[0].get() + 1);
+        AtomicReference<Computed<Integer>> self = new AtomicReference<>();
+        self.set(Signal.computed(() -> self.get().get() + 1));
 
-        assertThrows(IllegalStateException.class, () -> self[0].get());
+        assertThrows(IllegalStateException.class, () -> self.get().get());
 
-        Computed<Integer>[] a = new Computed[1];
-        Computed<Integer>[] b = new Computed[1];
-        a[0] = Signal.computed(() -> b[0] != null ? b[0].get() + 1 : 0);
-        b[0] = Signal.computed(() -> a[0].get() + 1);
+        AtomicReference<Computed<Integer>> a = new AtomicReference<>();
+        AtomicReference<Computed<Integer>> b = new AtomicReference<>();
+        a.set(Signal.computed(() -> b.get() != null ? b.get().get() + 1 : 0));
+        b.set(Signal.computed(() -> a.get().get() + 1));
 
-        assertThrows(IllegalStateException.class, () -> a[0].get());
+        assertThrows(IllegalStateException.class, () -> a.get().get());
     }
 
     @Test

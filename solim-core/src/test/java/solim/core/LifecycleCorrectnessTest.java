@@ -12,13 +12,15 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
+import solim.reactive.Computed;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
 import solim.runtime.StructuralReconciler;
-import solim.test.SolimEnv;
 
-class LifecycleCorrectnessTest extends SolimEnv {
+class LifecycleCorrectnessTest extends solim.test.OwnershipEnv {
+
+
 
     @Test
     void disposalOrderIsLIFO() {
@@ -26,9 +28,9 @@ class LifecycleCorrectnessTest extends SolimEnv {
         Component comp = new Component() {
             @Override
             protected Element build() {
-                own(DisposableAction.of(() -> order.add("first")));
-                own(DisposableAction.of(() -> order.add("second")));
-                own(DisposableAction.of(() -> order.add("third")));
+                adopt(DisposableAction.of(() -> order.add("first")));
+                adopt(DisposableAction.of(() -> order.add("second")));
+                adopt(DisposableAction.of(() -> order.add("third")));
                 return new Element();
             }
         };
@@ -46,12 +48,12 @@ class LifecycleCorrectnessTest extends SolimEnv {
         Component comp = new Component() {
             @Override
             protected Element build() {
-                own(DisposableAction.of(() -> disposed.add("first")));
-                own(DisposableAction.of(() -> {
+                adopt(DisposableAction.of(() -> disposed.add("first")));
+                adopt(DisposableAction.of(() -> {
                     disposed.add("failing");
                     throw new RuntimeException("Simulated disposal failure");
                 }));
-                own(DisposableAction.of(() -> disposed.add("third")));
+                adopt(DisposableAction.of(() -> disposed.add("third")));
                 return new Element();
             }
         };
@@ -82,7 +84,7 @@ class LifecycleCorrectnessTest extends SolimEnv {
         Component comp = new Component() {
             @Override
             protected Element build() {
-                own(DisposableAction.of(count::incrementAndGet));
+                adopt(DisposableAction.of(count::incrementAndGet));
                 return new Element();
             }
         };
@@ -100,7 +102,7 @@ class LifecycleCorrectnessTest extends SolimEnv {
         Component comp = new Component() {
             @Override
             protected Element build() {
-                own(DisposableAction.of(() -> resourceDisposed.set(true)));
+                adopt(DisposableAction.of(() -> resourceDisposed.set(true)));
                 throw new RuntimeException("Build crashed");
             }
         };
@@ -117,7 +119,7 @@ class LifecycleCorrectnessTest extends SolimEnv {
         Component comp = new Component() {
             @Override
             protected Element build() {
-                own(DisposableAction.of(() -> resourceDisposed.set(true)));
+                adopt(DisposableAction.of(() -> resourceDisposed.set(true)));
                 return null;
             }
         };
@@ -158,14 +160,52 @@ class LifecycleCorrectnessTest extends SolimEnv {
     }
 
     @Test
-    void effectNotAutoRegisteredOutsideBuild() {
+    void windowlessReactiveCreationFallsBackToTheSessionRoot() {
+        Signal<Integer> sig = Signal.of(0);
+
+        Effect effect = Effect.of(() -> sig.get());
+        Computed<Integer> computed = new Computed<>(sig::get);
+
+        assertTrue(SessionRoot.get().disposables().contains(effect),
+                "A windowless Effect must be adopted by SessionRoot");
+        assertTrue(SessionRoot.get().disposables().contains(computed),
+                "A windowless Computed must be adopted by SessionRoot");
+
+        Component adopter = new Component() {
+            @Override
+            protected Element build() {
+                return new Element();
+            }
+        };
+        assertThrows(IllegalStateException.class, () -> adopter.adopt(effect),
+                "SessionRoot holds the resource, so a component can not also own it");
+
+        SessionRoot.get().dispose();
+        assertTrue(effect.isDisposed(), "SessionRoot disposal must dispose the Effect it adopted");
+        assertTrue(computed.isDisposed(),
+                "SessionRoot disposal must dispose the Computed it adopted");
+    }
+
+    @Test
+    void anAmbientWindowTakesPrecedenceOverTheSessionRootFallback() {
+        Signal<Integer> sig = Signal.of(0);
+
+        Effect windowed = inOwnershipWindow(() -> Effect.of(() -> sig.get()));
+
+        assertFalse(SessionRoot.get().disposables().contains(windowed),
+                "A windowed resource belongs to the ambient owner, not to SessionRoot");
+        assertFalse(windowed.isDisposed());
+    }
+
+    @Test
+    void effectInsideAWindowIsOwnedAndStopsOnDispose() {
         Signal<Integer> sig = Signal.of(0);
         AtomicInteger runs = new AtomicInteger(0);
 
-        Effect e = Effect.of(() -> {
+        Effect e = inOwnershipWindow(() -> Effect.of(() -> {
             sig.get();
             runs.incrementAndGet();
-        });
+        }));
 
         assertEquals(1, runs.get());
         sig.set(1);
@@ -226,7 +266,7 @@ class LifecycleCorrectnessTest extends SolimEnv {
         Component comp = new Component() {
             @Override
             protected Element build() {
-                own(DisposableAction.of(() -> owned.set(true)));
+                adopt(DisposableAction.of(() -> owned.set(true)));
                 return new Element();
             }
         };

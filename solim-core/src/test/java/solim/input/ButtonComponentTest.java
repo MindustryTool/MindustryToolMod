@@ -1,6 +1,14 @@
 package solim.input;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.position;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.width;
+import static solim.modifier.Values.x;
+import static solim.modifier.Values.y;
 
 import arc.Core;
 import arc.scene.Element;
@@ -160,21 +168,21 @@ class ButtonComponentTest extends SolimEnv {
 
     @Test
     void widthSetsPrefWidth() {
-        Button btn = new Button().width(200f);
+        Button btn = new Button().props(width(200f), prefWidth(200f));
         assertEquals(200f, btn.button().getPrefWidth(), 0.01f);
         btn.dispose();
     }
 
     @Test
     void heightSetsPrefHeight() {
-        Button btn = new Button().height(80f);
+        Button btn = new Button().props(height(80f), prefHeight(80f));
         assertEquals(80f, btn.button().getPrefHeight(), 0.01f);
         btn.dispose();
     }
 
     @Test
     void sizeSetsBothDimensions() {
-        Button btn = new Button().size(100f);
+        Button btn = new Button().props(size(100f), prefWidth(100f), prefHeight(100f));
         assertEquals(100f, btn.button().getPrefWidth(), 0.01f);
         assertEquals(100f, btn.button().getPrefHeight(), 0.01f);
         btn.dispose();
@@ -184,13 +192,13 @@ class ButtonComponentTest extends SolimEnv {
     void positionSetsCoordinates() {
         Button btn = new Button();
 
-        btn.x(10f);
+        btn.props(x(10f));
         assertEquals(10f, btn.button().x, 0.01f);
 
-        btn.y(20f);
+        btn.props(y(20f));
         assertEquals(20f, btn.button().y, 0.01f);
 
-        btn.position(30f, 40f);
+        btn.props(position(30f, 40f));
         assertEquals(30f, btn.button().x, 0.01f);
         assertEquals(40f, btn.button().y, 0.01f);
         btn.dispose();

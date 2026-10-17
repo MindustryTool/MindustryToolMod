@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.gap;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,9 +22,10 @@ import arc.scene.ui.Button.ButtonStyle;
 import solim.core.OwnershipContext;
 import solim.reactive.Signal;
 import solim.test.BuildScopeHost;
-import solim.test.SolimEnv;
+import solim.test.OwnershipEnv;
 
-class ButtonDisposalTest extends SolimEnv {
+class ButtonDisposalTest extends OwnershipEnv {
+
 
     @BeforeEach
     void setUp() {
@@ -147,7 +149,7 @@ class ButtonDisposalTest extends SolimEnv {
     @Test
     void gapBindingStopsOnDispose() {
         Signal<Float> gap = Signal.of(4f);
-        Button button = new Button().gap(gap);
+        Button button = new Button().props(gap(gap));
         Element first = new Element();
         Element second = new Element();
         button.children(() -> {

@@ -10,12 +10,33 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import arc.scene.ui.Label;
+import solim.core.Component;
+import solim.core.OwnershipContext;
 import solim.reactive.Computed;
 import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
-import solim.test.SolimEnv;
+import solim.test.OwnershipEnv;
 
-class FeedbackDisposalTest extends SolimEnv {
+class FeedbackDisposalTest extends OwnershipEnv {
+
+	/**
+	 * {@code ProgressBar} and {@code FeedbackBadge} create their binding effect in the
+	 * constructor, so they must be instantiated inside an ownership window. The helper
+	 * opens a window owned by a throwaway holder, mirroring how a component would own
+	 * them through {@code children()}.
+	 */
+	private static final class Holder extends Component {
+	}
+
+	private static <T> T insideWindow(arc.func.Prov<T> factory) {
+		Holder holder = new Holder();
+		OwnershipContext.push(holder);
+		try {
+			return factory.get();
+		} finally {
+			OwnershipContext.pop();
+		}
+	}
 
 	@BeforeEach
 	void setUp() {
@@ -31,9 +52,9 @@ class FeedbackDisposalTest extends SolimEnv {
 	@Test
 	void badgeBindingDiesOnDispose() {
 		Signal<String> source = Signal.of("a");
-		Computed<String> text = source.map(v -> "[" + v + "]");
+		Computed<String> text = insideWindow(() -> source.map(v -> "[" + v + "]"));
 		text.peek();
-		FeedbackBadge badge = FeedbackBadge.of(text);
+		FeedbackBadge badge = insideWindow(() -> FeedbackBadge.of(text));
 		assertFalse(badge.isDisposed());
 
 		source.set("b");
@@ -71,7 +92,7 @@ class FeedbackDisposalTest extends SolimEnv {
 	@Test
 	void progressBarEffectDiesOnDispose() {
 		Signal<Float> progress = Signal.of(0f);
-		ProgressBar bar = ProgressBar.of(progress);
+		ProgressBar bar = insideWindow(() -> ProgressBar.of(progress));
 		assertFalse(bar.isDisposed());
 
 		progress.set(0.5f);

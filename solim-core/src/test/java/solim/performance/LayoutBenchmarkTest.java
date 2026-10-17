@@ -1,6 +1,7 @@
 package solim.performance;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.growX;
 
 import org.junit.jupiter.api.Test;
 
@@ -17,8 +18,8 @@ public class LayoutBenchmarkTest extends SolimEnv {
         Column col = new Column();
         col.children(() -> {
             for (int i = 0; i < count; i++) {
-                new Card().growX().children(() -> {
-                    new Row().growX().children(() -> {
+                new Card().props(growX()).children(() -> {
+                    new Row().props(growX()).children(() -> {
                         Element el = new Element();
                         el.setSize(40f, 40f);
                     });

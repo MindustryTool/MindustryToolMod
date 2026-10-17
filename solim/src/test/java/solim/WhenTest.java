@@ -2,6 +2,7 @@ package solim;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.growX;
 
 import arc.scene.Element;
 import org.junit.jupiter.api.AfterEach;
@@ -166,7 +167,7 @@ class WhenTest extends SolimEnv {
                 .elseDo(() -> {
                     elseBox[0] = new Probe();
                 })
-                .growX();
+                .props(growX());
         when.element();
         SignalDispatcher.flush();
         assertTrue(when.cellConfig().growX);

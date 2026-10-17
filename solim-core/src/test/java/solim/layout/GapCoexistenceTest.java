@@ -1,6 +1,10 @@
 package solim.layout;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.margin;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.visible;
 
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +20,9 @@ class GapCoexistenceTest extends SolimEnv {
 
     @Test
     void childMarginAndContainerGapCoexistAdditivelyInRow() {
-        Row r = new Row().gap(12f);
-        Card card1 = new Card().margin(5f, 10f, 5f, 10f);
-        Card card2 = new Card().margin(6f, 15f, 6f, 20f);
+        Row r = new Row().props(gap(12f));
+        Card card1 = new Card().props(margin(5f, 10f, 5f, 10f));
+        Card card2 = new Card().props(margin(6f, 15f, 6f, 20f));
         Card card3 = new Card();
 
         r.children(() -> {
@@ -49,9 +53,9 @@ class GapCoexistenceTest extends SolimEnv {
 
     @Test
     void childMarginAndContainerGapCoexistAdditivelyInColumn() {
-        Column col = new Column().gap(14f);
-        Card card1 = new Card().margin(8f, 4f, 4f, 4f);
-        Card card2 = new Card().margin(6f, 4f, 4f, 4f);
+        Column col = new Column().props(gap(14f));
+        Card card1 = new Card().props(margin(8f, 4f, 4f, 4f));
+        Card card2 = new Card().props(margin(6f, 4f, 4f, 4f));
         Card card3 = new Card();
 
         col.children(() -> {
@@ -76,7 +80,7 @@ class GapCoexistenceTest extends SolimEnv {
 
     @Test
     void visibilityCollapsePromotesNextVisibleSiblingToZeroLeadingGap() {
-        Row row = new Row().gap(16f);
+        Row row = new Row().props(gap(16f));
         Card cardA = new Card();
         Card cardB = new Card();
         Card cardC = new Card();
@@ -95,20 +99,20 @@ class GapCoexistenceTest extends SolimEnv {
         assertEquals(16f, CellAccess.padLeft(cellB), 0.01f);
         assertEquals(16f, CellAccess.padLeft(cellC), 0.01f);
 
-        cardA.visible(false);
+        cardA.props(visible(false));
         assertEquals(0f, CellAccess.padLeft(cellA), 0.01f);
 
         assertEquals(0f, CellAccess.padLeft(cellB), 0.01f);
 
         assertEquals(16f, CellAccess.padLeft(cellC), 0.01f);
 
-        cardB.visible(false);
+        cardB.props(visible(false));
         assertEquals(0f, CellAccess.padLeft(cellA), 0.01f);
         assertEquals(0f, CellAccess.padLeft(cellB), 0.01f);
 
         assertEquals(0f, CellAccess.padLeft(cellC), 0.01f);
 
-        cardA.visible(true);
+        cardA.props(visible(true));
         assertEquals(0f, CellAccess.padLeft(cellA), 0.01f);
         assertEquals(0f, CellAccess.padLeft(cellB), 0.01f);
         assertEquals(16f, CellAccess.padLeft(cellC), 0.01f);
@@ -118,7 +122,7 @@ class GapCoexistenceTest extends SolimEnv {
     void dynamicComponentCollapseAndExpandRespacesSiblingsWithoutGhostGaps() {
         Signal<Boolean> showItem = Signal.of(true);
 
-        Row row = new Row().gap(20f);
+        Row row = new Row().props(gap(20f));
         Card prefix = new Card();
         Dynamic<Boolean> dynamicCard = Dynamic.of(showItem, visible -> {
             if (visible) {
@@ -149,7 +153,7 @@ class GapCoexistenceTest extends SolimEnv {
 
         assertEquals(20f, CellAccess.padLeft(suffixCell), 0.01f);
 
-        prefix.visible(false);
+        prefix.props(visible(false));
 
         assertEquals(0f, CellAccess.padLeft(suffixCell), 0.01f);
 
@@ -164,7 +168,7 @@ class GapCoexistenceTest extends SolimEnv {
     void childMarginInsideRowColumnAndGridSetsParentCellPadding() {
 
         Row row = new Row();
-        Card rowChild = new Card().margin(5f, 10f, 15f, 20f);
+        Card rowChild = new Card().props(margin(5f, 10f, 15f, 20f));
         row.children(() -> AttachmentStack.add(rowChild));
         Cell<?> rowCell = row.table().getCell(rowChild.element());
         assertEquals(5f, CellAccess.padTop(rowCell), 0.01f);
@@ -173,7 +177,7 @@ class GapCoexistenceTest extends SolimEnv {
         assertEquals(20f, CellAccess.padRight(rowCell), 0.01f);
 
         Column col = new Column();
-        Card colChild = new Card().margin(6f, 12f, 18f, 24f);
+        Card colChild = new Card().props(margin(6f, 12f, 18f, 24f));
         col.children(() -> AttachmentStack.add(colChild));
         Cell<?> colCell = col.table().getCell(colChild.element());
         assertEquals(6f, CellAccess.padTop(colCell), 0.01f);
@@ -182,7 +186,7 @@ class GapCoexistenceTest extends SolimEnv {
         assertEquals(24f, CellAccess.padRight(colCell), 0.01f);
 
         Grid grid = new Grid(2);
-        Card gridChild = new Card().margin(7f, 14f, 21f, 28f);
+        Card gridChild = new Card().props(margin(7f, 14f, 21f, 28f));
         grid.children(() -> AttachmentStack.add(gridChild));
         Cell<?> gridCell = grid.table().getCell(gridChild.element());
         assertEquals(7f, CellAccess.padTop(gridCell), 0.01f);
@@ -195,8 +199,7 @@ class GapCoexistenceTest extends SolimEnv {
     void marginAndPaddingCoexistOnContainer() {
         Row parent = new Row();
         Card card = new Card()
-                .margin(8f, 12f, 16f, 20f)
-                .padding(4f, 6f, 8f, 10f);
+                .props(margin(8f, 12f, 16f, 20f), padding(4f, 6f, 8f, 10f));
 
         parent.children(() -> AttachmentStack.add(card));
 

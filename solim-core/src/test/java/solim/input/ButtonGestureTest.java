@@ -1,6 +1,11 @@
 package solim.input;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static solim.modifier.Values.margin;
+import static solim.modifier.Values.opacity;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
 
 import arc.scene.event.InputEvent;
 import arc.scene.ui.Button.ButtonStyle;
@@ -80,11 +85,11 @@ class ButtonGestureTest extends SolimEnv {
     @Test
     void opacityModifierStaticAndReactive() {
         Button btn = new Button();
-        btn.opacity(0.4f);
+        btn.props(opacity(0.4f));
         assertEquals(0.4f, btn.element().color.a, 0.001f);
 
         Signal<Float> op = Signal.of(0.8f);
-        btn.opacity(op);
+        btn.props(opacity(op));
         assertEquals(0.8f, btn.element().color.a, 0.001f);
 
         op.set(0.25f);
@@ -94,11 +99,11 @@ class ButtonGestureTest extends SolimEnv {
 
     @Test
     void layoutModifierOpacity() {
-        Row r = new Row().opacity(0.5f);
+        Row r = new Row().props(opacity(0.5f));
         assertEquals(0.5f, r.element().color.a, 0.001f);
 
         Signal<Float> op = Signal.of(0.9f);
-        r.opacity(op);
+        r.props(opacity(op));
         assertEquals(0.9f, r.element().color.a, 0.001f);
     }
 
@@ -107,7 +112,7 @@ class ButtonGestureTest extends SolimEnv {
         Signal<Float> size = Signal.of(48f);
         Signal<Float> margin = Signal.of(8f);
 
-        Button btn = new Button().size(size).margin(margin);
+        Button btn = new Button().props(size(size), prefWidth(size), prefHeight(size), margin(margin));
 
         assertEquals(48f, btn.button().getWidth(), 0.01f);
         assertEquals(48f, btn.button().getHeight(), 0.01f);

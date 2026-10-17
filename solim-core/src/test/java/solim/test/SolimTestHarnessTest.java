@@ -17,10 +17,11 @@ import solim.runtime.SignalDispatcher;
 
 class SolimTestHarnessTest extends SolimEnv {
 
+
     @Test
     void harnessEnsuresCleanAmbientContexts() {
         assertEquals(0, AttachmentStack.size());
-        assertEquals(0, OwnershipContext.size());
+        assertEquals(1, OwnershipContext.size(), "Only the harness window owns anything");
         assertEquals(0, ReactiveContext.size());
         assertEquals(0, SignalDispatcher.size());
         assertFalse(SignalDispatcher.isFlushing());

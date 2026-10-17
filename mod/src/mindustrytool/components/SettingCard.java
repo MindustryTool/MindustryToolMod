@@ -1,6 +1,13 @@
 package mindustrytool.components;
 
 import static solim.UI.*;
+import static solim.modifier.Values.border;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.rounded;
+import static solim.modifier.Values.size;
 
 import arc.scene.style.Drawable;
 import arc.util.Nullable;
@@ -17,18 +24,14 @@ public final class SettingCard {
 
     public static Card card() {
         return solim.UI.card()
-                .growX()
-                .padding(unit(2.5f))
-                .gap(unit(2))
-                .rounded(unit(2), WebStyles.Colors.SECTION_BG)
-                .border(1f, WebStyles.Colors.SECTION_BORDER);
+                .props(growX(), padding(unit(2.5f)), rounded(unit(2), WebStyles.Colors.SECTION_BG), border(1f, WebStyles.Colors.SECTION_BORDER), gap(unit(2)));
     }
 
     public static Component section(@Nullable Drawable icon, String title, Runnable content) {
         return card().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
                 if (icon != null) {
-                    icon(icon).size(unit(5)).color(Pal.accent);
+                    icon(icon).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))).color(Pal.accent);
                 }
                 text(title)
                         .color(Pal.accent)
@@ -54,9 +57,9 @@ public final class SettingCard {
     public static Component header(@Nullable Drawable icon, String name, String badgeText,
             @Nullable String description) {
         return card().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
                 if (icon != null) {
-                    icon(icon).size(unit(5)).color(Pal.accent);
+                    icon(icon).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))).color(Pal.accent);
                 }
                 text(name)
                         .color(Pal.accent)
@@ -78,9 +81,9 @@ public final class SettingCard {
     public static Component header(@Nullable Drawable icon, String name, Readable<String> badgeText,
             @Nullable String description) {
         return card().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
                 if (icon != null) {
-                    icon(icon).size(unit(5)).color(Pal.accent);
+                    icon(icon).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))).color(Pal.accent);
                 }
                 text(name)
                         .color(Pal.accent)

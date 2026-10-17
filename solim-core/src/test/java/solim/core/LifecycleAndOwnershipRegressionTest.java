@@ -17,11 +17,12 @@ import solim.reactive.Effect;
 import solim.reactive.Signal;
 import solim.reactive.TwoWayBinding;
 import solim.runtime.StructuralReconciler;
-import solim.test.SolimEnv;
+import solim.test.OwnershipEnv;
 import solim.test.TestComponent;
 import solim.test.TestDisposable;
 
-public class LifecycleAndOwnershipRegressionTest extends SolimEnv {
+public class LifecycleAndOwnershipRegressionTest extends OwnershipEnv {
+
 
     @Test
     void lazyBuildExecutesOnlyOnFirstElementCall() {
@@ -71,7 +72,7 @@ public class LifecycleAndOwnershipRegressionTest extends SolimEnv {
         Component parent = new Component() {
             @Override
             protected Element build() {
-                own(new TestDisposable("parent-res-1") {
+                adopt(new TestDisposable("parent-res-1") {
                     @Override
                     public void dispose() {
                         super.dispose();
@@ -82,14 +83,14 @@ public class LifecycleAndOwnershipRegressionTest extends SolimEnv {
                 new Component() {
                     @Override
                     protected Element build() {
-                        own(new TestDisposable("child-res-1") {
+                        adopt(new TestDisposable("child-res-1") {
                             @Override
                             public void dispose() {
                                 super.dispose();
                                 disposalLog.add("child-res-1");
                             }
                         });
-                        own(new TestDisposable("child-res-2") {
+                        adopt(new TestDisposable("child-res-2") {
                             @Override
                             public void dispose() {
                                 super.dispose();
@@ -100,7 +101,7 @@ public class LifecycleAndOwnershipRegressionTest extends SolimEnv {
                     }
                 }.element();
 
-                own(new TestDisposable("parent-res-2") {
+                adopt(new TestDisposable("parent-res-2") {
                     @Override
                     public void dispose() {
                         super.dispose();
@@ -129,17 +130,17 @@ public class LifecycleAndOwnershipRegressionTest extends SolimEnv {
         Component comp = new Component() {
             @Override
             protected Element build() {
-                own(DisposableAction.of(() -> disposed.add("res-1")));
-                own(DisposableAction.of(() -> {
+                adopt(DisposableAction.of(() -> disposed.add("res-1")));
+                adopt(DisposableAction.of(() -> {
                     disposed.add("failing-res-1");
                     throw new RuntimeException("Simulated error 1");
                 }));
-                own(DisposableAction.of(() -> disposed.add("res-2")));
-                own(DisposableAction.of(() -> {
+                adopt(DisposableAction.of(() -> disposed.add("res-2")));
+                adopt(DisposableAction.of(() -> {
                     disposed.add("failing-res-2");
                     throw new RuntimeException("Simulated error 2");
                 }));
-                own(DisposableAction.of(() -> disposed.add("res-3")));
+                adopt(DisposableAction.of(() -> disposed.add("res-3")));
                 return new Element();
             }
         };
@@ -162,8 +163,8 @@ public class LifecycleAndOwnershipRegressionTest extends SolimEnv {
             new Component() {
                 @Override
                 protected Element build() {
-                    own(DisposableAction.of(() -> cleanupLog.add("first")));
-                    own(DisposableAction.of(() -> cleanupLog.add("second")));
+                    adopt(DisposableAction.of(() -> cleanupLog.add("first")));
+                    adopt(DisposableAction.of(() -> cleanupLog.add("second")));
                     throw new RuntimeException("Crash during build");
                 }
             }.element();
@@ -187,7 +188,7 @@ public class LifecycleAndOwnershipRegressionTest extends SolimEnv {
         assertEquals(1, actionRuns.get(), "Repeated dispose must be a no-op");
 
         Signal<Integer> sig = Signal.of(10);
-        Computed<Integer> computed = sig.map(v -> v * 2);
+        Computed<Integer> computed = inOwnershipWindow(() -> sig.map(v -> v * 2));
         assertFalse(computed.isDisposed());
         assertEquals(20, (int) computed.get());
         computed.dispose();
@@ -196,10 +197,10 @@ public class LifecycleAndOwnershipRegressionTest extends SolimEnv {
         assertTrue(computed.isDisposed());
 
         AtomicInteger effectRuns = new AtomicInteger(0);
-        Effect effect = Effect.of(() -> {
+        Effect effect = inOwnershipWindow(() -> Effect.of(() -> {
             effectRuns.incrementAndGet();
             sig.get();
-        });
+        }));
         assertFalse(effect.isDisposed());
         effect.dispose();
         assertTrue(effect.isDisposed());

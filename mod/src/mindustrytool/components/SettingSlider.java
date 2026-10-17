@@ -1,6 +1,7 @@
 package mindustrytool.components;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
 
 import arc.graphics.Color;
 import arc.util.Nullable;
@@ -21,8 +22,8 @@ public final class SettingSlider {
             float max,
             float step,
             Readable<String> formattedValue) {
-        return column().growX().gap(unit(1)).left().children(() -> {
-            row().growX().center().children(() -> {
+        return column().props(growX(), gap(unit(1)), left()).children(() -> {
+            row().props(growX(), center()).children(() -> {
                 text(title)
                         .color(Color.white)
                         .left();
@@ -40,7 +41,7 @@ public final class SettingSlider {
                         .growX();
             }
 
-            slider(signal, min, max, step).growX();
+            slider(signal, min, max, step).props(growX());
         });
     }
 
@@ -62,8 +63,8 @@ public final class SettingSlider {
             int max,
             int step,
             Readable<String> formattedValue) {
-        return column().growX().gap(unit(1)).left().children(() -> {
-            row().growX().center().children(() -> {
+        return column().props(growX(), gap(unit(1)), left()).children(() -> {
+            row().props(growX(), center()).children(() -> {
                 text(title)
                         .color(Color.white)
                         .left();
@@ -81,7 +82,7 @@ public final class SettingSlider {
                         .growX();
             }
 
-            slider(signal, min, max, step).growX();
+            slider(signal, min, max, step).props(growX());
         });
     }
 

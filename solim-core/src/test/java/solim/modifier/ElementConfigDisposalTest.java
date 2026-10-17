@@ -4,6 +4,16 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
+import static solim.modifier.Values.position;
+import static solim.modifier.Values.opacity;
+import static solim.modifier.Values.alpha;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.visible;
+import static solim.modifier.Values.width;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,9 +28,10 @@ import solim.layout.Row;
 import solim.reactive.Signal;
 import solim.test.BuildScopeHost;
 import solim.test.ModifierScope;
-import solim.test.SolimEnv;
+import solim.test.OwnershipEnv;
 
-class ElementConfigDisposalTest extends SolimEnv {
+class ElementConfigDisposalTest extends OwnershipEnv {
+
 
     @BeforeEach
     void setUp() {
@@ -32,7 +43,7 @@ class ElementConfigDisposalTest extends SolimEnv {
     void widthBindingStopsOnDispose() {
         forScope((row, scope) -> {
             Signal<Float> width = Signal.of(100f);
-            row.width(width);
+            row.props(width(width), prefWidth(width));
             Element element = row.element();
             assertEquals(100f, element.getWidth(), 0.01f, scope + ": initial width");
 
@@ -53,7 +64,7 @@ class ElementConfigDisposalTest extends SolimEnv {
     void heightBindingStopsOnDispose() {
         forScope((row, scope) -> {
             Signal<Float> height = Signal.of(40f);
-            row.height(height);
+            row.props(height(height), prefHeight(height));
             Element element = row.element();
 
             height.set(80f);
@@ -73,7 +84,7 @@ class ElementConfigDisposalTest extends SolimEnv {
     void sizeBindingStopsOnDispose() {
         forScope((row, scope) -> {
             Signal<Float> size = Signal.of(32f);
-            row.size(size);
+            row.props(size(size), prefWidth(size), prefHeight(size));
             Element element = row.element();
 
             size.set(64f);
@@ -96,7 +107,7 @@ class ElementConfigDisposalTest extends SolimEnv {
         forScope((row, scope) -> {
             Signal<Float> width = Signal.of(20f);
             Signal<Float> height = Signal.of(30f);
-            row.size(width, height);
+            row.props(size(width, height), prefWidth(width), prefHeight(height));
             Element element = row.element();
 
             width.set(50f);
@@ -121,7 +132,7 @@ class ElementConfigDisposalTest extends SolimEnv {
         forScope((row, scope) -> {
             Signal<Float> x = Signal.of(5f);
             Signal<Float> y = Signal.of(7f);
-            row.position(x, y);
+            row.props(position(x, y));
             Element element = row.element();
 
             x.set(15f);
@@ -146,7 +157,7 @@ class ElementConfigDisposalTest extends SolimEnv {
     void visibleBindingStopsOnDispose() {
         forScope((row, scope) -> {
             Signal<Boolean> visible = Signal.of(true);
-            row.visible(visible);
+            row.props(visible(visible));
             Element element = row.element();
 
             visible.set(false);
@@ -167,7 +178,7 @@ class ElementConfigDisposalTest extends SolimEnv {
         forScope((row, scope) -> {
             Signal<Float> opacity = Signal.of(0.25f);
             Signal<Float> alpha = Signal.of(0.5f);
-            row.opacity(opacity).alpha(alpha);
+            row.props(opacity(opacity), alpha(alpha));
             Element element = row.element();
             assertEquals(0.5f, element.color.a, 0.01f, scope + ": alpha wins as the later binding");
 
@@ -191,7 +202,7 @@ class ElementConfigDisposalTest extends SolimEnv {
     void reactiveTooltipStopsOnDispose() {
         forScope((row, scope) -> {
             Signal<String> tip = Signal.of("first");
-            row.tooltip(tip);
+            row.props(tooltip(tip));
             Element element = row.element();
             Label label = tooltipLabel(element);
             assertEquals("first", label.getText().toString(), scope + ": initial tooltip text");
@@ -214,7 +225,7 @@ class ElementConfigDisposalTest extends SolimEnv {
         Signal<Float> width = Signal.of(10f);
         Signal<Boolean> visible = Signal.of(true);
         Row[] target = new Row[1];
-        BuildScopeHost host = new BuildScopeHost(() -> target[0] = new Row().width(width).visible(visible));
+        BuildScopeHost host = new BuildScopeHost(() -> target[0] = new Row().props(width(width), prefWidth(width), visible(visible)));
         host.element();
 
         Element element = target[0].element();

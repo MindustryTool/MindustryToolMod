@@ -1,6 +1,7 @@
 package solim.layout;
 
-import solim.modifier.CellConfig;
+import solim.modifier.Configurable;
+import solim.modifier.Props;
 
 import arc.scene.Element;
 import arc.scene.style.Drawable;
@@ -10,8 +11,6 @@ import arc.struct.Seq;
 import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.SolimToken;
-import solim.modifier.ElementConfig;
-import solim.modifier.TableConfig;
 import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
@@ -19,10 +18,11 @@ import solim.reactive.Readable;
 import solim.modifier.PendingCellConfig;
 
 public final class Grid extends Component
-        implements CellConfig<Grid>, GapContainer, ElementConfig<Grid>, TableConfig<Grid> {
+        implements GapContainer, Configurable<Grid> {
 
     private final Table table;
     private final PendingCellConfig constraints = new PendingCellConfig();
+    private @Nullable Props<Grid> pending;
     private int columns = 1;
     private float gap = 4f;
     private int currentCell = 0;
@@ -64,7 +64,7 @@ public final class Grid extends Component
 
     public Grid columns(@Nullable Readable<Integer> c) {
         if (c != null) {
-            own(Effect.of(() -> {
+            withinOwnership(() -> Effect.of(() -> {
                 Integer cols = c.get();
                 if (cols != null) {
                     this.columns = Math.max(1, cols);
@@ -73,24 +73,12 @@ public final class Grid extends Component
             }));
         }
         return this;
-    }
+    };
 
-    public Grid gap(float g) {
+    @Override
+    public void setGap(float g) {
         this.gap = g;
         respace();
-        return this;
-    }
-
-    public Grid gap(@Nullable Readable<Float> gapSignal) {
-        if (gapSignal != null) {
-            own(Effect.of(() -> {
-                Float g = gapSignal.get();
-                if (g != null) {
-                    gap(g);
-                }
-            }));
-        }
-        return this;
     }
 
     @Override
@@ -114,6 +102,7 @@ public final class Grid extends Component
     }
 
     public Grid children(@Nullable Runnable r) {
+        applyPendingProps();
         int[] count = new int[] { 0 };
         OwnershipContext.push(this);
         AttachmentStack.push(table, (tbl, child) -> {
@@ -187,96 +176,21 @@ public final class Grid extends Component
     }
 
     @Override
-    public Grid align(int align) {
-        TableConfig.super.align(align);
-        constraints.align = align;
-        constraints.applyAlignToParentCell(element());
-        table.defaults().align(align);
-        for (Cell<?> c : table.getCells()) {
-            if (c != null) {
-                c.align(align);
-            }
-        }
-        return this;
-    }
-
-    @Override
-    public Grid center() {
-        TableConfig.super.center();
-        constraints.alignCenter();
-        constraints.applyAlignToParentCell(element());
-        table.defaults().center();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null) {
-                c.center();
-            }
-        }
-        return this;
-    }
-
-    @Override
-    public Grid top() {
-        TableConfig.super.top();
-        constraints.alignTop();
-        constraints.applyAlignToParentCell(element());
-        table.defaults().top();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null) {
-                c.top();
-            }
-        }
-        return this;
-    }
-
-    @Override
-    public Grid bottom() {
-        TableConfig.super.bottom();
-        constraints.alignBottom();
-        constraints.applyAlignToParentCell(element());
-        table.defaults().bottom();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null) {
-                c.bottom();
-            }
-        }
-        return this;
-    }
-
-    @Override
-    public Grid left() {
-        TableConfig.super.left();
-        constraints.alignLeft();
-        constraints.applyAlignToParentCell(element());
-        table.defaults().left();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null) {
-                c.left();
-            }
-        }
-        return this;
-    }
-
-    @Override
-    public Grid right() {
-        TableConfig.super.right();
-        constraints.alignRight();
-        constraints.applyAlignToParentCell(element());
-        table.defaults().right();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null) {
-                c.right();
-            }
-        }
-        return this;
-    }
-
-    @Override
     public Grid name(@Nullable String name) {
         setName(name);
         return this;
     }
 
     @Override
+    public @Nullable Props<Grid> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<Grid> props) {
+        this.pending = props;
+    }
+
     public Grid self() {
         return this;
     }

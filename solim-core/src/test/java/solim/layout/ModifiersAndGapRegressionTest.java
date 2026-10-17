@@ -3,6 +3,13 @@ package solim.layout;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.opacity;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.visible;
+import static solim.modifier.Values.width;
 
 import arc.scene.Element;
 import arc.scene.event.Touchable;
@@ -19,7 +26,7 @@ public class ModifiersAndGapRegressionTest extends SolimCoreEnv {
     @Test
     void elementModifiersAppliedCorrectly() {
         Column col = new Column();
-        col.width(120f).height(60f).visible(false).opacity(0.75f).touchable(Touchable.disabled);
+        col.props(width(120f), prefWidth(120f), height(60f), prefHeight(60f), visible(false), opacity(0.75f)).touchable(Touchable.disabled);
 
         Element el = col.element();
         assertEquals(120f, el.getWidth(), 0.01f);
@@ -35,7 +42,7 @@ public class ModifiersAndGapRegressionTest extends SolimCoreEnv {
         Signal<Boolean> visSig = Signal.of(true);
 
         Row row = new Row();
-        row.width(widthSig).visible(visSig);
+        row.props(width(widthSig), prefWidth(widthSig), visible(visSig));
 
         assertEquals(100f, row.element().getWidth(), 0.01f);
         assertTrue(row.element().visible);
@@ -78,10 +85,10 @@ public class ModifiersAndGapRegressionTest extends SolimCoreEnv {
 
     @Test
     void gapContainerEmptyAndSingleChild() {
-        Column emptyCol = new Column().gap(12f);
+        Column emptyCol = new Column().props(gap(12f));
         assertEquals(0, emptyCol.table().getChildren().size);
 
-        Column singleCol = new Column().gap(12f);
+        Column singleCol = new Column().props(gap(12f));
         Element singleEl = new Element();
         singleCol.table().add(singleEl);
 
@@ -90,7 +97,7 @@ public class ModifiersAndGapRegressionTest extends SolimCoreEnv {
 
     @Test
     void gapContainerMultipleChildrenAndVisibilityTransitions() {
-        Column col = new Column().gap(10f);
+        Column col = new Column().props(gap(10f));
         Table table = col.table();
 
         Element c1 = new Element();

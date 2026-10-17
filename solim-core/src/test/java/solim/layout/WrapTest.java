@@ -4,6 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static solim.modifier.Values.center;
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.left;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.right;
 
 import org.junit.jupiter.api.Test;
 
@@ -51,7 +56,7 @@ class WrapTest extends SolimEnv {
     @Test
     void gapSetsDefaultCellPadding() {
         Wrap w = new Wrap();
-        w.gap(8f);
+        w.props(gap(8f));
         assertEquals(8f, w.gap());
         Cell<?> def = w.table().defaults();
         assertEquals(8f, CellAccess.padRight(def));
@@ -61,21 +66,21 @@ class WrapTest extends SolimEnv {
     @Test
     void leftAlignsTable() {
         Wrap w = new Wrap();
-        w.left();
+        w.props(left());
 
     }
 
     @Test
     void centerAlignsTable() {
         Wrap w = new Wrap();
-        w.center();
+        w.props(center());
 
     }
 
     @Test
     void rightAlignsTable() {
         Wrap w = new Wrap();
-        w.right();
+        w.props(right());
 
     }
 
@@ -90,7 +95,7 @@ class WrapTest extends SolimEnv {
     @Test
     void paddingSetsTablePadding() {
         Wrap w = new Wrap();
-        w.padding(12f);
+        w.props(padding(12f));
 
     }
 

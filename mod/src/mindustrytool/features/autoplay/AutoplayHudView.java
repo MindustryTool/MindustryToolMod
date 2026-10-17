@@ -1,6 +1,15 @@
 package mindustrytool.features.autoplay;
 
 import static solim.UI.*;
+import static solim.modifier.Values.border;
+import static solim.modifier.Values.draggable;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.position;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.rounded;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.func.Prov;
@@ -35,24 +44,20 @@ public class AutoplayHudView extends Component {
     protected Element build() {
         hud = hud(() -> {
             row()
-                    .padding(unit(1))
-                    .gap(unit(1))
-                    .rounded(unit(2), WebStyles.Colors.SECTION_BG)
-                    .border(1.5f, WebStyles.Colors.BORDER)
-                    .center()
+                    .props(padding(unit(1)), rounded(unit(2), WebStyles.Colors.SECTION_BG), border(1.5f, WebStyles.Colors.BORDER), gap(unit(1)), center())
                     .children(() -> {
                         when(feature.hideDragHandleConfig.signal())
                                 .elseDo(() -> button()
                                         .style(WebStyles.ghost())
-                                        .size(buttonSize())
-                                        .children(() -> icon(Icon.move).size(iconSize()))
-                                        .draggable(feature.xSignal, feature.ySignal));
+                                        .props(size(buttonSize()), prefWidth(buttonSize()), prefHeight(buttonSize()))
+                                        .children(() -> icon(Icon.move).props(size(iconSize()), prefWidth(iconSize()), prefHeight(iconSize())))
+                                        .props(draggable(feature.xSignal, feature.ySignal)));
 
                         buildControls(feature, null);
                     });
         });
 
-        hud.position(feature.xSignal, feature.ySignal);
+        hud.props(position(feature.xSignal, feature.ySignal));
 
         listen(ResizeEvent.class, e -> {
             keepInScreen();
@@ -88,8 +93,7 @@ public class AutoplayHudView extends Component {
         });
 
         return row()
-                .gap(unit(1))
-                .center()
+                .props(gap(unit(1)), center())
                 .children(() -> {
                     masterButton(feature, buttonSize, iconSize, canEdit);
 
@@ -99,8 +103,8 @@ public class AutoplayHudView extends Component {
                     reactiveGrid(feature.visibleTasks())
                             .key(AutoplayTask::getId)
                             .columns(columns)
-                            .gap(unit(1))
-                            .children(task -> taskButton(feature, task, buttonSize, iconSize, canEdit));
+                            .props(gap(unit(1)))
+                            .items(task -> taskButton(feature, task, buttonSize, iconSize, canEdit));
                 });
     }
 
@@ -120,12 +124,11 @@ public class AutoplayHudView extends Component {
 
         Button btn = button()
                 .style(WebStyles.ghost())
-                .size(buttonSize)
-                .tooltip(Core.bundle.get("feature.autoplay.hud.master.tooltip"))
+                .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(Core.bundle.get("feature.autoplay.hud.master.tooltip")))
                 .checked(feature.enabled())
                 .onClick(() -> feature.setEnabled(!feature.isEnabled()))
                 .onLongClick(300L, () -> openSettings(feature))
-                .children(() -> icon(Icon.play).size(iconSize).color(color));
+                .children(() -> icon(Icon.play).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)).color(color));
                 
         return canEdit != null ? btn.enabled(canEdit) : btn;
     }
@@ -151,11 +154,10 @@ public class AutoplayHudView extends Component {
 
         Button btn = button()
                 .style(WebStyles.ghost())
-                .size(buttonSize)
-                .tooltip(task.getName())
+                .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(task.getName()))
                 .onClick(() -> feature.setTaskEnabled(task.getId(), !feature.isTaskEnabled(task.getId())))
                 .onLongClick(300L, () -> openSettings(feature))
-                .children(() -> icon(task.getIcon()).size(iconSize).color(color));
+                .children(() -> icon(task.getIcon()).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)).color(color));
 
         return canEdit != null ? btn.enabled(canEdit) : btn;
     }

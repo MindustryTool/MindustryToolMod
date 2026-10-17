@@ -24,9 +24,9 @@ import solim.display.Text;
 import solim.input.Button;
 import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
-import solim.test.SolimEnv;
+import solim.test.OwnershipEnv;
 
-class TabsDisposalTest extends SolimEnv {
+class TabsDisposalTest extends OwnershipEnv {
 
 	static Application prevApp;
 	static Graphics prevGraphics;

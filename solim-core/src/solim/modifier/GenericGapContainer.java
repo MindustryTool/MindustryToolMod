@@ -5,12 +5,7 @@ import solim.core.Component;
 import solim.core.SolimToken;
 import solim.layout.Direction;
 import solim.layout.GapContainer;
-import solim.input.Button;
-import solim.layout.Card;
-import solim.layout.Column;
-import solim.layout.Grid;
-import solim.layout.Row;
-import solim.layout.Wrap;
+import solim.layout.GapHost;
 
 final class GenericGapContainer extends Component implements GapContainer {
     private final Table table;
@@ -25,35 +20,20 @@ final class GenericGapContainer extends Component implements GapContainer {
     static void setGap(Table table, float gap) {
         if (table == null)
             return;
-        GapContainer gc = GapContainer.find(table);
-        if (gc != null) {
-            if (gc instanceof Row) {
-                ((Row) gc).gap(gap);
-            } else if (gc instanceof Column) {
-                ((Column) gc).gap(gap);
-            } else if (gc instanceof Grid) {
-                ((Grid) gc).gap(gap);
-            } else if (gc instanceof Wrap) {
-                ((Wrap) gc).gap(gap);
-            } else if (gc instanceof Card) {
-                ((Card) gc).gap(gap);
-            } else if (gc instanceof Button) {
-                ((Button) gc).gap(gap);
-            } else if (gc instanceof GenericGapContainer) {
-                ((GenericGapContainer) gc).setGap(gap);
-            } else {
-                gc.respace();
-            }
+        GapHost host = GapHost.find(table);
+        if (host != null) {
+            host.setGap(gap);
         } else {
-            GenericGapContainer ggc = new GenericGapContainer(table, gap);
-            SolimToken.bind(table, ggc);
-            ggc.respace();
+            GenericGapContainer generic = new GenericGapContainer(table, gap);
+            SolimToken.bind(table, generic);
+            generic.respace();
         }
         table.invalidateHierarchy();
     }
 
-    void setGap(float gap) {
-        this.gap = gap;
+    @Override
+    public void setGap(float g) {
+        gap = g;
         respace();
     }
 

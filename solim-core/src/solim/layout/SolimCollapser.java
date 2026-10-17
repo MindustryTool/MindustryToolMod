@@ -6,17 +6,15 @@ import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.SolimToken;
-import solim.modifier.CellConfig;
-import solim.modifier.ElementConfig;
+import solim.modifier.Configurable;
 import solim.modifier.PendingCellConfig;
-import solim.modifier.TableConfig;
+import solim.modifier.Props;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 
-public final class SolimCollapser extends Component implements CellConfig<SolimCollapser>,
-        ElementConfig<SolimCollapser>, TableConfig<SolimCollapser>, GapContainer {
+public final class SolimCollapser extends Component implements GapContainer, Configurable<SolimCollapser> {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -35,6 +33,7 @@ public final class SolimCollapser extends Component implements CellConfig<SolimC
     private final Table content;
     private final Collapser collapser;
     private final PendingCellConfig constraints = new PendingCellConfig();
+    private @Nullable Props<SolimCollapser> pending;
     private boolean animated = true;
     private boolean initialized = false;
     private float gap = 0f;
@@ -100,7 +99,7 @@ public final class SolimCollapser extends Component implements CellConfig<SolimC
 
     public SolimCollapser collapsed(@Nullable Readable<Boolean> collapsed) {
         if (collapsed != null) {
-            own(Effect.of(() -> {
+            withinOwnership(() -> Effect.of(() -> {
                 Boolean col = collapsed.get();
                 if (col != null) {
                     boolean anim = initialized && animated;
@@ -110,7 +109,7 @@ public final class SolimCollapser extends Component implements CellConfig<SolimC
             }));
         }
         return this;
-    }
+    };
 
     public SolimCollapser expanded(boolean expanded) {
         return collapsed(!expanded);
@@ -118,7 +117,7 @@ public final class SolimCollapser extends Component implements CellConfig<SolimC
 
     public SolimCollapser expanded(@Nullable Readable<Boolean> expanded) {
         if (expanded != null) {
-            own(Effect.of(() -> {
+            withinOwnership(() -> Effect.of(() -> {
                 Boolean exp = expanded.get();
                 if (exp != null) {
                     boolean anim = initialized && animated;
@@ -128,9 +127,10 @@ public final class SolimCollapser extends Component implements CellConfig<SolimC
             }));
         }
         return this;
-    }
+    };
 
     public SolimCollapser children(@Nullable Runnable r) {
+        applyPendingProps();
         OwnershipContext.push(this);
         AttachmentStack.push(content, ATTACHER);
         try {
@@ -146,10 +146,10 @@ public final class SolimCollapser extends Component implements CellConfig<SolimC
         return this;
     }
 
-    public SolimCollapser gap(float g) {
+    @Override
+    public void setGap(float g) {
         this.gap = g;
         respace();
-        return this;
     }
 
     @Override
@@ -168,87 +168,13 @@ public final class SolimCollapser extends Component implements CellConfig<SolimC
     }
 
     @Override
-    public SolimCollapser align(int align) {
-        TableConfig.super.align(align);
-        constraints.align = align;
-        constraints.applyAlignToParentCell(element());
-        content.defaults().align(align);
-        for (Cell<?> c : content.getCells()) {
-            if (c != null) {
-                c.align(align);
-            }
-        }
-        return this;
+    public @Nullable Props<SolimCollapser> pendingProps() {
+        return pending;
     }
 
     @Override
-    public SolimCollapser center() {
-        TableConfig.super.center();
-        constraints.alignCenter();
-        constraints.applyAlignToParentCell(element());
-        content.defaults().center();
-        for (Cell<?> c : content.getCells()) {
-            if (c != null) {
-                c.center();
-            }
-        }
-        return this;
-    }
-
-    @Override
-    public SolimCollapser top() {
-        TableConfig.super.top();
-        constraints.alignTop();
-        constraints.applyAlignToParentCell(element());
-        content.defaults().top();
-        for (Cell<?> c : content.getCells()) {
-            if (c != null) {
-                c.top();
-            }
-        }
-        return this;
-    }
-
-    @Override
-    public SolimCollapser bottom() {
-        TableConfig.super.bottom();
-        constraints.alignBottom();
-        constraints.applyAlignToParentCell(element());
-        content.defaults().bottom();
-        for (Cell<?> c : content.getCells()) {
-            if (c != null) {
-                c.bottom();
-            }
-        }
-        return this;
-    }
-
-    @Override
-    public SolimCollapser left() {
-        TableConfig.super.left();
-        constraints.alignLeft();
-        constraints.applyAlignToParentCell(element());
-        content.defaults().left();
-        for (Cell<?> c : content.getCells()) {
-            if (c != null) {
-                c.left();
-            }
-        }
-        return this;
-    }
-
-    @Override
-    public SolimCollapser right() {
-        TableConfig.super.right();
-        constraints.alignRight();
-        constraints.applyAlignToParentCell(element());
-        content.defaults().right();
-        for (Cell<?> c : content.getCells()) {
-            if (c != null) {
-                c.right();
-            }
-        }
-        return this;
+    public void setPendingProps(@Nullable Props<SolimCollapser> props) {
+        this.pending = props;
     }
 
     @Override

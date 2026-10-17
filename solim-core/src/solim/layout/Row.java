@@ -1,6 +1,7 @@
 package solim.layout;
 
-import solim.modifier.CellConfig;
+import solim.modifier.Configurable;
+import solim.modifier.Props;
 
 import arc.scene.Element;
 import arc.scene.event.Touchable;
@@ -9,8 +10,6 @@ import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.SolimToken;
-import solim.modifier.ElementConfig;
-import solim.modifier.TableConfig;
 import solim.runtime.AttachmentStack;
 import solim.reactive.Readable;
 import solim.modifier.PendingCellConfig;
@@ -18,7 +17,7 @@ import solim.core.OwnershipContext;
 import solim.reactive.Effect;
 
 public final class Row extends Component
-        implements CellConfig<Row>, ElementConfig<Row>, TableConfig<Row>, GapContainer {
+        implements GapContainer, Configurable<Row> {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -36,6 +35,7 @@ public final class Row extends Component
     private final PendingCellConfig constraints = new PendingCellConfig();
     private float gap = 0f;
     private boolean attached = false;
+    private @Nullable Props<Row> pending;
 
     public Row() {
         this(new Table());
@@ -73,24 +73,6 @@ public final class Row extends Component
         return this;
     }
 
-    public Row gap(float g) {
-        this.gap = g;
-        respace();
-        return this;
-    }
-
-    public Row gap(@Nullable Readable<Float> gapSignal) {
-        if (gapSignal != null) {
-            own(Effect.of(() -> {
-                Float g = gapSignal.get();
-                if (g != null) {
-                    gap(g);
-                }
-            }));
-        }
-        return this;
-    }
-
     @Override
     public Direction direction() {
         return Direction.HORIZONTAL;
@@ -102,104 +84,18 @@ public final class Row extends Component
     }
 
     @Override
+    public void setGap(float g) {
+        this.gap = g;
+        respace();
+    }
+
+    @Override
     public void respace() {
         GapContainer.applySpacing(table, Direction.HORIZONTAL, gap);
     }
 
-    @Override
-    public Row align(int align) {
-        TableConfig.super.align(align);
-        cellConfig().align = align;
-        cellConfig().applyAlignToParentCell(element());
-        table.defaults().align(align);
-        for (Cell<?> c : table.getCells()) {
-            if (c != null)
-                c.align(align);
-        }
-        return this;
-    }
-
-    @Override
-    public Row top() {
-        TableConfig.super.top();
-        cellConfig().alignTop();
-        cellConfig().applyAlignToParentCell(element());
-        table.defaults().top();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null)
-                c.top();
-        }
-        return this;
-    }
-
-    @Override
-    public Row bottom() {
-        TableConfig.super.bottom();
-        cellConfig().alignBottom();
-        cellConfig().applyAlignToParentCell(element());
-        table.defaults().bottom();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null)
-                c.bottom();
-        }
-        return this;
-    }
-
-    @Override
-    public Row left() {
-        TableConfig.super.left();
-        cellConfig().alignLeft();
-        cellConfig().applyAlignToParentCell(element());
-        table.defaults().left();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null)
-                c.left();
-        }
-        return this;
-    }
-
-    @Override
-    public Row right() {
-        TableConfig.super.right();
-        cellConfig().alignRight();
-        cellConfig().applyAlignToParentCell(element());
-        table.defaults().right();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null)
-                c.right();
-        }
-        return this;
-    }
-
-    @Override
-    public Row center() {
-        TableConfig.super.center();
-        cellConfig().alignCenter();
-        cellConfig().applyAlignToParentCell(element());
-        table.defaults().center();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null)
-                c.center();
-        }
-        return this;
-    }
-
-    public Row align(Align a) {
-        switch (a) {
-            case START:
-            case STRETCH:
-                return top();
-            case CENTER:
-                return center();
-            case END:
-                return bottom();
-            default:
-                break;
-        }
-        return this;
-    }
-
     public Row children(@Nullable Runnable r) {
+        applyPendingProps();
         OwnershipContext.push(this);
         AttachmentStack.push(table, ATTACHER);
         try {
@@ -235,6 +131,15 @@ public final class Row extends Component
     }
 
     @Override
+    public @Nullable Props<Row> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<Row> props) {
+        this.pending = props;
+    }
+
     public Row self() {
         return this;
     }

@@ -17,11 +17,10 @@ import solim.core.Component;
 import solim.core.DisposableAction;
 import solim.core.OwnershipContext;
 import solim.core.SolimToken;
-import solim.modifier.CellConfig;
 import solim.layout.Row;
+import solim.modifier.Configurable;
 import solim.modifier.PendingCellConfig;
-import solim.modifier.ElementConfig;
-import solim.modifier.TableConfig;
+import solim.modifier.Props;
 import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
@@ -31,11 +30,12 @@ import arc.scene.event.EventListener;
 import arc.scene.ui.Button;
 import arc.scene.ui.layout.Scl;
 
-public class Hud extends Component implements CellConfig<Hud>, ElementConfig<Hud>, TableConfig<Hud> {
+public class Hud extends Component implements Configurable<Hud> {
 
     private final Table root;
     private final Table container;
     private final PendingCellConfig constraints = new PendingCellConfig();
+    private @Nullable Props<Hud> pending;
     private @Nullable Signal<Float> boundXSignal;
     private @Nullable Signal<Float> boundYSignal;
 
@@ -85,7 +85,8 @@ public class Hud extends Component implements CellConfig<Hud>, ElementConfig<Hud
             Core.app.post(this::keepInScreenIfLive);
         };
         Events.on(ResizeEvent.class, resizeListener);
-        own(DisposableAction.of(() -> Events.remove(ResizeEvent.class, resizeListener)));
+        withinOwnership(() -> OwnershipContext.register(
+                DisposableAction.of(() -> Events.remove(ResizeEvent.class, resizeListener))));
     }
 
     private void keepInScreenIfLive() {
@@ -179,12 +180,13 @@ public class Hud extends Component implements CellConfig<Hud>, ElementConfig<Hud
 
     public Hud background(@Nullable Readable<Drawable> bg) {
         if (bg != null) {
-            own(Effect.of(() -> container.background(bg.get())));
+            withinOwnership(() -> Effect.of(() -> container.background(bg.get())));
         }
         return this;
     }
 
     public Hud children(@Nullable Runnable r) {
+        applyPendingProps();
         OwnershipContext.push(this);
         AttachmentStack.push(container, Row.ATTACHER);
         try {
@@ -211,7 +213,22 @@ public class Hud extends Component implements CellConfig<Hud>, ElementConfig<Hud
         if (x instanceof Signal) {
             this.boundXSignal = (Signal<Float>) x;
         }
-        ElementConfig.super.x(x);
+        if (x != null) {
+            OwnershipContext.push(this);
+            try {
+                Effect.of(() -> {
+                    Float v = x.get();
+                    if (v != null) {
+                        Element el = element();
+                        if (el != null) {
+                            el.x = v;
+                        }
+                    }
+                });
+            } finally {
+                OwnershipContext.pop();
+            }
+        }
         return this;
     }
 
@@ -219,11 +236,25 @@ public class Hud extends Component implements CellConfig<Hud>, ElementConfig<Hud
         if (y instanceof Signal) {
             this.boundYSignal = (Signal<Float>) y;
         }
-        ElementConfig.super.y(y);
+        if (y != null) {
+            OwnershipContext.push(this);
+            try {
+                Effect.of(() -> {
+                    Float v = y.get();
+                    if (v != null) {
+                        Element el = element();
+                        if (el != null) {
+                            el.y = v;
+                        }
+                    }
+                });
+            } finally {
+                OwnershipContext.pop();
+            }
+        }
         return this;
     }
 
-    @Override
     public Hud opacity(float a) {
         float val = Math.max(0f, Math.min(1f, a));
         root.color.a = val;
@@ -231,11 +262,10 @@ public class Hud extends Component implements CellConfig<Hud>, ElementConfig<Hud
         return this;
     }
 
-    @Override
     public Hud opacity(@Nullable Readable<Float> opacity) {
         if (opacity == null)
             return this;
-        own(Effect.of(() -> {
+        withinOwnership(() -> Effect.of(() -> {
             Float v = opacity.get();
             if (v != null)
                 opacity(v);
@@ -250,7 +280,7 @@ public class Hud extends Component implements CellConfig<Hud>, ElementConfig<Hud
 
     public Hud scale(Readable<Float> s) {
         if (s != null) {
-            own(Effect.of(() -> {
+            withinOwnership(() -> Effect.of(() -> {
                 Float v = s.get();
                 if (v != null) {
                     container.setScale(v);
@@ -443,6 +473,16 @@ public class Hud extends Component implements CellConfig<Hud>, ElementConfig<Hud
 
     public void pack() {
         root.pack();
+    }
+
+    @Override
+    public @Nullable Props<Hud> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<Hud> props) {
+        this.pending = props;
     }
 
     @Override

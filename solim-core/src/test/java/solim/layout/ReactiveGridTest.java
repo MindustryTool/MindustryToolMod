@@ -4,6 +4,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.left;
+import static solim.modifier.Values.margin;
+import static solim.modifier.Values.minHeight;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.visible;
+import static solim.modifier.Values.width;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,7 +66,7 @@ class ReactiveGridTest extends SolimEnv {
 
         ReactiveGrid<String> grid = new ReactiveGrid<>(items);
         grid.columns(cols).key(s -> s);
-        grid.children((item, ctx) -> {
+        grid.items((item, ctx) -> {
             capturedCtx.set(ctx);
             return new ItemComp(item);
         });
@@ -70,8 +82,8 @@ class ReactiveGridTest extends SolimEnv {
         Signal<Integer> cols = Signal.of(4);
         Signal<List<String>> items = Signal.of(Arrays.asList("A"));
         ReactiveGrid<String> grid = new ReactiveGrid<>(items);
-        grid.columns(cols).key(s -> s).gap(10f);
-        grid.children((item, ctx) -> new ItemComp(item));
+        grid.columns(cols).key(s -> s).props(gap(10f));
+        grid.items((item, ctx) -> new ItemComp(item));
         grid.element();
 
         grid.table().setWidth(400f);
@@ -85,7 +97,7 @@ class ReactiveGridTest extends SolimEnv {
 
         assertEquals(195f, grid.context().itemWidth().get(), 0.1f);
 
-        grid.gap(20f);
+        grid.props(gap(20f));
         SignalDispatcher.flush();
 
         assertEquals(190f, grid.context().itemWidth().get(), 0.1f);
@@ -98,7 +110,7 @@ class ReactiveGridTest extends SolimEnv {
 
         ReactiveGrid<String> grid = new ReactiveGrid<>(items);
         grid.columns(cols).key(s -> s);
-        grid.children(ItemComp::new);
+        grid.items(ItemComp::new);
         Element el = grid.element();
         assertNotNull(el);
         assertEquals(2, grid.table().getChildren().size);
@@ -112,7 +124,7 @@ class ReactiveGridTest extends SolimEnv {
 
         ReactiveGrid<String> grid = new ReactiveGrid<>(items);
         grid.columns(cols).key(s -> s);
-        grid.children((item, ctx) -> {
+        grid.items((item, ctx) -> {
             ItemComp c = new ItemComp(item);
             created[0] = c;
             return c;
@@ -132,9 +144,9 @@ class ReactiveGridTest extends SolimEnv {
 
         List<Element> childElementsGrowX = new ArrayList<>();
         ReactiveGrid<String> grid = new ReactiveGrid<>(items);
-        grid.columns(cols).key(s -> s).gap(10f);
-        grid.children((item, ctx) -> {
-            Column col = new Column().growX();
+        grid.columns(cols).key(s -> s).props(gap(10f));
+        grid.items((item, ctx) -> {
+            Column col = new Column().props(growX());
             childElementsGrowX.add(col.element());
             return col;
         });
@@ -160,9 +172,9 @@ class ReactiveGridTest extends SolimEnv {
 
         List<Element> childElements = new ArrayList<>();
         ReactiveGrid<String> grid = new ReactiveGrid<>(items);
-        grid.columns(cols).key(s -> s).gap(10f);
-        grid.children((item, ctx) -> {
-            Column col = new Column().width(ctx.itemWidth());
+        grid.columns(cols).key(s -> s).props(gap(10f));
+        grid.items((item, ctx) -> {
+            Column col = new Column().props(width(ctx.itemWidth()), prefWidth(ctx.itemWidth()));
             childElements.add(col.element());
             return col;
         });
@@ -185,9 +197,9 @@ class ReactiveGridTest extends SolimEnv {
 
         List<Element> childElements = new ArrayList<>();
         ReactiveGrid<String> grid = new ReactiveGrid<>(items);
-        grid.columns(cols).key(s -> s).gap(10f);
-        grid.children((item, ctx) -> {
-            Column col = new Column().growX();
+        grid.columns(cols).key(s -> s).props(gap(10f));
+        grid.items((item, ctx) -> {
+            Column col = new Column().props(growX());
             childElements.add(col.element());
             return col;
         });
@@ -214,17 +226,14 @@ class ReactiveGridTest extends SolimEnv {
         List<Element> cardElements = new ArrayList<>();
         List<Element> outerColElements = new ArrayList<>();
         ReactiveGrid<String> gridCards = new ReactiveGrid<>(items);
-        gridCards.columns(cols).key(s -> s).gap(10f);
-        gridCards.children((item, ctx) -> {
+        gridCards.columns(cols).key(s -> s).props(gap(10f));
+        gridCards.items((item, ctx) -> {
             Card[] holder = new Card[1];
             Column col = new Column()
-                    .growX()
-                    .gap(8f)
+                    .props(growX(), gap(8f))
                     .children(() -> {
                         holder[0] = new Card()
-                                .growX()
-                                .margin(4f, 0f, 4f, 0f)
-                                .height(ctx.itemWidth())
+                                .props(growX(), margin(4f, 0f, 4f, 0f), height(ctx.itemWidth()), prefHeight(ctx.itemWidth()))
                                 .children(() -> {
                                 });
                     });
@@ -251,11 +260,8 @@ class ReactiveGridTest extends SolimEnv {
         Signal<List<String>> items = Signal.of(Collections.emptyList());
         ReactiveGrid<String> grid = new ReactiveGrid<>(items);
         grid.columns(cols).key(s -> s);
-        grid.children((s, ctx) -> new ItemComp(s));
-        grid.width(400f)
-                .height(200f)
-                .visible(false)
-                .padding(16f);
+        grid.items((s, ctx) -> new ItemComp(s));
+        grid.props(width(400f), prefWidth(400f), height(200f), prefHeight(200f), visible(false), padding(16f));
 
         assertEquals(400f, grid.element().getWidth());
         assertEquals(200f, grid.element().getHeight());
@@ -269,7 +275,7 @@ class ReactiveGridTest extends SolimEnv {
         Signal<List<String>> items = Signal.of(new ArrayList<>(Arrays.asList("a", "b")));
         ReactiveGrid<String> grid = new ReactiveGrid<>(items);
         grid.columns(2).key(s -> s);
-        grid.children(ItemComp::new);
+        grid.items(ItemComp::new);
 
         grid.element();
         assertTrue(countFilled(grid.table()) > 0, "Grid must mount before disposal to make this meaningful");
@@ -305,9 +311,7 @@ class ReactiveGridTest extends SolimEnv {
         protected Element build() {
             return new Card()
                     .name("probe-card")
-                    .left()
-                    .grow()
-                    .minHeight(200f)
+                    .props(left(), grow(), minHeight(200f))
                     .children(() -> {
                         Element content = new Element() {
                             @Override
@@ -332,7 +336,7 @@ class ReactiveGridTest extends SolimEnv {
         Signal<List<String>> items = Signal.of(Arrays.asList("A", "B"));
         ReactiveGrid<String> grid = new ReactiveGrid<>(items);
         grid.columns(cols).key(s -> s);
-        grid.children((item, ctx) -> new CardWrapperProbe(50f));
+        grid.items((item, ctx) -> new CardWrapperProbe(50f));
         grid.element();
 
         Element firstEl = grid.table().getChildren().get(0);
@@ -351,7 +355,7 @@ class ReactiveGridTest extends SolimEnv {
         Signal<List<String>> items = Signal.of(Arrays.asList("short", "tall"));
         ReactiveGrid<String> grid = new ReactiveGrid<>(items);
         grid.columns(cols).key(s -> s);
-        grid.children((item, ctx) -> "short".equals(item) ? new CardWrapperProbe(50f) : new CardWrapperProbe(350f));
+        grid.items((item, ctx) -> "short".equals(item) ? new CardWrapperProbe(50f) : new CardWrapperProbe(350f));
         grid.element();
         grid.table().setWidth(600f);
         grid.table().setHeight(grid.table().getPrefHeight());
@@ -374,7 +378,7 @@ class ReactiveGridTest extends SolimEnv {
 
         ReactiveGrid<String> grid = new ReactiveGrid<>(items);
         grid.key(s -> s);
-        grid.children((item, ctx) -> new ItemComp(item));
+        grid.items((item, ctx) -> new ItemComp(item));
         grid.empty(() -> {
             solim.display.Text t = solim.display.Text.of(emptyText);
             AttachmentStack.add(t.element());

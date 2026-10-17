@@ -8,6 +8,14 @@ import static solim.UI.spacer;
 import static solim.UI.text;
 import static solim.UI.textField;
 import static solim.UI.unit;
+import static solim.modifier.Values.center;
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -67,21 +75,20 @@ public class MapRulesDialog extends SolimDialog {
         modal.addCloseButton();
         modal.closeOnBack();
         modal.children(() -> {
-            column().grow().center().children(() -> {
-                column().growX().gap(unit(2)).children(() -> {
+            column().props(grow(), center()).children(() -> {
+                column().props(growX(), gap(unit(2))).children(() -> {
                     textField(nameInput)
-                            .growX()
-                            .height(unit(11))
+                            .props(growX(), height(unit(11)), prefHeight(unit(11)))
                             .style(WebStyles.clearInput())
                             .placeholder(t("feature.map-rules.save_name"));
-                    row().growX().gap(unit(2)).children(() -> {
+                    row().props(growX(), gap(unit(2))).children(() -> {
                         spacer();
                         button(t("feature.map-rules.cancel"), modal::hide)
                                 .style(WebStyles.ghostText())
-                                .height(unit(10));
+                                .props(height(unit(10)), prefHeight(unit(10)));
                         button(t("feature.map-rules.save_confirm"), () -> {
                             confirmSave(nameInput.peek(), overwrite.peek(), modal);
-                        }).style(WebStyles.primaryText()).height(unit(10));
+                        }).style(WebStyles.primaryText()).props(height(unit(10)), prefHeight(unit(10)));
                     });
                 });
             });
@@ -119,14 +126,14 @@ public class MapRulesDialog extends SolimDialog {
         confirm.addCloseButton();
         confirm.closeOnBack();
         confirm.children(() -> {
-            column().grow().center().children(() -> {
-                column().growX().gap(unit(2)).children(() -> {
+            column().props(grow(), center()).children(() -> {
+                column().props(growX(), gap(unit(2))).children(() -> {
                     text(name).color(Color.white).center();
-                    row().growX().gap(unit(2)).children(() -> {
+                    row().props(growX(), gap(unit(2))).children(() -> {
                         spacer();
                         button(t("feature.map-rules.cancel"), confirm::hide)
                                 .style(WebStyles.ghostText())
-                                .height(unit(10));
+                                .props(height(unit(10)), prefHeight(unit(10)));
                         button(t("feature.map-rules.save_overwrite"), () -> {
                             Map saved = feature.saveService.save(name, true);
                             confirm.hide();
@@ -141,8 +148,8 @@ public class MapRulesDialog extends SolimDialog {
                                 Vars.ui.showInfoFade(Core.bundle.format("feature.map-rules.save-error", name));
                             }
                             view.refresh();
-                        }).style(WebStyles.dangerText()).height(unit(10))
-                                .children(() -> icon(Icon.warning).size(unit(5)));
+                        }).style(WebStyles.dangerText()).props(height(unit(10)), prefHeight(unit(10)))
+                                .children(() -> icon(Icon.warning).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))));
                     });
                 });
             });

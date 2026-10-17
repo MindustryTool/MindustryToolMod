@@ -1,6 +1,11 @@
 package mindustrytool.features.playerconnect.ui;
 
 import static solim.UI.*;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.margin;
+import static solim.modifier.Values.position;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.visible;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -30,11 +35,9 @@ public class JoinApprovalHudView extends Component {
         });
 
         hud.background(Styles.black8);
-        hud.visible(feature.currentRequestSignal().map(r -> r != null));
+        hud.props(visible(feature.currentRequestSignal().map(r -> r != null)));
 
-        hud.position(
-                Units.screenWidth() / 2f,
-                Units.screenHeight() - 50f);
+        hud.props(position(Units.screenWidth() / 2f, Units.screenHeight() - 50f));
 
         return hud.element();
     }
@@ -49,21 +52,19 @@ public class JoinApprovalHudView extends Component {
                 request.player != null ? request.player.name : "Unknown");
 
         return row()
-                .gap(unit(3))
-                .margin(unit(2), unit(4), unit(2), unit(4))
-                .center()
+                .props(margin(unit(2), unit(4), unit(2), unit(4)), gap(unit(3)), center())
                 .children(() -> {
                     text(msg).color(Color.white);
 
                     button(Core.bundle.get("feature.player-connect.accept", "Accept"), () -> feature.accept(request))
                             .style(Styles.defaultb)
                             .color(Pal.accent)
-                            .height(unit(8));
+                            .props(height(unit(8)), prefHeight(unit(8)));
 
                     button(Core.bundle.get("feature.player-connect.reject", "Reject"), () -> feature.reject(request))
                             .style(Styles.defaultb)
                             .color(Color.scarlet)
-                            .height(unit(8));
+                            .props(height(unit(8)), prefHeight(unit(8)));
                 });
     }
 }

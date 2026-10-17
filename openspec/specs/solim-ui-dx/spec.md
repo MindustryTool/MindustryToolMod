@@ -147,3 +147,17 @@ The UI facade SHALL NOT expose methods with no call sites that duplicate existin
 - **WHEN** a reactive count badge is needed
 - **THEN** it is declared as `badge(count.map(v -> v > 99 ? "99+" : String.valueOf(v)))` and updates reactively
 
+### Requirement: Single props call per component
+A component declaration SHALL NOT chain multiple `.props(...)` calls. All layout, spacing, alignment, sizing, and styling properties for a single component instance SHALL be declared within a single `.props(...)` invocation.
+
+#### Scenario: Chained props consolidated
+- **WHEN** configuring a component with multiple layout modifiers
+- **THEN** all properties are passed as arguments to a single `.props(...)` method call rather than chaining `.props(...)` multiple times
+
+### Requirement: UI effects created within build
+Components that create reactive effects via `Effect.of(...)` SHALL instantiate them inside `build()` (or during an active ownership window) rather than in their constructors, ensuring automatic registration and disposal with the component lifecycle.
+
+#### Scenario: View effect lifecycle
+- **WHEN** a component with reactive state subscriptions is realized via `build()`
+- **THEN** the reactive effect is registered with the component as ambient owner and automatically disposed when the component is disposed
+

@@ -41,7 +41,7 @@ class InstrumentationTest extends SolimEnv {
         assertFalse(Instrumentation.enabled());
 
         Signal<Integer> source = Signal.of(0);
-        Computed<Integer> computed = Signal.computed(() -> source.get() + 1);
+        Computed<Integer> computed = inOwnershipWindow(() -> Signal.computed(() -> source.get() + 1));
         Effect.of(computed::get);
         SignalDispatcher.flush();
 
@@ -126,7 +126,7 @@ class InstrumentationTest extends SolimEnv {
         });
 
         Signal<Integer> sig = Signal.of(1);
-        Computed<Integer> comp = Signal.computed(() -> sig.get() * 10);
+        Computed<Integer> comp = inOwnershipWindow(() -> Signal.computed(() -> sig.get() * 10));
         Effect.of(comp::get);
         events.clear();
 
@@ -151,7 +151,7 @@ class InstrumentationTest extends SolimEnv {
     @Test
     void pullGraphTraversalIsIndependentOfPushEvents() {
         Signal<Integer> source = Signal.of(42);
-        Computed<Integer> comp = Signal.computed(() -> source.get() + 10);
+        Computed<Integer> comp = inOwnershipWindow(() -> Signal.computed(() -> source.get() + 10));
         assertEquals(52, (int) comp.get());
 
         assertTrue(source instanceof DebugReactiveNode);

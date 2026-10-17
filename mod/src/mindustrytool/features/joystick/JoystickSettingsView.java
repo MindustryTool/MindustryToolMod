@@ -1,6 +1,11 @@
 package mindustrytool.features.joystick;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
 
 import arc.Core;
 import arc.scene.Element;
@@ -63,7 +68,7 @@ public class JoystickSettingsView extends Component {
                     divider().color(WebStyles.Colors.SECTION_BORDER);
 
                     checkbox(Core.bundle.get("feature.joystick.settings.show-handle", "Show Reposition Handle"),
-                            feature.showHandleConfig.signal()).growX();
+                            feature.showHandleConfig.signal()).props(growX());
                 });
     }
 
@@ -71,7 +76,7 @@ public class JoystickSettingsView extends Component {
         return SettingCard.section(Icon.eye, Core.bundle.get("feature.joystick.settings.camera", "Camera Controls"),
                 () -> {
                     checkbox(Core.bundle.get("feature.free-camera.name", "Free Camera"),
-                            freeCam.enabled()).growX();
+                            freeCam.enabled()).props(growX());
                 });
     }
 
@@ -79,11 +84,9 @@ public class JoystickSettingsView extends Component {
         return SettingCard.card().children(() -> {
             button(feature::resetPosition)
                     .style(WebStyles.outline())
-                    .growX()
-                    .height(unit(11))
-                    .gap(unit(2))
+                    .props(growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
                     .children(() -> {
-                        icon(Icon.refresh).size(unit(6));
+                        icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                         text(Core.bundle.get("feature.joystick.settings.reset-position", "Reset Joystick Position"));
                     });
         });

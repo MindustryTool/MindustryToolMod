@@ -1,6 +1,12 @@
 package mindustrytool.features.browser.common;
 
 import static solim.UI.*;
+import static solim.modifier.Values.border;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.paddingX;
+import static solim.modifier.Values.paddingY;
+import static solim.modifier.Values.rounded;
 
 import java.util.List;
 
@@ -64,11 +70,11 @@ public final class BrowserLayout {
             return;
         }
 
-        card(WebStyles.previewCardBackground()).growX().top().left().padding(unit(4)).gap(unit(4)).children(() -> {
+        card(WebStyles.previewCardBackground()).props(growX(), padding(unit(4)), top(), left(), gap(unit(4))).children(() -> {
             text(Core.bundle.get("browser.detail.tags")).color(Color.white).growX().left();
-            wrap().growX().left().gap(unit(2)).children(() -> {
+            wrap().props(growX(), left(), gap(unit(2))).children(() -> {
                 for (TagData tag : tags) {
-                    row().rounded(12).paddingX(unit(3)).paddingY(unit(1)).border(2, Color.darkGray).children(() -> {
+                    row().props(rounded(12), paddingX(unit(3)), paddingY(unit(1)), border(2, Color.darkGray)).children(() -> {
                         text(tag.getName())
                                 .color(tag.color());
                     });

@@ -1,6 +1,19 @@
 package mindustrytool.features.chat;
 
 import static solim.UI.*;
+import static solim.modifier.Values.border;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.paddingBottom;
+import static solim.modifier.Values.paddingLeft;
+import static solim.modifier.Values.paddingRight;
+import static solim.modifier.Values.paddingTop;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.rounded;
+import static solim.modifier.Values.size;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -52,18 +65,17 @@ public class ChatInputView extends Component {
             }
         });
 
-        return column().growX().gap(unit(1)).padding(unit(2)).children(() -> {
+        return column().props(growX(), padding(unit(2)), gap(unit(1))).children(() -> {
 
             when(isNotLoggedIn)
-                    .thenDo(() -> row().growX().padding(unit(1)).children(() -> {
+                    .thenDo(() -> row().props(growX(), padding(unit(1))).children(() -> {
                         button(Core.bundle.get("auth.login", "Login"), () -> AuthOverlay.getInstance().startLoginUI())
                                 .style(Styles.defaultt)
-                                .growX()
-                                .height(unit(8));
+                                .props(growX(), height(unit(8)), prefHeight(unit(8)));
                     }))
                     .elseDo(() -> {
 
-                        column().growX().gap(unit(1)).children(() -> {
+                        column().props(growX(), gap(unit(1))).children(() -> {
                             dynamic(store.ui().replyTarget(), target -> {
                                 if (target != null) {
                                     String authorId = target.getCreatedBy();
@@ -72,29 +84,24 @@ public class ChatInputView extends Component {
                                             ? cachedUser.getName()
                                             : (authorId != null ? authorId : "message");
 
-                                    row().growX().padding(unit(1)).height(unit(12)).gap(unit(1)).children(() -> {
+                                    row().props(growX(), padding(unit(1)), height(unit(12)), prefHeight(unit(12)), gap(unit(1))).children(() -> {
                                         text(Core.bundle.format("feature.chat.ui.replying", targetName))
                                                 .color(Color.lightGray)
                                                 .fontScale(0.85f).left();
                                         spacer();
                                         button(() -> store.ui().setReplyTarget(null))
                                                 .style(Styles.clearNonei)
-                                                .size(unit(6), unit(6))
-                                                .children(() -> icon(Icon.cancel).size(unit(4), unit(4)));
+                                                .props(size(unit(6), unit(6)), prefWidth(unit(6)), prefHeight(unit(6)))
+                                                .children(() -> icon(Icon.cancel).props(size(unit(4), unit(4)), prefWidth(unit(4)), prefHeight(unit(4))));
                                     });
                                 }
-                            }).growX();
+                            }).props(growX());
 
-                            row().growX().gap(unit(1)).children(() -> {
-                                card(Styles.black5).growX().children(() -> {
-                                    row().growX().gap(unit(1))
-                                            .paddingLeft(unit(3))
-                                            .paddingRight(unit(2))
-                                            .paddingTop(unit(1))
-                                            .paddingBottom(unit(1))
-                                            .rounded(unit(3), Color.clear)
-                                            .border(1.5f, Color.darkGray)
-                                            .center()
+                            row().props(growX(), gap(unit(1))).children(() -> {
+                                card(Styles.black5).props(growX()).children(() -> {
+                                    row().props(growX(), gap(unit(1)),
+                                            paddingLeft(unit(3)), paddingRight(unit(2)), paddingTop(unit(1)), paddingBottom(unit(1)), rounded(unit(3), Color.clear), border(1.5f, Color.darkGray),
+                                            center())
                                             .children(() -> {
                                                 chatInput = textField(messageText)
                                                         .style(WebStyles.clearInput())
@@ -104,27 +111,26 @@ public class ChatInputView extends Component {
                                                         .validator(this::isValidInput)
                                                         .onEnter(this::onSend)
                                                         .disabled(isSending)
-                                                        .growX();
+                                                        .props(growX());
 
                                                 button(() -> new AttachContentDialog(this::handleAttachContent).show())
                                                         .style(WebStyles.ghost())
-                                                        .size(unit(10))
+                                                        .props(size(unit(10)), prefWidth(unit(10)), prefHeight(unit(10)))
                                                         .children(
-                                                                () -> image(FileIcon.of("upload.png")).size(unit(6),
-                                                                        unit(6)));
+                                                                () -> image(FileIcon.of("upload.png")).props(size(unit(6), unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
 
                                                 button(this::onSend)
                                                         .style(WebStyles.ghost())
                                                         .enabled(canSend)
-                                                        .size(unit(10))
+                                                        .props(size(unit(10)), prefWidth(unit(10)), prefHeight(unit(10)))
                                                         .children(() -> image(FileIcon.of("send.png"))
-                                                                .size(unit(6), unit(6))
+                                                                .props(size(unit(6), unit(6)), prefWidth(unit(6)), prefHeight(unit(6)))
                                                                 .color(Pal.accent));
                                             });
                                 });
                             });
                         });
-                    }).grow();
+                    }).props(grow());
         }).element();
     }
 

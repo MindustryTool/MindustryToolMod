@@ -1,6 +1,7 @@
 package solim.overlay;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static solim.modifier.Values.margin;
 
 import arc.Core;
 import arc.Graphics;
@@ -74,7 +75,7 @@ class PopupMenuTest extends SolimEnv {
             AtomicInteger builds = new AtomicInteger();
             Popup<String> menu = new Popup<>();
             Popup<String> chained = menu
-                    .children(data -> {
+                    .items(data -> {
                         builds.incrementAndGet();
                         return emptyContent();
                     })
@@ -99,7 +100,7 @@ class PopupMenuTest extends SolimEnv {
             ensureScene();
             AtomicInteger builds = new AtomicInteger();
             AtomicBoolean disposed = new AtomicBoolean(false);
-            menu.children(data -> {
+            menu.items(data -> {
                 builds.incrementAndGet();
                 return trackedContent(disposed);
             });
@@ -133,7 +134,7 @@ class PopupMenuTest extends SolimEnv {
         Popup<String> menu = new Popup<>();
         try {
             ensureScene();
-            menu.children(data -> emptyContent());
+            menu.items(data -> emptyContent());
             menu.show("visible", 10f, 10f);
             assertNotNull(menu.table().parent);
             menu.show(null, 10f, 10f);
@@ -157,7 +158,7 @@ class PopupMenuTest extends SolimEnv {
         Popup<String> popup = new Popup<>();
         try {
             ensureScene();
-            popup.children(data -> new Card().margin(10f, 15f, 20f, 25f));
+            popup.items(data -> new Card().props(margin(10f, 15f, 20f, 25f)));
             popup.show("test", 100f, 100f);
             Table table = popup.table();
             Cell<?> cell = table.getCells().first();
@@ -183,7 +184,7 @@ class PopupMenuTest extends SolimEnv {
         try {
             Scene scene = new Scene();
             Core.scene = scene;
-            menu.children(data -> emptyContent());
+            menu.items(data -> emptyContent());
             Table anchor = new Table();
             scene.root.addChild(anchor);
             menu.layerBehind(anchor);
@@ -210,7 +211,7 @@ class PopupMenuTest extends SolimEnv {
         Popup<String> menu = new Popup<>();
         try {
             ensureScene();
-            menu.children(data -> emptyContent());
+            menu.items(data -> emptyContent());
             menu.layerBehind(new Table());
 
             menu.show("data", 10f, 20f);
@@ -231,7 +232,7 @@ class PopupMenuTest extends SolimEnv {
         Popup<String> menu = new Popup<>();
         try {
             ensureScene();
-            menu.children(data -> emptyContent());
+            menu.items(data -> emptyContent());
             menu.show("data", 10f, 10f);
             assertTrue(menu.isShowing());
 
@@ -269,7 +270,7 @@ class PopupMenuTest extends SolimEnv {
         Popup<String> menu = new Popup<>();
         try {
             ensureScene();
-            menu.children(data -> fixedContent(100f, 80f));
+            menu.items(data -> fixedContent(100f, 80f));
             menu.show("data", 10f, 10f);
             assertTrue(menu.isShowing());
 

@@ -558,6 +558,7 @@ public class PlayerConnectFeature extends Feature {
                 });
     }
 
+    // Arc's Settings.getJson(String, Class<T>, Class<?>, Prov<T>) derives T from the container Class, so ArrayMap.class can only yield a raw ArrayMap.
     @SuppressWarnings("unchecked")
     public ArrayMap<String, String> getCustomProviders() {
         return Core.settings.getJson(
@@ -648,6 +649,7 @@ public class PlayerConnectFeature extends Feature {
             return;
         }
 
+        // Arc's Table.getCells() is declared as Seq<Cell>, with a raw Cell argument that cannot be recovered from that API.
         @SuppressWarnings("rawtypes")
         Seq<Cell> cells = root.getCells();
         if (cells.isEmpty()) {

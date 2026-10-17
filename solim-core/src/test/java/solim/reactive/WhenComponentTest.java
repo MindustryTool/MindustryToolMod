@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.growX;
 
 import org.junit.jupiter.api.Test;
 
@@ -204,7 +205,7 @@ class WhenComponentTest extends SolimCoreEnv {
                     thenBox[0] = new Probe();
                 })
                 .elseDo(() -> new Probe())
-                .growX();
+                .props(solim.modifier.Values.growX());
         when.element();
         SignalDispatcher.flush();
         assertTrue(when.cellConfig().growX);
@@ -218,7 +219,7 @@ class WhenComponentTest extends SolimCoreEnv {
         Signal<Boolean> cond = Signal.of(true);
         Probe[] thenBox = new Probe[1];
         Probe[] elseBox = new Probe[1];
-        When when = When.of(cond).growX();
+        When when = When.of(cond).props(solim.modifier.Values.growX());
         assertEquals(0, when.container().getChildren().size);
 
         when.thenDo(() -> {
@@ -226,6 +227,7 @@ class WhenComponentTest extends SolimCoreEnv {
         }).elseDo(() -> {
             elseBox[0] = new Probe();
         });
+        when.element();
         assertEquals(1, when.container().getChildren().size);
         assertFalse(thenBox[0].wasDisposed);
 
@@ -435,10 +437,11 @@ class WhenComponentTest extends SolimCoreEnv {
     void perRootCellConfigAppliesToOwnCell() {
         Signal<Boolean> cond = Signal.of(true);
         When when = When.of(cond).thenDo(() -> {
-            new Row().growX();
+            new Row().props(growX());
             new Probe();
         });
         when.element();
+        // Arc's Table.getCells() is declared as Seq<Cell>, with a raw Cell argument that cannot be recovered from that API.
         @SuppressWarnings("rawtypes")
         Seq<Cell> cells = when.container().getCells();
         assertEquals(2, cells.size);
@@ -456,7 +459,7 @@ class WhenComponentTest extends SolimCoreEnv {
                 Row row = new Row();
                 row.cellConfig().prefWidth = Readable.of(100f);
                 row.cellConfig().prefHeight = Readable.of(40f);
-            }).growX();
+            }).props(solim.modifier.Values.growX());
         });
         Table table = col.table();
         table.setSize(400f, 300f);
@@ -474,10 +477,10 @@ class WhenComponentTest extends SolimCoreEnv {
         When[] whenBox = new When[1];
         Column col = new Column().children(() -> {
             whenBox[0] = When.of(cond).thenDo(() -> {
-                Row row = new Row().growX();
+                Row row = new Row().props(growX());
                 row.cellConfig().prefHeight = Readable.of(40f);
                 rowBox[0] = row;
-            }).growX();
+            }).props(solim.modifier.Values.growX());
         });
         Table table = col.table();
         table.setSize(400f, 300f);

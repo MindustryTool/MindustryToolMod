@@ -1,6 +1,14 @@
 package mindustrytool.features.emoji;
 
 import static solim.UI.*;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -9,6 +17,7 @@ import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.emoji.EmojiIcons.Entry;
+import solim.modifier.Values;
 import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -35,37 +44,31 @@ public class EmojiDialog extends SolimDialog {
         });
 
         children(() -> {
-            column().grow().gap(unit(2.5f)).padding(unit(3)).center().children(() -> {
-                row().growX().gap(unit(1.5f))
-                        .padding(unit(1.5f))
-                        .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
-                        .border(1.5f, WebStyles.Colors.BORDER_INPUT)
-                        .center()
+            column().props(grow(), padding(unit(3)), center(), gap(unit(2.5f))).children(() -> {
+                row().props(growX(), padding(unit(1.5f)), Values.rounded(unit(2), WebStyles.Colors.SECONDARY_BG), Values.border(1.5f, WebStyles.Colors.BORDER_INPUT), gap(unit(1.5f)), center())
                         .children(() -> {
-                            icon(Icon.zoom).size(unit(4.5f)).color(WebStyles.Colors.GHOST_FG);
+                            icon(Icon.zoom).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f))).color(WebStyles.Colors.GHOST_FG);
                             textField(searchQuery)
-                                    .growX()
-                                    .height(unit(8))
+                                    .props(growX(), height(unit(8)), prefHeight(unit(8)))
                                     .style(WebStyles.clearInput())
                                     .placeholder(Core.bundle.get("feature.emoji.search"));
                         });
 
-                scroll().grow().children(() -> {
+                scroll().props(grow()).children(() -> {
                     dynamic(filteredEntries, entries -> {
                         if (entries == null || entries.isEmpty()) {
-                            row().growX().padding(unit(4)).center().children(() -> {
+                            row().props(growX(), padding(unit(4)), center()).children(() -> {
                                 text(Core.bundle.get("feature.emoji.empty")).color(Color.gray);
                             });
                         } else {
-                            wrap().left().gap(unit(1.5f)).children(() -> {
+                            wrap().props(left(), gap(unit(1.5f))).children(() -> {
                                 for (Entry entry : entries) {
                                     button()
                                             .style(WebStyles.actionChip())
                                             .onClick(() -> copyGlyph(entry))
-                                            .padding(unit(1.5f))
-                                            .tooltip(entry.name)
+                                            .props(padding(unit(1.5f)), tooltip(entry.name))
                                             .children(() -> {
-                                                row().gap(unit(1.5f)).center().children(() -> {
+                                                row().props(gap(unit(1.5f)), center()).children(() -> {
                                                     text(String.valueOf(entry.glyph));
                                                     text(entry.name);
                                                 });
@@ -73,7 +76,7 @@ public class EmojiDialog extends SolimDialog {
                                 }
                             });
                         }
-                    }).grow();
+                    }).props(grow());
                 });
             });
         });

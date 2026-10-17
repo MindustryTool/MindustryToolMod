@@ -27,8 +27,6 @@ import solim.graphics.Drawables;
 import solim.layout.Direction;
 import solim.layout.GapContainer;
 import solim.layout.Row;
-import solim.modifier.ElementConfig;
-import solim.modifier.TableConfig;
 import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
@@ -36,12 +34,15 @@ import solim.reactive.Readable;
 import solim.style.SolimButtonStyle;
 import solim.style.SolimButtonStyleBuilder;
 import arc.scene.style.Drawable;
-import solim.modifier.CellConfig;
+import solim.modifier.Configurable;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.Props;
+import solim.modifier.RoundedHelper;
+import solim.modifier.Values;
 import arc.util.Time;
 
 public final class Button
-        extends Component implements GapContainer, ElementConfig<Button>, TableConfig<Button>, CellConfig<Button> {
+        extends Component implements GapContainer, Configurable<Button> {
 
     private final arc.scene.ui.Button button;
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -56,6 +57,7 @@ public final class Button
     private boolean hasLongClickListener = false;
     private boolean hasCheckedReassertListener = false;
     private @Nullable Readable<Boolean> checkedBinding;
+    private @Nullable Props<Button> pending;
     private static boolean checkedWarningLogged = false;
 
     public Button() {
@@ -85,6 +87,7 @@ public final class Button
     }
 
     public Button children(@Nullable Runnable r) {
+        applyPendingProps();
         OwnershipContext.push(this);
         AttachmentStack.push(button, Row.ATTACHER);
         try {
@@ -123,7 +126,9 @@ public final class Button
         children(() -> {
             if (drawable != null) {
                 SolimImage img = new SolimImage(Drawables.scalable(drawable));
-                img.scaling(Scaling.fit).size(Units.unit(6));
+                img.scaling(Scaling.fit)
+                        .props(Values.size(Units.unit(6)), Values.prefWidth(Units.unit(6)),
+                                Values.prefHeight(Units.unit(6)));
                 AttachmentStack.attachToParent(img.element());
             }
         });
@@ -135,14 +140,15 @@ public final class Button
             if (drawable != null) {
                 SolimImage img = new SolimImage();
                 img.drawable(drawable.map(Drawables::scalable));
-                img.scaling(Scaling.fit).size(Units.unit(6));
+                img.scaling(Scaling.fit)
+                        .props(Values.size(Units.unit(6)), Values.prefWidth(Units.unit(6)),
+                                Values.prefHeight(Units.unit(6)));
                 AttachmentStack.attachToParent(img.element());
             }
         });
         return this;
     }
 
-    @Override
     public Button onClick(@Nullable Runnable action) {
         this.onClick = action;
         if (action != null) {
@@ -214,7 +220,6 @@ public final class Button
         });
     }
 
-    @Override
     public Button stopClickPropagation(boolean stop) {
         this.stopClickPropagation = stop;
         return this;
@@ -222,14 +227,14 @@ public final class Button
 
     public Button enabled(@Nullable Readable<Boolean> signal) {
         if (signal != null) {
-            own(Effect.of(() -> button.setDisabled(!Boolean.TRUE.equals(signal.get()))));
+            withinOwnership(() -> Effect.of(() -> button.setDisabled(!Boolean.TRUE.equals(signal.get()))));
         }
         return this;
     }
 
     public Button checked(@Nullable Readable<Boolean> signal) {
         if (signal != null) {
-            own(Effect.of(() -> button.setChecked(Boolean.TRUE.equals(signal.get()))));
+            withinOwnership(() -> Effect.of(() -> button.setChecked(Boolean.TRUE.equals(signal.get()))));
 
             if (signal instanceof ReactiveSource) {
                 checkedBinding = signal;
@@ -271,11 +276,12 @@ public final class Button
 
     public Button visible(@Nullable Readable<Boolean> signal) {
         if (signal != null) {
-            own(Effect.of(() -> button.visible = Boolean.TRUE.equals(signal.get())));
+            withinOwnership(() -> Effect.of(() -> button.visible = Boolean.TRUE.equals(signal.get())));
         }
         return this;
     }
 
+    // TODO put it into .props()
     public Button style(@Nullable ButtonStyle style) {
         if (style != null) {
             button.setStyle(style);
@@ -285,7 +291,7 @@ public final class Button
 
     public Button style(@Nullable Readable<? extends ButtonStyle> style) {
         if (style != null) {
-            own(Effect.of(() -> {
+            withinOwnership(() -> Effect.of(() -> {
                 ButtonStyle s = style.get();
                 if (s != null) {
                     button.setStyle(s);
@@ -293,7 +299,7 @@ public final class Button
             }));
         }
         return this;
-    }
+    };
 
     public Button style(@Nullable Cons<SolimButtonStyleBuilder> config) {
         if (config == null) {
@@ -305,7 +311,7 @@ public final class Button
             applyResolvedStyle(builder.build());
         } else {
             applyResolvedStyle(builder.build());
-            own(Effect.of(() -> applyResolvedStyle(builder.build())));
+            withinOwnership(() -> Effect.of(() -> applyResolvedStyle(builder.build())));
         }
         return this;
     }
@@ -331,7 +337,7 @@ public final class Button
             applyStyleMargin(resolved.margin().floatValue());
         }
         if (resolved.gap() != null) {
-            gap(resolved.gap().floatValue());
+            setGap(resolved.gap().floatValue());
         }
         if (resolved.font() != null) {
             applyStyleFont(resolved.font());
@@ -368,22 +374,10 @@ public final class Button
         }
     }
 
-    public Button gap(float g) {
+    @Override
+    public void setGap(float g) {
         this.gap = g;
         respace();
-        return this;
-    }
-
-    public Button gap(@Nullable Readable<Float> gapSignal) {
-        if (gapSignal != null) {
-            own(Effect.of(() -> {
-                Float g = gapSignal.get();
-                if (g != null) {
-                    gap(g);
-                }
-            }));
-        }
-        return this;
     }
 
     @Override
@@ -412,7 +406,7 @@ public final class Button
 
     public Button color(Readable<Color> color) {
         if (color != null) {
-            own(Effect.of(() -> {
+            withinOwnership(() -> Effect.of(() -> {
                 Color c = color.get();
                 if (c != null) {
                     button.setColor(c);
@@ -420,7 +414,7 @@ public final class Button
             }));
         }
         return this;
-    }
+    };
 
     public Button rounded(int radius) {
         return rounded(radius, (Color) null);
@@ -431,9 +425,12 @@ public final class Button
     }
 
     public Button rounded(int radius, @Nullable Color color) {
-        TableConfig.super.rounded(radius, color);
-        RoundedDrawable rd = getOrCreateRounded(radius);
+        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(table(), radius);
         if (rd != null) {
+            rd.radius(radius);
+            if (color != null) {
+                rd.fillColor(color);
+            }
             ButtonStyle s = button.getStyle();
             if (s == null) {
                 s = new ButtonStyle();
@@ -451,9 +448,22 @@ public final class Button
     }
 
     public Button rounded(int radius, @Nullable Readable<Color> color) {
-        TableConfig.super.rounded(radius, color);
-        RoundedDrawable rd = getOrCreateRounded(radius);
+        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(table(), radius);
         if (rd != null) {
+            rd.radius(radius);
+            if (color != null) {
+                OwnershipContext.push(this);
+                try {
+                    Effect.of(() -> {
+                        Color c = color.get();
+                        if (c != null) {
+                            rd.fillColor(c);
+                        }
+                    });
+                } finally {
+                    OwnershipContext.pop();
+                }
+            }
             ButtonStyle s = button.getStyle();
             if (s == null) {
                 s = new ButtonStyle();
@@ -488,9 +498,9 @@ public final class Button
     }
 
     public Button border(float stroke, @Nullable Color color) {
-        TableConfig.super.border(stroke, color);
-        RoundedDrawable rd = getOrCreateRounded(8);
+        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(table(), 8);
         if (rd != null) {
+            rd.border(stroke, color != null ? color : Color.white);
             ButtonStyle s = button.getStyle();
             if (s == null) {
                 s = new ButtonStyle();
@@ -511,9 +521,21 @@ public final class Button
     }
 
     public Button border(float stroke, @Nullable Readable<Color> color) {
-        TableConfig.super.border(stroke, color);
-        RoundedDrawable rd = getOrCreateRounded(8);
+        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(table(), 8);
         if (rd != null) {
+            if (color != null) {
+                OwnershipContext.push(this);
+                try {
+                    Effect.of(() -> {
+                        Color c = color.get();
+                        rd.border(stroke, c != null ? c : Color.white);
+                    });
+                } finally {
+                    OwnershipContext.pop();
+                }
+            } else {
+                rd.border(stroke, Color.white);
+            }
             ButtonStyle s = button.getStyle();
             if (s == null) {
                 s = new ButtonStyle();
@@ -543,9 +565,8 @@ public final class Button
         return button;
     }
 
-    @Override
     public Button align(int align) {
-        TableConfig.super.align(align);
+        table().align(align);
         constraints.align = align;
         constraints.applyAlignToParentCell(element());
         button.defaults().align(align);
@@ -557,9 +578,8 @@ public final class Button
         return this;
     }
 
-    @Override
     public Button center() {
-        TableConfig.super.center();
+        table().center();
         constraints.alignCenter();
         constraints.applyAlignToParentCell(element());
         button.defaults().center();
@@ -571,9 +591,8 @@ public final class Button
         return this;
     }
 
-    @Override
     public Button top() {
-        TableConfig.super.top();
+        table().top();
         constraints.alignTop();
         constraints.applyAlignToParentCell(element());
         button.defaults().top();
@@ -585,9 +604,8 @@ public final class Button
         return this;
     }
 
-    @Override
     public Button bottom() {
-        TableConfig.super.bottom();
+        table().bottom();
         constraints.alignBottom();
         constraints.applyAlignToParentCell(element());
         button.defaults().bottom();
@@ -599,9 +617,8 @@ public final class Button
         return this;
     }
 
-    @Override
     public Button left() {
-        TableConfig.super.left();
+        table().left();
         constraints.alignLeft();
         constraints.applyAlignToParentCell(element());
         button.defaults().left();
@@ -613,9 +630,8 @@ public final class Button
         return this;
     }
 
-    @Override
     public Button right() {
-        TableConfig.super.right();
+        table().right();
         constraints.alignRight();
         constraints.applyAlignToParentCell(element());
         button.defaults().right();
@@ -634,6 +650,15 @@ public final class Button
     }
 
     @Override
+    public @Nullable Props<Button> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<Button> props) {
+        this.pending = props;
+    }
+
     public Button self() {
         return this;
     }

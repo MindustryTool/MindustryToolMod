@@ -1,6 +1,12 @@
 package mindustrytool.features.joystick;
 
 import static solim.UI.*;
+import static solim.modifier.Values.draggable;
+import static solim.modifier.Values.position;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.scene.Element;
@@ -27,16 +33,15 @@ public class JoystickHudView extends Component {
                 when(feature.showHandleConfig.signal())
                         .thenDo(() -> button()
                                 .style(WebStyles.ghost())
-                                .size(unit(11))
-                                .tooltip(Core.bundle.get("feature.joystick.settings.show-handle"))
-                                .children(() -> icon(Icon.move).size(unit(6)))
-                                .draggable(feature.posXConfig.signal(), feature.posYConfig.signal()));
+                                .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.joystick.settings.show-handle")))
+                                .children(() -> icon(Icon.move).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))))
+                                .props(draggable(feature.posXConfig.signal(), feature.posYConfig.signal())));
 
                 arc(new JoystickWidget(feature));
             });
         });
 
-        hud.position(feature.posXConfig.signal(), feature.posYConfig.signal());
+        hud.props(position(feature.posXConfig.signal(), feature.posYConfig.signal()));
         hud.opacity(feature.opacityConfig.signal());
 
         listen(ResizeEvent.class, e -> {

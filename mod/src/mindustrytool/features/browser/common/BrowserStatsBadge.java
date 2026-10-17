@@ -1,6 +1,10 @@
 package mindustrytool.features.browser.common;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
 
 import arc.scene.Element;
 import mindustry.gen.Icon;
@@ -21,19 +25,19 @@ public class BrowserStatsBadge extends Component {
 
     @Override
     protected Element build() {
-        return row().growX().gap(unit(4)).children(() -> {
-            row().gap(unit(2)).center().children(() -> {
-                icon(FileIcon.of("heart.png")).size(unit(5));
+        return row().props(growX(), gap(unit(4))).children(() -> {
+            row().props(gap(unit(2)), center()).children(() -> {
+                icon(FileIcon.of("heart.png")).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)));
                 text(formatCount(likes));
             });
 
-            row().gap(unit(2)).center().children(() -> {
-                icon(FileIcon.of("message-circle.png")).size(unit(5));
+            row().props(gap(unit(2)), center()).children(() -> {
+                icon(FileIcon.of("message-circle.png")).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)));
                 text(formatCount(comments));
             });
 
-            row().gap(unit(2)).center().children(() -> {
-                icon(Icon.downloadSmall).size(unit(5));
+            row().props(gap(unit(2)), center()).children(() -> {
+                icon(Icon.downloadSmall).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)));
                 text(formatCount(downloads));
             });
         }).element();

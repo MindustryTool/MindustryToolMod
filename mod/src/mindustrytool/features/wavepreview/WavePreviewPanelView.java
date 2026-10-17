@@ -1,6 +1,17 @@
 package mindustrytool.features.wavepreview;
 
 import static solim.UI.*;
+import static solim.modifier.Values.backgroundColor;
+import static solim.modifier.Values.border;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.maxWidth;
+import static solim.modifier.Values.opacity;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.rounded;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.visible;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -28,16 +39,12 @@ public class WavePreviewPanelView extends Component {
         Readable<Float> opacity = feature.opacityConfig.signal();
         Readable<Float> scale = ModSettings.effectiveScale(feature.scaleConfig.signal());
 
-        return column().left().top()
-                .border(1.5f, Color.darkGray)
-                .rounded(unit(3))
-                .backgroundColor(WebStyles.Colors.SECONDARY_BG)
-                .opacity(opacity)
-                .visible(() -> Vars.ui != null && Vars.ui.hudfrag != null && Vars.ui.hudfrag.shown
-                        && Vars.state.isGame() && Vars.state.rules != null && Vars.state.rules.waves)
+        return column()
+                .props(left(), top(), border(1.5f, Color.darkGray), rounded(unit(3)), backgroundColor(WebStyles.Colors.SECONDARY_BG), opacity(opacity), visible(() -> Vars.ui != null && Vars.ui.hudfrag != null && Vars.ui.hudfrag.shown
+                        && Vars.state.isGame() && Vars.state.rules != null && Vars.state.rules.waves))
                 .children(() -> {
 
-                    dynamic(feature.getState().waves(), waves -> column().growX().left().children(() -> {
+                    dynamic(feature.getState().waves(), waves -> column().props(growX(), left()).children(() -> {
                         if (waves == null || waves.isEmpty()) {
                             return;
                         }
@@ -50,12 +57,12 @@ public class WavePreviewPanelView extends Component {
                             }
                             renderWaveSection(section, scale, multiWave);
                         }
-                    })).padding(unit(2)).growX();
+                    })).props(padding(unit(2)), growX());
                 }).element();
     }
 
     private void renderWaveSection(WaveSectionData section, Readable<Float> scale, boolean multiWave) {
-        column().growX().left().children(() -> {
+        column().props(growX(), left()).children(() -> {
             if (multiWave) {
                 text(Core.bundle.format("feature.wave-preview.section.wave", section.waveNumber))
                         .left()
@@ -90,21 +97,21 @@ public class WavePreviewPanelView extends Component {
 
         Readable<Float> iconSize = scale.map(s -> 16f * 1.5f * (s != null ? s : 1f));
 
-        row().growX().center().left().gap(unit(1)).children(() -> {
+        row().props(growX(), center(), left(), gap(unit(1))).children(() -> {
             text(domainLabel)
                     .left()
                     .style(Styles.outlineLabel)
                     .color(Color.lightGray)
                     .fontScale(scale.map(s -> 0.85f * (s != null ? s : 1f)));
 
-            wrap().growX().maxWidth(230).gap(unit(1)).children(() -> {
+            wrap().props(growX(), maxWidth(230), gap(unit(1))).children(() -> {
                 for (int i = 0; i < entries.size; i++) {
                     WaveUnitEntry entry = entries.get(i);
-                    row().center().gap(unit(0.5f)).children(() -> {
+                    row().props(center(), gap(unit(0.5f))).children(() -> {
                         image(entry.type.uiIcon != null
                                 ? new TextureRegionDrawable(entry.type.uiIcon)
                                 : new TextureRegionDrawable())
-                                .size(iconSize);
+                                .props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize));
 
                         text(String.valueOf(entry.amount))
                                 .style(Styles.outlineLabel)

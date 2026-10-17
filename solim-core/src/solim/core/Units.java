@@ -3,9 +3,7 @@ package solim.core;
 import arc.Core;
 import arc.Events;
 import arc.scene.ui.layout.Scl;
-import mindustry.game.EventType.ResizeEvent;
-import solim.reactive.Computed;
-import solim.reactive.Readable;
+import mindustry.game.EventType.Trigger;
 import solim.reactive.Signal;
 
 public final class Units {
@@ -14,7 +12,7 @@ public final class Units {
     public static final Signal<Float> dvh = Signal.of(calcDvh());
 
     static {
-        Events.on(ResizeEvent.class, e -> update());
+        Events.run(Trigger.update, () -> update());
     }
 
     private Units() {
@@ -57,27 +55,19 @@ public final class Units {
         return scl > 0f ? Core.graphics.getHeight() / scl : Core.graphics.getHeight();
     }
 
-    public static Computed<Float> dvw(float percentage) {
-        return new Computed<>(() -> dvw.get() * percentage);
+    public static float dvw(float percentage) {
+        return dvw.get() * percentage;
     }
 
-    public static Computed<Float> dvh(float percentage) {
-        return new Computed<>(() -> dvh.get() * percentage);
+    public static float dvh(float percentage) {
+        return dvh.get() * percentage;
     }
 
-    public static Computed<Float> dvw(Readable<Float> percentage) {
-        return new Computed<>(() -> dvw.get() * percentage.get());
+    public static float width() {
+        return screenWidth();
     }
 
-    public static Computed<Float> dvh(Readable<Float> percentage) {
-        return new Computed<>(() -> dvh.get() * percentage.get());
-    }
-
-    public static Computed<Float> width() {
-        return new Computed<>(() -> dvw.get() * 100f);
-    }
-
-    public static Computed<Float> height() {
-        return new Computed<>(() -> dvh.get() * 100f);
+    public static float height() {
+        return screenHeight();
     }
 }

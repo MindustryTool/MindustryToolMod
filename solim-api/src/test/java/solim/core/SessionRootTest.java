@@ -15,6 +15,20 @@ class SessionRootTest {
 		}
 	}
 
+	private static class DummyDisposable implements Disposable {
+		private boolean disposed = false;
+
+		@Override
+		public void dispose() {
+			disposed = true;
+		}
+
+		@Override
+		public boolean isDisposed() {
+			return disposed;
+		}
+	}
+
 	@BeforeEach
 	void setUp() {
 		OwnershipContext.clear();
@@ -75,5 +89,38 @@ class SessionRootTest {
 
 		top.dispose();
 		assertFalse(SessionRoot.get().contains(top));
+	}
+
+	@Test
+	void disposedResourcesLeaveTheSessionRootRegistry() {
+		DummyDisposable resource = new DummyDisposable();
+		SessionRoot.get().adopt(resource);
+		assertTrue(SessionRoot.get().disposables().contains(resource));
+
+		resource.dispose();
+
+		assertFalse(SessionRoot.get().disposables().contains(resource),
+				"A resource disposed by its own owner must not stay registered");
+
+		DummyComponent owner = new DummyComponent();
+		owner.adopt(resource);
+
+		assertTrue(owner.disposables().contains(resource),
+				"A dead resource must be adoptable by a live component");
+	}
+
+	@Test
+	void resetForTestsMakesTheRootAcceptAdoptionsAgain() {
+		SessionRoot.get().dispose();
+		assertTrue(SessionRoot.get().isDisposed());
+
+		SessionRoot.get().resetForTests();
+
+		DummyDisposable resource = new DummyDisposable();
+		SessionRoot.get().adopt(resource);
+
+		assertFalse(SessionRoot.get().isDisposed());
+		assertTrue(SessionRoot.get().disposables().contains(resource),
+				"The root must accept adoptions again after a reset");
 	}
 }

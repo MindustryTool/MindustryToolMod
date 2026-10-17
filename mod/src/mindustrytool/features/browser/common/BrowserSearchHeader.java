@@ -1,6 +1,17 @@
 package mindustrytool.features.browser.common;
 
 import static solim.UI.*;
+import static solim.modifier.Values.border;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.paddingLeft;
+import static solim.modifier.Values.paddingX;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.rounded;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -59,39 +70,31 @@ public class BrowserSearchHeader extends Component {
 
     @Override
     protected Element build() {
-        return column().growX().gap(unit(2)).children(() -> {
-            row().growX().gap(unit(2)).children(() -> {
+        return column().props(growX(), gap(unit(2))).children(() -> {
+            row().props(growX(), gap(unit(2))).children(() -> {
 
-                row().grow().gap(unit(1))
-                        .paddingLeft(unit(2))
-                        .rounded(unit(3), Color.clear)
-                        .gap(unit(2))
-                        .border(1.5f, Color.darkGray)
-                        .center()
+                row().props(grow(), gap(unit(2)), paddingLeft(unit(2)), rounded(unit(3), Color.clear), border(1.5f, Color.darkGray), center())
                         .children(() -> {
-                            icon(Icon.zoom).size(unit(6));
+                            icon(Icon.zoom).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                             textField(inputBuffer)
-                                    .growX()
-                                    .height(unit(11))
+                                    .props(growX(), height(unit(11)), prefHeight(unit(11)))
                                     .style(WebStyles.clearInput())
                                     .placeholder(Core.bundle.get("browser.search.placeholder"))
                                     .onEnter(this::submitNow);
                         });
 
-                button(this::refresh).style(WebStyles.outlineText()).size(unit(11))
-                        .tooltip(Core.bundle.get("browser.search.refresh"))
-                        .children(() -> icon(Icon.refresh).size(unit(6)));
+                button(this::refresh).style(WebStyles.outlineText()).props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("browser.search.refresh")))
+                        .children(() -> icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
 
-                button(onFilterClick).style(WebStyles.outlineText()).size(unit(11))
-                        .tooltip(Core.bundle.get("browser.search.filter"))
-                        .children(() -> icon(Icon.filter).size(unit(6)));
+                button(onFilterClick).style(WebStyles.outlineText()).props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("browser.search.filter")))
+                        .children(() -> icon(Icon.filter).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
             });
 
             dynamic(state.selectedTags(), tags -> {
                 if (tags != null && !tags.isEmpty()) {
-                    row().growX().gap(unit(1)).children(() -> {
+                    row().props(growX(), gap(unit(1))).children(() -> {
                         wrap().children(() -> {
-                            row().gap(unit(1)).children(() -> {
+                            row().props(gap(unit(1))).children(() -> {
                                 for (String tag : tags) {
                                     renderChip(tag);
                                 }
@@ -105,12 +108,10 @@ public class BrowserSearchHeader extends Component {
 
     private void renderChip(String tag) {
         button(tag, () -> state.toggleTag(tag))
-                .gap(unit(1))
                 .style(Styles.cleart)
                 .border(1.5f, Color.lightGray)
                 .rounded(6)
-                .paddingX(unit(3))
-                .height(unit(9))
+                .props(paddingX(unit(3)), height(unit(9)), prefHeight(unit(9)), gap(unit(1)))
                 .children(() -> icon(Icon.cancel));
     }
 

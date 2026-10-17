@@ -21,6 +21,7 @@ import solim.test.SolimCoreEnv;
 
 class OwnershipScopeAdoptionTest extends SolimCoreEnv {
 
+
     static final class Owner extends Component {
         final List<Disposable> created = new ArrayList<>();
 

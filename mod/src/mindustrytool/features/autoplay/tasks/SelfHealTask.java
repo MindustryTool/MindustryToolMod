@@ -1,6 +1,7 @@
 package mindustrytool.features.autoplay.tasks;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
 
 import arc.Core;
 import arc.math.geom.Geometry;
@@ -95,9 +96,9 @@ public class SelfHealTask implements AutoplayTask {
         Readable<String> thresholdLabel = healThreshold.signal().map(val ->
                 Core.bundle.format("feature.autoplay.settings.self-heal.threshold", Math.round((val != null ? val : 0.6f) * 100)));
 
-        column().growX().gap(unit(1)).children(() -> {
+        column().props(growX(), gap(unit(1))).children(() -> {
             text(thresholdLabel).growX().left().color(WebStyles.Colors.GHOST_FG);
-            slider(healThreshold.signal(), 0.2f, 0.8f, 0.05f).growX();
+            slider(healThreshold.signal(), 0.2f, 0.8f, 0.05f).props(growX());
         });
     }
 

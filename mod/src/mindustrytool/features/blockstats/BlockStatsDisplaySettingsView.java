@@ -1,6 +1,14 @@
 package mindustrytool.features.blockstats;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.paddingX;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -136,17 +144,16 @@ public class BlockStatsDisplaySettingsView extends Component {
         });
 
         return SettingCard.section(iconDrawable, title, () -> {
-            wrap().growX().gap(unit(1.5f)).children(() -> {
+            wrap().props(growX(), gap(unit(1.5f))).children(() -> {
                 for (BlockGroup group : groups) {
                     button(Core.bundle.get(group.bundleKey()), () -> filter.set(group))
                             .style(WebStyles.filterChipText())
                             .checked(filter.map(current -> current == group))
-                            .height(unit(8))
-                            .paddingX(unit(2.5f));
+                            .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
                 }
             });
 
-            row().growX().gap(unit(1.5f)).children(() -> {
+            row().props(growX(), gap(unit(1.5f))).children(() -> {
                 bulkButton(Icon.add, Core.bundle.get("feature.blockstats-display.settings.select-all"),
                         () -> setAllBlocksEnabled(progress, true));
                 bulkButton(Icon.cancel, Core.bundle.get("feature.blockstats-display.settings.deselect-all"),
@@ -154,22 +161,19 @@ public class BlockStatsDisplaySettingsView extends Component {
             });
 
             reactiveGrid(visibleBlocks)
+                    .props(growX(), gap(unit(1.5f)))
                     .columns(chipColumns)
                     .key(block -> block.name)
-                    .gap(unit(1.5f))
-                    .growX()
-                    .children(block -> new BlockChip(block, progress));
+                    .items(block -> new BlockChip(block, progress));
         });
     }
 
     private Component bulkButton(Drawable iconDrawable, String label, Runnable action) {
         return button(action)
                 .style(WebStyles.outlineText())
-                .height(unit(11))
-                .growX()
-                .gap(unit(2))
+                .props(height(unit(11)), prefHeight(unit(11)), growX(), gap(unit(2)))
                 .children(() -> {
-                    icon(iconDrawable).size(unit(6));
+                    icon(iconDrawable).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                     text(label);
                 });
     }
@@ -178,11 +182,9 @@ public class BlockStatsDisplaySettingsView extends Component {
         return SettingCard.card().children(() -> {
             button(feature::resetToDefaults)
                     .style(WebStyles.outline())
-                    .growX()
-                    .height(unit(11))
-                    .gap(unit(2))
+                    .props(growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
                     .children(() -> {
-                        icon(Icon.refresh).size(unit(6));
+                        icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                         text(Core.bundle.get("feature.blockstats-display.settings.reset"));
                     });
         });
@@ -289,14 +291,12 @@ public class BlockStatsDisplaySettingsView extends Component {
 
             return button()
                     .style(WebStyles.filterChip())
-                    .size(unit(11))
-                    .padding(unit(1))
-                    .tooltip(block.localizedName)
+                    .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), padding(unit(1)), tooltip(block.localizedName))
                     .checked(enabled)
                     .onClick(() -> setBlockEnabled(block, progress, !isBlockEnabled(block, progress)))
                     .children(() -> {
                         icon(drawable)
-                                .size(unit(6))
+                                .props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)))
                                 .color(enabled.map(on ->
                                         Boolean.TRUE.equals(on) ? Color.white : new Color(1f, 1f, 1f, 0.35f)));
                     }).element();

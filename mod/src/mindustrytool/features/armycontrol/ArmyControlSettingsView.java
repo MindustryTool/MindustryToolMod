@@ -1,6 +1,11 @@
 package mindustrytool.features.armycontrol;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.paddingX;
+import static solim.modifier.Values.prefHeight;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -42,26 +47,24 @@ public class ArmyControlSettingsView extends Component {
 
     private Component modeCard() {
         return SettingCard.section(Icon.settings, Core.bundle.get("feature.army-control.settings.display-mode", "Display Mode"), () -> {
-            row().growX().gap(unit(2)).center().children(() -> {
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
                 text(Core.bundle.get("feature.army-control.settings.display-mode", "Display Mode")).left().color(Color.white);
 
                 spacer();
-                row().gap(unit(1.5f)).children(() -> {
+                row().props(gap(unit(1.5f))).children(() -> {
                     button(Core.bundle.get("feature.army-control.settings.display-mode.popup", "Popup"),
                             () -> feature.displayModeConfig.set(ArmyControlFeature.DISPLAY_POPUP))
                             .style(WebStyles.filterChipText())
                             .checked(feature.displayModeConfig.signal()
                                     .map(ArmyControlFeature.DISPLAY_POPUP::equals))
-                            .height(unit(8))
-                            .paddingX(unit(2.5f));
+                            .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
 
                     button(Core.bundle.get("feature.army-control.settings.display-mode.hud", "HUD"),
                             () -> feature.displayModeConfig.set(ArmyControlFeature.DISPLAY_HUD))
                             .style(WebStyles.filterChipText())
                             .checked(feature.displayModeConfig.signal()
                                     .map(ArmyControlFeature.DISPLAY_HUD::equals))
-                            .height(unit(8))
-                            .paddingX(unit(2.5f));
+                            .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
                 });
             });
         });
@@ -81,12 +84,12 @@ public class ArmyControlSettingsView extends Component {
     }
 
     private Component actionsCard() {
-        return SettingCard.card().padding(unit(2.5f)).gap(unit(2)).children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
+        return SettingCard.card().props(padding(unit(2.5f)), gap(unit(2))).children(() -> {
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
                 button(Core.bundle.get("feature.army-control.settings.reset-position", "Reset HUD Position"), () -> {
                     feature.xConfig.reset();
                     feature.yConfig.reset();
-                }).style(WebStyles.secondaryText()).growX();
+                }).style(WebStyles.secondaryText()).props(growX());
             });
         });
     }

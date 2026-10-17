@@ -1,36 +1,47 @@
-## ADDED Requirements
+# solim-config-dsl Specification
 
-### Requirement: Deferred Props builder
+## Purpose
+TBD - created by archiving change refactor-component-lifecycle-modifiers. Update Purpose after archive.
+## Requirements
+### Requirement: Props applies inside a component-scoped window
 
-A `Props<T>` SHALL record properties as data without touching an Arc type, allocating an `Effect`, or registering ownership. `Props<T>` SHALL be generic over its host component so that a single recorded list MAY carry properties targeting `Element`, `Table`, and `Cell` simultaneously.
-
-#### Scenario: Building Props has no side effects
-- **WHEN** a call site writes `.props(gap(2), width(4), color(Color.red))`
-- **THEN** no Arc type is resolved, no `Effect` is created, and no ownership registration occurs; only an ordered list of properties is produced
+A `Props<T>` SHALL be applied either immediately inside a window that the host opens for itself, or during realization. It SHALL be generic over its host component so that a single recorded list MAY carry properties targeting `Element`, `Table`, and `Cell` simultaneously. Constructing a `Props` SHALL NOT create an `Effect` or register ownership; only applying it does.
 
 #### Scenario: Mixed Arc targets in one Props
 - **WHEN** a `Props` records `gap(2)`, which targets `Table`, together with `width(4)` and `color(Color.red)`, which target `Element`
 - **THEN** all three are retained in one list and applied to whichever target the host exposes for each
 
-#### Scenario: Props is safe to build outside an ownership window
-- **WHEN** a `Props` is constructed at a call site that is not inside `build()` or a `children()` block
-- **THEN** construction succeeds, because recording a property creates no reactive primitive
+#### Scenario: Constructing Props creates no reactive primitive
+- **WHEN** a `Props` is constructed
+- **THEN** no `Effect` is created and no ownership registration occurs; only an ordered list of properties is produced
 
-### Requirement: Properties apply inside the children window
+### Requirement: An already realized host applies props in its own window
 
-A `Props` SHALL apply its recorded properties at the start of the host's `children()` block, before the block runs and before the children are attached. The host SHALL be the active ambient owner for the duration of the application.
+When a host is already built, `props(...)` SHALL open a window with the host as the active ambient owner before applying, and SHALL close it afterwards.
 
-#### Scenario: Reactive properties install inside the window
-- **WHEN** a `Props` holds a property backed by a `Readable` and the host's `children()` block runs
-- **THEN** the binding is installed as an `Effect` while the host is the active ambient owner, with no explicit ownership registration at the call site
+#### Scenario: Reactive properties bind to the host, not the enclosing scope
+- **WHEN** `props(...)` is called on a realized host from inside an enclosing `children()` block
+- **THEN** the host is the active ambient owner for the application, so any `Effect` the properties create is owned by the host rather than the enclosing component
 
-#### Scenario: Static properties apply without any reactive primitive
-- **WHEN** a `Props` holds only static-valued properties
-- **THEN** they are applied directly to the Arc target and no `Effect` is allocated
+#### Scenario: Eagerly constructed hosts need no construction change
+- **WHEN** a host such as `Column`, `Row`, `Card`, `Text`, or `Divider` is eagerly constructed and receives `props(...)`
+- **THEN** the properties apply immediately, with no requirement that the host be converted to lazy `build()`
 
-#### Scenario: Eagerly constructed hosts are supported
-- **WHEN** a host such as `Column`, `Row`, `Card`, `Grid`, `Wrap`, or `Spacer` carries a `Props`
-- **THEN** the properties are applied through its `children()` block even though the host never executes `build()`
+#### Scenario: Binding is disposed with the host
+- **WHEN** a reactive property installs a binding on a realized host
+- **THEN** disposing the host disposes the binding, and subsequent signal writes no longer reach the Arc target
+
+#### Scenario: Properties are applied at most once
+- **WHEN** a `Props` has been applied through either path
+- **THEN** a later `applyPendingProps()` on the same host does not re-apply it
+
+### Requirement: A lazy host applies props during realization
+
+When a host is not yet built, `props(...)` SHALL record the properties and `Component.onRealized(Element)` SHALL drain them inside the window that realization already opens.
+
+#### Scenario: Deferred application still lands in a window
+- **WHEN** a lazy host receives `props(...)` and is later realized
+- **THEN** the properties are applied during realization, while the host is the active ambient owner
 
 #### Scenario: Application order is preserved
 - **WHEN** a `Props` records two properties that write the same target property
@@ -84,6 +95,18 @@ While both styles exist during migration, a modifier chained after `.props(...)`
 - **WHEN** a call site writes `.gap(4f).props(gap(2))`
 - **THEN** the effective gap is 2f
 
+### Requirement: Every host exposes one children signature
+
+Every `Configurable` host SHALL expose `children(Runnable)` returning the host type. A reconciler's item factory SHALL NOT be named `children`, because a zero-argument lambda would then be ambiguous between the two.
+
+#### Scenario: Item factories are distinguished by name
+- **WHEN** a collection host such as `ForEach`, `ReactiveGrid`, `VirtualList`, or `Popup` accepts a per-item factory
+- **THEN** that factory is named `items(...)` rather than `children(...)`, and returns the host type for fluency
+
+#### Scenario: A no-argument children lambda is unambiguous
+- **WHEN** any host is given `children(() -> ...)`
+- **THEN** it resolves to the container block, with no competing `children(Func<T, Component>)` overload
+
 ### Requirement: The mixin interfaces are removed
 
 `CellConfig`, `ElementConfig`, and `TableConfig` SHALL NOT remain in the codebase once every call site has been migrated. Their removal SHALL be enforced by compilation rather than by manual audit.
@@ -95,3 +118,4 @@ While both styles exist during migration, a modifier chained after `.props(...)`
 #### Scenario: No mod type hierarchy depends on the mixins
 - **WHEN** the migration completes
 - **THEN** no mod class implements the mixin interfaces, because the migration is a call-site rewrite only
+

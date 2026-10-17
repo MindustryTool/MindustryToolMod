@@ -7,30 +7,26 @@ import arc.util.Nullable;
 import java.util.Objects;
 import arc.func.Cons;
 import solim.core.Component;
+import solim.core.OwnershipContext;
 import solim.core.SolimToken;
-import solim.modifier.CellConfig;
+import solim.modifier.Configurable;
 import solim.layout.CollapseHelper;
-import solim.modifier.ElementConfig;
 import solim.modifier.PendingCellConfig;
-import solim.modifier.TableConfig;
+import solim.modifier.Props;
 import solim.runtime.AttachmentStack;
 import solim.runtime.Fragment;
 import solim.runtime.ReactiveContext;
-import java.util.ArrayList;
-import java.util.List;
-import solim.core.Disposable;
 
 public final class Dynamic<T> extends Component
-        implements CellConfig<Dynamic<T>>, TableConfig<Dynamic<T>>, ElementConfig<Dynamic<T>> {
-    private static final Object SENTINEL = new Object();
+        implements Configurable<Dynamic<T>> {
     private final Table container = new Table();
     private final PendingCellConfig constraints = new PendingCellConfig();
     private final Readable<T> source;
     private final Cons<T> factory;
     private Component currentComponent;
-    @SuppressWarnings("unchecked")
-    private T lastValue = (T) SENTINEL;
-    private final List<Disposable> currentBindings = new ArrayList<>();
+    private @Nullable Props<Dynamic<T>> pending;
+    private @Nullable T lastValue;
+    private boolean hasValue;
 
     private Dynamic(Readable<T> source, Cons<T> factory) {
         this.source = Objects.requireNonNull(source, "source must not be null");
@@ -54,6 +50,35 @@ public final class Dynamic<T> extends Component
     }
 
     @Override
+    public Dynamic<T> children(@Nullable Runnable block) {
+        applyPendingProps();
+        OwnershipContext.push(this);
+        try {
+            if (block != null) {
+                block.run();
+            }
+        } finally {
+            OwnershipContext.pop();
+        }
+        return this;
+    }
+
+    @Override
+    public @Nullable Props<Dynamic<T>> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<Dynamic<T>> props) {
+        this.pending = props;
+    }
+
+    @Override
+    protected void onRealized(Element element) {
+        applyPendingProps();
+    }
+
+    @Override
     public Dynamic<T> name(@Nullable String name) {
         setName(name);
         return this;
@@ -64,9 +89,8 @@ public final class Dynamic<T> extends Component
         return constraints;
     }
 
-    @Override
     public Dynamic<T> align(int align) {
-        TableConfig.super.align(align);
+        table().align(align);
         constraints.align = align;
         constraints.applyAlignToParentCell(element());
         container.defaults().align(align);
@@ -78,9 +102,8 @@ public final class Dynamic<T> extends Component
         return this;
     }
 
-    @Override
     public Dynamic<T> center() {
-        TableConfig.super.center();
+        table().center();
         constraints.alignCenter();
         constraints.applyAlignToParentCell(element());
         container.defaults().center();
@@ -92,9 +115,8 @@ public final class Dynamic<T> extends Component
         return this;
     }
 
-    @Override
     public Dynamic<T> top() {
-        TableConfig.super.top();
+        table().top();
         constraints.alignTop();
         constraints.applyAlignToParentCell(element());
         container.defaults().top();
@@ -106,9 +128,8 @@ public final class Dynamic<T> extends Component
         return this;
     }
 
-    @Override
     public Dynamic<T> bottom() {
-        TableConfig.super.bottom();
+        table().bottom();
         constraints.alignBottom();
         constraints.applyAlignToParentCell(element());
         container.defaults().bottom();
@@ -120,9 +141,8 @@ public final class Dynamic<T> extends Component
         return this;
     }
 
-    @Override
     public Dynamic<T> left() {
-        TableConfig.super.left();
+        table().left();
         constraints.alignLeft();
         constraints.applyAlignToParentCell(element());
         container.defaults().left();
@@ -134,9 +154,8 @@ public final class Dynamic<T> extends Component
         return this;
     }
 
-    @Override
     public Dynamic<T> right() {
-        TableConfig.super.right();
+        table().right();
         constraints.alignRight();
         constraints.applyAlignToParentCell(element());
         container.defaults().right();
@@ -153,18 +172,15 @@ public final class Dynamic<T> extends Component
         applyContainerAlign();
         Effect.of(() -> {
             T value = source.get();
-            if (Objects.equals(value, lastValue)) {
+            if (hasValue && Objects.equals(value, lastValue)) {
                 return;
             }
+            hasValue = true;
             lastValue = value;
             if (currentComponent != null) {
                 currentComponent.dispose();
                 currentComponent = null;
             }
-            for (Disposable d : currentBindings) {
-                d.dispose();
-            }
-            currentBindings.clear();
             container.clearChildren();
             mount(value);
             applyContainerAlign();
@@ -196,26 +212,20 @@ public final class Dynamic<T> extends Component
             if (el.parent != null) {
                 continue;
             }
-            Cell<?> cell = container.add(el);
+            Cell<?> cell = AttachmentStack.attach(container, el, null, root);
+            if (cell == null) {
+                continue;
+            }
             cell.minWidth(0f);
-            applyRootCellConfig(root, el, cell);
+            if (PendingCellConfig.find(root) == null && PendingCellConfig.find(el) == null
+                    && SolimToken.isExpandingChild(el)) {
+                cell.growX();
+            }
             mounted++;
         }
         if (mounted == 0) {
             currentComponent.dispose();
             currentComponent = null;
-        }
-    }
-
-    private void applyRootCellConfig(Component root, Element el, Cell<?> cell) {
-        PendingCellConfig sc = PendingCellConfig.find(root);
-        if (sc == null) {
-            sc = PendingCellConfig.find(el);
-        }
-        if (sc != null) {
-            currentBindings.addAll(sc.applyToCell(cell));
-        } else if (SolimToken.isExpandingChild(el)) {
-            cell.growX();
         }
     }
 
@@ -228,7 +238,7 @@ public final class Dynamic<T> extends Component
     }
 
     private void updateParentCell() {
-        CollapseHelper.updateParentCell(container, currentComponent != null, constraints);
+        CollapseHelper.updateParentCell(container, currentComponent != null, constraints, this);
     }
 
     @Override
@@ -237,10 +247,6 @@ public final class Dynamic<T> extends Component
             currentComponent.dispose();
             currentComponent = null;
         }
-        for (Disposable d : currentBindings) {
-            d.dispose();
-        }
-        currentBindings.clear();
         container.clearChildren();
     }
 

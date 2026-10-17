@@ -1,6 +1,9 @@
 package mindustrytool.features.smartdrill.ui;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.prefHeight;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -37,8 +40,8 @@ public class SmartDrillSettingsView extends Component {
     private Component settingsCard() {
         return SettingCard.section(Icon.settings, Core.bundle.get("feature.smart-drill.settings.title"), () -> {
 
-            row().growX().gap(unit(2)).center().children(() -> {
-                column().growX().gap(unit(1.5f)).left().children(() -> {
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
+                column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                     text(Core.bundle.get("feature.smart-drill.settings.auto-disable"))
                             .color(Color.white)
                             .left();
@@ -70,8 +73,7 @@ public class SmartDrillSettingsView extends Component {
             button(Core.bundle.get("feature.smart-drill.settings.reset"),
                     feature::resetToDefaults)
                     .style(WebStyles.outlineText())
-                    .height(unit(11))
-                    .growX();
+                    .props(height(unit(11)), prefHeight(unit(11)), growX());
         });
     }
 }

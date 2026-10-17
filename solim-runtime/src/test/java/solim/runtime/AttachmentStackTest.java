@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import arc.scene.Element;
 import arc.scene.ui.layout.Table;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.core.Component;
 
@@ -16,10 +17,17 @@ class AttachmentStackTest {
         }
     }
 
+    private AttachmentStack.CellConfigurator previousConfigurator;
+
+    @BeforeEach
+    void rememberConfigurator() {
+        previousConfigurator = AttachmentStack.cellConfigurator();
+    }
+
     @AfterEach
     void clear() {
         AttachmentStack.clear();
-        AttachmentStack.setCellConfigurator((AttachmentStack.CellConfigurator) null);
+        AttachmentStack.setCellConfigurator(previousConfigurator);
     }
 
     @Test

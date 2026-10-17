@@ -5,11 +5,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
+import solim.test.SolimEnv;
 import solim.reactive.Computed;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
 
-class ObjectGraphScannerTest {
+class ObjectGraphScannerTest extends SolimEnv {
 
     static class Inner {
         final Signal<String> name = Signal.of("nested");

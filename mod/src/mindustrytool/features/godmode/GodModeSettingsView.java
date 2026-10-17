@@ -1,6 +1,12 @@
 package mindustrytool.features.godmode;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.paddingX;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
 
 import arc.Core;
 import arc.scene.Element;
@@ -37,27 +43,25 @@ public class GodModeSettingsView extends Component {
         return SettingCard.section(Icon.layers,
                 Core.bundle.get("feature.god-mode.settings.display-layout", "Display & Layout"), () -> {
 
-                    row().growX().center().children(() -> {
+                    row().props(growX(), center()).children(() -> {
                         text(Core.bundle.get("feature.god-mode.settings.display-mode", "Display Mode"))
                                 .color(WebStyles.Colors.GHOST_FG)
                                 .left();
                         spacer();
-                        row().gap(unit(1.5f)).children(() -> {
+                        row().props(gap(unit(1.5f))).children(() -> {
                             button(Core.bundle.get("feature.god-mode.settings.display-mode.hud", "HUD"),
                                     () -> feature.displayModeConfig.set(GodModeFeature.DISPLAY_HUD))
                                     .style(WebStyles.filterChipText())
                                     .checked(feature.displayModeConfig.signal()
                                             .map(GodModeFeature.DISPLAY_HUD::equals))
-                                    .height(unit(8))
-                                    .paddingX(unit(2.5f));
+                                    .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
 
                             button(Core.bundle.get("feature.god-mode.settings.display-mode.popup", "Popup"),
                                     () -> feature.displayModeConfig.set(GodModeFeature.DISPLAY_POPUP))
                                     .style(WebStyles.filterChipText())
                                     .checked(feature.displayModeConfig.signal()
                                             .map(GodModeFeature.DISPLAY_POPUP::equals))
-                                    .height(unit(8))
-                                    .paddingX(unit(2.5f));
+                                    .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
                         });
                     });
 
@@ -74,7 +78,7 @@ public class GodModeSettingsView extends Component {
                     divider().color(WebStyles.Colors.SECTION_BORDER);
 
                     checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle", "Hide Drag Handle"),
-                            feature.hideDragHandleConfig.signal()).growX();
+                            feature.hideDragHandleConfig.signal()).props(growX());
                 });
     }
 
@@ -88,30 +92,27 @@ public class GodModeSettingsView extends Component {
                             .growX()
                             .left();
 
-                    row().gap(unit(1.5f)).children(() -> {
+                    row().props(gap(unit(1.5f))).children(() -> {
                         button(Core.bundle.get("feature.god-mode.settings.provider.auto", "Auto"),
                                 () -> feature.providerModeConfig.set(GodModeFeature.PROVIDER_AUTO))
                                 .style(WebStyles.filterChipText())
                                 .checked(feature.providerModeConfig.signal()
                                         .map(GodModeFeature.PROVIDER_AUTO::equals))
-                                .height(unit(8))
-                                .paddingX(unit(2f));
+                                .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2f)));
 
                         button(Core.bundle.get("feature.god-mode.settings.provider.internal", "Internal"),
                                 () -> feature.providerModeConfig.set(GodModeFeature.PROVIDER_INTERNAL))
                                 .style(WebStyles.filterChipText())
                                 .checked(feature.providerModeConfig.signal()
                                         .map(GodModeFeature.PROVIDER_INTERNAL::equals))
-                                .height(unit(8))
-                                .paddingX(unit(2f));
+                                .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2f)));
 
                         button(Core.bundle.get("feature.god-mode.settings.provider.js", "JS (/js)"),
                                 () -> feature.providerModeConfig.set(GodModeFeature.PROVIDER_JS))
                                 .style(WebStyles.filterChipText())
                                 .checked(feature.providerModeConfig.signal()
                                         .map(GodModeFeature.PROVIDER_JS::equals))
-                                .height(unit(8))
-                                .paddingX(unit(2f));
+                                .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2f)));
                     });
                 });
     }
@@ -120,11 +121,9 @@ public class GodModeSettingsView extends Component {
         return SettingCard.card().children(() -> {
             button(feature::resetPosition)
                     .style(WebStyles.outline())
-                    .growX()
-                    .height(unit(11))
-                    .gap(unit(2))
+                    .props(growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
                     .children(() -> {
-                        icon(Icon.refresh).size(unit(6));
+                        icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                         text(Core.bundle.get("feature.god-mode.settings.reset-position", "Reset HUD Position"));
                     });
         });

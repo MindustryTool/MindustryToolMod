@@ -50,9 +50,39 @@ public abstract class Component implements DisposableOwner {
         return true;
     }
 
+    /**
+     * Pushes this component as the ambient owner. Use it where a component creates owned
+     * resources outside its {@code build()} — in a constructor or in a modifier — so the ambient
+     * owner is unambiguous instead of whatever happened to be on the stack. Always pair with
+     * {@link #closeSelfWindow()} in a {@code finally} block.
+     */
+    public final void openSelfWindow() {
+        OwnershipContext.push(this);
+    }
+
+    public final void closeSelfWindow() {
+        OwnershipContext.pop(this);
+    }
+
+    /**
+     * Runs {@code block} with this component as the ambient owner, so every resource it creates
+     * is adopted by this component and disposed with it.
+     */
+    public final void withinOwnership(Runnable block) {
+        openSelfWindow();
+        try {
+            block.run();
+        } finally {
+            closeSelfWindow();
+        }
+    }
+
     protected Element build() {
         throw new UnsupportedOperationException(
                 getClass().getSimpleName() + " was constructed lazily but does not implement build()");
+    }
+
+    protected void onRealized(Element element) {
     }
 
     public boolean isAncestorOf(@Nullable Component other) {
@@ -112,6 +142,7 @@ public abstract class Component implements DisposableOwner {
             cached = built;
             applyDefaultName(built);
             applySpacing();
+            onRealized(built);
             return built;
         } catch (Throwable throwable) {
             if (Vars.ui != null) {
@@ -168,34 +199,15 @@ public abstract class Component implements DisposableOwner {
             children.add(child);
             return;
         }
+        OwnershipGuard.rejectDuplicate(resource, this);
         if (disposableIndex.add(resource)) {
             disposables.add(resource);
         }
     }
 
-    public void reparentTo(@Nullable DisposableOwner newOwner) {
-        SolimAssert.checkMainThread();
-        checkNotDisposed();
-        Element element = cached;
-        if (newOwner == null) {
-            detachFromParent();
-            return;
-        }
-        if (element != null && element.parent != null) {
-            element.remove();
-        }
-        detachFromParent();
-        newOwner.adopt(this);
-    }
-
-    public final <T extends Disposable> T own(@Nullable T resource) {
-        adopt(resource);
-        return resource;
-    }
-
     public <T> Disposable listen(Class<T> eventType, Cons<T> listener) {
         Events.on(eventType, listener);
-        return own(DisposableAction.of(() -> Events.remove(eventType, listener)));
+        return OwnershipContext.register(DisposableAction.of(() -> Events.remove(eventType, listener)));
     }
 
     public final boolean isBuilt() {

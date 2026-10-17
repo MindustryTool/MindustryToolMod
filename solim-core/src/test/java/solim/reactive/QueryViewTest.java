@@ -453,7 +453,7 @@ class QueryViewTest extends SolimEnv {
         QueryView<String> view = QueryView.of(query).data(data -> new Component() {
             @Override
             protected Element build() {
-                return own(new Text(data)).element();
+                return new Text(data).element();
             }
 
             @Override
@@ -619,22 +619,21 @@ class QueryViewTest extends SolimEnv {
         assertEquals("page1", getText(view));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void queryViewCenterPropagatesAlignmentToParentCellAndChildren() {
         CompletableFuture<String> future = new CompletableFuture<>();
         Query<String> query = Query.noKey(() -> future);
 
-        QueryView<String>[] viewHolder = new QueryView[1];
+        AtomicReference<QueryView<String>> viewHolder = new AtomicReference<>();
         solim.layout.Column col = new solim.layout.Column().children(() -> {
             QueryView<String> view = QueryView.of(query);
             view.center();
             view.data(data -> label(data));
             solim.runtime.AttachmentStack.attachToParent(view.element());
-            viewHolder[0] = view;
+            viewHolder.set(view);
         });
 
-        QueryView<String> view = viewHolder[0];
+        QueryView<String> view = viewHolder.get();
         Table colTable = col.table();
         Cell<?> viewCell = colTable.getCell(view.element());
         colTable.setSize(200f, 200f);

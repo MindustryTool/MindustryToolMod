@@ -3,6 +3,8 @@ package solim.style;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.width;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -103,7 +105,7 @@ class ReactiveStyleTest extends SolimEnv {
     @Test
     void scopedLambdaPreservesChain() {
         Button button = new Button();
-        Button same = button.style(s -> s.rounded(4).up(u -> u.background(Color.red))).width(100f);
+        Button same = button.style(s -> s.rounded(4).up(u -> u.background(Color.red))).props(width(100f), prefWidth(100f));
         assertTrue(same == button);
         assertEquals(100f, button.button().getWidth(), 0.001f);
         button.dispose();

@@ -1,6 +1,10 @@
 package solim.graphics;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static solim.modifier.Values.background;
+import static solim.modifier.Values.backgroundColor;
+import static solim.modifier.Values.border;
+import static solim.modifier.Values.rounded;
 
 import arc.graphics.Color;
 import arc.graphics.Pixmap;
@@ -155,7 +159,7 @@ class RoundedGraphicsTest extends SolimEnv {
     @Test
     void layoutModifiersApplyRoundedAndBorderToUnderlyingTable() {
         Column col = new Column();
-        col.rounded(12, Color.gray).border(2f, Color.scarlet);
+        col.props(rounded(12, Color.gray), border(2f, Color.scarlet));
 
         assertTrue(col.table().getBackground() instanceof RoundedDrawable);
         RoundedDrawable rd = (RoundedDrawable) col.table().getBackground();
@@ -168,8 +172,8 @@ class RoundedGraphicsTest extends SolimEnv {
     @Test
     void elementModifiersAppliesRoundedToColumn() {
         Column col = new Column();
-        col.rounded(10, Color.royal);
-        col.border(1.5f, Color.gold);
+        col.props(rounded(10, Color.royal));
+        col.props(border(1.5f, Color.gold));
         Table table = col.table();
 
         assertTrue(table.getBackground() instanceof RoundedDrawable);
@@ -187,7 +191,7 @@ class RoundedGraphicsTest extends SolimEnv {
         assertTrue(btn.button().getBackground() instanceof RoundedDrawable);
 
         Card card = new Card();
-        card.rounded(16, Color.black).border(2f, Color.cyan);
+        card.props(rounded(16, Color.black), border(2f, Color.cyan));
         assertTrue(card.table().getBackground() instanceof RoundedDrawable);
 
         Popup<Object> popup = new Popup<>();
@@ -196,7 +200,7 @@ class RoundedGraphicsTest extends SolimEnv {
 
         if (Core.scene != null) {
             Badge badge = new Badge("New");
-            badge.rounded(4, Color.scarlet);
+            badge.props(rounded(4, Color.scarlet));
             assertTrue(badge.table().getBackground() instanceof RoundedDrawable);
         }
     }
@@ -207,7 +211,7 @@ class RoundedGraphicsTest extends SolimEnv {
         assertEquals(Color.clear, raw.getFillColor(), "Default fillColor must be transparent (Color.clear)");
 
         Column colBorder = new Column();
-        colBorder.border(1.5f, Color.darkGray);
+        colBorder.props(border(1.5f, Color.darkGray));
         assertTrue(colBorder.table().getBackground() instanceof RoundedDrawable);
         RoundedDrawable rdBorders = (RoundedDrawable) colBorder.table().getBackground();
         assertEquals(Color.clear, rdBorders.getFillColor(), "Calling .border() must default to transparent fillColor");
@@ -215,7 +219,7 @@ class RoundedGraphicsTest extends SolimEnv {
         assertEquals(1.5f, rdBorders.getStroke(), 0.001f);
 
         Column colRounded = new Column();
-        colRounded.rounded(6);
+        colRounded.props(rounded(6));
         assertTrue(colRounded.table().getBackground() instanceof RoundedDrawable);
         RoundedDrawable rdRound = (RoundedDrawable) colRounded.table().getBackground();
         assertEquals(6, rdRound.getRadius());
@@ -266,7 +270,7 @@ class RoundedGraphicsTest extends SolimEnv {
     @Test
     void backgroundThenBorderPreservesBoth() {
         Column col = new Column();
-        col.background(Styles.black6).border(1f, Color.gray);
+        col.props(background(Styles.black6), border(1f, Color.gray));
         assertTrue(col.table().getBackground() instanceof RoundedDrawable,
                 "Background should be RoundedDrawable after border call");
         RoundedDrawable rd = (RoundedDrawable) col.table().getBackground();
@@ -277,7 +281,7 @@ class RoundedGraphicsTest extends SolimEnv {
     @Test
     void borderThenBackgroundPreservesBoth() {
         Column col = new Column();
-        col.border(1f, Color.gray).background(Styles.black6);
+        col.props(border(1f, Color.gray), background(Styles.black6));
         assertTrue(col.table().getBackground() instanceof RoundedDrawable,
                 "Background should be RoundedDrawable after background call");
         RoundedDrawable rd = (RoundedDrawable) col.table().getBackground();
@@ -288,7 +292,7 @@ class RoundedGraphicsTest extends SolimEnv {
     @Test
     void roundedThenBackgroundPreservesBoth() {
         Column col = new Column();
-        col.rounded(12, Color.darkGray).background(Styles.black6);
+        col.props(rounded(12, Color.darkGray), background(Styles.black6));
         assertTrue(col.table().getBackground() instanceof RoundedDrawable,
                 "Background should be RoundedDrawable after background call");
         RoundedDrawable rd = (RoundedDrawable) col.table().getBackground();
@@ -299,7 +303,7 @@ class RoundedGraphicsTest extends SolimEnv {
     @Test
     void backgroundThenRoundedPreservesBoth() {
         Column col = new Column();
-        col.background(Styles.black6).rounded(12, Color.darkGray);
+        col.props(background(Styles.black6), rounded(12, Color.darkGray));
         assertTrue(col.table().getBackground() instanceof RoundedDrawable,
                 "Background should be RoundedDrawable after rounded call");
         RoundedDrawable rd = (RoundedDrawable) col.table().getBackground();
@@ -311,21 +315,21 @@ class RoundedGraphicsTest extends SolimEnv {
     void allThreeOrderIndependent() {
 
         Column col1 = new Column();
-        col1.background(Styles.black6).rounded(10, Color.darkGray).border(1.5f, Color.red);
+        col1.props(background(Styles.black6), rounded(10, Color.darkGray), border(1.5f, Color.red));
         assertTrue(col1.table().getBackground() instanceof RoundedDrawable);
         RoundedDrawable rd1 = (RoundedDrawable) col1.table().getBackground();
         assertEquals(10, rd1.getRadius());
         assertEquals(1.5f, rd1.getStroke(), 0.001f);
 
         Column col2 = new Column();
-        col2.border(1.5f, Color.red).background(Styles.black6).rounded(10, Color.darkGray);
+        col2.props(border(1.5f, Color.red), background(Styles.black6), rounded(10, Color.darkGray));
         assertTrue(col2.table().getBackground() instanceof RoundedDrawable);
         RoundedDrawable rd2 = (RoundedDrawable) col2.table().getBackground();
         assertEquals(10, rd2.getRadius());
         assertEquals(1.5f, rd2.getStroke(), 0.001f);
 
         Column col3 = new Column();
-        col3.rounded(10, Color.darkGray).border(1.5f, Color.red).background(Styles.black6);
+        col3.props(rounded(10, Color.darkGray), border(1.5f, Color.red), background(Styles.black6));
         assertTrue(col3.table().getBackground() instanceof RoundedDrawable);
         RoundedDrawable rd3 = (RoundedDrawable) col3.table().getBackground();
         assertEquals(10, rd3.getRadius());
@@ -335,7 +339,7 @@ class RoundedGraphicsTest extends SolimEnv {
     @Test
     void backgroundColorDirectOnColumn() {
         Column col = new Column();
-        col.background(Color.royal);
+        col.props(background(Color.royal));
         assertTrue(col.table().getBackground() instanceof RoundedDrawable);
         RoundedDrawable rd = (RoundedDrawable) col.table().getBackground();
         assertEquals(Color.royal, rd.getFillColor(), "background(Color) must set fillColor on RoundedDrawable");
@@ -344,7 +348,7 @@ class RoundedGraphicsTest extends SolimEnv {
     @Test
     void backgroundColorSetsFillColorOnExistingRoundedDrawable() {
         Column col = new Column();
-        col.rounded(16).border(2f, Color.green).backgroundColor(Color.red);
+        col.props(rounded(16), border(2f, Color.green), backgroundColor(Color.red));
         assertTrue(col.table().getBackground() instanceof RoundedDrawable);
         RoundedDrawable rd = (RoundedDrawable) col.table().getBackground();
         assertEquals(16, rd.getRadius(), "Radius must be preserved");
@@ -357,7 +361,7 @@ class RoundedGraphicsTest extends SolimEnv {
     void reactiveBackgroundColorUpdatesFillColor() {
         Signal<Color> colorSignal = Signal.of(Color.red);
         Column col = new Column();
-        col.rounded(10).backgroundColor(colorSignal);
+        col.props(rounded(10), backgroundColor(colorSignal));
 
         RoundedDrawable rd = (RoundedDrawable) col.table().getBackground();
         assertEquals(Color.red, rd.getFillColor());

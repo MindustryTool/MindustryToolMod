@@ -47,6 +47,8 @@ import solim.layout.Spacer;
 import solim.layout.Tabs;
 import solim.layout.VirtualList;
 import solim.layout.ItemHeightProvider;
+import solim.modifier.Prop;
+import solim.modifier.Values;
 import solim.overlay.Hud;
 import solim.overlay.Popup;
 import solim.overlay.SolimDialog;
@@ -114,9 +116,7 @@ public final class UI {
     }
 
     public static SolimStack stack() {
-        SolimStack s = new SolimStack();
-        AttachmentStack.attachToParent(s.element());
-        return s;
+        return new SolimStack();
     }
 
     public static Grid grid() {
@@ -136,9 +136,7 @@ public final class UI {
     }
 
     public static Grid grid(Readable<Integer> columns) {
-        Grid g = new Grid().columns(columns);
-        AttachmentStack.attachToParent(g.element());
-        return g;
+        return new Grid().columns(columns);
     }
 
     public static Grid grid(Readable<Integer> columns, @Nullable Runnable r) {
@@ -182,15 +180,11 @@ public final class UI {
     }
 
     public static Divider divider(Direction direction) {
-        Divider d = new Divider(direction);
-        AttachmentStack.attachToParent(d.element());
-        return d;
+        return new Divider(direction);
     }
 
     public static Spacer spacer() {
-        Spacer s = new Spacer();
-        AttachmentStack.attachToParent(s.element());
-        return s;
+        return new Spacer();
     }
 
     public static SolimImage image() {
@@ -198,102 +192,77 @@ public final class UI {
     }
 
     public static SolimImage image(Drawable drawable) {
-        SolimImage img = new SolimImage(drawable);
-        AttachmentStack.attachToParent(img.element());
-        return img;
+        return new SolimImage(drawable);
     }
 
     public static SolimImage image(Readable<Drawable> drawable) {
         SolimImage img = new SolimImage();
         img.drawable(drawable);
-        AttachmentStack.attachToParent(img.element());
         return img;
     }
 
     public static SolimImage icon(Drawable drawable) {
-        return image(Drawables.scalable(drawable)).scaling(Scaling.fit).size(unit(6));
+        float iconSize = unit(6);
+        return image(Drawables.scalable(drawable)).scaling(Scaling.fit)
+                .props(Values.size(iconSize), Values.prefWidth(iconSize), Values.prefHeight(iconSize));
     }
 
     public static SolimImage icon(Readable<Drawable> drawable) {
-        return image(drawable != null ? drawable.map(Drawables::scalable) : null).scaling(Scaling.fit).size(unit(6));
+        float iconSize = unit(6);
+        return image(drawable != null ? drawable.map(Drawables::scalable) : null).scaling(Scaling.fit)
+                .props(Values.size(iconSize), Values.prefWidth(iconSize), Values.prefHeight(iconSize));
     }
 
     public static NetworkImage networkImage() {
-        NetworkImage img = new NetworkImage();
-        AttachmentStack.attachToParent(img.element());
-        return img;
+        return new NetworkImage();
     }
 
     public static NetworkImage networkImage(@Nullable String url) {
-        NetworkImage img = new NetworkImage(url);
-        AttachmentStack.attachToParent(img.element());
-        return img;
+        return new NetworkImage(url);
     }
 
     public static NetworkImage networkImage(@Nullable Readable<String> url) {
-        NetworkImage img = new NetworkImage(url);
-        AttachmentStack.attachToParent(img.element());
-        return img;
+        return new NetworkImage(url);
     }
 
     public static SolimVideo video() {
-        SolimVideo vid = new SolimVideo();
-        AttachmentStack.attachToParent(vid.element());
-        return vid;
+        return new SolimVideo();
     }
 
     public static SolimVideo video(@Nullable String url) {
-        SolimVideo vid = new SolimVideo(url);
-        AttachmentStack.attachToParent(vid.element());
-        return vid;
+        return new SolimVideo(url);
     }
 
     public static SolimVideo video(@Nullable Readable<String> url) {
-        SolimVideo vid = new SolimVideo(url);
-        AttachmentStack.attachToParent(vid.element());
-        return vid;
+        return new SolimVideo(url);
     }
 
     public static Text text(String s) {
-        Text t = Text.of(s);
-        AttachmentStack.attachToParent(t.label());
-        return t;
+        return Text.of(s);
     }
 
     public static Text text(Readable<String> s) {
-        Text t = Text.of(s);
-        AttachmentStack.attachToParent(t.label());
-        return t;
+        return Text.of(s);
     }
 
     public static Badge badge(String text) {
-        Badge b = new Badge(text);
-        AttachmentStack.attachToParent(b.element());
-        return b;
+        return new Badge(text);
     }
 
     public static Badge badge(Readable<String> text) {
-        Badge b = new Badge(text);
-        AttachmentStack.attachToParent(b.element());
-        return b;
+        return new Badge(text);
     }
 
     public static Badge badge(int count) {
-        Badge b = Badge.ofCount(count);
-        AttachmentStack.attachToParent(b.element());
-        return b;
+        return Badge.ofCount(count);
     }
 
     public static Button button() {
-        Button b = new Button();
-        AttachmentStack.attachToParent(b.element());
-        return b;
+        return new Button();
     }
 
     public static Button button(@Nullable Runnable onClick) {
-        Button b = new Button(onClick);
-        AttachmentStack.attachToParent(b.element());
-        return b;
+        return new Button(onClick);
     }
 
     public static Button button(String text, @Nullable Runnable onClick) {
@@ -309,45 +278,31 @@ public final class UI {
     }
 
     public static SolimTextField textField(Signal<String> signal) {
-        SolimTextField tf = SolimTextField.of(signal);
-        AttachmentStack.attachToParent(tf.field());
-        return tf;
+        return SolimTextField.of(signal);
     }
 
     public static SolimSlider slider(Signal<Float> signal, float min, float max, float step) {
-        SolimSlider s = SolimSlider.of(signal, min, max, step);
-        AttachmentStack.attachToParent(s.slider());
-        return s;
+        return SolimSlider.of(signal, min, max, step);
     }
 
     public static SolimSlider slider(Signal<Integer> signal, int min, int max, int step) {
-        SolimSlider s = SolimSlider.of(signal, min, max, step);
-        AttachmentStack.attachToParent(s.slider());
-        return s;
+        return SolimSlider.of(signal, min, max, step);
     }
 
     public static Checkbox checkbox(String label, Signal<Boolean> signal) {
-        Checkbox cb = Checkbox.of(label, signal);
-        AttachmentStack.attachToParent(cb.checkBox());
-        return cb;
+        return Checkbox.of(label, signal);
     }
 
     public static Checkbox checkbox(String label, boolean initial, Cons<Boolean> onChanged) {
-        Checkbox cb = Checkbox.of(label, initial, onChanged);
-        AttachmentStack.attachToParent(cb.checkBox());
-        return cb;
+        return Checkbox.of(label, initial, onChanged);
     }
 
     public static Switch switchToggle(Signal<Boolean> signal) {
-        Switch sw = Switch.of(signal);
-        AttachmentStack.attachToParent(sw.element());
-        return sw;
+        return Switch.of(signal);
     }
 
     public static <T> SolimSelect<T> select(Signal<T> signal, List<T> options) {
-        SolimSelect<T> s = SolimSelect.of(signal, options);
-        AttachmentStack.attachToParent(s.selectBox());
-        return s;
+        return SolimSelect.of(signal, options);
     }
 
     public static SolimDialog dialog(String title) {
@@ -359,9 +314,7 @@ public final class UI {
     }
 
     public static Hud hud() {
-        Hud h = new Hud();
-        AttachmentStack.attachToParent(h.element());
-        return h;
+        return new Hud();
     }
 
     public static Hud hud(@Nullable Runnable content) {
@@ -376,7 +329,7 @@ public final class UI {
 
     public static <T> Popup<T> popup(Func<T, Component> provider) {
         Popup<T> popup = new Popup<>();
-        popup.children(provider);
+        popup.items(provider);
         return popup;
     }
 
@@ -437,9 +390,7 @@ public final class UI {
     }
 
     public static <T> QueryView<T> query(Query<T> query) {
-        QueryView<T> qv = QueryView.of(query);
-        AttachmentStack.attachToParent(qv.element());
-        return qv;
+        return QueryView.of(query);
     }
 
     public static <T, R> Mutation<T, R> mutation(Func<T, CompletableFuture<R>> mutator) {
@@ -452,7 +403,6 @@ public final class UI {
 
     public static <T> Dynamic<T> dynamic(Readable<T> source, Cons<T> factory) {
         Dynamic<T> d = Dynamic.of(source, factory);
-        AttachmentStack.attachToParent(d.element());
         return d;
     }
 
@@ -462,7 +412,6 @@ public final class UI {
 
     public static <T> ForEach<T> forEach(Readable<? extends Iterable<T>> collection) {
         ForEach<T> fe = ForEach.of(collection);
-        AttachmentStack.attachToParent(fe.element());
         return fe;
     }
 
@@ -472,7 +421,6 @@ public final class UI {
 
     public static <T> ReactiveGrid<T> reactiveGrid(Readable<? extends Iterable<T>> items) {
         ReactiveGrid<T> grid = ReactiveGrid.of(items);
-        AttachmentStack.attachToParent(grid.element());
         return grid;
     }
 
@@ -484,7 +432,6 @@ public final class UI {
             Readable<? extends List<T>> collection,
             ItemHeightProvider<T> heightProvider) {
         VirtualList<T> vl = VirtualList.of(collection, heightProvider);
-        AttachmentStack.attachToParent(vl.element());
         return vl;
     }
 
@@ -492,7 +439,6 @@ public final class UI {
             List<T> items,
             ItemHeightProvider<T> heightProvider) {
         VirtualList<T> vl = VirtualList.of(items, heightProvider);
-        AttachmentStack.attachToParent(vl.element());
         return vl;
     }
 
@@ -509,20 +455,12 @@ public final class UI {
         return Units.unit(value);
     }
 
-    public static Computed<Float> dvw(float percentage) {
-        return Units.dvw(percentage);
+    public static float dvw(float percentage) {
+        return Units.width() * percentage / 100f;
     }
 
-    public static Computed<Float> dvh(float percentage) {
-        return Units.dvh(percentage);
-    }
-
-    public static Computed<Float> dvw(Readable<Float> percentage) {
-        return Units.dvw(percentage);
-    }
-
-    public static Computed<Float> dvh(Readable<Float> percentage) {
-        return Units.dvh(percentage);
+    public static float dvh(float percentage) {
+        return Units.height() * percentage / 100f;
     }
 
     public static <T> Disposable listen(Class<T> type, Cons<T> listener) {
@@ -530,9 +468,7 @@ public final class UI {
     }
 
     public static Tabs tabs(Signal<Integer> activeTab) {
-        Tabs t = new Tabs(activeTab);
-        AttachmentStack.attachToParent(t.element());
-        return t;
+        return new Tabs(activeTab);
     }
 
     public static RoundedDrawable rounded(int radius) {
@@ -557,5 +493,77 @@ public final class UI {
 
     public static @Nullable Drawable scalable(@Nullable Drawable drawable) {
         return Drawables.scalable(drawable);
+    }
+
+    public static Prop grow() {
+        return Values.grow();
+    }
+
+    public static Prop growX() {
+        return Values.growX();
+    }
+
+    public static Prop growY() {
+        return Values.growY();
+    }
+
+    public static Prop center() {
+        return Values.center();
+    }
+
+    public static Prop top() {
+        return Values.top();
+    }
+
+    public static Prop bottom() {
+        return Values.bottom();
+    }
+
+    public static Prop left() {
+        return Values.left();
+    }
+
+    public static Prop right() {
+        return Values.right();
+    }
+
+    public static Prop align(int align) {
+        return Values.align(align);
+    }
+
+    public static Prop gap(float v) {
+        return Values.gap(v);
+    }
+
+    public static Prop gap(Readable<Float> v) {
+        return Values.gap(v);
+    }
+
+    public static Prop padding(float p) {
+        return Values.padding(p);
+    }
+
+    public static Prop padding(Readable<Float> p) {
+        return Values.padding(p);
+    }
+
+    public static Prop padding(float top, float left, float bottom, float right) {
+        return Values.padding(top, left, bottom, right);
+    }
+
+    public static Prop paddingX(float v) {
+        return Values.paddingX(v);
+    }
+
+    public static Prop paddingX(@Nullable Readable<Float> x) {
+        return Values.paddingX(x);
+    }
+
+    public static Prop paddingY(float v) {
+        return Values.paddingY(v);
+    }
+
+    public static Prop paddingY(@Nullable Readable<Float> y) {
+        return Values.paddingY(y);
     }
 }

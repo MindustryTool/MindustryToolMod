@@ -7,10 +7,11 @@ val mindustryVersion: String by rootProject.extra
 
 dependencies {
     // SolimEnv needs the solim ambient types (AttachmentStack, OwnershipContext,
-    // ReactiveContext, SignalDispatcher). Runtime-only: depending on solim-core
-    // here would create a build-path cycle, since solim-core's tests consume
-    // this module. Core-specific resets live in a solim-core test env instead.
+    // ReactiveContext, SignalDispatcher) plus the solim-core module state a test env has to
+    // re-establish between runs. These env classes are the boundary: a module outside solim
+    // reaches those seams here, so its tests never name SolimToken or PendingCellConfig.
     implementation(project(":solim-runtime"))
+    implementation(project(":solim-core"))
 
     // The env classes are JUnit extension points (annotations live in main sources).
     compileOnly("org.junit.jupiter:junit-jupiter:5.10.2")

@@ -9,6 +9,8 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+// java.lang.reflect.Field.get and Method.invoke return Object, and a field declared as Seq<Tile> has a non-reifiable
+// type argument, so reflection cannot recover the declarative type without an unchecked cast.
 @SuppressWarnings("unchecked")
 public final class ReflectUtil {
 

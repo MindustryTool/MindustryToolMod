@@ -15,6 +15,8 @@ import arc.scene.event.EventListener;
 import arc.scene.event.InputEvent;
 import arc.scene.event.Touchable;
 import arc.scene.ui.layout.Table;
+import arc.util.Nullable;
+import solim.core.OwnershipContext;
 import solim.test.SolimEnv;
 
 class ElementConfigClickTest extends SolimEnv {
@@ -107,19 +109,64 @@ class ElementConfigClickTest extends SolimEnv {
         return count;
     }
 
-    private static final class Clickable extends Component implements ElementConfig<Clickable> {
+    private static final class Clickable extends Component implements Configurable<Clickable> {
+        private final Table table = new Table();
+        private final PendingCellConfig constraints = new PendingCellConfig();
+        private @Nullable Props<Clickable> pending;
 
         Clickable() {
             super(new Table());
         }
 
+        public Clickable onClick(@Nullable Runnable action) {
+            props(Values.onClick(action));
+            return this;
+        }
+
+        public Clickable stopClickPropagation(boolean stop) {
+            props(Values.stopClickPropagation(stop));
+            return this;
+        }
+
         @Override
+        public Table table() {
+            return table;
+        }
+
+        @Override
+        public PendingCellConfig cellConfig() {
+            return constraints;
+        }
+
+        @Override
+        public Clickable children(@Nullable Runnable block) {
+            applyPendingProps();
+            OwnershipContext.push(this);
+            try {
+                if (block != null) {
+                    block.run();
+                }
+            } finally {
+                OwnershipContext.pop();
+            }
+            return this;
+        }
+
+        @Override
+        public @Nullable Props<Clickable> pendingProps() {
+            return pending;
+        }
+
+        @Override
+        public void setPendingProps(@Nullable Props<Clickable> props) {
+            this.pending = props;
+        }
+
         public Clickable name(String name) {
             setName(name);
             return this;
         }
 
-        @Override
         public Clickable self() {
             return this;
         }

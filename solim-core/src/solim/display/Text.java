@@ -11,18 +11,21 @@ import arc.scene.ui.layout.Table;
 import arc.util.Align;
 import arc.util.Nullable;
 import solim.core.Component;
+import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.core.SpacingAware;
-import solim.modifier.ElementConfig;
-import solim.modifier.CellConfig;
+import solim.modifier.Configurable;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.Props;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 
-public final class Text extends Component implements SpacingAware, ElementConfig<Text>, CellConfig<Text> {
+public final class Text extends Component
+        implements SpacingAware, Configurable<Text> {
 
     private final Label label;
     private final PendingCellConfig constraints = new PendingCellConfig();
+    private @Nullable Props<Text> pending;
 
     private float padTop;
     private float padLeft;
@@ -94,7 +97,7 @@ public final class Text extends Component implements SpacingAware, ElementConfig
 
     public Text text(Readable<String> text) {
         if (text != null) {
-            own(Effect.of(() -> label.setText(text.get() != null ? text.get() : "")));
+            withinOwnership(() -> Effect.of(() -> label.setText(text.get() != null ? text.get() : "")));
         }
         return this;
     }
@@ -106,7 +109,7 @@ public final class Text extends Component implements SpacingAware, ElementConfig
 
     public Text color(Readable<Color> color) {
         if (color != null) {
-            own(Effect.of(() -> {
+            withinOwnership(() -> Effect.of(() -> {
                 Color c = color.get();
                 if (c != null) {
                     label.setColor(c);
@@ -361,7 +364,7 @@ public final class Text extends Component implements SpacingAware, ElementConfig
 
     public Text fontScale(Readable<Float> scale) {
         if (scale != null) {
-            own(Effect.of(() -> {
+            withinOwnership(() -> Effect.of(() -> {
                 Float s = scale.get();
                 if (s != null) {
                     label.setFontScale(s);
@@ -369,7 +372,7 @@ public final class Text extends Component implements SpacingAware, ElementConfig
             }));
         }
         return this;
-    }
+    };
 
     public Label label() {
         applySpacing();
@@ -377,8 +380,36 @@ public final class Text extends Component implements SpacingAware, ElementConfig
     }
 
     @Override
+    public Text children(@Nullable Runnable block) {
+        OwnershipContext.push(this);
+        try {
+            if (block != null) {
+                block.run();
+            }
+        } finally {
+            OwnershipContext.pop();
+        }
+        return this;
+    }
+
+    @Override
+    public Table table() {
+        return null;
+    }
+
+    @Override
     public PendingCellConfig cellConfig() {
         return constraints;
+    }
+
+    @Override
+    public @Nullable Props<Text> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<Text> props) {
+        this.pending = props;
     }
 
     @Override

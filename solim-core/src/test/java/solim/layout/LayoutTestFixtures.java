@@ -88,7 +88,7 @@ public final class LayoutTestFixtures {
                 new ComponentAdapter("Dynamic", () -> Dynamic.of(Signal.of("item"), val -> new Element())),
                 new ComponentAdapter("ForEach", () -> {
                     ForEach<String> fe = ForEach.of(Signal.of(Arrays.asList("a", "b")));
-                    fe.children(item -> new FixedComponent());
+                    fe.items(item -> new FixedComponent());
                     return fe;
                 }),
                 new ComponentAdapter("QueryView",

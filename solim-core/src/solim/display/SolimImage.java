@@ -8,20 +8,22 @@ import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import arc.util.Scaling;
 import solim.core.Component;
+import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.core.SpacingAware;
-import solim.modifier.CellConfig;
-import solim.modifier.ElementConfig;
+import solim.modifier.Configurable;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.Props;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
 public final class SolimImage extends Component
-        implements SpacingAware, CellConfig<SolimImage>, ElementConfig<SolimImage> {
+        implements SpacingAware, Configurable<SolimImage> {
 
     private final Image element;
     private final PendingCellConfig constraints = new PendingCellConfig();
+    private @Nullable Props<SolimImage> pending;
     private Scaling scaling = Scaling.fit;
 
     private float padTop;
@@ -86,7 +88,7 @@ public final class SolimImage extends Component
 
     public SolimImage drawable(Readable<Drawable> d) {
         if (d != null) {
-            own(Effect.of(() -> element.setDrawable(d.get())));
+            withinOwnership(() -> Effect.of(() -> element.setDrawable(d.get())));
         }
         return this;
     }
@@ -110,7 +112,8 @@ public final class SolimImage extends Component
 
     public SolimImage color(Readable<Color> color) {
         if (color != null) {
-            own(Effect.of(() -> {
+            // TODO: we are suppose to use .props for this not custom function
+            withinOwnership(() -> Effect.of(() -> {
                 Color c = color.get();
                 if (c != null) {
                     element.setColor(c);
@@ -118,7 +121,7 @@ public final class SolimImage extends Component
             }));
         }
         return this;
-    }
+    };
 
     public SolimImage padding(float p) {
         this.padTop = this.padLeft = this.padBottom = this.padRight = p;
@@ -234,6 +237,35 @@ public final class SolimImage extends Component
 
     public Image image() {
         return element;
+    }
+
+    @Override
+    public @Nullable Table table() {
+        return null;
+    }
+
+    @Override
+    public SolimImage children(@Nullable Runnable block) {
+        applyPendingProps();
+        OwnershipContext.push(this);
+        try {
+            if (block != null) {
+                block.run();
+            }
+        } finally {
+            OwnershipContext.pop();
+        }
+        return this;
+    }
+
+    @Override
+    public @Nullable Props<SolimImage> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<SolimImage> props) {
+        this.pending = props;
     }
 
     public SolimImage align(int align) {

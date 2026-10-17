@@ -1,6 +1,8 @@
 package mindustrytool.components;
 
 import static solim.UI.*;
+import static solim.modifier.Values.center;
+import static solim.modifier.Values.grow;
 
 import arc.graphics.Color;
 import arc.scene.Element;
@@ -31,15 +33,15 @@ public class Loader extends Component {
     }
 
     public static Component centered() {
-        return row().grow().center().children(() -> new Loader());
+        return row().props(grow(), center()).children(() -> new Loader());
     }
 
     public static Component centered(float size) {
-        return row().grow().center().children(() -> new Loader(size));
+        return row().props(grow(), center()).children(() -> new Loader(size));
     }
 
     public static Component centered(float size, @Nullable Color color) {
-        return row().grow().center().children(() -> new Loader(size, color));
+        return row().props(grow(), center()).children(() -> new Loader(size, color));
     }
 
     @Override

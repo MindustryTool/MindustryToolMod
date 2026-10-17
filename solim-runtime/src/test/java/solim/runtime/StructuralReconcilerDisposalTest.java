@@ -12,6 +12,7 @@ import solim.core.Component;
 
 class StructuralReconcilerDisposalTest {
 
+
     static final class TestComponent extends Component {
         final String id;
 

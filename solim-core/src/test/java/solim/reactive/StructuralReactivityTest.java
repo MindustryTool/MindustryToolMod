@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.growX;
 import solim.layout.Card;
 
 import java.util.Arrays;
@@ -78,7 +79,7 @@ class StructuralReactivityTest extends SolimEnv {
 
         ForEach<String> fe = new ForEach<>(items);
         fe.key(id -> id);
-        fe.children(id -> {
+        fe.items(id -> {
             TestComponent tc = new TestComponent(id);
             created.put(id, tc);
             return tc;
@@ -121,7 +122,7 @@ class StructuralReactivityTest extends SolimEnv {
 
         ReactiveGrid<String> grid = new ReactiveGrid<>(items);
         grid.columns(cols).key(id -> id);
-        grid.children(id -> {
+        grid.items(id -> {
             factoryCallCount.put(id, factoryCallCount.getOrDefault(id, 0) + 1);
             return new TestComponent(id);
         });
@@ -154,7 +155,7 @@ class StructuralReactivityTest extends SolimEnv {
         Signal<List<String>> items = Signal.of(Arrays.asList("A"));
         ForEach<String> fe = new ForEach<>(items);
         fe.key(id -> id);
-        fe.children(id -> new TestComponent(id));
+        fe.items(id -> new TestComponent(id));
         fe.element();
         Cell<?> cell = fe.container().getCells().first();
         assertEquals(0, CellAccess.expandX(cell), "ForEach item must not growX by default");
@@ -178,14 +179,14 @@ class StructuralReactivityTest extends SolimEnv {
         class ConstrainedComp extends Component {
             @Override
             protected Element build() {
-                return new Card().growX().element();
+                return new Card().props(growX()).element();
             }
         }
 
         Signal<List<String>> items = Signal.of(Arrays.asList("A"));
         ForEach<String> fe = new ForEach<>(items);
         fe.key(id -> id);
-        fe.children(id -> new ConstrainedComp());
+        fe.items(id -> new ConstrainedComp());
         fe.element();
         Cell<?> cell = fe.container().getCells().first();
         assertEquals(1, CellAccess.expandX(cell), "Constrained child in ForEach must growX");

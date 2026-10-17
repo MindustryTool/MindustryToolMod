@@ -29,6 +29,10 @@ subprojects {
         isShowViolations = true
     }
 
+    tasks.withType<Checkstyle>().configureEach {
+        maxHeapSize = "1g"
+    }
+
     version = "1.0"
 
     repositories {
