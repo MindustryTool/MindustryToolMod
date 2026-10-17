@@ -1,6 +1,14 @@
 package mindustrytool.features.browser.schematic;
 
 import static solim.UI.*;
+import static solim.modifier.Values.background;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.onClick;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -67,28 +75,23 @@ public class SchematicCard extends Component {
 
         return column()
                 .name("SchematicCard-" + schematic.getItemId())
-                .width(size)
-                .gap(unit(2))
+                .props(prefWidth(size), gap(unit(2)))
                 .children(() -> {
                     card(WebStyles.previewCardBackground())
                             .name("SchematicCard-preview-" + schematic.getItemId())
-                            .size(size)
-                            .onClick(onClick)
+                            .props(prefWidth(size), prefHeight(size), onClick(onClick))
                             .children(() -> {
                                 stack().grow()
                                         .layer(() -> networkImage()
                                                 .rounded(8)
                                                 .scaling(Scaling.fit)
-                                                .grow()
+                                                .props(grow())
                                                 .url(imageUrl)
                                                 .placeholder(Icon.image)
                                                 .fallback(Icon.image))
-                                        .layer(() -> column().grow().children(() -> {
+                                        .layer(() -> column().props(grow()).children(() -> {
                                             spacer();
-                                            row().growX()
-                                                    .background(Styles.black8)
-                                                    .padding(unit(1.5f), unit(2f), unit(1.5f), unit(2f))
-                                                    .center()
+                                            row().props(growX(), background(Styles.black8), padding(unit(1.5f), unit(2f), unit(1.5f), unit(2f)), center())
                                                     .children(() -> {
                                                         text(title)
                                                                 .style(Styles.defaultLabel)
@@ -100,7 +103,7 @@ public class SchematicCard extends Component {
                                         }));
                             });
 
-                    row().width(size).gap(unit(1.5f)).children(() -> {
+                    row().props(prefWidth(size), gap(unit(1.5f))).children(() -> {
                         statButton(
                                 likesText,
                                 FileIcon.of("heart.png", Icon.upOpenSmall),
@@ -123,10 +126,8 @@ public class SchematicCard extends Component {
 
                         button(onCopy)
                                 .style(WebStyles.actionCardText())
-                                .growX()
-                                .height(unit(9))
-                                .tooltip(Core.bundle.get("browser.schematic.copy"))
-                                .children(() -> icon(Icon.copy).size(unit(4.5f)).color(Color.white));
+                                .props(growX(), prefHeight(unit(9)), tooltip(Core.bundle.get("browser.schematic.copy")))
+                                .children(() -> icon(Icon.copy).props(prefWidth(unit(4.5f)), prefHeight(unit(4.5f))).color(Color.white));
                     });
                 }).element();
     }
@@ -134,12 +135,9 @@ public class SchematicCard extends Component {
     private void statButton(String count, Drawable iconDrawable, Color textColor, Runnable action, String tooltip) {
         button(action)
                 .style(WebStyles.actionCardText())
-                .growX()
-                .height(unit(9))
-                .gap(unit(1))
-                .tooltip(tooltip)
+                .props(growX(), prefHeight(unit(9)), gap(unit(1)), tooltip(tooltip))
                 .children(() -> {
-                    icon(iconDrawable).size(unit(4.5f)).color(Color.white).marginRight(unit(1));
+                    icon(iconDrawable).props(prefWidth(unit(4.5f)), prefHeight(unit(4.5f))).color(Color.white).marginRight(unit(1));
                     text(count).style(Styles.defaultLabel).fontScale(0.85f).color(textColor);
                 });
     }

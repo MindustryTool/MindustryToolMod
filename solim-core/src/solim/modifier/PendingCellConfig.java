@@ -4,13 +4,14 @@ import solim.runtime.ReactiveContext;
 
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
+import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import solim.core.Disposable;
-import solim.core.SolimToken;
 import solim.core.OwnershipContext;
+import solim.core.SolimToken;
 import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
@@ -27,9 +28,15 @@ public final class PendingCellConfig {
         }
 
         if (config != null) {
-            List<Disposable> effects = config.applyToCell(cell);
-            for (Disposable effect : effects) {
-                OwnershipContext.register(effect);
+            if (comp != null) {
+                comp.openSelfWindow();
+                try {
+                    config.applyToCell(cell);
+                } finally {
+                    comp.closeSelfWindow();
+                }
+            } else {
+                config.applyToCell(cell);
             }
         }
 
@@ -67,6 +74,8 @@ public final class PendingCellConfig {
 
     public @Nullable Integer align;
 
+    private @Nullable List<Disposable> appliedBindings;
+
     public boolean hasExplicitWidth() {
         return prefWidth != null || minWidth != null || maxWidth != null;
     }
@@ -75,28 +84,39 @@ public final class PendingCellConfig {
         return prefHeight != null || minHeight != null || maxHeight != null;
     }
 
+    public void align(int named) {
+        if (named == 0) {
+            this.align = null;
+            return;
+        }
+        if (named == Align.center) {
+            this.align = Align.center;
+            return;
+        }
+        int current = this.align != null ? this.align : 0;
+        int opposite = named == Align.top ? Align.bottom : named == Align.bottom ? Align.top
+                : named == Align.left ? Align.right : Align.left;
+        this.align = (current | named) & ~opposite;
+    }
+
     public void alignCenter() {
         this.align = Align.center;
     }
 
     public void alignTop() {
-        int current = this.align != null ? this.align : 0;
-        this.align = (current | Align.top) & ~Align.bottom;
+        align(Align.top);
     }
 
     public void alignBottom() {
-        int current = this.align != null ? this.align : 0;
-        this.align = (current | Align.bottom) & ~Align.top;
+        align(Align.bottom);
     }
 
     public void alignLeft() {
-        int current = this.align != null ? this.align : 0;
-        this.align = (current | Align.left) & ~Align.right;
+        align(Align.left);
     }
 
     public void alignRight() {
-        int current = this.align != null ? this.align : 0;
-        this.align = (current | Align.right) & ~Align.left;
+        align(Align.right);
     }
 
     public static @Nullable PendingCellConfig find(@Nullable Object target) {
@@ -104,8 +124,8 @@ public final class PendingCellConfig {
             return null;
         }
 
-        if (target instanceof CellConfig) {
-            return ((CellConfig<?>) target).cellConfig();
+        if (target instanceof Configurable) {
+            return ((Configurable<?>) target).cellConfig();
         }
 
         if (target instanceof PendingCellConfig) {
@@ -119,8 +139,8 @@ public final class PendingCellConfig {
                 if (token.cellConfig != null) {
                     return token.cellConfig;
                 }
-                if (token.component instanceof CellConfig) {
-                    return ((CellConfig<?>) token.component).cellConfig();
+                if (token.component instanceof Configurable) {
+                    return ((Configurable<?>) token.component).cellConfig();
                 }
             }
             return null;
@@ -129,8 +149,9 @@ public final class PendingCellConfig {
     }
 
     public List<Disposable> applyToCell(Cell<?> cell) {
+        releaseApplied();
         List<Disposable> effects = new ArrayList<>();
-
+        boolean windowed = OwnershipContext.size() > 0;
         effects.addAll(bind(cell, prefWidth, v -> applyPrefWidth(cell, v)));
         effects.addAll(bind(cell, prefHeight, v -> applyPrefHeight(cell, v)));
         effects.addAll(bind(cell, minWidth, v -> applyMinWidth(cell, v)));
@@ -170,15 +191,15 @@ public final class PendingCellConfig {
                 cell.padRight(Math.max(0f, v));
             }
         }));
+        if (!windowed) {
+            adoptAll(effects);
+        }
 
         if (growX) {
             cell.growX();
-            Float floor = ReactiveContext.untracked(() -> minWidth != null ? minWidth.peek() : null);
-            if (floor != null) {
-                cell.minWidth(Math.max(0f, floor));
-            } else if (minWidth == null) {
-                cell.minWidth(0f);
-            }
+            Float floor = ReactiveContext.untracked(
+                    () -> minWidth != null ? minWidth.peek() : prefWidth != null ? prefWidth.peek() : null);
+            cell.minWidth(floor != null ? Math.max(0f, floor) : 0f);
         }
         if (growY)
             cell.growY();
@@ -187,7 +208,42 @@ public final class PendingCellConfig {
             cell.align(align);
         }
 
+        if (windowed) {
+            appliedBindings = effects;
+        }
         return effects;
+    }
+
+    /**
+     * Takes ownership of bindings created outside a component window, so a direct
+     * {@code applyToCell} call from application or test code still has a lifecycle.
+     */
+    private void adoptAll(List<Disposable> effects) {
+        List<Disposable> owned = appliedBindings;
+        if (owned == null) {
+            owned = new ArrayList<>();
+            appliedBindings = owned;
+        }
+        owned.addAll(effects);
+    }
+
+    /**
+     * A reconciler re-attaches its items on every pass, so the bindings installed
+     * for the previous cell must be released before the new ones are created.
+     * Without this the item would accumulate one live binding per reflow.
+     */
+    private void releaseApplied() {
+        List<Disposable> stale = appliedBindings;
+        appliedBindings = null;
+        if (stale == null) {
+            return;
+        }
+        for (int i = stale.size() - 1; i >= 0; i--) {
+            try {
+                stale.get(i).dispose();
+            } catch (Throwable ignored) {
+            }
+        }
     }
 
     public void applySizeToParentCell(@Nullable Element element) {
@@ -200,27 +256,27 @@ public final class PendingCellConfig {
     }
 
     public void applyPrefWidth(@Nullable Element element) {
-        applySize(element, prefWidth, Cell::width);
+        applySize(element, prefWidth, Cell::width, (target, value) -> target.setWidth(Scl.scl(value)));
     }
 
     public void applyPrefHeight(@Nullable Element element) {
-        applySize(element, prefHeight, Cell::height);
+        applySize(element, prefHeight, Cell::height, (target, value) -> target.setHeight(Scl.scl(value)));
     }
 
     public void applyMinWidth(@Nullable Element element) {
-        applySize(element, minWidth, Cell::minWidth);
+        applySize(element, minWidth, Cell::minWidth, null);
     }
 
     public void applyMinHeight(@Nullable Element element) {
-        applySize(element, minHeight, Cell::minHeight);
+        applySize(element, minHeight, Cell::minHeight, null);
     }
 
     public void applyMaxWidth(@Nullable Element element) {
-        applySize(element, maxWidth, Cell::maxWidth);
+        applySize(element, maxWidth, Cell::maxWidth, null);
     }
 
     public void applyMaxHeight(@Nullable Element element) {
-        applySize(element, maxHeight, Cell::maxHeight);
+        applySize(element, maxHeight, Cell::maxHeight, null);
     }
 
     public void applyMarginToParentCell(@Nullable Element element) {
@@ -272,20 +328,25 @@ public final class PendingCellConfig {
     }
 
     private static void applySize(@Nullable Element element, @Nullable Readable<Float> source,
-            SizeApplier applier) {
+            SizeApplier applier, @Nullable ElementSizeApplier elementApplier) {
         if (source == null) {
-            return;
-        }
-        Cell<?> cell = parentCell(element);
-        if (cell == null) {
             return;
         }
         Float value = source.get();
         if (value == null) {
             return;
         }
-        applier.apply(cell, Math.max(0f, value));
-        cell.getTable().invalidateHierarchy();
+        float size = Math.max(0f, value);
+        Cell<?> cell = parentCell(element);
+        if (cell != null) {
+            applier.apply(cell, size);
+            cell.getTable().invalidateHierarchy();
+            return;
+        }
+        if (element != null && elementApplier != null) {
+            elementApplier.apply(element, size);
+            element.invalidateHierarchy();
+        }
     }
 
     private static void applyMargin(@Nullable Element element, @Nullable Readable<Float> source,
@@ -374,6 +435,11 @@ public final class PendingCellConfig {
     @FunctionalInterface
     private interface SizeApplier {
         void apply(Cell<?> cell, float value);
+    }
+
+    @FunctionalInterface
+    private interface ElementSizeApplier {
+        void apply(Element element, float value);
     }
 
     @FunctionalInterface

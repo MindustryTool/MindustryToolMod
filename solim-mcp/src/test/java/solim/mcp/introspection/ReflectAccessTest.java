@@ -5,10 +5,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
+import solim.test.SolimEnv;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
 
-class ReflectAccessTest {
+class ReflectAccessTest extends SolimEnv {
 
 	@Test
 	void readsPrivateField() {

@@ -125,20 +125,25 @@ class SolimStackTest extends SolimEnv {
     }
 
     @Test
-    void legacyLayerAndChildrenMethodsAreRemoved() {
+    void legacyChildrenComponentAdapterIsRemoved() {
         for (Method method : SolimStack.class.getMethods()) {
             assertNotEquals("childrenComponent", method.getName(),
                     "childrenComponent must be removed");
-            if ("children".equals(method.getName()) && method.getParameterTypes().length > 0) {
-
-                assertNotEquals(Runnable.class, method.getParameterTypes()[0],
-                        "SolimStack must not expose children(Runnable)");
-            }
             if ("layer".equals(method.getName())) {
                 for (Class<?> param : method.getParameterTypes()) {
                     assertNotEquals(Runnable.class, param, "layer(Runnable) must be removed");
                 }
             }
         }
+    }
+
+    @Test
+    void propsRecordOntoThePendingCellConfiguration() {
+        SolimStack stack = new SolimStack();
+
+        stack.props(solim.modifier.Values.growX(), solim.modifier.Values.growY());
+
+        assertEquals(Boolean.TRUE, stack.cellConfig().growX);
+        assertEquals(Boolean.TRUE, stack.cellConfig().growY);
     }
 }

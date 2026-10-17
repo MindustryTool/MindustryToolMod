@@ -29,12 +29,11 @@ import solim.core.DisposableAction;
 import solim.reactive.Signal;
 import solim.reactive.TwoWayBinding;
 import solim.runtime.SignalDispatcher;
-import solim.test.SolimEnv;
+import solim.test.OwnershipEnv;
 
-class TwoWayBindingDisposalTest extends SolimEnv {
+class TwoWayBindingDisposalTest extends OwnershipEnv {
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    static void addStyleIfMissing(Class type, Object style) {
+    static <T> void addStyleIfMissing(Class<T> type, T style) {
         try {
             Core.scene.getStyle(type);
         } catch (IllegalArgumentException missing) {

@@ -73,7 +73,7 @@ class ContextualConfigValueTest extends SolimEnv {
         Core.settings.put("app.posX.portrait", 250f);
 
         AtomicReference<Float> signalValue = new AtomicReference<>(xConfig.get());
-        Effect sub = Effect.of(xConfig.signal(), signalValue::set);
+        Effect sub = inOwnershipWindow(() -> Effect.of(xConfig.signal(), signalValue::set));
 
         portrait.set(true);
         SignalDispatcher.flush();

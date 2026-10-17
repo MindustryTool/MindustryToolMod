@@ -1,6 +1,13 @@
 package solim.layout;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.visible;
+import static solim.modifier.Values.width;
 
 import arc.scene.Element;
 import java.util.*;
@@ -55,7 +62,7 @@ class VirtualListTest extends SolimEnv {
         Signal<List<String>> items = Signal.of(Collections.<String>emptyList());
         VirtualList<String> vl = new VirtualList<>(items, (id, w) -> 50f);
         vl.key(id -> id);
-        vl.children(TestItemComponent::new);
+        vl.items(TestItemComponent::new);
         vl.element();
         SignalDispatcher.flush();
 
@@ -75,7 +82,7 @@ class VirtualListTest extends SolimEnv {
 
         VirtualList<String> vl = new VirtualList<>(items, (id, w) -> 50f);
         vl.key(id -> id);
-        vl.children(id -> {
+        vl.items(id -> {
             TestItemComponent c = new TestItemComponent(id);
             created.put(id, c);
             return c;
@@ -105,8 +112,8 @@ class VirtualListTest extends SolimEnv {
         List<String> list = Arrays.asList("A", "B", "C");
         VirtualList<String> vl = new VirtualList<>(Signal.of(list), (id, w) -> 50f);
         vl.key(id -> id);
-        vl.children(TestItemComponent::new);
-        vl.gap(10f);
+        vl.items(TestItemComponent::new);
+        vl.props(gap(10f));
         vl.element();
         SignalDispatcher.flush();
 
@@ -119,7 +126,7 @@ class VirtualListTest extends SolimEnv {
         List<String> list = Arrays.asList("A", "B");
         VirtualList<String> vl = new VirtualList<>(Signal.of(list), (id, w) -> w < 200f ? 100f : 40f);
         vl.key(id -> id);
-        vl.children(TestItemComponent::new);
+        vl.items(TestItemComponent::new);
         vl.element();
         SignalDispatcher.flush();
 
@@ -138,7 +145,7 @@ class VirtualListTest extends SolimEnv {
         Map<String, TestItemComponent> created = new HashMap<>();
         VirtualList<String> vl = new VirtualList<>(Signal.of(list), (id, w) -> 50f);
         vl.key(id -> id);
-        vl.children(id -> {
+        vl.items(id -> {
             TestItemComponent c = new TestItemComponent(id);
             created.put(id, c);
             return c;
@@ -175,7 +182,7 @@ class VirtualListTest extends SolimEnv {
         Signal<List<String>> listSignal = Signal.of(Collections.singletonList("item1"));
         VirtualList<String> vl = new VirtualList<>(listSignal, (id, w) -> 50f);
         vl.key(id -> id);
-        vl.children(id -> new ReactiveChild());
+        vl.items(id -> new ReactiveChild());
         vl.element();
         SignalDispatcher.flush();
 
@@ -197,11 +204,8 @@ class VirtualListTest extends SolimEnv {
         Signal<List<String>> items = Signal.of(Collections.emptyList());
         VirtualList<String> list = new VirtualList<>(items, (s, i) -> 50f);
         list.key(s -> s);
-        list.children(TestItemComponent::new);
-        list.width(350f)
-                .height(500f)
-                .visible(false)
-                .padding(6f);
+        list.items(TestItemComponent::new);
+        list.props(width(350f), prefWidth(350f), height(500f), prefHeight(500f), visible(false), padding(6f));
 
         assertEquals(350f, list.element().getWidth());
         assertEquals(500f, list.element().getHeight());

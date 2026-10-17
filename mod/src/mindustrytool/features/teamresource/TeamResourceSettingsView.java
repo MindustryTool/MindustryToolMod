@@ -1,6 +1,9 @@
 package mindustrytool.features.teamresource;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.prefHeight;
 
 import arc.Core;
 import arc.scene.Element;
@@ -69,19 +72,19 @@ public class TeamResourceSettingsView extends Component {
         return SettingCard.section(Icon.tree,
                 Core.bundle.get("team-resources.settings.section.metrics", "Tracked Metrics"), () -> {
                     checkbox(Core.bundle.get("team-resources.show-items", "Show Core Items"),
-                            feature.showItemsConfig.signal()).growX();
+                            feature.showItemsConfig.signal()).props(growX());
 
                     checkbox(Core.bundle.get("team-resources.show-units", "Show Unit Counts"),
-                            feature.showUnitsConfig.signal()).growX();
+                            feature.showUnitsConfig.signal()).props(growX());
 
                     checkbox(Core.bundle.get("team-resources.show-power", "Show Power Graph"),
-                            feature.showPowerConfig.signal()).growX();
+                            feature.showPowerConfig.signal()).props(growX());
 
                     checkbox(Core.bundle.get("team-resources.show-stored-power", "Show Stored Power"),
-                            feature.showStoredPowerConfig.signal()).growX();
+                            feature.showStoredPowerConfig.signal()).props(growX());
 
                     checkbox(Core.bundle.get("team-resources.always-show-flow-rate", "Always Show Flow Rate"),
-                            feature.alwaysShowFlowRateConfig.signal()).growX();
+                            feature.alwaysShowFlowRateConfig.signal()).props(growX());
                 });
     }
 
@@ -89,36 +92,34 @@ public class TeamResourceSettingsView extends Component {
         return SettingCard.section(Icon.eye,
                 Core.bundle.get("team-resources.settings.section.appearance", "Appearance & Behavior"), () -> {
                     checkbox(Core.bundle.get("team-resources.hide-background", "Hide Background"),
-                            feature.hideBackgroundConfig.signal()).growX();
+                            feature.hideBackgroundConfig.signal()).props(growX());
 
                     checkbox(Core.bundle.get("team-resources.hide-header", "Hide Title Bar"),
-                            feature.hideHeaderConfig.signal()).growX();
+                            feature.hideHeaderConfig.signal()).props(growX());
 
                     checkbox(Core.bundle.get("team-resources.hide-zero-units", "Hide Inactive Units (0 count)"),
-                            feature.hideZeroUnitsConfig.signal()).growX();
+                            feature.hideZeroUnitsConfig.signal()).props(growX());
 
                     checkbox(Core.bundle.get("team-resources.hide-zero-items", "Hide Empty Items (0 count)"),
-                            feature.hideZeroItemsConfig.signal()).growX();
+                            feature.hideZeroItemsConfig.signal()).props(growX());
 
                     checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle", "Hide Drag Handle"),
-                            feature.hideDragHandleConfig.signal()).growX();
+                            feature.hideDragHandleConfig.signal()).props(growX());
                 });
     }
 
     private Component actionsCard() {
         return SettingCard.card().children(() -> {
-            row().growX().gap(unit(2)).center().children(() -> {
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
                 button(Core.bundle.get("feature.quick-access.settings.reset-position", "Reset Position"),
                         feature::resetPosition)
                         .style(WebStyles.outlineText())
-                        .height(unit(11))
-                        .growX();
+                        .props(height(unit(11)), prefHeight(unit(11)), growX());
 
                 button(Core.bundle.get("team-resources.reset-to-defaults", "Reset to Defaults"),
                         feature::resetToDefaults)
                         .style(WebStyles.outlineText())
-                        .height(unit(11))
-                        .growX();
+                        .props(height(unit(11)), prefHeight(unit(11)), growX());
             });
         });
     }

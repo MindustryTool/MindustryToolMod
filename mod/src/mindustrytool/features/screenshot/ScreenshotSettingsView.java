@@ -1,6 +1,11 @@
 package mindustrytool.features.screenshot;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
 
 import arc.Core;
 import arc.files.Fi;
@@ -44,7 +49,7 @@ public class ScreenshotSettingsView extends Component {
     private Component optionsCard() {
         return SettingCard.section(Icon.settings, Core.bundle.get("feature.screenshot.settings.section.options"),
                 () -> {
-                    row().growX().gap(unit(2)).center().children(() -> {
+                    row().props(growX(), gap(unit(2)), center()).children(() -> {
                         text(Core.bundle.get("feature.screenshot.settings.include-ui"))
                                 .color(Color.white)
                                 .growX()
@@ -59,21 +64,17 @@ public class ScreenshotSettingsView extends Component {
         return SettingCard.card().children(() -> {
             button(feature::capture)
                     .style(WebStyles.primary())
-                    .growX()
-                    .height(unit(11))
-                    .gap(unit(2))
+                    .props(growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
                     .children(() -> {
-                        icon(FileIcon.of("camera.png", Icon.image)).size(unit(6));
+                        icon(FileIcon.of("camera.png", Icon.image)).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                         text(Core.bundle.get("feature.screenshot.settings.capture-now"));
                     });
 
             button(this::openScreenshotsFolder)
                     .style(WebStyles.outline())
-                    .growX()
-                    .height(unit(11))
-                    .gap(unit(2))
+                    .props(growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
                     .children(() -> {
-                        icon(Icon.link).size(unit(6));
+                        icon(Icon.link).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                         text(Core.bundle.get("feature.screenshot.settings.open-folder"));
                     });
         });

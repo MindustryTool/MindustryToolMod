@@ -7,24 +7,33 @@ import arc.graphics.Color;
 import arc.input.KeyCode;
 import solim.graphics.RoundedDrawable;
 import arc.scene.ui.TextField;
+import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import arc.func.Cons;
 import arc.func.Boolf;
 import solim.core.Component;
 import solim.core.DisposableAction;
-import solim.modifier.ElementConfig;
-import solim.modifier.CellConfig;
+import solim.core.OwnershipContext;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
+import solim.modifier.Configurable;
+import solim.modifier.ElementCapability;
+import solim.modifier.FieldCapability;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.Props;
+import solim.modifier.TextCapability;
+import solim.modifier.WrappableCapability;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.style.InputStyle;
 
 public final class SolimTextField extends Component
-        implements ElementConfig<SolimTextField>, CellConfig<SolimTextField> {
+        implements Configurable<SolimTextField>, ElementCapability, CellCapability, AlignmentCapability, FieldCapability, TextCapability, WrappableCapability {
 
     private final TextField field;
     private final PendingCellConfig constraints = new PendingCellConfig();
+    private @Nullable Props<SolimTextField> pending;
     private Effect disabledEffect;
     private Boolf<String> validator;
     private final Signal<Boolean> valid = Signal.of(true);
@@ -51,26 +60,31 @@ public final class SolimTextField extends Component
         this.field.name = "solim-textfield-textField";
         field.setText(signal.peek() != null ? signal.peek() : "");
 
-        own(new TwoWayBinding<>(
-                signal,
-                field::getText,
-                val -> {
-                    field.setText(val != null ? val : "");
+        OwnershipContext.push(this);
+        try {
+            new TwoWayBinding<>(
+                    signal,
+                    field::getText,
+                    val -> {
+                        field.setText(val != null ? val : "");
 
-                    if (validator != null) {
-                        valid.set(validator.get(val));
-                    }
-                },
-                onChange -> {
-                    field.changed(() -> {
-                        onChange.run();
                         if (validator != null) {
-                            valid.set(validator.get(field.getText()));
+                            valid.set(validator.get(val));
                         }
-                    });
+                    },
+                    onChange -> {
+                        field.changed(() -> {
+                            onChange.run();
+                            if (validator != null) {
+                                valid.set(validator.get(field.getText()));
+                            }
+                        });
 
-                    return DisposableAction.empty();
-                }));
+                        return DisposableAction.empty();
+                    });
+        } finally {
+            OwnershipContext.pop();
+        }
     }
 
     public static SolimTextField of(Signal<String> signal) {
@@ -113,7 +127,7 @@ public final class SolimTextField extends Component
         if (disabledEffect != null) {
             disabledEffect.dispose();
         }
-        disabledEffect = own(Effect.of(disabled, d -> field.setDisabled(Boolean.TRUE.equals(d))));
+        withinOwnership(() -> disabledEffect = Effect.of(disabled, d -> field.setDisabled(Boolean.TRUE.equals(d))));
         return this;
     }
 
@@ -130,9 +144,31 @@ public final class SolimTextField extends Component
         return this;
     }
 
+    public SolimTextField style(@Nullable TextField.TextFieldStyle style) {
+        if (style != null) {
+            field.setStyle(style);
+        }
+        return this;
+    }
+
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
+    }
+
+    @Override
+    public @Nullable Table table() {
+        return null;
+    }
+
+    @Override
+    public @Nullable Props<SolimTextField> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<SolimTextField> props) {
+        this.pending = props;
     }
 
     public TextField field() {

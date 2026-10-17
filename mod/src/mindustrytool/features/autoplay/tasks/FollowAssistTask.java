@@ -1,6 +1,10 @@
 package mindustrytool.features.autoplay.tasks;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.paddingX;
+import static solim.modifier.Values.prefHeight;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -100,16 +104,16 @@ public class FollowAssistTask implements AutoplayTask {
 
     @Override
     public void buildSettings(AutoplayFeature feature) {
-        column().growX().gap(unit(1)).children(() -> {
+        column().props(growX(), gap(unit(1))).children(() -> {
             text(Core.bundle.get("feature.autoplay.settings.follow-assist.select-player")).growX().left().color(WebStyles.Colors.GHOST_FG);
 
-            wrap().gap(unit(1)).left().children(() -> {
+            wrap().props(gap(unit(1)), left()).children(() -> {
                 Readable<Boolean> anyChecked = targetPlayerName.signal().map(name -> name == null || name.trim().isEmpty());
                 button(() -> targetPlayerName.set(""))
                         .style(WebStyles.filterChipText())
-                        .paddingX(unit(2))
+                        .props(paddingX(unit(2)))
                         .checked(anyChecked)
-                        .height(unit(8))
+                        .props(height(unit(8)), prefHeight(unit(8)))
                         .children(() -> text(Core.bundle.get("feature.autoplay.settings.follow-assist.any-builder"))
                                 .color(anyChecked.map(c -> c ? Color.white : Color.gray)));
 
@@ -121,9 +125,9 @@ public class FollowAssistTask implements AutoplayTask {
                     Readable<Boolean> playerChecked = targetPlayerName.signal().map(name -> pName.equals(name));
                     button(() -> targetPlayerName.set(pName))
                             .style(WebStyles.filterChipText())
-                            .paddingX(unit(2))
+                            .props(paddingX(unit(2)))
                             .checked(playerChecked)
-                            .height(unit(8))
+                            .props(height(unit(8)), prefHeight(unit(8)))
                             .children(() -> text(pName)
                                     .color(playerChecked.map(c -> c ? Color.white : Color.gray)));
                 }

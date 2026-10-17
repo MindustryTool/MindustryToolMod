@@ -5,6 +5,27 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.growY;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.margin;
+import static solim.modifier.Values.marginBottom;
+import static solim.modifier.Values.marginLeft;
+import static solim.modifier.Values.marginRight;
+import static solim.modifier.Values.marginTop;
+import static solim.modifier.Values.marginX;
+import static solim.modifier.Values.marginY;
+import static solim.modifier.Values.maxHeight;
+import static solim.modifier.Values.maxWidth;
+import static solim.modifier.Values.minHeight;
+import static solim.modifier.Values.minWidth;
+import static solim.modifier.Values.opacity;
+import static solim.modifier.Values.position;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.visible;
+import static solim.modifier.Values.width;
 
 import java.util.List;
 
@@ -59,11 +80,11 @@ class NetworkImageComponentTest extends SolimEnv {
         assertEquals(32f, img.image().getWidth(), 0.01f);
         assertEquals(32f, img.image().getHeight(), 0.01f);
 
-        img.width(20f);
+        img.props(width(20f), prefWidth(20f));
         assertEquals(20f, img.image().getWidth(), 0.01f);
         assertEquals(20f, img.cellConfig().prefWidth.get(), 0.01f);
 
-        img.height(25f);
+        img.props(height(25f), prefHeight(25f));
         assertEquals(25f, img.image().getHeight(), 0.01f);
         assertEquals(25f, img.cellConfig().prefHeight.get(), 0.01f);
 
@@ -75,7 +96,7 @@ class NetworkImageComponentTest extends SolimEnv {
         Signal<Float> w = Signal.of(40f);
         Signal<Float> h = Signal.of(30f);
 
-        NetworkImage img = new NetworkImage().size(w, h);
+        NetworkImage img = new NetworkImage().props(size(w, h), prefWidth(w), prefHeight(h));
         assertEquals(40f, img.image().getWidth(), 0.01f);
         assertEquals(30f, img.image().getHeight(), 0.01f);
 
@@ -116,9 +137,7 @@ class NetworkImageComponentTest extends SolimEnv {
         Signal<Float> alpha = Signal.of(1f);
 
         NetworkImage img = new NetworkImage()
-                .position(15f, 25f)
-                .visible(vis)
-                .opacity(alpha);
+                .props(position(15f, 25f), visible(vis), opacity(alpha));
 
         assertEquals(15f, img.image().x, 0.01f);
         assertEquals(25f, img.image().y, 0.01f);
@@ -146,10 +165,7 @@ class NetworkImageComponentTest extends SolimEnv {
     void tableCellSizeAndBoundsConstraints() {
         Table table = new Table();
         NetworkImage img = new NetworkImage()
-                .minWidth(10f)
-                .maxWidth(100f)
-                .minHeight(15f)
-                .maxHeight(80f);
+                .props(minWidth(10f), maxWidth(100f), minHeight(15f), maxHeight(80f));
 
         Cell<?> cell = table.add(img.element());
         img.cellConfig().applyToCell(cell);
@@ -162,6 +178,10 @@ class NetworkImageComponentTest extends SolimEnv {
         img.size(45f, 35f);
         assertEquals(45f, CellAccess.minWidth(cell), 0.01f);
         assertEquals(35f, CellAccess.minHeight(cell), 0.01f);
+        assertEquals(45f, CellAccess.maxWidth(cell), 0.01f,
+                "size(w, h) must fix the cell width, not merely bound it");
+        assertEquals(35f, CellAccess.maxHeight(cell), 0.01f,
+                "size(w, h) must fix the cell height, not merely bound it");
 
         img.dispose();
     }
@@ -172,12 +192,12 @@ class NetworkImageComponentTest extends SolimEnv {
         NetworkImage img = new NetworkImage();
         Cell<?> cell = table.add(img.element());
 
-        img.growX();
+        img.props(growX());
         assertEquals(1, CellAccess.expandX(cell));
         assertEquals(1f, CellAccess.fillX(cell), 0.01f);
         assertEquals(0, CellAccess.expandY(cell));
 
-        img.growY();
+        img.props(growY());
         assertEquals(1, CellAccess.expandY(cell));
         assertEquals(1f, CellAccess.fillY(cell), 0.01f);
 
@@ -188,7 +208,7 @@ class NetworkImageComponentTest extends SolimEnv {
     void tableCellMargins() {
         Table table = new Table();
         NetworkImage img = new NetworkImage()
-                .margin(10f);
+                .props(margin(10f));
 
         Cell<?> cell = table.add(img.element());
         img.cellConfig().applyToCell(cell);
@@ -198,29 +218,29 @@ class NetworkImageComponentTest extends SolimEnv {
         assertEquals(10f, CellAccess.padBottom(cell), 0.01f);
         assertEquals(10f, CellAccess.padRight(cell), 0.01f);
 
-        img.margin(2f, 4f, 6f, 8f);
+        img.props(margin(2f, 4f, 6f, 8f));
         assertEquals(2f, CellAccess.padTop(cell), 0.01f);
         assertEquals(4f, CellAccess.padLeft(cell), 0.01f);
         assertEquals(6f, CellAccess.padBottom(cell), 0.01f);
         assertEquals(8f, CellAccess.padRight(cell), 0.01f);
 
-        img.marginTop(12f);
+        img.props(marginTop(12f));
         assertEquals(12f, CellAccess.padTop(cell), 0.01f);
 
-        img.marginLeft(14f);
+        img.props(marginLeft(14f));
         assertEquals(14f, CellAccess.padLeft(cell), 0.01f);
 
-        img.marginBottom(16f);
+        img.props(marginBottom(16f));
         assertEquals(16f, CellAccess.padBottom(cell), 0.01f);
 
-        img.marginRight(18f);
+        img.props(marginRight(18f));
         assertEquals(18f, CellAccess.padRight(cell), 0.01f);
 
-        img.marginX(20f);
+        img.props(marginX(20f));
         assertEquals(20f, CellAccess.padLeft(cell), 0.01f);
         assertEquals(20f, CellAccess.padRight(cell), 0.01f);
 
-        img.marginY(22f);
+        img.props(marginY(22f));
         assertEquals(22f, CellAccess.padTop(cell), 0.01f);
         assertEquals(22f, CellAccess.padBottom(cell), 0.01f);
 
@@ -232,7 +252,7 @@ class NetworkImageComponentTest extends SolimEnv {
         Table table = new Table();
         Signal<Float> topPad = Signal.of(5f);
 
-        NetworkImage img = new NetworkImage().marginTop(topPad);
+        NetworkImage img = new NetworkImage().props(marginTop(topPad));
         Cell<?> cell = table.add(img.element());
         List<Disposable> cellDisposables = img.cellConfig().applyToCell(cell);
 
@@ -287,8 +307,7 @@ class NetworkImageComponentTest extends SolimEnv {
 
         NetworkImage img = new NetworkImage()
                 .size(42f, 38f)
-                .margin(8f)
-                .growX();
+                .props(margin(8f), growX());
 
         AttachmentStack.add(img);
         AttachmentStack.pop();

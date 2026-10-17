@@ -2,6 +2,10 @@ package solim;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.width;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -27,7 +31,7 @@ class ContainerAutoAttachmentTest extends SolimEnv {
         Column[] colRef = new Column[1];
         Row row = UI.row().children(() -> {
             UI.text("1");
-            colRef[0] = UI.column().width(10f);
+            colRef[0] = UI.column().props(width(10f), prefWidth(10f));
             UI.text("2");
         });
 
@@ -40,7 +44,7 @@ class ContainerAutoAttachmentTest extends SolimEnv {
         Row[] rowRef = new Row[1];
         Column col = UI.column().children(() -> {
             UI.text("Top");
-            rowRef[0] = UI.row().height(15f);
+            rowRef[0] = UI.row().props(height(15f), prefHeight(15f));
             UI.text("Bottom");
         });
 
@@ -76,9 +80,9 @@ class ContainerAutoAttachmentTest extends SolimEnv {
 
         Row row = UI.row().children(() -> {
             t1[0] = UI.text("A");
-            c1[0] = UI.column().width(5f);
+            c1[0] = UI.column().props(width(5f), prefWidth(5f));
             t2[0] = UI.text("B");
-            r1[0] = UI.row().width(10f);
+            r1[0] = UI.row().props(width(10f), prefWidth(10f));
             t3[0] = UI.text("C");
         });
 

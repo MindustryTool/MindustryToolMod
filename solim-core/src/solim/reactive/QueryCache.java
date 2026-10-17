@@ -89,12 +89,16 @@ public final class QueryCache {
         this.scheduler = scheduler != null ? scheduler : defaultScheduler();
     }
 
+    // ConcurrentHashMap<QueryKey, CacheEntry<?>> erases the CacheEntry type argument, and ConcurrentHashMap has no
+    // accessor that recovers it, so the T the caller asks for cannot be read back out of the map.
     @SuppressWarnings("unchecked")
     public <T> CacheEntry<T> getOrCreateEntry(QueryKey key) {
         Objects.requireNonNull(key, "key cannot be null");
         return (CacheEntry<T>) entries.computeIfAbsent(key, CacheEntry::new);
     }
 
+    // ConcurrentHashMap<QueryKey, CacheEntry<?>> erases the CacheEntry type argument, and ConcurrentHashMap has no
+    // accessor that recovers it, so the T the caller asks for cannot be read back out of the map.
     @SuppressWarnings("unchecked")
     public <T> CacheEntry<T> getEntry(QueryKey key) {
         Objects.requireNonNull(key, "key cannot be null");

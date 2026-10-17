@@ -3,6 +3,7 @@ package solim.reactive;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
@@ -51,13 +52,12 @@ class ComputedTest extends SolimEnv {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void cycleDetection() {
-        Computed<Integer>[] a = new Computed[1];
-        Computed<Integer>[] b = new Computed[1];
-        a[0] = Signal.computed(() -> b[0] != null ? b[0].get() + 1 : 1);
-        b[0] = Signal.computed(() -> a[0].get() + 1);
-        assertThrows(IllegalStateException.class, () -> a[0].get());
+        AtomicReference<Computed<Integer>> a = new AtomicReference<>();
+        AtomicReference<Computed<Integer>> b = new AtomicReference<>();
+        a.set(Signal.computed(() -> b.get() != null ? b.get().get() + 1 : 1));
+        b.set(Signal.computed(() -> a.get().get() + 1));
+        assertThrows(IllegalStateException.class, () -> a.get().get());
     }
 
     @Test

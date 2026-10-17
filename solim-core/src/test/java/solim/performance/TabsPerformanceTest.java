@@ -1,6 +1,7 @@
 package solim.performance;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.growX;
 
 import arc.Core;
 import arc.scene.Element;
@@ -19,7 +20,7 @@ public class TabsPerformanceTest extends SolimEnv {
         Column col = new Column();
         col.children(() -> {
             for (int i = 0; i < count; i++) {
-                new Card().growX().children(() -> {
+                new Card().props(growX()).children(() -> {
                     Element el = new Element();
                     el.setSize(30f, 30f);
                 });
@@ -39,7 +40,7 @@ public class TabsPerformanceTest extends SolimEnv {
         Tabs tabs = new Tabs(activeTab);
 
         tabs.tab("Tab 0", () -> {
-            new Card().growX().children(() -> {
+            new Card().props(growX()).children(() -> {
                 Element el = new Element();
                 el.setSize(100f, 100f);
             });

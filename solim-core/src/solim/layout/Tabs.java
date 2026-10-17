@@ -1,15 +1,16 @@
 package solim.layout;
 
-import solim.modifier.CellConfig;
 
 import arc.graphics.Color;
 import arc.scene.style.Drawable;
 import arc.scene.ui.Button.ButtonStyle;
+import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import solim.core.Component;
+import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.core.Units;
 import solim.graphics.RoundedDrawable;
@@ -19,11 +20,27 @@ import solim.runtime.OwnershipScope;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
-import solim.modifier.ElementConfig;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
+import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.TableCapability;
 import solim.modifier.PendingCellConfig;
-import solim.modifier.TableConfig;
+import solim.modifier.Props;
+import solim.modifier.Values;
 
-public final class Tabs extends Component implements CellConfig<Tabs>, ElementConfig<Tabs>, TableConfig<Tabs> {
+public final class Tabs extends Component
+        implements Configurable<Tabs>, GapHost, TableCapability, CellCapability, ContainerCapability<Tabs>, AlignmentCapability {
+
+    public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
+        Cell<?> cell = table.add(child);
+        cell.top().left();
+        if (SolimToken.isExpandingChild(child)) {
+            cell.growY();
+        }
+        cell.row();
+        return cell;
+    };
 
     private final Table root;
     private final Row headerBar;
@@ -33,6 +50,7 @@ public final class Tabs extends Component implements CellConfig<Tabs>, ElementCo
     private final List<Button> tabButtons = new ArrayList<>();
     private final List<Table> tabContents = new ArrayList<>();
     private final PendingCellConfig constraints = new PendingCellConfig();
+    private @Nullable Props<Tabs> pending;
 
     public Tabs(Signal<Integer> activeTab) {
         this(activeTab, new Table());
@@ -46,29 +64,32 @@ public final class Tabs extends Component implements CellConfig<Tabs>, ElementCo
         this.root.name = "solim-tabs-root";
         this.root.top().left();
 
-        this.headerBar = new Row().gap(4f);
-        own(this.headerBar);
-        this.headerBar.name("solim-tabs-headerBar");
-        this.headerBar.top().left();
-        this.headerBar.height(Units.unit(14));
-        this.root.add(headerBar.element()).growX().row();
+        OwnershipContext.push(this);
+        try {
+            this.headerBar = new Row();
+            this.headerBar.name("solim-tabs-headerBar");
+            this.headerBar.props(Values.gap(4f), Values.top(), Values.left(), Values.height(Units.unit(14)), Values.prefHeight(Units.unit(14)));
+            this.root.add(headerBar.element()).growX().row();
 
-        this.contentStack = new SolimStack();
-        own(this.contentStack);
-        this.root.add(contentStack.element()).grow();
+            this.contentStack = new SolimStack();
+            this.root.add(contentStack.element()).grow();
+        } finally {
+            OwnershipContext.pop();
+        }
     }
 
     public static Tabs of(Signal<Integer> activeTab) {
         return new Tabs(activeTab);
     }
 
-    public Tabs headerGap(float gap) {
-        this.headerBar.gap(gap);
-        return this;
+    @Override
+    public void setGap(float gap) {
+        headerGap(gap);
     }
 
-    public Tabs gap(float gap) {
-        return headerGap(gap);
+    public Tabs headerGap(float gap) {
+        this.headerBar.setGap(gap);
+        return this;
     }
 
     public Tabs tabStyle(@Nullable ButtonStyle style) {
@@ -91,25 +112,30 @@ public final class Tabs extends Component implements CellConfig<Tabs>, ElementCo
     public Tabs tab(Readable<String> title, @Nullable Drawable icon, Runnable contentBuilder) {
         int index = tabButtons.size();
 
-        Button btn = new Button(tabButtonStyle);
-        if (tabButtonStyle == null) {
-            btn.rounded(10, Color.clear).border(2f, Color.gray);
-            ButtonStyle s = btn.button().getStyle();
-            if (s != null) {
-                s.checked = RoundedDrawable.of(10, new Color(1f, 1f, 1f, 0.12f), 2f, Color.white);
-                s.over = RoundedDrawable.of(10, new Color(1f, 1f, 1f, 0.06f), 2f, Color.lightGray);
-                s.down = RoundedDrawable.of(10, new Color(1f, 1f, 1f, 0.18f), 2f, Color.white);
+        OwnershipContext.push(this);
+        Button btn;
+        try {
+            btn = new Button(tabButtonStyle);
+            if (tabButtonStyle == null) {
+                btn.rounded(10, Color.clear).border(2f, Color.gray);
+                ButtonStyle s = btn.button().getStyle();
+                if (s != null) {
+                    s.checked = RoundedDrawable.of(10, new Color(1f, 1f, 1f, 0.12f), 2f, Color.white);
+                    s.over = RoundedDrawable.of(10, new Color(1f, 1f, 1f, 0.06f), 2f, Color.lightGray);
+                    s.down = RoundedDrawable.of(10, new Color(1f, 1f, 1f, 0.18f), 2f, Color.white);
+                }
             }
+            btn.onClick(() -> activeTab.set(index));
+            btn.checked(activeTab.map(idx -> idx != null && idx == index));
+        } finally {
+            OwnershipContext.pop();
         }
-        btn.onClick(() -> activeTab.set(index));
-        btn.checked(activeTab.map(idx -> idx != null && idx == index));
-        btn.grow();
+        btn.props(Values.grow());
 
         btn.children(() -> {
             btn.icon(icon).text(title);
         });
         tabButtons.add(btn);
-        own(btn);
         headerBar.table().add(btn.element()).growX();
         headerBar.respace();
 
@@ -134,15 +160,20 @@ public final class Tabs extends Component implements CellConfig<Tabs>, ElementCo
                 }
             }
         };
-        own(Effect.of(() -> {
-            Integer cur = activeTab.get();
-            boolean isActive = (cur != null && cur == index);
-            if (isActive) {
-                mountContent.run();
-            }
-            contentContainer.visible = isActive;
-            contentContainer.setLayoutEnabled(isActive);
-        }));
+        OwnershipContext.push(this);
+        try {
+            Effect.of(() -> {
+                Integer cur = activeTab.get();
+                boolean isActive = (cur != null && cur == index);
+                if (isActive) {
+                    mountContent.run();
+                }
+                contentContainer.visible = isActive;
+                contentContainer.setLayoutEnabled(isActive);
+            });
+        } finally {
+            OwnershipContext.pop();
+        }
 
         return this;
     }
@@ -171,6 +202,32 @@ public final class Tabs extends Component implements CellConfig<Tabs>, ElementCo
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
+    }
+
+    public Tabs children(@Nullable Runnable r) {
+        applyPendingProps();
+        OwnershipContext.push(this);
+        AttachmentStack.push(root, ATTACHER);
+        try {
+            if (r != null) {
+                r.run();
+            }
+        } finally {
+            AttachmentStack.pop();
+            OwnershipContext.pop();
+        }
+        AttachmentStack.attachToParent(root);
+        return this;
+    }
+
+    @Override
+    public @Nullable Props<Tabs> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<Tabs> props) {
+        this.pending = props;
     }
 
     @Override

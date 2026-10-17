@@ -7,21 +7,43 @@ import arc.util.Nullable;
 import java.util.List;
 import solim.core.Component;
 import solim.core.DisposableAction;
+import solim.core.OwnershipContext;
 import solim.reactive.Signal;
 import solim.reactive.TwoWayBinding;
-import solim.modifier.ElementConfig;
-import solim.modifier.CellConfig;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
+import solim.modifier.Configurable;
+import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.Props;
+import solim.modifier.SelectCapability;
+import arc.scene.ui.layout.Table;
 
 public final class SolimSelect<T> extends Component
-        implements ElementConfig<SolimSelect<T>>, CellConfig<SolimSelect<T>> {
+        implements Configurable<SolimSelect<T>>, ElementCapability, CellCapability, AlignmentCapability, SelectCapability {
     private final TextButton selectBox;
     private final PendingCellConfig constraints = new PendingCellConfig();
+    private @Nullable Props<SolimSelect<T>> pending;
     private int selectedIndex = 0;
 
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
+    }
+
+    @Override
+    public @Nullable Table table() {
+        return null;
+    }
+
+    @Override
+    public @Nullable Props<SolimSelect<T>> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<SolimSelect<T>> props) {
+        this.pending = props;
     }
 
     public SolimSelect(Signal<T> signal, List<T> options) {
@@ -38,29 +60,34 @@ public final class SolimSelect<T> extends Component
                 selectedIndex = idx;
         }
         selectBox.setText(String.valueOf(signal.peek()));
-        own(new TwoWayBinding<>(
-                signal,
-                () -> options.isEmpty() ? null : options.get(selectedIndex),
-                cur -> {
-                    int idx = options.indexOf(cur);
-                    if (idx >= 0)
-                        selectedIndex = idx;
-                    selectBox.setText(String.valueOf(cur));
-                },
-                onChange -> {
+        OwnershipContext.push(this);
+        try {
+            new TwoWayBinding<>(
+                    signal,
+                    () -> options.isEmpty() ? null : options.get(selectedIndex),
+                    cur -> {
+                        int idx = options.indexOf(cur);
+                        if (idx >= 0)
+                            selectedIndex = idx;
+                        selectBox.setText(String.valueOf(cur));
+                    },
+                    onChange -> {
 
-                    ChangeListener listener = new ChangeListener() {
-                        @Override
-                        public void changed(ChangeEvent event, @Nullable Element actor) {
-                            if (!options.isEmpty()) {
-                                selectedIndex = (selectedIndex + 1) % options.size();
-                                onChange.run();
+                        ChangeListener listener = new ChangeListener() {
+                            @Override
+                            public void changed(ChangeEvent event, @Nullable Element actor) {
+                                if (!options.isEmpty()) {
+                                    selectedIndex = (selectedIndex + 1) % options.size();
+                                    onChange.run();
+                                }
                             }
-                        }
-                    };
-                    selectBox.addListener(listener);
-                    return DisposableAction.of(() -> selectBox.removeListener(listener));
-                }));
+                        };
+                        selectBox.addListener(listener);
+                        return DisposableAction.of(() -> selectBox.removeListener(listener));
+                    });
+        } finally {
+            OwnershipContext.pop();
+        }
     }
 
     public static <T> SolimSelect<T> of(Signal<T> signal, List<T> options) {

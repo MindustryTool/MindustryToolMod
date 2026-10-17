@@ -1,6 +1,16 @@
 package mindustrytool.features.schematicgrid;
 
 import static solim.UI.*;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.minHeight;
+import static solim.modifier.Values.onClick;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -14,6 +24,8 @@ import mindustry.Vars;
 import mindustry.game.Schematic;
 import mindustry.gen.Icon;
 import mindustrytool.components.WebStyles;
+import solim.core.Units;
+import solim.modifier.Values;
 import solim.core.Component;
 import solim.layout.Scroll;
 import solim.overlay.SolimDialog;
@@ -54,10 +66,7 @@ public class SchematicPickerDialog extends SolimDialog {
             return Math.max(0, total - shownCount);
         });
 
-        registerDisposable(Effect.of(searchQuery, query -> resetBatch()));
-        registerDisposable(Effect.of(selectedTag, tag -> resetBatch()));
-
-        Computed<Float> viewportWidth = dvw(100f);
+        Signal<Float> viewportWidth = Units.dvw;
         Readable<Boolean> portrait = isPortrait();
         Computed<Integer> columnCount = new Computed<>(() -> {
             Float width = viewportWidth.get();
@@ -75,23 +84,21 @@ public class SchematicPickerDialog extends SolimDialog {
         });
 
         children(() -> {
-            column().grow().gap(unit(2.5f)).padding(unit(3)).center().children(() -> {
-                row().growX().gap(unit(1.5f))
-                        .padding(unit(1.5f))
-                        .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
-                        .border(1.5f, WebStyles.Colors.BORDER_INPUT)
-                        .center()
+            Effect.of(searchQuery, query -> resetBatch());
+            Effect.of(selectedTag, tag -> resetBatch());
+
+            column().props(grow(), padding(unit(3)), center(), gap(unit(2.5f))).children(() -> {
+                row().props(growX(), padding(unit(1.5f)), Values.rounded(unit(2), WebStyles.Colors.SECONDARY_BG), Values.border(1.5f, WebStyles.Colors.BORDER_INPUT), gap(unit(1.5f)), center())
                         .children(() -> {
-                            icon(Icon.zoom).size(unit(4.5f)).color(WebStyles.Colors.GHOST_FG);
+                            icon(Icon.zoom).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f))).color(WebStyles.Colors.GHOST_FG);
                             textField(searchQuery)
-                                    .growX()
-                                    .height(unit(8))
+                                    .props(growX(), height(unit(8)), prefHeight(unit(8)))
                                     .style(WebStyles.clearInput())
                                     .placeholder(Core.bundle.get("feature.quick-schematic-grid.picker.search"));
                         });
 
-                scroll().minHeight(unit(16)).growX().children(() -> {
-                    wrap().left().gap(unit(1.5f)).children(() -> {
+                scroll().props(minHeight(unit(16)), growX()).children(() -> {
+                    wrap().props(left(), gap(unit(1.5f))).children(() -> {
                         tagChip(null, tags);
                         for (String tag : tags) {
                             tagChip(tag, tags);
@@ -99,7 +106,7 @@ public class SchematicPickerDialog extends SolimDialog {
                     });
                 });
 
-                gridScroll = scroll().grow().onReachBottom(100f, () -> expandBatch(filtered));
+                gridScroll = scroll().props(grow()).onReachBottom(100f, () -> expandBatch(filtered));
                 gridScroll.children(() -> {
                     reactiveGrid(displayed).columns(columnCount).key(SchematicPickerDialog::keyOf)
                             .empty(() -> {
@@ -107,8 +114,8 @@ public class SchematicPickerDialog extends SolimDialog {
                                         .color(Color.gray)
                                         .padding(unit(4));
                             })
-                            .gap(unit(3))
-                            .children(schematic -> new SchematicPickerCard(schematic, () -> {
+                            .props(gap(unit(3)))
+                            .items(schematic -> new SchematicPickerCard(schematic, () -> {
                                 if (onSelect != null) {
                                     onSelect.get(schematic);
                                 }
@@ -121,8 +128,7 @@ public class SchematicPickerDialog extends SolimDialog {
                             String label = Core.bundle.format("feature.quick-schematic-grid.picker.load-more", count);
                             button(label, () -> expandBatch(filtered))
                                     .style(WebStyles.secondary())
-                                    .growX()
-                                    .height(unit(9f));
+                                    .props(growX(), height(unit(9f)), prefHeight(unit(9f)));
                         }
                     });
                 });
@@ -138,8 +144,7 @@ public class SchematicPickerDialog extends SolimDialog {
                 .style(WebStyles.filterChip())
                 .checked(selectedTag.map(sel -> tag == null ? sel == null : tag.equals(sel)))
                 .onClick(() -> selectedTag.set(tag))
-                .padding(unit(1.5f))
-                .tooltip(label)
+                .props(padding(unit(1.5f)), tooltip(label))
                 .children(() -> text(label));
     }
 
@@ -282,27 +287,20 @@ public class SchematicPickerDialog extends SolimDialog {
             String dimensions = schematic.width + " x " + schematic.height;
 
             return column()
-                    .growX()
-                    .gap(unit(1.5f))
+                    .props(growX(), gap(unit(1.5f)))
                     .children(() -> {
                         when(previewReady)
                                 .thenDo(() -> card(WebStyles.previewCardBackground())
-                                        .growX()
-                                        .height(unit(42f))
-                                        .onClick(onClick)
-                                        .tooltip(title)
+                                        .props(growX(), height(unit(42f)), prefHeight(unit(42f)), onClick(onClick), tooltip(title))
                                         .children(() -> {
                                             new BoundedSchematicImage(
                                                     schematic, Readable.of(unit(42f)), unit(42f));
                                         }))
                                 .elseDo(() -> card(WebStyles.previewCardBackground())
-                                        .growX()
-                                        .height(unit(42f))
-                                        .onClick(onClick)
-                                        .tooltip(title)
+                                        .props(growX(), height(unit(42f)), prefHeight(unit(42f)), onClick(onClick), tooltip(title))
                                         .children(() -> {
-                                            column().grow().center().gap(unit(1f)).children(() -> {
-                                                icon(Icon.image).size(unit(6f)).color(Color.lightGray);
+                                            column().props(grow(), center(), gap(unit(1f))).children(() -> {
+                                                icon(Icon.image).props(size(unit(6f)), prefWidth(unit(6f)), prefHeight(unit(6f))).color(Color.lightGray);
                                                 text(Core.bundle.get(
                                                         "feature.quick-schematic-grid.picker.preview-generating"))
                                                         .color(Color.lightGray)

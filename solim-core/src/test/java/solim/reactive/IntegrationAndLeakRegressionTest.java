@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.padding;
 
 import arc.scene.Element;
 import arc.scene.ui.layout.Table;
@@ -73,7 +75,7 @@ public class IntegrationAndLeakRegressionTest extends SolimEnv {
 
         @Override
         protected Element build() {
-            Row row = new Row().gap(8f);
+            Row row = new Row().props(gap(8f));
             Table table = row.table();
             AttachmentStack.push(table);
             Text.of(labelText);
@@ -94,18 +96,18 @@ public class IntegrationAndLeakRegressionTest extends SolimEnv {
         Component app = new Component() {
             @Override
             protected Element build() {
-                Column col = new Column().gap(16f);
+                Column col = new Column().props(gap(16f));
                 Table appTable = col.table();
                 AttachmentStack.push(appTable);
 
-                Row header = new Row().gap(8f);
+                Row header = new Row().props(gap(8f));
                 Table headerTable = header.table();
                 AttachmentStack.push(headerTable);
                 Text.of("App Header");
                 Badge.ofCount(count);
                 AttachmentStack.pop();
 
-                Card card = new Card().padding(12f);
+                Card card = new Card().props(padding(12f));
                 Table cardContainer = card.container();
                 AttachmentStack.push(cardContainer);
 

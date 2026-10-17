@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.grow;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -83,7 +85,7 @@ class lazyComponentAutoAttachTest extends SolimEnv {
         final Element[] divider = new Element[1];
         final Probe[] inputView = new Probe[1];
 
-        Column col = new Column().grow().gap(4f).children(() -> {
+        Column col = new Column().props(grow(), gap(4f)).children(() -> {
             messageList[0] = new Probe();
             Divider div = new Divider(Direction.X);
             AttachmentStack.attachToParent(div.element());

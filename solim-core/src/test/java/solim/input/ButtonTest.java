@@ -1,6 +1,10 @@
 package solim.input;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.width;
 
 import arc.Core;
 import arc.scene.Element;
@@ -22,7 +26,7 @@ class ButtonTest extends SolimEnv {
 
 	@Test
 	void buttonWidthAndHeightCustomSize() {
-		Button btn = new Button().width(200f).height(80f);
+		Button btn = new Button().props(width(200f), prefWidth(200f), height(80f), prefHeight(80f));
 
 		assertEquals(200f, btn.button().getPrefWidth(), 0.01f);
 		assertEquals(80f, btn.button().getPrefHeight(), 0.01f);

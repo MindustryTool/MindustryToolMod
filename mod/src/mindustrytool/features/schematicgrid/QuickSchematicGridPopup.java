@@ -34,7 +34,7 @@ public final class QuickSchematicGridPopup {
         }
         if (menu == null) {
             menu = popup();
-            menu.children(QuickSchematicGridPopup::buildContent);
+            menu.items(QuickSchematicGridPopup::buildContent);
         }
         QuickAccessPopupHelper.show(menu, feature, quickAccessBar);
     }

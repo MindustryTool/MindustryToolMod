@@ -1,6 +1,11 @@
 package solim.layout;
 
-import solim.modifier.CellConfig;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
+import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.Props;
+import solim.modifier.TableCapability;
 
 import arc.graphics.Color;
 import arc.scene.style.Drawable;
@@ -9,8 +14,6 @@ import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.SolimToken;
-import solim.modifier.ElementConfig;
-import solim.modifier.TableConfig;
 import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
@@ -18,7 +21,7 @@ import solim.reactive.Readable;
 import solim.modifier.PendingCellConfig;
 
 public final class Card extends Component
-        implements CellConfig<Card>, ElementConfig<Card>, TableConfig<Card>, GapContainer {
+        implements GapContainer, Configurable<Card>, TableCapability, CellCapability, ContainerCapability<Card>, AlignmentCapability {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -38,6 +41,7 @@ public final class Card extends Component
     private final PendingCellConfig constraints = new PendingCellConfig();
     private float gap = 0f;
     private boolean attached = false;
+    private @Nullable Props<Card> pending;
 
     public Card() {
         this(new Table());
@@ -55,7 +59,7 @@ public final class Card extends Component
     public Card(@Nullable Drawable background) {
         this();
         if (background != null) {
-            background(background);
+            table.setBackground(background);
         }
     }
 
@@ -82,7 +86,7 @@ public final class Card extends Component
 
     public Card color(@Nullable Readable<Color> color) {
         if (color != null) {
-            own(Effect.of(() -> {
+            withinOwnership(() -> Effect.of(() -> {
                 Color c = color.get();
                 if (c != null) {
                     table.setColor(c);
@@ -90,9 +94,10 @@ public final class Card extends Component
             }));
         }
         return this;
-    }
+    };
 
     public Card children(@Nullable Runnable r) {
+        applyPendingProps();
         OwnershipContext.push(this);
         AttachmentStack.push(table, ATTACHER);
         try {
@@ -115,12 +120,6 @@ public final class Card extends Component
         }
     }
 
-    public Card gap(float g) {
-        this.gap = g;
-        respace();
-        return this;
-    }
-
     @Override
     public Direction direction() {
         return Direction.VERTICAL;
@@ -132,92 +131,14 @@ public final class Card extends Component
     }
 
     @Override
+    public void setGap(float g) {
+        this.gap = g;
+        respace();
+    }
+
+    @Override
     public void respace() {
         GapContainer.applySpacing(table, Direction.VERTICAL, gap);
-    }
-
-    @Override
-    public Card align(int align) {
-        TableConfig.super.align(align);
-        constraints.align = align;
-        constraints.applyAlignToParentCell(element());
-        table.defaults().align(align);
-        for (Cell<?> c : table.getCells()) {
-            if (c != null) {
-                c.align(align);
-            }
-        }
-        return this;
-    }
-
-    @Override
-    public Card center() {
-        TableConfig.super.center();
-        constraints.alignCenter();
-        constraints.applyAlignToParentCell(element());
-        table.defaults().center();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null) {
-                c.center();
-            }
-        }
-        return this;
-    }
-
-    @Override
-    public Card top() {
-        TableConfig.super.top();
-        constraints.alignTop();
-        constraints.applyAlignToParentCell(element());
-        table.defaults().top();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null) {
-                c.top();
-            }
-        }
-        return this;
-    }
-
-    @Override
-    public Card bottom() {
-        TableConfig.super.bottom();
-        constraints.alignBottom();
-        constraints.applyAlignToParentCell(element());
-        table.defaults().bottom();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null) {
-                c.bottom();
-            }
-        }
-        return this;
-    }
-
-    @Override
-    public Card left() {
-        TableConfig.super.left();
-        constraints.alignLeft();
-        constraints.applyAlignToParentCell(element());
-        table.defaults().left();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null) {
-                c.left();
-            }
-        }
-        return this;
-    }
-
-    @Override
-    public Card right() {
-        TableConfig.super.right();
-        constraints.alignRight();
-        constraints.applyAlignToParentCell(element());
-        table.defaults().right();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null) {
-                c.right();
-            }
-        }
-        return this;
     }
 
     @Override
@@ -227,6 +148,15 @@ public final class Card extends Component
     }
 
     @Override
+    public @Nullable Props<Card> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<Card> props) {
+        this.pending = props;
+    }
+
     public Card self() {
         return this;
     }

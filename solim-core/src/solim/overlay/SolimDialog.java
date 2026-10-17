@@ -16,15 +16,27 @@ import mindustry.ui.dialogs.BaseDialog;
 import arc.func.Prov;
 import solim.core.Component;
 import solim.core.Disposable;
+import solim.core.OwnershipContext;
+import solim.core.SolimToken;
 import solim.graphics.RoundedDrawable;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
+import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.TableCapability;
+import solim.modifier.PendingCellConfig;
+import solim.modifier.Props;
 import solim.modifier.RoundedHelper;
 import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
 
-public class SolimDialog extends Component {
+public class SolimDialog extends Component
+        implements Configurable<SolimDialog>, TableCapability, CellCapability, ContainerCapability<SolimDialog>, AlignmentCapability {
 
     private final BaseDialog wrapped;
+    private final PendingCellConfig constraints = new PendingCellConfig();
+    private @Nullable Props<SolimDialog> pending;
     private boolean isShown = false;
     private @Nullable Runnable contentBuilder;
     private boolean contentBuilt = false;
@@ -44,6 +56,32 @@ public class SolimDialog extends Component {
         this.wrapped = wrapped;
         wrapped.name = name;
         wrapped.setFillParent(true);
+        SolimToken.bind(wrapped, this, constraints);
+    }
+
+    @Override
+    public Table table() {
+        return wrapped.cont;
+    }
+
+    @Override
+    public PendingCellConfig cellConfig() {
+        return constraints;
+    }
+
+    @Override
+    public @Nullable Props<SolimDialog> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<SolimDialog> props) {
+        this.pending = props;
+    }
+
+    @Override
+    public SolimDialog self() {
+        return this;
     }
 
     public SolimDialog fillParent(boolean fillParent) {
@@ -62,6 +100,7 @@ public class SolimDialog extends Component {
     }
 
     public SolimDialog children(@Nullable Runnable contentBuilder) {
+        applyPendingProps();
         this.contentBuilder = contentBuilder;
         return this;
     }
@@ -69,20 +108,24 @@ public class SolimDialog extends Component {
     public void ensureContentBuilt() {
         if (!contentBuilt && contentBuilder != null) {
             contentBuilt = true;
-            Component comp = new Component() {
-                @Override
-                protected Element build() {
-                    AttachmentStack.push(wrapped.cont);
-                    try {
-                        contentBuilder.run();
-                    } finally {
-                        AttachmentStack.pop();
+            OwnershipContext.push(this);
+            try {
+                Component comp = new Component() {
+                    @Override
+                    protected Element build() {
+                        AttachmentStack.push(wrapped.cont);
+                        try {
+                            contentBuilder.run();
+                        } finally {
+                            AttachmentStack.pop();
+                        }
+                        return wrapped.cont;
                     }
-                    return wrapped.cont;
-                }
-            };
-            own(comp);
-            comp.element();
+                };
+                comp.element();
+            } finally {
+                OwnershipContext.pop();
+            }
         }
     }
 
@@ -124,7 +167,8 @@ public class SolimDialog extends Component {
     }
 
     public <T extends Disposable> T registerDisposable(T disposable) {
-        return own(disposable);
+        adopt(disposable);
+        return disposable;
     }
 
     public <T> Disposable listen(Class<T> eventType, Cons<T> listener) {
@@ -134,7 +178,8 @@ public class SolimDialog extends Component {
     public <T> Signal<T> createSignal(Func<Runnable, Disposable> registrar, Prov<T> Prov) {
         Signal<T> signal = Signal.of(Prov.get());
         if (registrar != null) {
-            own(registrar.get(() -> signal.set(Prov.get())));
+            Disposable registration = registrar.get(() -> signal.set(Prov.get()));
+            adopt(registration);
         }
         return signal;
     }
@@ -208,6 +253,18 @@ public class SolimDialog extends Component {
 
     public SolimDialog maxWidth(float maxWidth) {
         wrapped.cont.defaults().maxWidth(maxWidth);
+        return this;
+    }
+
+    public SolimDialog maxWidth(Readable<Float> maxWidth) {
+        if (maxWidth != null) {
+            Effect.of(() -> {
+                Float w = maxWidth.get();
+                if (w != null) {
+                    wrapped.cont.defaults().maxWidth(w);
+                }
+            });
+        }
         return this;
     }
 

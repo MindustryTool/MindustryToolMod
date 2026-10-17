@@ -81,7 +81,7 @@ class OwnershipTreeTest extends SolimCoreEnv {
 
     @Test
     void nonComponentResourcesStayLeavesAndDoNotBecomeChildren() {
-        Computed<String> derived = Signal.computed(() -> "v");
+        Computed<String> derived = inOwnershipWindow(() -> Signal.computed(() -> "v"));
         derived.get();
         Component[] ownerRef = new Component[1];
 
@@ -110,8 +110,8 @@ class OwnershipTreeTest extends SolimCoreEnv {
         Component owner = new Component() {
             @Override
             protected Element build() {
-                own(DisposableAction.of(() -> log.add("own-leaf-1")));
-                own(DisposableAction.of(() -> log.add("own-leaf-2")));
+                adopt(DisposableAction.of(() -> log.add("own-leaf-1")));
+                adopt(DisposableAction.of(() -> log.add("own-leaf-2")));
 
                 Component child = new Component() {
                     @Override
@@ -184,8 +184,8 @@ class OwnershipTreeTest extends SolimCoreEnv {
         Component owner = new Component() {
             @Override
             protected Element build() {
-                own(DisposableAction.of(() -> log.add("own-leaf-1")));
-                own(DisposableAction.of(() -> log.add("own-leaf-2")));
+                adopt(DisposableAction.of(() -> log.add("own-leaf-1")));
+                adopt(DisposableAction.of(() -> log.add("own-leaf-2")));
 
                 Probe bad = new Probe("bad-child", log);
                 bad.failOnDispose = new RuntimeException("child disposal failed");

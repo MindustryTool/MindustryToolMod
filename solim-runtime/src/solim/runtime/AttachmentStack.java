@@ -78,6 +78,10 @@ public final class AttachmentStack {
         cellConfigurator = configurator;
     }
 
+    public static @Nullable CellConfigurator cellConfigurator() {
+        return cellConfigurator;
+    }
+
     public static void setCellConfigurator(@Nullable Cons2<Cell<?>, Element> configurator) {
         cellConfigurator = configurator != null
                 ? (cell, child, comp) -> configurator.get(cell, child)
@@ -241,7 +245,7 @@ public final class AttachmentStack {
         for (Component comp : list) {
             Element el = isolate(comp::element);
             if (el != null && el.parent == null) {
-                attach(entry.table, el, entry.attacher, comp);
+                attachPending(entry.table, el, entry.attacher, comp);
             }
             if (comp instanceof SpacingAware) {
                 ((SpacingAware) comp).applySpacing();
@@ -272,7 +276,20 @@ public final class AttachmentStack {
         }
         Entry entry = stack.peek();
         attachPendingComponents(entry);
-        attach(entry.table, child, entry.attacher, null);
+        attachPending(entry.table, child, entry.attacher, null);
+    }
+
+    public static Cell<?> attach(Table parent, Element child, @Nullable Attacher attacher,
+            @Nullable Component component) {
+        if (parent == null || child == null) {
+            return null;
+        }
+        Cell<?> cell = attacher != null ? attacher.attach(parent, child) : parent.add(child);
+        CellConfigurator configurator = cellConfigurator;
+        if (cell != null && configurator != null) {
+            configurator.configure(cell, child, component);
+        }
+        return cell;
     }
 
     public static Element add(Object child) {
@@ -287,16 +304,12 @@ public final class AttachmentStack {
         }
     }
 
-    private static void attach(Table parent, Element child, Attacher attacher, @Nullable Component comp) {
+    private static void attachPending(Table parent, Element child, Attacher attacher, @Nullable Component comp) {
         if (parent == null || child == null) {
             return;
         }
         if (child.parent != parent && !parent.getChildren().contains(child, true)) {
-            Cell<?> cell = attacher != null ? attacher.attach(parent, child) : parent.add(child);
-            CellConfigurator configurator = cellConfigurator;
-            if (cell != null && configurator != null) {
-                configurator.configure(cell, child, comp);
-            }
+            attach(parent, child, attacher, comp);
         }
     }
 }

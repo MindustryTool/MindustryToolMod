@@ -5,16 +5,21 @@ import solim.core.Component;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.tooltip;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import arc.func.Cons;
 import arc.scene.Element;
 import arc.scene.event.EventListener;
 import arc.scene.ui.Label;
 import arc.scene.ui.Tooltip;
 import arc.scene.ui.layout.Table;
+import arc.util.Nullable;
+import solim.core.OwnershipContext;
 import solim.input.Button;
+import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
@@ -95,7 +100,7 @@ class ElementConfigTooltipTest extends SolimEnv {
     @Test
     void buttonInheritsElementConfigTooltip() {
         Button btn = new Button();
-        btn.tooltip("Button tooltip");
+        btn.props(tooltip("Button tooltip"));
 
         assertEquals(1, tooltipCount(btn.element()), "Button should inherit tooltip from ElementConfig");
         btn.dispose();
@@ -120,19 +125,70 @@ class ElementConfigTooltipTest extends SolimEnv {
         return null;
     }
 
-    private static final class TestTarget extends Component implements ElementConfig<TestTarget> {
+    private static final class TestTarget extends Component
+            implements Configurable<TestTarget>, ElementCapability, CellCapability {
+        private final Table table = new Table();
+        private final PendingCellConfig constraints = new PendingCellConfig();
+        private @Nullable Props<TestTarget> pending;
 
         TestTarget() {
             super(new Table());
         }
 
+        public TestTarget tooltip(@Nullable String tip) {
+            props(Values.tooltip(tip));
+            return this;
+        }
+
+        public TestTarget tooltip(@Nullable Readable<String> tip) {
+            props(Values.tooltip(tip));
+            return this;
+        }
+
+        public TestTarget tooltip(@Nullable Cons<Table> builder) {
+            props(Values.tooltip(builder));
+            return this;
+        }
+
         @Override
+        public Table table() {
+            return table;
+        }
+
+        @Override
+        public PendingCellConfig cellConfig() {
+            return constraints;
+        }
+
+        
+        public TestTarget children(@Nullable Runnable block) {
+            applyPendingProps();
+            OwnershipContext.push(this);
+            try {
+                if (block != null) {
+                    block.run();
+                }
+            } finally {
+                OwnershipContext.pop();
+            }
+            return this;
+        }
+
+        @Override
+        public @Nullable Props<TestTarget> pendingProps() {
+            return pending;
+        }
+
+        @Override
+        public void setPendingProps(@Nullable Props<TestTarget> props) {
+            this.pending = props;
+        }
+
         public TestTarget name(String name) {
             setName(name);
             return this;
         }
 
-        @Override
         public TestTarget self() {
             return this;
         }

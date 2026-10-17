@@ -1,6 +1,14 @@
 package mindustrytool.features.schematicgrid;
 
 import static solim.UI.*;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.onClick;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -8,6 +16,7 @@ import mindustry.game.Schematic;
 import mindustry.gen.Icon;
 import mindustry.ui.dialogs.SchematicsDialog.SchematicImage;
 import mindustrytool.components.WebStyles;
+import solim.modifier.Values;
 import solim.overlay.SolimDialog;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
@@ -35,9 +44,6 @@ public class QuickSchematicGridSlotDialog extends SolimDialog {
         schematicFile = Signal.of(entry != null ? entry.schematicFile : null);
         iconText = Signal.of(entry != null ? entry.customIcon : null);
 
-        Effect.of(labelText, value -> persist());
-        Effect.of(iconText, value -> persist());
-
         Readable<Schematic> resolved = Signal.computed(
                 () -> feature.resolveSchematic(schematicFile.get(), schematicName.get()));
 
@@ -47,28 +53,29 @@ public class QuickSchematicGridSlotDialog extends SolimDialog {
         maxWidth(500f);
 
         children(() -> {
-            column().grow().gap(unit(2.5f)).padding(unit(3)).center().children(() -> {
+            Effect.of(labelText, value -> persist());
+            Effect.of(iconText, value -> persist());
+
+            column().props(grow(), padding(unit(3)), center(), gap(unit(2.5f))).children(() -> {
                 text(Core.bundle.get("feature.quick-schematic-grid.edit.schematic"))
                         .growX()
                         .left()
                         .color(WebStyles.Colors.GHOST_FG);
 
                 card(WebStyles.previewCardBackground())
-                        .growX()
-                        .height(unit(42f))
-                        .onClick(this::repickSchematic)
+                        .props(growX(), height(unit(42f)), prefHeight(unit(42f)), onClick(this::repickSchematic))
                         .children(() -> {
                             dynamic(resolved, schematic -> {
                                 if (schematic == null) {
-                                    row().grow().center().children(() -> {
-                                        icon(Icon.warning).size(unit(10)).color(Color.scarlet);
+                                    row().props(grow(), center()).children(() -> {
+                                        icon(Icon.warning).props(size(unit(10)), prefWidth(unit(10)), prefHeight(unit(10))).color(Color.scarlet);
                                     });
                                 } else {
-                                    row().grow().children(() -> {
+                                    row().props(grow()).children(() -> {
                                         arc(new SchematicImage(schematic));
                                     });
                                 }
-                            }).grow();
+                            }).props(grow());
                         });
 
                 text(Core.bundle.get("feature.quick-schematic-grid.edit.label"))
@@ -76,15 +83,12 @@ public class QuickSchematicGridSlotDialog extends SolimDialog {
                         .left()
                         .color(WebStyles.Colors.GHOST_FG);
 
-                row().growX().gap(unit(1.5f))
-                        .padding(unit(1.5f))
-                        .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
-                        .border(1.5f, WebStyles.Colors.BORDER_INPUT)
-                        .center()
+                row().props(growX(), gap(unit(1.5f)),
+                        padding(unit(1.5f)), Values.rounded(unit(2), WebStyles.Colors.SECONDARY_BG), Values.border(1.5f, WebStyles.Colors.BORDER_INPUT),
+                        center())
                         .children(() -> {
                             textField(labelText)
-                                    .growX()
-                                    .height(unit(8))
+                                    .props(growX(), height(unit(8)), prefHeight(unit(8)))
                                     .style(WebStyles.clearInput())
                                     .placeholder(Core.bundle.get("feature.quick-schematic-grid.edit.label.hint"));
                         });
@@ -94,7 +98,7 @@ public class QuickSchematicGridSlotDialog extends SolimDialog {
                         .left()
                         .color(WebStyles.Colors.GHOST_FG);
 
-                row().growX().gap(unit(2)).center().children(() -> {
+                row().props(growX(), gap(unit(2)), center()).children(() -> {
                     dynamic(iconText, icon -> {
                         if (icon == null || icon.trim().isEmpty()) {
                             text(Core.bundle.get("feature.quick-schematic-grid.edit.icon.none"))
@@ -104,17 +108,17 @@ public class QuickSchematicGridSlotDialog extends SolimDialog {
                         } else {
                             text(icon).fontScale(1.5f).growX().left();
                         }
-                    }).growX();
+                    }).props(growX());
 
                     spacer();
 
                     button(Core.bundle.get("feature.quick-schematic-grid.edit.icon.pick"), this::pickIcon)
                             .style(WebStyles.secondary())
-                            .height(unit(9));
+                            .props(height(unit(9)), prefHeight(unit(9)));
 
                     button(Core.bundle.get("feature.quick-schematic-grid.edit.icon.clear"), this::clearIcon)
                             .style(WebStyles.ghost())
-                            .height(unit(9));
+                            .props(height(unit(9)), prefHeight(unit(9)));
                 });
 
                 divider();
@@ -122,11 +126,10 @@ public class QuickSchematicGridSlotDialog extends SolimDialog {
                 button(this::clearSlot)
                         .style(WebStyles.ghost())
                         .children(() -> {
-                            icon(Icon.cancel).size(unit(5)).color(Color.scarlet);
+                            icon(Icon.cancel).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))).color(Color.scarlet);
                             text(Core.bundle.get("feature.quick-schematic-grid.edit.clear-slot")).color(Color.scarlet);
                         })
-                        .growX()
-                        .height(unit(9));
+                        .props(growX(), height(unit(9)), prefHeight(unit(9)));
             });
         });
     }

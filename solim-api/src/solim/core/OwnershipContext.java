@@ -48,9 +48,8 @@ public final class OwnershipContext {
             return null;
         }
         DisposableOwner current = stack.peek();
-        if (current != null) {
-            current.adopt(disposable);
-        }
+        DisposableOwner owner = current != null ? current : SessionRoot.get();
+        owner.adopt(disposable);
         return disposable;
     }
 

@@ -1,6 +1,12 @@
 package mindustrytool.features.pathfinding;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.paddingX;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
 
 import arc.Core;
 import arc.scene.Element;
@@ -48,17 +54,17 @@ public class PathfindingSettingsView extends Component {
         return SettingCard.section(Icon.layers,
                 Core.bundle.get("feature.pathfinding.settings.layers", "Display Layers"), () -> {
                     checkbox(Core.bundle.get("feature.pathfinding.settings.draw-unit-path", "Draw Unit Paths"),
-                            feature.drawUnitPathConfig.signal()).growX();
+                            feature.drawUnitPathConfig.signal()).props(growX());
 
                     divider().color(WebStyles.Colors.SECTION_BORDER);
 
                     checkbox(Core.bundle.get("feature.pathfinding.settings.draw-spawn-path", "Draw Spawn Point Paths"),
-                            feature.drawSpawnPathConfig.signal()).growX();
+                            feature.drawSpawnPathConfig.signal()).props(growX());
 
                     divider().color(WebStyles.Colors.SECTION_BORDER);
 
                     checkbox(Core.bundle.get("feature.pathfinding.settings.draw-allies", "Draw Ally Unit Paths"),
-                            feature.drawAlliesConfig.signal()).growX();
+                            feature.drawAlliesConfig.signal()).props(growX());
                 });
     }
 
@@ -95,17 +101,16 @@ public class PathfindingSettingsView extends Component {
     private Component costTypesCard() {
         return SettingCard.section(Icon.terrain,
                 Core.bundle.get("feature.pathfinding.settings.cost-types", "Movement Cost Types"), () -> {
-                    wrap().gap(unit(1.5f)).children(() -> {
-                        for (int i = 0; i < feature.costTypeConfigs.length; i++) {
+                    wrap().props(gap(unit(1.5f))).children(() -> {
+                        for (int i = 0; i < feature.costTypeConfigs.size; i++) {
                             final int index = i;
                             String bundleKey = "feature.pathfinding.settings.cost." + COST_KEY_SUFFIXES[index];
                             button(Core.bundle.get(bundleKey, COST_KEY_SUFFIXES[index]),
-                                    () -> feature.costTypeConfigs[index]
-                                            .set(!Boolean.TRUE.equals(feature.costTypeConfigs[index].signal().peek())))
+                                    () -> feature.costTypeConfigs.get(index)
+                                            .set(!Boolean.TRUE.equals(feature.costTypeConfigs.get(index).signal().peek())))
                                     .style(WebStyles.filterChipText())
-                                    .checked(feature.costTypeConfigs[index].signal().map(v -> Boolean.TRUE.equals(v)))
-                                    .height(unit(8))
-                                    .paddingX(unit(2f));
+                                    .checked(feature.costTypeConfigs.get(index).signal().map(v -> Boolean.TRUE.equals(v)))
+                                    .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2f)));
                         }
                     });
                 });
@@ -115,11 +120,9 @@ public class PathfindingSettingsView extends Component {
         return SettingCard.card().children(() -> {
             button(feature::resetToDefaults)
                     .style(WebStyles.outline())
-                    .growX()
-                    .height(unit(11))
-                    .gap(unit(2))
+                    .props(growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
                     .children(() -> {
-                        icon(Icon.refresh).size(unit(6));
+                        icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                         text(Core.bundle.get("feature.pathfinding.settings.reset", "Reset to Defaults"));
                     });
         });

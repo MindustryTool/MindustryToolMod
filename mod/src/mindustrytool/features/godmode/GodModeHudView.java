@@ -1,6 +1,17 @@
 package mindustrytool.features.godmode;
 
 import static solim.UI.*;
+import static solim.modifier.Values.border;
+import static solim.modifier.Values.draggable;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.paddingLeft;
+import static solim.modifier.Values.paddingRight;
+import static solim.modifier.Values.position;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.rounded;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -30,24 +41,20 @@ public class GodModeHudView extends Component {
 
         hud = hud(() -> {
             row()
-                    .padding(unit(1))
-                    .gap(unit(1))
-                    .rounded(unit(2), WebStyles.Colors.SECTION_BG)
-                    .border(1.5f, WebStyles.Colors.BORDER)
-                    .center()
+                    .props(padding(unit(1)), rounded(unit(2), WebStyles.Colors.SECTION_BG), border(1.5f, WebStyles.Colors.BORDER), gap(unit(1)), center())
                     .children(() -> {
                         when(feature.hideDragHandleConfig.signal())
                                 .elseDo(() -> button()
                                         .style(WebStyles.ghost())
-                                        .size(buttonSize)
-                                        .children(() -> icon(Icon.move).size(iconSize))
-                                        .draggable(feature.xSignal, feature.ySignal));
+                                        .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize))
+                                        .children(() -> icon(Icon.move).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)))
+                                        .props(draggable(feature.xSignal, feature.ySignal)));
 
                         buildControls(feature, null);
                     });
         });
 
-        hud.position(feature.xSignal, feature.ySignal);
+        hud.props(position(feature.xSignal, feature.ySignal));
 
         effect(() -> {
             scale.get();
@@ -75,57 +82,52 @@ public class GodModeHudView extends Component {
 
     private static Component buildActiveTools(GodModeFeature feature, GodModeProvider provider,
             Readable<Float> buttonSize, Readable<Float> iconSize, @Nullable Readable<Boolean> canEdit) {
-        return row().gap(unit(1)).center().children(() -> {
+        return row().props(gap(unit(1)), center()).children(() -> {
             button()
                     .style(WebStyles.ghost())
-                    .size(buttonSize)
-                    .tooltip(Core.bundle.get("feature.god-mode.hud.team"))
+                    .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(Core.bundle.get("feature.god-mode.hud.team")))
                     .onClick(() -> new GodModeTeamDialog(provider).show())
                     .enabled(canEdit)
-                    .children(() -> icon(Icon.players).size(iconSize));
+                    .children(() -> icon(Icon.players).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)));
 
             button()
                     .style(WebStyles.ghost())
-                    .size(buttonSize)
-                    .tooltip(Core.bundle.get("feature.god-mode.hud.items"))
+                    .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(Core.bundle.get("feature.god-mode.hud.items")))
                     .onClick(() -> new GodModeItemsDialog(provider).show())
                     .enabled(canEdit)
-                    .children(() -> icon(Icon.box).size(iconSize));
+                    .children(() -> icon(Icon.box).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)));
 
             button()
                     .style(WebStyles.ghost())
-                    .size(buttonSize)
-                    .tooltip(Core.bundle.get("feature.god-mode.hud.units"))
+                    .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(Core.bundle.get("feature.god-mode.hud.units")))
                     .onClick(() -> new GodModeUnitsDialog(provider).show())
                     .enabled(canEdit)
-                    .children(() -> icon(Icon.units).size(iconSize));
+                    .children(() -> icon(Icon.units).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)));
 
             button()
                     .style(WebStyles.ghost())
-                    .size(buttonSize)
-                    .tooltip(Core.bundle.get("feature.god-mode.hud.effects"))
+                    .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(Core.bundle.get("feature.god-mode.hud.effects")))
                     .onClick(() -> new GodModeEffectsDialog(provider).show())
                     .enabled(canEdit)
-                    .children(() -> icon(Icon.effect).size(iconSize));
+                    .children(() -> icon(Icon.effect).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)));
 
             button()
                     .style(WebStyles.ghost())
-                    .size(buttonSize)
-                    .tooltip(Core.bundle.get("feature.god-mode.hud.core"))
+                    .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(Core.bundle.get("feature.god-mode.hud.core")))
                     .onClick(() -> new GodModeCoreDialog(provider).show())
                     .enabled(canEdit)
-                    .children(() -> icon(Icon.hammer).size(iconSize));
+                    .children(() -> icon(Icon.hammer).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)));
 
             button()
                     .style(WebStyles.filterChip())
-                    .size(buttonSize)
+                    .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize))
                     .checked(feature.fogDisabledSignal())
-                    .tooltip(feature.fogDisabledSignal().map(disabled -> Boolean.TRUE.equals(disabled)
+                    .props(tooltip(feature.fogDisabledSignal().map(disabled -> Boolean.TRUE.equals(disabled)
                             ? Core.bundle.get("feature.god-mode.hud.fog-off")
-                            : Core.bundle.get("feature.god-mode.hud.fog-on")))
+                            : Core.bundle.get("feature.god-mode.hud.fog-on"))))
                     .onClick(feature::toggleFog)
                     .enabled(canEdit)
-                    .children(() -> icon(Icon.eye).size(iconSize).color(
+                    .children(() -> icon(Icon.eye).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)).color(
                             feature.fogDisabledSignal()
                                     .map(dis -> Boolean.TRUE.equals(dis) ? Color.gold : WebStyles.Colors.GHOST_FG)));
         });
@@ -133,18 +135,17 @@ public class GodModeHudView extends Component {
 
     private static Component buildUnavailableContent(GodModeFeature feature, Readable<Float> buttonSize,
             Readable<Float> iconSize, @Nullable Readable<Boolean> canEdit) {
-        return row().gap(unit(1.5f)).center().paddingLeft(unit(1)).paddingRight(unit(1)).children(() -> {
+        return row().props(paddingLeft(unit(1)), paddingRight(unit(1)), gap(unit(1.5f)), center()).children(() -> {
             text(Core.bundle.get("feature.god-mode.hud.no-provider"))
                     .color(WebStyles.Colors.DANGER)
                     .center();
 
             button()
                     .style(WebStyles.outline())
-                    .size(buttonSize)
-                    .tooltip(Core.bundle.get("feature.god-mode.hud.refresh-provider"))
+                    .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(Core.bundle.get("feature.god-mode.hud.refresh-provider")))
                     .onClick(feature::checkProvider)
                     .enabled(canEdit)
-                    .children(() -> icon(Icon.refresh).size(iconSize).color(WebStyles.Colors.PRIMARY_FG));
+                    .children(() -> icon(Icon.refresh).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)).color(WebStyles.Colors.PRIMARY_FG));
         });
     }
 

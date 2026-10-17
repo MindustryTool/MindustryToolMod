@@ -8,11 +8,12 @@ import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import solim.core.Disposable;
+import solim.core.DisposableOwner;
 import solim.core.OwnershipContext;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 
-public class RoundedDrawable implements Drawable, Disposable {
+public class RoundedDrawable implements Drawable, DisposableOwner {
 
     private int radius;
     private float stroke;
@@ -34,11 +35,11 @@ public class RoundedDrawable implements Drawable, Disposable {
 
     private final List<Disposable> bindings = new ArrayList<>();
 
-    private <T extends Disposable> T own(T binding) {
-        if (binding != null && !disposed) {
-            bindings.add(binding);
+    @Override
+    public void adopt(Disposable resource) {
+        if (resource != null && !disposed) {
+            bindings.add(resource);
         }
-        return binding;
     }
 
     public RoundedDrawable(int radius) {
@@ -90,12 +91,17 @@ public class RoundedDrawable implements Drawable, Disposable {
 
     public RoundedDrawable radius(Readable<Integer> radiusSignal) {
         if (radiusSignal != null) {
-            own(OwnershipContext.register(Effect.of(() -> {
+            OwnershipContext.push(this);
+            try {
+                Effect.of(() -> {
                 Integer r = radiusSignal.get();
                 if (r != null) {
                     radius(r);
                 }
-            })));
+                });
+            } finally {
+                OwnershipContext.pop();
+            }
         }
         return this;
     }
@@ -113,12 +119,17 @@ public class RoundedDrawable implements Drawable, Disposable {
 
     public RoundedDrawable fillColor(Readable<Color> colorSignal) {
         if (colorSignal != null) {
-            own(OwnershipContext.register(Effect.of(() -> {
+            OwnershipContext.push(this);
+            try {
+                Effect.of(() -> {
                 Color c = colorSignal.get();
                 if (c != null) {
                     fillColor(c);
                 }
-            })));
+                });
+            } finally {
+                OwnershipContext.pop();
+            }
         }
         return this;
     }
@@ -144,33 +155,48 @@ public class RoundedDrawable implements Drawable, Disposable {
         this.stroke = Math.max(0f, stroke);
         updatePatches();
         if (colorSignal != null) {
-            own(OwnershipContext.register(Effect.of(() -> {
+            OwnershipContext.push(this);
+            try {
+                Effect.of(() -> {
                 Color c = colorSignal.get();
                 if (c != null) {
                     this.borderColor.set(c);
                 }
-            })));
+                });
+            } finally {
+                OwnershipContext.pop();
+            }
         }
         return this;
     }
 
     public RoundedDrawable border(Readable<Float> strokeSignal, Readable<Color> colorSignal) {
         if (strokeSignal != null) {
-            own(OwnershipContext.register(Effect.of(() -> {
+            OwnershipContext.push(this);
+            try {
+                Effect.of(() -> {
                 Float s = strokeSignal.get();
                 if (s != null) {
                     this.stroke = Math.max(0f, s);
                     updatePatches();
                 }
-            })));
+                });
+            } finally {
+                OwnershipContext.pop();
+            }
         }
         if (colorSignal != null) {
-            own(OwnershipContext.register(Effect.of(() -> {
+            OwnershipContext.push(this);
+            try {
+                Effect.of(() -> {
                 Color c = colorSignal.get();
                 if (c != null) {
                     this.borderColor.set(c);
                 }
-            })));
+                });
+            } finally {
+                OwnershipContext.pop();
+            }
         }
         return this;
     }

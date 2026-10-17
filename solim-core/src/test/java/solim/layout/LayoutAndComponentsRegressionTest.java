@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.padding;
 
 import arc.scene.Element;
 import arc.scene.event.ClickListener;
@@ -49,7 +50,7 @@ public class LayoutAndComponentsRegressionTest extends SolimEnv {
 
     @Test
     void cardAppliesContentAndPadding() {
-        Card card = new Card().padding(16f);
+        Card card = new Card().props(padding(16f));
         Table container = card.container();
 
         Element content = new Element();

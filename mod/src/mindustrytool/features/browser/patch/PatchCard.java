@@ -1,6 +1,16 @@
 package mindustrytool.features.browser.patch;
 
 import static solim.UI.*;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.onClick;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
+import static solim.modifier.Values.width;
 
 import arc.Core;
 import arc.func.Prov;
@@ -108,18 +118,15 @@ public class PatchCard extends Component {
 
         return column()
                 .name("PatchCard-" + patch.getItemId())
-                .width(size)
-                .gap(unit(2))
+                .props(width(size), prefWidth(size), gap(unit(2)))
                 .children(() -> {
                     card(WebStyles.previewCardBackground())
                             .name("PatchCard-content-" + patch.getItemId())
-                            .size(size)
-                            .onClick(onClick)
-                            .padding(unit(3))
-                            .children(() -> column().grow().gap(unit(2)).children(() -> {
-                                row().growX().gap(unit(1.5f)).children(() -> {
+                            .props(size(size), prefWidth(size), prefHeight(size), onClick(onClick), padding(unit(3)))
+                            .children(() -> column().props(grow(), gap(unit(2))).children(() -> {
+                                row().props(growX(), gap(unit(1.5f))).children(() -> {
                                     card(WebStyles.previewCardBackground())
-                                            .padding(unit(0.5f), unit(1.5f), unit(0.5f), unit(1.5f))
+                                            .props(padding(unit(0.5f), unit(1.5f), unit(0.5f), unit(1.5f)))
                                             .children(() -> text(typeLabel)
                                                     .style(Styles.defaultLabel)
                                                     .fontScale(0.75f)
@@ -132,7 +139,7 @@ public class PatchCard extends Component {
                                             .growX();
                                 });
 
-                                row().grow().top().left().children(() -> text(description)
+                                row().props(grow(), top(), left()).children(() -> text(description)
                                         .style(Styles.defaultLabel)
                                         .fontScale(0.85f)
                                         .color(Color.lightGray)
@@ -141,7 +148,7 @@ public class PatchCard extends Component {
                                         .growX());
                             }));
 
-                    row().width(size).gap(unit(1.5f)).children(() -> {
+                    row().props(width(size), prefWidth(size), gap(unit(1.5f))).children(() -> {
                         statButton(
                                 likesText,
                                 FileIcon.of("heart.png", Icon.upOpenSmall),
@@ -164,11 +171,9 @@ public class PatchCard extends Component {
 
                         button(onCopy)
                                 .style(WebStyles.actionCardText())
-                                .growX()
-                                .height(unit(9))
+                                .props(growX(), height(unit(9)), prefHeight(unit(9)), tooltip(Core.bundle.get("browser.patch.copy")))
                                 .enabled(busy.map(b -> !b))
-                                .tooltip(Core.bundle.get("browser.patch.copy"))
-                                .children(() -> icon(Icon.copy).size(unit(4.5f)).color(Color.white));
+                                .children(() -> icon(Icon.copy).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f))).color(Color.white));
                     });
                 }).element();
     }
@@ -176,12 +181,9 @@ public class PatchCard extends Component {
     private Button statButton(String count, Drawable iconDrawable, Color textColor, Runnable action, String tooltip) {
         return button(action)
                 .style(WebStyles.actionCardText())
-                .growX()
-                .height(unit(9))
-                .gap(unit(1))
-                .tooltip(tooltip)
+                .props(growX(), height(unit(9)), prefHeight(unit(9)), gap(unit(1)), tooltip(tooltip))
                 .children(() -> {
-                    icon(iconDrawable).size(unit(4.5f)).color(Color.white).marginRight(unit(1));
+                    icon(iconDrawable).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f))).color(Color.white).marginRight(unit(1));
                     text(count).style(Styles.defaultLabel).fontScale(0.85f).color(textColor);
                 });
     }

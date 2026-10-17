@@ -19,6 +19,7 @@ import solim.feedback.ProgressBar;
 import solim.feedback.Spinner;
 import solim.reactive.Computed;
 import solim.reactive.Signal;
+import arc.func.Prov;
 import arc.scene.ui.Image;
 import arc.scene.ui.Label;
 import java.util.ArrayList;
@@ -26,6 +27,19 @@ import java.util.List;
 import solim.test.SolimEnv;
 
 class OverlayFeedbackTest extends SolimEnv {
+
+    private static final class Holder extends Component {
+    }
+
+    private static <T> T insideWindow(Prov<T> factory) {
+        Holder holder = new Holder();
+        solim.core.OwnershipContext.push(holder);
+        try {
+            return factory.get();
+        } finally {
+            solim.core.OwnershipContext.pop();
+        }
+    }
 
     @BeforeAll
     static void checkArcContext() {
@@ -128,7 +142,7 @@ class OverlayFeedbackTest extends SolimEnv {
     @Test
     void progressBarReactive() {
         Signal<Float> progress = Signal.of(0.3f);
-        ProgressBar pb = new ProgressBar(progress);
+        ProgressBar pb = insideWindow(() -> new ProgressBar(progress));
         assertEquals(1, pb.bar().getChildren().size);
         Element firstFill = pb.bar().getChildren().get(0);
 
@@ -153,8 +167,8 @@ class OverlayFeedbackTest extends SolimEnv {
     @Test
     void badgeReactiveCount() {
         Signal<Integer> count = Signal.of(5);
-        Computed<String> text = count.map(v -> v > 99 ? "99+" : String.valueOf(v));
-        FeedbackBadge b = FeedbackBadge.of(text);
+        Computed<String> text = insideWindow(() -> count.map(v -> v > 99 ? "99+" : String.valueOf(v)));
+        FeedbackBadge b = insideWindow(() -> FeedbackBadge.of(text));
         assertEquals("5", ((Label) b.table().getChildren().get(0)).getText().toString());
 
         count.set(50);

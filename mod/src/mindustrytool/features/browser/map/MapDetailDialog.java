@@ -1,6 +1,11 @@
 package mindustrytool.features.browser.map;
 
 import static solim.UI.*;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -61,59 +66,59 @@ public class MapDetailDialog extends SolimDialog {
 
         @Override
         protected Element build() {
-            return column().grow().padding(unit(2)).gap(unit(2)).children(() -> {
+            return column().props(grow(), padding(unit(2)), gap(unit(2))).children(() -> {
                 when(isPortrait())
                         .thenDo(this::portraitLayout)
                         .elseDo(this::landscapeLayout)
-                        .grow();
+                        .props(grow());
             }).element();
         }
 
         private Component portraitLayout() {
-            return column().grow().top().left().gap(unit(4)).children(() -> {
+            return column().props(grow(), top(), left(), gap(unit(4))).children(() -> {
                 previewImagePortrait();
-                scroll().grow().children(() -> details());
+                scroll().props(grow()).children(() -> details());
             });
         }
 
         private Component landscapeLayout() {
-            return row().grow().center().top().gap(unit(4)).children(() -> {
+            return row().props(grow(), center(), top(), gap(unit(4))).children(() -> {
                 previewImageLandscape();
-                scroll().grow().children(() -> details());
+                scroll().props(grow()).children(() -> details());
             });
         }
 
         private void previewImagePortrait() {
-            row().grow().children(() -> {
+            row().props(grow()).children(() -> {
                 networkImage(BrowserImages.mapImageUrl(itemId))
                         .placeholder(Icon.terrain)
                         .origin(Align.top | Align.left)
                         .fallback(Icon.terrain)
-                        .growX()
+                        .props(growX())
                         .rounded(8)
                         .scaling(Scaling.fit);
             });
         }
 
         private void previewImageLandscape() {
-            row().grow().children(() -> {
+            row().props(grow()).children(() -> {
                 networkImage(BrowserImages.mapImageUrl(itemId))
                         .placeholder(Icon.terrain)
                         .origin(Align.top)
                         .fallback(Icon.terrain)
-                        .growX()
+                        .props(growX())
                         .scaling(Scaling.fit);
             });
         }
 
         private void details() {
-            column().growX().gap(unit(2)).children(() -> {
-                card(WebStyles.previewCardBackground()).padding(unit(4)).gap(unit(2)).growX().children(() -> {
-                    row().growX().gap(unit(2)).children(() -> {
+            column().props(growX(), gap(unit(2))).children(() -> {
+                card(WebStyles.previewCardBackground()).props(padding(unit(4)), growX(), gap(unit(2))).children(() -> {
+                    row().props(growX(), gap(unit(2))).children(() -> {
                         text(Core.bundle.get("browser.detail.author")).color(Color.lightGray).fontScale(1.2f);
                         if (authorQuery != null) {
                             query(authorQuery)
-                                    .growX()
+                                    .props(growX())
                                     .loading(() -> text(authorId != null ? authorId : "").color(Color.white)
                                             .fontScale(1.2f))
                                     .error(err -> text(authorId != null ? authorId : "").color(Color.white)
@@ -124,13 +129,13 @@ public class MapDetailDialog extends SolimDialog {
                         }
                     });
 
-                    row().growX().gap(unit(2)).children(() -> {
+                    row().props(growX(), gap(unit(2))).children(() -> {
                         text(Core.bundle.get("browser.detail.dimensions")).color(Color.lightGray);
                         text(detail.getWidth() + "x" + detail.getHeight()).color(Color.white);
                     });
                 });
 
-                card(WebStyles.previewCardBackground()).padding(unit(4)).gap(unit(2)).growX().children(() -> {
+                card(WebStyles.previewCardBackground()).props(padding(unit(4)), growX(), gap(unit(2))).children(() -> {
                     new BrowserStatsBadge(
                             BrowserImages.count(detail.getLikes()),
                             BrowserImages.count(detail.getComments()),
@@ -140,25 +145,23 @@ public class MapDetailDialog extends SolimDialog {
                 BrowserLayout.renderTags(detail.getTags());
 
                 if (detail.getDescription() != null && !detail.getDescription().isEmpty()) {
-                    card(WebStyles.previewCardBackground()).padding(unit(4)).gap(unit(2)).growX().children(() -> {
+                    card(WebStyles.previewCardBackground()).props(padding(unit(4)), growX(), gap(unit(2))).children(() -> {
                         text(detail.getDescription()).color(Color.lightGray).wrap(true).left().growX();
                     });
                 }
 
                 divider();
 
-                row().growX().gap(unit(2)).children(() -> {
+                row().props(growX(), gap(unit(2))).children(() -> {
                     button(Core.bundle.get("browser.map.download"),
                             () -> MapActions.downloadAndImport(itemId))
                             .style(WebStyles.primary())
-                            .growX()
-                            .height(unit(11));
+                            .props(growX(), height(unit(11)), prefHeight(unit(11)));
 
                     button(Core.bundle.get("browser.map.play"),
                             () -> MapActions.playMap(itemId))
                             .style(WebStyles.primary())
-                            .growX()
-                            .height(unit(11));
+                            .props(growX(), height(unit(11)), prefHeight(unit(11)));
                 });
             });
         }

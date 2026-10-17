@@ -3,16 +3,19 @@ package solim.reactive;
 import arc.Core;
 import arc.util.Nullable;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import arc.func.Prov;
 import solim.core.Disposable;
+import solim.core.DisposableOwner;
 import solim.core.OwnershipContext;
 
-public final class Query<T> implements Readable<T>, Disposable {
+public final class Query<T> implements Readable<T>, DisposableOwner {
 
     private static final int DEFAULT_RETRY_COUNT = 3;
     private static final long DEFAULT_RETRY_DELAY_MS = 1_000L;
@@ -178,28 +181,33 @@ public final class Query<T> implements Readable<T>, Disposable {
     }
 
     private void initEffect() {
-        effect = Effect.of(() -> {
-            if (disposed)
-                return;
+        OwnershipContext.push(this);
+        try {
+            effect = Effect.of(() -> {
+                if (disposed)
+                    return;
 
-            boolean isEnabled = enabled == null || Boolean.TRUE.equals(enabled.get());
-            if (!isEnabled) {
-                fetchGeneration++;
-                fetching.set(false);
-                return;
-            }
-
-            if (initialRun) {
-                initialRun = false;
-                CacheEntry<T> entry = cache.getEntry(keyForFetch());
-                if (entry != null && entry.hasData() && !entry.isStale(staleTimeMs)) {
-
+                boolean isEnabled = enabled == null || Boolean.TRUE.equals(enabled.get());
+                if (!isEnabled) {
+                    fetchGeneration++;
+                    fetching.set(false);
                     return;
                 }
-            }
 
-            doFetch();
-        });
+                if (initialRun) {
+                    initialRun = false;
+                    CacheEntry<T> entry = cache.getEntry(keyForFetch());
+                    if (entry != null && entry.hasData() && !entry.isStale(staleTimeMs)) {
+
+                        return;
+                    }
+                }
+
+                doFetch();
+            });
+        } finally {
+            OwnershipContext.pop();
+        }
     }
 
     private void startIntervalTimer() {
@@ -399,6 +407,15 @@ public final class Query<T> implements Readable<T>, Disposable {
         return data.peek();
     }
 
+    private final List<Disposable> owned = new ArrayList<>();
+
+    @Override
+    public void adopt(Disposable resource) {
+        if (resource != null && !disposed) {
+            owned.add(resource);
+        }
+    }
+
     @Override
     public void dispose() {
         if (disposed)
@@ -413,6 +430,14 @@ public final class Query<T> implements Readable<T>, Disposable {
             effect.dispose();
             effect = null;
         }
+
+        for (int i = owned.size() - 1; i >= 0; i--) {
+            try {
+                owned.get(i).dispose();
+            } catch (Throwable ignored) {
+            }
+        }
+        owned.clear();
 
         cache.detachObserver(key, cacheListener, gcTimeMs);
 

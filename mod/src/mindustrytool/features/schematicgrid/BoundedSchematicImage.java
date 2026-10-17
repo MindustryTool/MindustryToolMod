@@ -1,59 +1,54 @@
 package mindustrytool.features.schematicgrid;
 
 import static solim.UI.*;
+import static solim.modifier.Values.align;
 
 import arc.scene.Element;
+import arc.scene.ui.layout.Scl;
 import arc.util.Align;
 import arc.util.Nullable;
 import arc.util.Scaling;
 import mindustry.game.Schematic;
 import mindustry.ui.dialogs.SchematicsDialog.SchematicImage;
-import solim.core.Component;
-import solim.core.SolimToken;
-import solim.modifier.PendingCellConfig;
+import solim.core.SolimElement;
 import solim.reactive.Readable;
 
-final class BoundedSchematicImage extends Component {
+final class BoundedSchematicImage extends SolimElement {
 
     private final Schematic schematic;
     private final @Nullable Readable<Float> size;
     private final float fallback;
-    private final int align;
+    private final int cellAlign;
 
-    private @Nullable FixedPreview image;
+    private FixedPreview image;
 
     BoundedSchematicImage(Schematic schematic, @Nullable Readable<Float> size, float fallback) {
         this(schematic, size, fallback, Align.center);
     }
 
-    BoundedSchematicImage(Schematic schematic, @Nullable Readable<Float> size, float fallback, int align) {
+    BoundedSchematicImage(Schematic schematic, @Nullable Readable<Float> size, float fallback, int cellAlign) {
         this.schematic = schematic;
         this.size = size;
         this.fallback = fallback;
-        this.align = align;
+        this.cellAlign = cellAlign;
+        props(align(cellAlign));
     }
 
     @Override
-    protected Element build() {
+    protected Element createElement() {
         image = new FixedPreview(schematic);
-        PendingCellConfig cell = new PendingCellConfig();
-        cell.align = align;
-        SolimToken.bind(image, this, cell);
-        arc(image);
         effect(() -> {
             if (size != null) {
                 size.get();
             }
-            if (image != null) {
-                image.invalidate();
-            }
+            image.invalidate();
         });
         return image;
     }
 
     private float bound() {
         Float value = size != null ? size.peek() : null;
-        return value != null ? value : fallback;
+        return Scl.scl(value != null ? value : fallback);
     }
 
     private final class FixedPreview extends SchematicImage {

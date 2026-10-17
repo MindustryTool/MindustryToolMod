@@ -1,6 +1,12 @@
 package mindustrytool.features.godmode;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.scene.style.TextureRegionDrawable;
@@ -38,37 +44,35 @@ public class GodModeCoreDialog extends SolimDialog {
                         Math.round(posY.get() != null ? posY.get() : 0f)));
 
         children(() -> {
-            column().gap(unit(2.5f)).padding(unit(3)).children(() -> {
+            column().props(padding(unit(3)), gap(unit(2.5f))).children(() -> {
                 text(Core.bundle.get("feature.god-mode.core.select-core")).color(WebStyles.Colors.GHOST_FG);
 
-                scroll().size(440f, 110f).children(() -> {
-                    wrap().left().gap(unit(1.5f)).children(() -> {
+                scroll().props(size(440f, 110f), prefWidth(440f), prefHeight(110f)).children(() -> {
+                    wrap().props(left(), gap(unit(1.5f))).children(() -> {
                         for (Block b : coreBlocks) {
                             button()
                                     .style(WebStyles.filterChip())
                                     .checked(selectedCore.map(sel -> sel == b))
                                     .onClick(() -> selectedCore.set(b))
-                                    .size(unit(11), unit(11))
-                                    .padding(unit(1))
-                                    .tooltip(b.localizedName)
-                                    .children(() -> image(new TextureRegionDrawable(b.uiIcon)).size(unit(7.5f)));
+                                    .props(size(unit(11), unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), padding(unit(1)), tooltip(b.localizedName))
+                                    .children(() -> image(new TextureRegionDrawable(b.uiIcon)).props(size(unit(7.5f)), prefWidth(unit(7.5f)), prefHeight(unit(7.5f))));
                         }
                     });
                 });
 
                 text(Core.bundle.get("feature.god-mode.items.target-team")).color(WebStyles.Colors.GHOST_FG);
 
-                scroll().size(440f, 65f).children(() -> {
-                    wrap().left().gap(unit(1.5f)).children(() -> {
+                scroll().props(size(440f, 65f), prefWidth(440f), prefHeight(65f)).children(() -> {
+                    wrap().props(left(), gap(unit(1.5f))).children(() -> {
                         for (Team t : Team.baseTeams) {
                             button()
                                     .style(WebStyles.filterChip())
                                     .checked(selectedTeam.map(sel -> sel == t))
                                     .onClick(() -> selectedTeam.set(t))
-                                    .padding(unit(1.5f))
+                                    .props(padding(unit(1.5f)))
                                     .children(() -> {
-                                        row().gap(unit(1.5f)).center().children(() -> {
-                                            image(Tex.whiteui).size(unit(3)).color(t.color);
+                                        row().props(gap(unit(1.5f)), center()).children(() -> {
+                                            image(Tex.whiteui).props(size(unit(3)), prefWidth(unit(3)), prefHeight(unit(3))).color(t.color);
                                             text(t.localized()).color(t.color);
                                         });
                                     });
@@ -76,11 +80,11 @@ public class GodModeCoreDialog extends SolimDialog {
                     });
                 });
 
-                row().growX().gap(unit(2)).center().children(() -> {
+                row().props(growX(), gap(unit(2)), center()).children(() -> {
                     text(posLabel).color(WebStyles.Colors.GHOST_FG);
                     button()
                             .style(WebStyles.secondary())
-                            .padding(unit(1.5f))
+                            .props(padding(unit(1.5f)))
                             .onClick(() -> MapPositionPicker.pick(this::hide, (x, y) -> {
                                 posX.set(x);
                                 posY.set(y);
@@ -91,8 +95,7 @@ public class GodModeCoreDialog extends SolimDialog {
 
                 button()
                         .style(WebStyles.primary())
-                        .growX()
-                        .padding(unit(2))
+                        .props(growX(), padding(unit(2)))
                         .onClick(() -> {
                             Block b = selectedCore.get();
                             Team tm = selectedTeam.get();

@@ -14,37 +14,49 @@ import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import arc.util.Time;
-import java.util.ArrayList;
-import java.util.List;
 import arc.func.Func;
 import mindustry.game.EventType.ResizeEvent;
 import solim.core.Component;
-import solim.core.Disposable;
+import solim.core.SolimToken;
 import solim.graphics.RoundedDrawable;
 import solim.layout.Spacer;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
+import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.TableCapability;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.Props;
 import solim.modifier.RoundedHelper;
-import solim.modifier.TableConfig;
 import solim.core.OwnershipContext;
+import solim.runtime.AttachmentStack;
 import solim.runtime.OwnershipScope;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 
-public final class Popup<T> extends Component implements TableConfig<Popup<T>> {
+public final class Popup<T> extends Component
+        implements Configurable<Popup<T>>, TableCapability, CellCapability, ContainerCapability<Popup<T>>, AlignmentCapability {
 
     public enum Edge {
         TOP,
         BOTTOM
     }
 
+    public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
+        Cell<?> cell = table.add(child);
+        cell.top().left();
+        return cell;
+    };
+
     private static final float PIN_EPSILON = 1.0f;
 
     private final Table table = new PopupTable();
+    private final PendingCellConfig constraints = new PendingCellConfig();
+    private @Nullable Props<Popup<T>> pending;
     private @Nullable Edge pinnedEdge;
     private @Nullable Func<T, Component> provider;
     private @Nullable Component currentContent;
     private @Nullable Element layerAnchor;
-    private final List<Disposable> currentBindings = new ArrayList<>();
     private boolean touchAttached = false;
     private boolean keyAttached = false;
     private long lastHideTime = 0L;
@@ -87,12 +99,48 @@ public final class Popup<T> extends Component implements TableConfig<Popup<T>> {
     };
 
     public Popup() {
+        SolimToken.bind(table, this, constraints);
         this.table.name = "solim-popup-menu";
         Events.on(ResizeEvent.class, resizeListener);
     }
 
     public Table table() {
         return table;
+    }
+
+    @Override
+    public PendingCellConfig cellConfig() {
+        return constraints;
+    }
+
+    @Override
+    public @Nullable Props<Popup<T>> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<Popup<T>> props) {
+        this.pending = props;
+    }
+
+    @Override
+    protected void onRealized(Element element) {
+        applyPendingProps();
+    }
+
+    public Popup<T> children(@Nullable Runnable block) {
+        applyPendingProps();
+        OwnershipContext.push(this);
+        AttachmentStack.push(table, ATTACHER);
+        try {
+            if (block != null) {
+                block.run();
+            }
+        } finally {
+            AttachmentStack.pop();
+            OwnershipContext.pop();
+        }
+        return this;
     }
 
     public Popup<T> pinnedEdge(@Nullable Edge edge) {
@@ -169,7 +217,8 @@ public final class Popup<T> extends Component implements TableConfig<Popup<T>> {
         return this;
     }
 
-    public Popup<T> children(@Nullable Func<T, Component> provider) {
+    public Popup<T> items(@Nullable Func<T, Component> provider) {
+        applyPendingProps();
         this.provider = provider;
         return this;
     }
@@ -234,17 +283,10 @@ public final class Popup<T> extends Component implements TableConfig<Popup<T>> {
             Component content = OwnershipScope.build(() -> provider.get(data));
             if (content != null) {
                 currentContent = content;
-                Cell<?> cell = table.add(content.element());
-                PendingCellConfig config = PendingCellConfig.find(content);
-                if (config == null) {
-                    config = PendingCellConfig.find(content.element());
-                }
-                if (config != null) {
-                    List<Disposable> effects = config.applyToCell(cell);
-                    currentBindings.addAll(effects);
-                    for (Disposable effect : effects) {
-                        OwnershipContext.register(effect);
-                    }
+                Cell<?> cell = AttachmentStack.attach(table, content.element(), ATTACHER, content);
+                if (cell == null) {
+                    content.dispose();
+                    currentContent = null;
                 }
             }
         }
@@ -270,13 +312,6 @@ public final class Popup<T> extends Component implements TableConfig<Popup<T>> {
 
     private void clearContent() {
         table.clearChildren();
-        for (Disposable d : currentBindings) {
-            try {
-                d.dispose();
-            } catch (Throwable ignored) {
-            }
-        }
-        currentBindings.clear();
         if (currentContent != null) {
             try {
                 currentContent.dispose();

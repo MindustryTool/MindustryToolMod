@@ -1,6 +1,9 @@
 package mindustrytool.features.timecontrol;
 
 import static solim.UI.*;
+import static solim.modifier.Values.border;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.rounded;
 
 import arc.scene.Element;
 import arc.util.Nullable;
@@ -38,7 +41,7 @@ public final class TimeControlPopup {
         }
         if (menu == null) {
             menu = popup();
-            menu.children(TimeControlPopup::buildContent);
+            menu.items(TimeControlPopup::buildContent);
         }
         QuickAccessPopupHelper.show(menu, feature, quickAccessBar);
     }
@@ -58,11 +61,7 @@ public final class TimeControlPopup {
                 && Boolean.FALSE.equals(Signals.netClient().get()));
 
         return row()
-                .rounded(unit(2), WebStyles.Colors.SECTION_BG)
-                .border(1.5f, WebStyles.Colors.BORDER)
-                .padding(unit(1))
-                .gap(unit(1))
-                .center()
+                .props(rounded(unit(2), WebStyles.Colors.SECTION_BG), border(1.5f, WebStyles.Colors.BORDER), padding(unit(1)), gap(unit(1)), center())
                 .children(() -> TimeControlHudView.buildControls(feature, canEdit));
     }
 }

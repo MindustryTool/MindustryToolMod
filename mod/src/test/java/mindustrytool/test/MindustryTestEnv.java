@@ -11,18 +11,12 @@ import mindustry.ui.Fonts;
 import mindustrytool.features.FeatureManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import solim.modifier.PendingCellConfig;
 import solim.test.SolimEnv;
 
 public abstract class MindustryTestEnv extends SolimEnv {
 
     private static final Map<Field, Object> iconSnapshot = new HashMap<>();
     private static Font fontsDefSnapshot;
-
-    @Override
-    protected void resetModuleState() {
-        PendingCellConfig.install();
-    }
 
     @BeforeEach
     public void setUpMindustryTestEnv() {

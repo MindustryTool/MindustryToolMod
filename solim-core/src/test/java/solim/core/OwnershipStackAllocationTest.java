@@ -6,9 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 
 import arc.scene.Element;
 import org.junit.jupiter.api.Test;
-import solim.test.SolimCoreEnv;
+import solim.test.OwnershipEnv;
 
-class OwnershipStackAllocationTest extends SolimCoreEnv {
+class OwnershipStackAllocationTest extends OwnershipEnv {
+
 
     private static final class FixedElement extends Component {
         FixedElement() {

@@ -37,6 +37,8 @@ public final class SessionRoot implements DisposableOwner {
             }
             return;
         }
+        pruneDisposed();
+        OwnershipGuard.rejectDuplicate(resource, this);
         if (disposableIndex.add(resource)) {
             disposables.add(resource);
         }
@@ -55,7 +57,18 @@ public final class SessionRoot implements DisposableOwner {
     }
 
     public List<Disposable> disposables() {
+        pruneDisposed();
         return Collections.unmodifiableList(new ArrayList<>(disposables));
+    }
+
+    private void pruneDisposed() {
+        for (int i = disposables.size() - 1; i >= 0; i--) {
+            Disposable resource = disposables.get(i);
+            if (resource.isDisposed()) {
+                disposables.remove(i);
+                disposableIndex.remove(resource);
+            }
+        }
     }
 
     public boolean contains(@Nullable Component component) {
@@ -67,6 +80,11 @@ public final class SessionRoot implements DisposableOwner {
         children.clear();
         disposables.clear();
         disposableIndex.clear();
+    }
+
+    public void resetForTests() {
+        clear();
+        disposed = false;
     }
 
     @Override

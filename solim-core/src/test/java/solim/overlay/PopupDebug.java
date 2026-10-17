@@ -16,7 +16,7 @@ public class PopupDebug {
         Scene scene = new Scene();
         Core.scene = scene;
         Popup<String> menu = new Popup<>();
-        menu.children(data -> new Component() {
+        menu.items(data -> new Component() {
             @Override
             protected Element build() {
                 Table content = new Table();

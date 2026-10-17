@@ -1,6 +1,7 @@
 package solim.layout;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static solim.modifier.Values.gap;
 
 import arc.scene.Element;
 import arc.scene.ui.layout.CellAccess;
@@ -46,7 +47,7 @@ class GridTest extends SolimEnv {
     @Test
     void gapAppliesDirectionalSpacing() {
         Grid g = new Grid(2);
-        g.gap(16f);
+        g.props(gap(16f));
         Element a = new Element();
         Element b = new Element();
         Element c = new Element();
@@ -120,7 +121,7 @@ class GridTest extends SolimEnv {
     void reactiveGapUpdatesCellSpacing() {
         Signal<Float> gap = Signal.of(8f);
         Grid g = new Grid(2);
-        g.gap(gap);
+        g.props(gap(gap));
         Element a = new Element();
         Element b = new Element();
         g.add(a);
@@ -149,7 +150,7 @@ class GridTest extends SolimEnv {
     void fluentApiReturnsSameGrid() {
         Grid g = new Grid();
         assertSame(g, g.columns(3));
-        assertSame(g, g.gap(8f));
+        assertSame(g, g.props(gap(8f)));
         assertSame(g, g.name("test"));
     }
 }

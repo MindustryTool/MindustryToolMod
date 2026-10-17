@@ -1,6 +1,10 @@
 package solim.layout;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static solim.modifier.Values.marginX;
+import static solim.modifier.Values.marginY;
+import static solim.modifier.Values.paddingX;
+import static solim.modifier.Values.paddingY;
 
 import org.junit.jupiter.api.Test;
 
@@ -17,27 +21,27 @@ public class AxisSpacingTest extends SolimEnv {
 
     @Test
     void columnAndRowAxisSpacing() {
-        Column col = new Column().paddingX(16f).paddingY(8f);
+        Column col = new Column().props(paddingX(16f), paddingY(8f));
         Table colTable = col.table();
         assertEquals(16f, colTable.getMarginLeft(), 0.01f);
         assertEquals(16f, colTable.getMarginRight(), 0.01f);
         assertEquals(8f, colTable.getMarginTop(), 0.01f);
         assertEquals(8f, colTable.getMarginBottom(), 0.01f);
 
-        col.paddingX(10f).paddingY(5f);
+        col.props(paddingX(10f), paddingY(5f));
         assertEquals(10f, colTable.getMarginLeft(), 0.01f);
         assertEquals(10f, colTable.getMarginRight(), 0.01f);
         assertEquals(5f, colTable.getMarginTop(), 0.01f);
         assertEquals(5f, colTable.getMarginBottom(), 0.01f);
 
-        Row row = new Row().paddingX(20f).paddingY(12f);
+        Row row = new Row().props(paddingX(20f), paddingY(12f));
         Table rowTable = row.table();
         assertEquals(20f, rowTable.getMarginLeft(), 0.01f);
         assertEquals(20f, rowTable.getMarginRight(), 0.01f);
         assertEquals(12f, rowTable.getMarginTop(), 0.01f);
         assertEquals(12f, rowTable.getMarginBottom(), 0.01f);
 
-        row.paddingX(14f).paddingY(7f);
+        row.props(paddingX(14f), paddingY(7f));
         assertEquals(14f, rowTable.getMarginLeft(), 0.01f);
         assertEquals(14f, rowTable.getMarginRight(), 0.01f);
         assertEquals(7f, rowTable.getMarginTop(), 0.01f);
@@ -46,7 +50,7 @@ public class AxisSpacingTest extends SolimEnv {
 
     @Test
     void cardAxisPadding() {
-        Card card = new Card().paddingX(18f).paddingY(9f);
+        Card card = new Card().props(paddingX(18f), paddingY(9f));
         Table cardContainer = card.container();
         assertEquals(18f, cardContainer.getMarginLeft(), 0.01f);
         assertEquals(18f, cardContainer.getMarginRight(), 0.01f);
@@ -72,7 +76,7 @@ public class AxisSpacingTest extends SolimEnv {
 
     @Test
     void buttonAxisPaddingStaticAndReactive() {
-        Button btn = new Button().paddingX(12f).paddingY(6f);
+        Button btn = new Button().props(paddingX(12f), paddingY(6f));
         arc.scene.ui.Button arcBtn = (arc.scene.ui.Button) btn.element();
         assertEquals(12f, arcBtn.getMarginLeft(), 0.01f);
         assertEquals(12f, arcBtn.getMarginRight(), 0.01f);
@@ -81,7 +85,7 @@ public class AxisSpacingTest extends SolimEnv {
 
         Signal<Float> padXSignal = Signal.of(15f);
         Signal<Float> padYSignal = Signal.of(9f);
-        Button reactiveBtn = new Button().paddingX(padXSignal).paddingY(padYSignal);
+        Button reactiveBtn = new Button().props(paddingX(padXSignal), paddingY(padYSignal));
         SignalDispatcher.flush();
         arc.scene.ui.Button arcReactiveBtn = (arc.scene.ui.Button) reactiveBtn.element();
         assertEquals(15f, arcReactiveBtn.getMarginLeft(), 0.01f);
@@ -107,7 +111,7 @@ public class AxisSpacingTest extends SolimEnv {
         Signal<Float> mx = Signal.of(11f);
         Signal<Float> my = Signal.of(7f);
 
-        grid.marginX(mx).marginY(my);
+        grid.props(marginX(mx), marginY(my));
         grid.cellConfig().applyToCell(cell);
         SignalDispatcher.flush();
 

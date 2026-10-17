@@ -2,6 +2,9 @@ package solim.layout;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.padding;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -28,7 +31,7 @@ class ColumnGrowExplorationTest extends SolimEnv {
 
         @Override
         protected Element build() {
-            col = new Column().name("channel-list").grow().gap(4f).padding(8f).children(() -> {
+            col = new Column().name("channel-list").props(grow(), gap(4f), padding(8f)).children(() -> {
                 new Element();
             });
             return col.element();
@@ -39,7 +42,7 @@ class ColumnGrowExplorationTest extends SolimEnv {
     void directColumnWithGrowInsideRow() {
         final Column[] colHolder = new Column[1];
         Row row = new Row().children(() -> {
-            colHolder[0] = new Column().name("channel-list").grow().gap(4f).padding(8f).children(() -> {
+            colHolder[0] = new Column().name("channel-list").props(grow(), gap(4f), padding(8f)).children(() -> {
                 new Element();
             });
         });
@@ -71,9 +74,9 @@ class ColumnGrowExplorationTest extends SolimEnv {
     void directColumnGrowAfterChildren() {
         final Column[] colHolder = new Column[1];
         Row row = new Row().children(() -> {
-            colHolder[0] = new Column().name("channel-list").gap(4f).padding(8f).children(() -> {
+            colHolder[0] = new Column().name("channel-list").props(gap(4f), padding(8f)).children(() -> {
                 new Element();
-            }).grow();
+            }).props(grow());
         });
 
         Cell<?> cell = row.table().getCell(colHolder[0].element());

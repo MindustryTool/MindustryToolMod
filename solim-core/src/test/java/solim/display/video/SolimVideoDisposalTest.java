@@ -24,9 +24,9 @@ import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.Slider.SliderStyle;
 import solim.core.Component;
 import solim.reactive.Signal;
-import solim.test.SolimEnv;
+import solim.test.OwnershipEnv;
 
-class SolimVideoDisposalTest extends SolimEnv {
+class SolimVideoDisposalTest extends OwnershipEnv {
 
     private final List<SolimVideo> videos = new ArrayList<>();
 

@@ -63,9 +63,9 @@ class ComponentTest extends SolimEnv {
 		Component comp = new Component() {
 			@Override
 			protected Element build() {
-				own(DisposableAction.of(() -> order.append("first")));
-				own(DisposableAction.of(() -> order.append("second")));
-				own(DisposableAction.of(() -> order.append("third")));
+				adopt(DisposableAction.of(() -> order.append("first")));
+				adopt(DisposableAction.of(() -> order.append("second")));
+				adopt(DisposableAction.of(() -> order.append("third")));
 				return new Element();
 			}
 		};
@@ -83,7 +83,7 @@ class ComponentTest extends SolimEnv {
 		Component comp = new Component() {
 			@Override
 			protected Element build() {
-				own(DisposableAction.of(() -> disposeCount.incrementAndGet()));
+				adopt(DisposableAction.of(() -> disposeCount.incrementAndGet()));
 				return new Element();
 			}
 		};
@@ -132,7 +132,7 @@ class ComponentTest extends SolimEnv {
 		Component comp = new Component() {
 			@Override
 			protected Element build() {
-				own(DisposableAction.of(() -> disposeCount.incrementAndGet()));
+				adopt(DisposableAction.of(() -> disposeCount.incrementAndGet()));
 				return null;
 			}
 		};

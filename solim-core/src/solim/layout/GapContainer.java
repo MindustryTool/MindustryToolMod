@@ -8,8 +8,9 @@ import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.SolimToken;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.TableCapability;
 
-public interface GapContainer {
+public interface GapContainer extends GapHost, TableCapability {
 
     Direction direction();
 
@@ -41,6 +42,7 @@ public interface GapContainer {
         Element el = cell.get();
         if (el == null || !el.visible)
             return;
+        // Arc's Table.getCells() is declared as Seq<Cell>, with a raw Cell argument that cannot be recovered from that API.
         @SuppressWarnings("rawtypes")
         Seq<Cell> cells = table.getCells();
         if (cells == null || cells.size <= 1)
@@ -64,6 +66,7 @@ public interface GapContainer {
         }
     }
 
+    // Arc's Table.getCells() is declared as Seq<Cell>, with a raw Cell argument that cannot be recovered from that API.
     @SuppressWarnings("rawtypes")
     static void applySpacing(@Nullable Table table, Direction direction, float gap) {
         if (table == null)
@@ -109,6 +112,7 @@ public interface GapContainer {
         table.invalidate();
     }
 
+    // Arc's Table.getCells() is declared as Seq<Cell>, with a raw Cell argument that cannot be recovered from that API.
     @SuppressWarnings("rawtypes")
     static void applyGridSpacing(@Nullable Table table, int columns, float gap) {
         if (table == null)

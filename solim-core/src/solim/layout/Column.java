@@ -1,8 +1,6 @@
 package solim.layout;
 
-import solim.modifier.CellConfig;
 
-import arc.func.Cons;
 import arc.scene.Element;
 import arc.scene.event.Touchable;
 import arc.scene.ui.layout.Cell;
@@ -10,16 +8,18 @@ import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.SolimToken;
-import solim.modifier.ElementConfig;
-import solim.modifier.TableConfig;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
+import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.Props;
+import solim.modifier.TableCapability;
 import solim.runtime.AttachmentStack;
-import solim.reactive.Effect;
-import solim.reactive.Readable;
 import solim.modifier.PendingCellConfig;
 import solim.core.OwnershipContext;
 
-public final class Column
-        extends Component implements CellConfig<Column>, ElementConfig<Column>, TableConfig<Column>, GapContainer {
+public final class Column extends Component
+        implements GapContainer, Configurable<Column>, TableCapability, CellCapability, ContainerCapability<Column>, AlignmentCapability {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -36,6 +36,7 @@ public final class Column
 
     private final Table table;
     private final PendingCellConfig constraints = new PendingCellConfig();
+    private @Nullable Props<Column> pending;
     private float gap = 0f;
     private boolean attached = false;
 
@@ -75,24 +76,6 @@ public final class Column
         return this;
     }
 
-    public Column gap(float g) {
-        this.gap = g;
-        respace();
-        return this;
-    }
-
-    public Column gap(@Nullable Readable<Float> gapSignal) {
-        if (gapSignal != null) {
-            own(Effect.of(() -> {
-                Float g = gapSignal.get();
-                if (g != null) {
-                    gap(g);
-                }
-            }));
-        }
-        return this;
-    }
-
     @Override
     public Direction direction() {
         return Direction.VERTICAL;
@@ -104,125 +87,23 @@ public final class Column
     }
 
     @Override
+    public void setGap(float g) {
+        this.gap = g;
+        respace();
+    }
+
+    @Override
     public void respace() {
         GapContainer.applySpacing(table, Direction.VERTICAL, gap);
     }
 
-    @Override
-    public Column align(int align) {
-        TableConfig.super.align(align);
-        cellConfig().align = align;
-        cellConfig().applyAlignToParentCell(element());
-        table.defaults().align(align);
-        for (Cell<?> c : table.getCells()) {
-            if (c != null)
-                c.align(align);
-        }
-        return this;
-    }
-
-    @Override
-    public Column top() {
-        TableConfig.super.top();
-        cellConfig().alignTop();
-        cellConfig().applyAlignToParentCell(element());
-        table.defaults().top();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null)
-                c.top();
-        }
-        return this;
-    }
-
-    @Override
-    public Column bottom() {
-        TableConfig.super.bottom();
-        cellConfig().alignBottom();
-        cellConfig().applyAlignToParentCell(element());
-        table.defaults().bottom();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null)
-                c.bottom();
-        }
-        return this;
-    }
-
-    @Override
-    public Column left() {
-        TableConfig.super.left();
-        cellConfig().alignLeft();
-        cellConfig().applyAlignToParentCell(element());
-        table.defaults().left();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null)
-                c.left();
-        }
-        return this;
-    }
-
-    @Override
-    public Column right() {
-        TableConfig.super.right();
-        cellConfig().alignRight();
-        cellConfig().applyAlignToParentCell(element());
-        table.defaults().right();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null)
-                c.right();
-        }
-        return this;
-    }
-
-    @Override
-    public Column center() {
-        TableConfig.super.center();
-        cellConfig().alignCenter();
-        cellConfig().applyAlignToParentCell(element());
-        table.defaults().center();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null)
-                c.center();
-        }
-        return this;
-    }
-
-    public Column align(Align a) {
-        switch (a) {
-            case START:
-            case STRETCH:
-                return top();
-            case CENTER:
-                return center();
-            case END:
-                return bottom();
-            default:
-                break;
-        }
-        return this;
-    }
-
     public Column children(@Nullable Runnable r) {
+        applyPendingProps();
         OwnershipContext.push(this);
         AttachmentStack.push(table, ATTACHER);
         try {
             if (r != null) {
                 r.run();
-            }
-        } finally {
-            AttachmentStack.pop();
-            OwnershipContext.pop();
-        }
-        attachSelf();
-        respace();
-        return this;
-    }
-
-    public Column children(@Nullable Cons<Element> r) {
-        OwnershipContext.push(this);
-        AttachmentStack.push(table, ATTACHER);
-        try {
-            if (r != null) {
-                r.get(element());
             }
         } finally {
             AttachmentStack.pop();
@@ -253,6 +134,15 @@ public final class Column
     }
 
     @Override
+    public @Nullable Props<Column> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<Column> props) {
+        this.pending = props;
+    }
+
     public Column self() {
         return this;
     }

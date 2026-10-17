@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.gap;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -61,9 +62,10 @@ import solim.reactive.Dynamic;
 import solim.reactive.ForEach;
 import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
-import solim.test.SolimEnv;
+import solim.test.OwnershipEnv;
 
-class DisposalSweepTest extends SolimEnv {
+class DisposalSweepTest extends OwnershipEnv {
+
 
     static Application prevApp;
     static Graphics prevGraphics;
@@ -82,8 +84,7 @@ class DisposalSweepTest extends SolimEnv {
         return new Font(fontData, new TextureRegion(), false);
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    static void addStyleIfMissing(Class type, Object style) {
+    static <T> void addStyleIfMissing(Class<T> type, T style) {
         try {
             Core.scene.getStyle(type);
         } catch (IllegalArgumentException missing) {
@@ -201,7 +202,7 @@ class DisposalSweepTest extends SolimEnv {
         @Override
         protected Element build() {
             computed = source.map(v -> "v" + v);
-            own(computed);
+            adopt(computed);
             computed.peek();
             return new Element();
         }
@@ -287,9 +288,9 @@ class DisposalSweepTest extends SolimEnv {
     void rowColumnGridGapBindingsDie() {
         Signal<Float> gap = Signal.of(4f);
         Signal<Integer> columns = Signal.of(2);
-        Row row = new Row().gap(gap);
-        Column column = new Column().gap(gap);
-        Grid grid = new Grid().columns(columns).gap(gap);
+        Row row = new Row().props(gap(gap));
+        Column column = new Column().props(gap(gap));
+        Grid grid = new Grid().columns(columns).props(gap(gap));
 
         gap.set(8f);
         columns.set(3);
@@ -317,7 +318,7 @@ class DisposalSweepTest extends SolimEnv {
     void gridGapDiesNested() {
         Signal<Float> gap = Signal.of(4f);
         Probe<Grid> probe = new Probe<>();
-        Nest nest = new Nest(() -> probe.setValue(new Grid().gap(gap)));
+        Nest nest = new Nest(() -> probe.setValue(new Grid().props(gap(gap))));
         nest.element();
 
         gap.set(8f);
@@ -463,7 +464,7 @@ class DisposalSweepTest extends SolimEnv {
         List<Text> created = new ArrayList<>();
         ForEach<String> forEach = new ForEach<>(items);
         forEach.key(item -> item);
-        forEach.children(item -> {
+        forEach.items(item -> {
             Text text = Text.of(label);
             created.add(text);
             return text;
@@ -498,7 +499,7 @@ class DisposalSweepTest extends SolimEnv {
         List<Text> created = new ArrayList<>();
         ReactiveGrid<String> grid = new ReactiveGrid<>(items);
         grid.columns(columns).key(item -> item);
-        grid.children(item -> {
+        grid.items(item -> {
             Text text = Text.of(label);
             created.add(text);
             return text;
@@ -562,7 +563,7 @@ class DisposalSweepTest extends SolimEnv {
         List<Text> created = new ArrayList<>();
         VirtualList<String> list = new VirtualList<>(items, (item, width) -> 48f);
         list.key(item -> item);
-        list.children(item -> {
+        list.items(item -> {
             Text text = Text.of(label);
             created.add(text);
             return text;

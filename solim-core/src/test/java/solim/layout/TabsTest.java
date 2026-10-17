@@ -5,6 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.visible;
+import static solim.modifier.Values.width;
 
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
@@ -154,11 +160,9 @@ class TabsTest extends SolimEnv {
     @Test
     void tabsSupportsElementAndTableConfig() {
         Tabs tabs = new Tabs(Signal.of(0))
-                .width(500f)
-                .height(300f)
-                .visible(false)
+                .props(width(500f), prefWidth(500f), height(300f), prefHeight(300f), visible(false))
                 .name("custom-tabs")
-                .padding(12f);
+                .props(padding(12f));
 
         assertEquals(500f, tabs.element().getWidth());
         assertEquals(300f, tabs.element().getHeight());

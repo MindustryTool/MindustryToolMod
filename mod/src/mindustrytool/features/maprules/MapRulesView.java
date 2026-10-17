@@ -18,6 +18,21 @@ import static solim.UI.text;
 import static solim.UI.textField;
 import static solim.UI.unit;
 import static solim.UI.wrap;
+import static solim.modifier.Values.border;
+import static solim.modifier.Values.center;
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.left;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.minHeight;
+import static solim.modifier.Values.minWidth;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.rounded;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.func.Cons;
@@ -159,16 +174,16 @@ public class MapRulesView extends Component {
     @Override
     protected Element build() {
         Readable<String> badgeText = modeBadgeText();
-        return column().grow().center().children(() -> {
-            column().growX().gap(unit(2)).children(() -> {
+        return column().props(grow(), center()).children(() -> {
+            column().props(growX(), gap(unit(2))).children(() -> {
                 header(badgeText);
                 searchRow();
                 categoryChips();
                 divider();
-                scroll().grow().minHeight(dvh(45)).children(() -> {
+                scroll().props(grow(), minHeight(dvh(45))).children(() -> {
                     dynamic(viewKey(), key -> {
-                        column().growX().gap(unit(3)).children(() -> renderSections());
-                    }).grow();
+                        column().props(growX(), gap(unit(3))).children(() -> renderSections());
+                    }).props(grow());
                 });
             });
         }).element();
@@ -186,14 +201,13 @@ public class MapRulesView extends Component {
 
     private void header(Readable<String> badgeText) {
         boolean showPermission = showPermission();
-        row().growX().gap(unit(2)).center().children(() -> {
+        row().props(growX(), gap(unit(2)), center()).children(() -> {
             if (showPermission) {
                 badge(badgeText).color(Color.royal);
             }
             spacer();
-            button(this::onResetClicked).style(WebStyles.outlineText()).size(unit(11))
-                    .tooltip(t("feature.map-rules.reset"))
-                    .children(() -> icon(Icon.refresh).size(unit(6)));
+            button(this::onResetClicked).style(WebStyles.outlineText()).props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(t("feature.map-rules.reset")))
+                    .children(() -> icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
         });
         RuleEditMode m = mode.peek();
         if (m == RuleEditMode.CLIENT_ADMIN && showPermission) {
@@ -233,23 +247,18 @@ public class MapRulesView extends Component {
     }
 
     private void searchRow() {
-        row().growX().gap(unit(1))
-                .padding(unit(1.5f))
-                .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
-                .border(1.5f, WebStyles.Colors.BORDER_INPUT)
-                .center()
+        row().props(growX(), gap(unit(1)), padding(unit(1.5f)), rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1.5f, WebStyles.Colors.BORDER_INPUT), center())
                 .children(() -> {
-                    icon(Icon.zoom).size(unit(4.5f)).color(WebStyles.Colors.GHOST_FG);
+                    icon(Icon.zoom).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f))).color(WebStyles.Colors.GHOST_FG);
                     textField(search)
-                            .growX()
-                            .height(unit(8))
+                            .props(growX(), height(unit(8)), prefHeight(unit(8)))
                             .style(WebStyles.clearInput())
                             .placeholder(t("feature.map-rules.search.placeholder"));
                 });
     }
 
     private void categoryChips() {
-        wrap().left().gap(unit(1)).children(() -> {
+        wrap().props(left(), gap(unit(1))).children(() -> {
             chip(CAT_ALL, t("feature.map-rules.category.all"));
             chip(CAT_MODIFIED, t("feature.map-rules.category.modified"));
             chip(CAT_MULTIPLIERS, t("feature.map-rules.category.multipliers"));
@@ -265,7 +274,7 @@ public class MapRulesView extends Component {
         button(label, () -> category.set(id))
                 .style(WebStyles.filterChipText())
                 .checked(checked)
-                .height(unit(9));
+                .props(height(unit(9)), prefHeight(unit(9)));
     }
 
     private void renderSections() {
@@ -273,7 +282,7 @@ public class MapRulesView extends Component {
         String query = search.peek();
         Rules rules = rules();
         if (rules == null) {
-            row().growX().padding(unit(4)).center().children(() -> {
+            row().props(growX(), padding(unit(4)), center()).children(() -> {
                 text(t("feature.map-rules.empty")).color(Color.gray);
             });
             return;
@@ -305,7 +314,7 @@ public class MapRulesView extends Component {
                     rules, onlyModified, q) || anyShown;
         }
         if (!anyShown) {
-            row().growX().padding(unit(4)).center().children(() -> {
+            row().props(growX(), padding(unit(4)), center()).children(() -> {
                 String msg = CAT_MODIFIED.equals(category.peek())
                         ? t("feature.map-rules.empty-defaults")
                         : t("feature.map-rules.empty");
@@ -315,14 +324,13 @@ public class MapRulesView extends Component {
     }
 
     private void saveSection() {
-        card().growX().padding(unit(3)).children(() -> {
-            column().growX().gap(unit(2)).children(() -> {
+        card().props(growX(), padding(unit(3))).children(() -> {
+            column().props(growX(), gap(unit(2))).children(() -> {
                 text(t("feature.map-rules.save_map")).left().color(Color.white);
                 text(t("feature.map-rules.save_section.desc")).color(Color.lightGray).left().wrap();
                 button(t("feature.map-rules.save_map"), this::onSaveClicked)
                         .style(WebStyles.primaryText())
-                        .growX()
-                        .height(unit(11));
+                        .props(growX(), height(unit(11)), prefHeight(unit(11)));
                 String folder = customMapsFolder();
                 if (folder != null) {
                     text(f("feature.map-rules.save_folder", folder)).color(Color.gray).left().wrap();
@@ -355,7 +363,7 @@ public class MapRulesView extends Component {
         if (visible.isEmpty()) {
             return false;
         }
-        column().growX().gap(unit(2)).children(() -> {
+        column().props(growX(), gap(unit(2))).children(() -> {
             text(t(headerKey)).left().color(Color.white);
             for (RuleDescriptor def : visible) {
                 switch (def.kind) {
@@ -384,8 +392,8 @@ public class MapRulesView extends Component {
     }
 
     private void ruleCard(String descKey, Runnable content) {
-        card().growX().padding(unit(3)).children(() -> {
-            column().growX().gap(unit(2)).children(() -> {
+        card().props(growX(), padding(unit(3))).children(() -> {
+            column().props(growX(), gap(unit(2))).children(() -> {
                 content.run();
                 if (showDescriptions()) {
                     text(t(descKey)).color(Color.lightGray).left().wrap();
@@ -410,14 +418,14 @@ public class MapRulesView extends Component {
                         feature.mutator.setFloat(def, v);
                     }
                 });
-                row().growX().children(() -> {
+                row().props(growX()).children(() -> {
                     text(label).left();
                     spacer();
                     text(value.map(v -> v != null ? String.format("%.2f", v) : "")).color(Color.lightGray);
                 });
-                slider(value, def.min, def.max, def.step).growX().minWidth(unit(50));
+                slider(value, def.min, def.max, def.step).props(growX(), minWidth(unit(50)));
             } else {
-                row().growX().children(() -> {
+                row().props(growX()).children(() -> {
                     text(label).left();
                     spacer();
                     text(String.format("%.2f", current)).color(Color.lightGray);
@@ -442,14 +450,14 @@ public class MapRulesView extends Component {
                         feature.mutator.setInt(def, v);
                     }
                 });
-                row().growX().children(() -> {
+                row().props(growX()).children(() -> {
                     text(label).left();
                     spacer();
                     text(value.map(v -> v != null ? String.valueOf(v) : "")).color(Color.lightGray);
                 });
-                slider(value, (int) def.min, (int) def.max, (int) def.step).growX().minWidth(unit(50));
+                slider(value, (int) def.min, (int) def.max, (int) def.step).props(growX(), minWidth(unit(50)));
             } else {
-                row().growX().children(() -> {
+                row().props(growX()).children(() -> {
                     text(label).left();
                     spacer();
                     text(String.valueOf(current)).color(Color.lightGray);
@@ -477,7 +485,7 @@ public class MapRulesView extends Component {
                 return false;
             }
         }
-        column().growX().gap(unit(2)).children(() -> {
+        column().props(growX(), gap(unit(2))).children(() -> {
             text(t("feature.map-rules.section.bans")).left().color(Color.white);
             text(t("feature.map-rules.bans.blocks")).left().color(Color.lightGray);
             banGrid("feature.map-rules.bans.none-blocks", Vars.content.blocks(), rules.bannedBlocks,
@@ -538,7 +546,7 @@ public class MapRulesView extends Component {
             text(t(noneKey)).color(Color.gray).left();
             return;
         }
-        wrap().left().gap(unit(1)).children(() -> {
+        wrap().props(left(), gap(unit(1))).children(() -> {
             for (T item : toShow) {
                 banChip(item, banned != null && banned.contains(item), onToggle, iconOf);
             }
@@ -554,13 +562,13 @@ public class MapRulesView extends Component {
         button(label, () -> onToggle.get(item))
                 .style(WebStyles.filterChipText())
                 .checked(Readable.of(banned))
-                .height(unit(9))
+                .props(height(unit(9)), prefHeight(unit(9)))
                 .enabled(Readable.of(editableGameplay()))
                 .children(() -> {
                     try {
                         TextureRegion region = iconOf != null ? iconOf.get(item) : null;
                         if (region != null) {
-                            icon(new TextureRegionDrawable(region)).size(unit(5));
+                            icon(new TextureRegionDrawable(region)).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)));
                         }
                     } catch (Exception ignored) {
                     }
@@ -625,15 +633,15 @@ public class MapRulesView extends Component {
             if (editable) {
                 boolean isVisualOnly = !editableGameplay() && visualEditable(def.fieldName);
                 if (isVisualOnly) {
-                    checkbox(label, current, value -> feature.mutator.setVisualBool(def, value)).growX();
+                    checkbox(label, current, value -> feature.mutator.setVisualBool(def, value)).props(growX());
                 } else {
                     checkbox(label, current, value -> {
                         feature.mutator.setBool(def, value);
                         refresh();
-                    }).growX();
+                    }).props(growX());
                 }
             } else {
-                row().growX().children(() -> {
+                row().props(growX()).children(() -> {
                     text(label).left();
                     spacer();
                     text(current ? "[green]ON" : "[scarlet]OFF").color(Color.lightGray);

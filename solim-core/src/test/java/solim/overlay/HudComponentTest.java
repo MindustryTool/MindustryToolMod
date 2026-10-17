@@ -1,6 +1,7 @@
 package solim.overlay;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static solim.modifier.Values.position;
 
 import arc.Core;
 import arc.Events;
@@ -72,7 +73,7 @@ class HudComponentTest extends SolimEnv {
     @Test
     void hudPositionModifiers() {
         Hud hud = new Hud();
-        hud.position(100f, 200f);
+        hud.props(position(100f, 200f));
         assertEquals(100f, hud.element().x, 0.01f);
         assertEquals(200f, hud.element().y, 0.01f);
         hud.dispose();
@@ -110,7 +111,7 @@ class HudComponentTest extends SolimEnv {
     void keepInScreenClamping() {
         Hud hud = new Hud();
         hud.element().setSize(200f, 100f);
-        hud.position(1200f, 900f);
+        hud.props(position(1200f, 900f));
         hud.keepInScreen();
         assertEquals(824f, hud.element().x, 0.01f);
         assertEquals(668f, hud.element().y, 0.01f);
@@ -121,7 +122,7 @@ class HudComponentTest extends SolimEnv {
     void resizeEventClamping() {
         Hud hud = new Hud();
         hud.element().setSize(200f, 100f);
-        hud.position(800f, 600f);
+        hud.props(position(800f, 600f));
         hud.keepInScreen();
         mockGraphics.width = 800;
         mockGraphics.height = 600;
@@ -135,7 +136,7 @@ class HudComponentTest extends SolimEnv {
     void draggableMovementAndClamping() {
         Hud hud = new Hud();
         hud.element().setSize(200f, 100f);
-        hud.position(100f, 100f);
+        hud.props(position(100f, 100f));
         Signal<Float> xSig = Signal.of(100f);
         Signal<Float> ySig = Signal.of(100f);
         Element handle = new Element();

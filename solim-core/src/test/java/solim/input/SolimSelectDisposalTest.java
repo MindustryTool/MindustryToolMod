@@ -21,9 +21,10 @@ import arc.scene.ui.Button.ButtonStyle;
 import solim.core.OwnershipContext;
 import solim.reactive.Signal;
 import solim.test.BuildScopeHost;
-import solim.test.SolimEnv;
+import solim.test.OwnershipEnv;
 
-class SolimSelectDisposalTest extends SolimEnv {
+class SolimSelectDisposalTest extends OwnershipEnv {
+
 
     private static final List<String> options = Arrays.asList("A", "B", "C");
 

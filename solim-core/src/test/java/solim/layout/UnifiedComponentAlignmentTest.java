@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.lang.reflect.Method;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -19,6 +18,7 @@ import arc.scene.ui.layout.Table;
 import arc.util.Align;
 import solim.core.Component;
 import solim.layout.LayoutTestFixtures.ComponentAdapter;
+import solim.modifier.AlignmentCapability;
 import solim.modifier.PendingCellConfig;
 import solim.test.SolimEnv;
 
@@ -29,11 +29,28 @@ public class UnifiedComponentAlignmentTest extends SolimEnv {
     }
 
     private static void invokeAlignment(Component comp, String methodName) {
-        try {
-            Method m = comp.getClass().getMethod(methodName);
-            m.invoke(comp);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed invoking " + methodName + " on " + comp.getClass().getSimpleName(), e);
+        if (!(comp instanceof AlignmentCapability)) {
+            throw new IllegalArgumentException("Component is not AlignmentCapability: " + comp.getClass().getSimpleName());
+        }
+        AlignmentCapability alignable = (AlignmentCapability) comp;
+        switch (methodName) {
+            case "top":
+                alignable.alignCoordinated(null, Align.top);
+                break;
+            case "bottom":
+                alignable.alignCoordinated(null, Align.bottom);
+                break;
+            case "left":
+                alignable.alignCoordinated(null, Align.left);
+                break;
+            case "right":
+                alignable.alignCoordinated(null, Align.right);
+                break;
+            case "center":
+                alignable.alignCoordinated(null, Align.center);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown alignment method: " + methodName);
         }
     }
 

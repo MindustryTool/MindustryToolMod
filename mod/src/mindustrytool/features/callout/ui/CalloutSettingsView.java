@@ -1,6 +1,11 @@
 package mindustrytool.features.callout.ui;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -42,8 +47,8 @@ public class CalloutSettingsView extends Component {
     private Component settingsCard() {
         return SettingCard.section(Icon.settings, Core.bundle.get("feature.callout.settings.general"), () -> {
 
-            row().growX().gap(unit(2)).center().children(() -> {
-                column().growX().gap(unit(0.5f)).left().children(() -> {
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
+                column().props(growX(), gap(unit(0.5f)), left()).children(() -> {
                     text(Core.bundle.get("feature.callout.settings.team-chat"))
                             .color(Color.white)
                             .left();
@@ -59,8 +64,8 @@ public class CalloutSettingsView extends Component {
 
             divider().color(WebStyles.Colors.SECTION_BORDER);
 
-            row().growX().gap(unit(2)).center().children(() -> {
-                column().growX().gap(unit(0.5f)).left().children(() -> {
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
+                column().props(growX(), gap(unit(0.5f)), left()).children(() -> {
                     text(Core.bundle.get("feature.callout.settings.close-on-send"))
                             .color(Color.white)
                             .left();
@@ -77,14 +82,13 @@ public class CalloutSettingsView extends Component {
     }
 
     private Component resetButton() {
-        return row().growX().children(() -> {
+        return row().props(growX()).children(() -> {
             button(feature::resetToDefaults)
                     .style(WebStyles.outline())
-                    .height(unit(8.5f))
-                    .growX()
+                    .props(height(unit(8.5f)), prefHeight(unit(8.5f)), growX())
                     .children(() -> {
-                        row().gap(unit(1.5f)).center().children(() -> {
-                            icon(Icon.refresh).size(unit(4));
+                        row().props(gap(unit(1.5f)), center()).children(() -> {
+                            icon(Icon.refresh).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)));
                             text(Core.bundle.get("feature.callout.settings.reset"));
                         });
                     });

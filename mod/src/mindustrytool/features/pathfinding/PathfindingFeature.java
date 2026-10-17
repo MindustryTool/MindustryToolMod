@@ -15,6 +15,7 @@ import arc.math.geom.Vec2;
 import arc.scene.Element;
 import arc.struct.IntSet;
 import arc.struct.IntSet.IntSetIterator;
+import arc.struct.Seq;
 import arc.util.Interval;
 import arc.util.Nullable;
 import arc.util.Time;
@@ -68,7 +69,7 @@ public class PathfindingFeature extends Feature {
     public final ConfigValue<Boolean> drawAlliesConfig;
     public final ConfigValue<Float> zoomThresholdConfig;
     public final ConfigValue<Float> opacityConfig;
-    public final ConfigValue<Boolean>[] costTypeConfigs;
+    public final Seq<ConfigValue<Boolean>> costTypeConfigs;
 
     private final PathfindingCacheManager pathCache = new PathfindingCacheManager();
     private final PathfindingCacheManager spawnPathCache = new PathfindingCacheManager();
@@ -93,7 +94,6 @@ public class PathfindingFeature extends Feature {
     private final Cons<Unit> unitUpdateProcessor = this::updateProcessUnitPath;
     private final Cons<Unit> unitDrawProcessor = this::drawProcessUnitPath;
 
-    @SuppressWarnings("unchecked")
     public PathfindingFeature() {
         super(FeatureMetadata.builder()
                 .id("pathfinding")
@@ -111,9 +111,9 @@ public class PathfindingFeature extends Feature {
         zoomThresholdConfig = config.floatValue("zoom-threshold", 0.5f);
         opacityConfig = config.floatValue("opacity", 1.0f);
 
-        costTypeConfigs = new ConfigValue[COST_COUNT];
+        costTypeConfigs = new Seq<>(COST_COUNT);
         for (int i = 0; i < COST_COUNT; i++) {
-            costTypeConfigs[i] = config.boolValue("cost-type." + i, true);
+            costTypeConfigs.add(config.boolValue("cost-type." + i, true));
         }
 
         Effect.of(drawUnitPathConfig.signal(), v -> cachedDrawUnitPath = v != null ? v : true);
@@ -124,7 +124,7 @@ public class PathfindingFeature extends Feature {
 
         for (int i = 0; i < COST_COUNT; i++) {
             final int index = i;
-            Effect.of(costTypeConfigs[i].signal(), v -> cachedCostTypes[index] = v != null ? v : true);
+            Effect.of(costTypeConfigs.get(i).signal(), v -> cachedCostTypes[index] = v != null ? v : true);
         }
 
         syncConfigCache();
@@ -154,7 +154,7 @@ public class PathfindingFeature extends Feature {
         cachedOpacity = op != null ? op : 1.0f;
 
         for (int i = 0; i < COST_COUNT; i++) {
-            Boolean c = costTypeConfigs[i].get();
+            Boolean c = costTypeConfigs.get(i).get();
             cachedCostTypes[i] = c != null ? c : true;
         }
     }
@@ -166,7 +166,7 @@ public class PathfindingFeature extends Feature {
         zoomThresholdConfig.reset();
         opacityConfig.reset();
         for (int i = 0; i < COST_COUNT; i++) {
-            costTypeConfigs[i].reset();
+            costTypeConfigs.get(i).reset();
         }
         syncConfigCache();
     }

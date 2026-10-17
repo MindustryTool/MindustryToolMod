@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.position;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -20,9 +21,9 @@ import arc.mock.MockGraphics;
 import mindustry.game.EventType.ResizeEvent;
 import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
-import solim.test.SolimEnv;
+import solim.test.OwnershipEnv;
 
-class HudDisposalTest extends SolimEnv {
+class HudDisposalTest extends OwnershipEnv {
 
 	static class ResizableMockGraphics extends MockGraphics {
 		int width = 1024;
@@ -84,8 +85,8 @@ class HudDisposalTest extends SolimEnv {
 	void resizeListenerUnregisteredOnDispose() {
 		Hud hud = new Hud();
 		hud.root().setSize(200f, 100f);
-		hud.position(800f, 600f);
-		hud.keepInScreen();
+		hud.props(position(800f, 600f));
+		hud.withinOwnership(() -> hud.keepInScreen());
 		assertFalse(hud.isDisposed());
 
 		mockGraphics.width = 800;

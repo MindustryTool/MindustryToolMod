@@ -1,17 +1,22 @@
 package solim.reactive;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import arc.func.Cons;
 import arc.func.Prov;
 import solim.core.Disposable;
+import solim.core.DisposableOwner;
+import solim.core.OwnershipContext;
 import arc.func.Boolf2;
 
-public final class TwoWayBinding<T> implements Disposable {
+public final class TwoWayBinding<T> implements DisposableOwner {
 
     private boolean updating = false;
     private boolean disposed = false;
     private final Effect effect;
     private final Disposable listenerDisposable;
+    private final List<Disposable> owned = new ArrayList<>();
 
     public TwoWayBinding(
             Signal<T> signal,
@@ -36,18 +41,25 @@ public final class TwoWayBinding<T> implements Disposable {
             }
         });
 
-        this.effect = Effect.of(() -> {
-            T signalValue = signal.get();
-            T widgetValue = widgetGetter.get();
-            if (!equalityChecker.get(signalValue, widgetValue)) {
-                updating = true;
-                try {
-                    widgetSetter.get(signalValue);
-                } finally {
-                    updating = false;
+        OwnershipContext.push(this);
+        try {
+            this.effect = Effect.of(() -> {
+                T signalValue = signal.get();
+                T widgetValue = widgetGetter.get();
+                if (!equalityChecker.get(signalValue, widgetValue)) {
+                    updating = true;
+                    try {
+                        widgetSetter.get(signalValue);
+                    } finally {
+                        updating = false;
+                    }
                 }
-            }
-        });
+            });
+        } finally {
+            OwnershipContext.pop();
+        }
+
+        OwnershipContext.register(this);
     }
 
     public TwoWayBinding(
@@ -59,6 +71,13 @@ public final class TwoWayBinding<T> implements Disposable {
     }
 
     @Override
+    public void adopt(Disposable resource) {
+        if (resource != null && !disposed) {
+            owned.add(resource);
+        }
+    }
+
+    @Override
     public void dispose() {
         if (disposed) {
             return;
@@ -66,6 +85,10 @@ public final class TwoWayBinding<T> implements Disposable {
         disposed = true;
         effect.dispose();
         listenerDisposable.dispose();
+        for (int i = owned.size() - 1; i >= 0; i--) {
+            owned.get(i).dispose();
+        }
+        owned.clear();
     }
 
     @Override

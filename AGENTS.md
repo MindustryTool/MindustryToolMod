@@ -288,6 +288,50 @@ Fully qualified names are allowed only when strictly necessary to resolve unavoi
 
 ---
 
+# Generics & Type Safety — Mandatory
+
+Use generics properly. Do not use a raw type, and do not cast what the type system already proves.
+
+Rules:
+
+* Never use a raw type (`Seq`, `List`, `Cell`, `Func`) when a parameterized type is expressible.
+* Never cast to a type parameter, or to a type a generic already carries.
+* Never cast a value the compiler has already narrowed. A polymorphic call replaces an `instanceof` ladder followed by casts.
+* Never cast a generic call result to recover a type argument the caller already knows.
+* Do not add `@SuppressWarnings("unchecked")` or `@SuppressWarnings("rawtypes")`. Each one is a defect to remove rather than a warning to silence. The only exception is a signature forced by Arc or by the Java 8 runtime, and that exception must name the API that forces it in a comment.
+
+❌ Avoid:
+
+```java
+public <T> T first(List<?> items) {
+    return (T) items.get(0);
+}
+
+if (owner instanceof Row) {
+    ((Row) owner).gap(spacing);
+} else if (owner instanceof Column) {
+    ((Column) owner).gap(spacing);
+}
+```
+
+✅ Good:
+
+```java
+public <T> T first(List<T> items) {
+    return items.get(0);
+}
+
+// Dispatch through the interface the hosts already share, and let each host keep
+// its own spacing. Add the setter to that interface once, instead of casting at
+// every call site.
+GapContainer container = GapContainer.find(table);
+if (container != null) {
+    container.setSpacing(spacing);
+}
+```
+
+---
+
 # Simple Conditions: Prefer Ternary Operator — Mandatory
 
 Prefer the ternary operator (`? :`) over `if`/`if-else` blocks or mutable variables for simple condition checks, variable initialization, and method arguments.
@@ -443,6 +487,23 @@ public Readable<Boolean> enabled() {
 
 Mod code must use the public `solim.UI.*` declarative facades. Attempting to reference `:solim-runtime` classes will result in compile-time errors. Mod code should not manually call `own()`, relying on ambient ownership instead.
 
+### No Internal or Lifecycle API Outside Solim — Mandatory
+
+The isolation above extends past `:solim-runtime`: no internal solim API and no lifecycle API may be referenced outside the solim modules.
+
+* **Internal seams** — `SolimToken`, `PendingCellConfig`, `OwnershipGuard`, `OwnershipContext`, `AttachmentStack`, `AttachmentBridge`, and any other type whose only purpose is to wire a component to the engine.
+* **Lifecycle seams** — `openSelfWindow()`, `closeSelfWindow()`, `withinOwnership(...)`, `onRealized(...)`, `applyPendingProps()`, `applyToCell(...)`, `cellConfig()`, `adopt(...)`, `respace()`.
+
+Mod code expresses these declaratively instead:
+
+* a component declares its configuration with `.props(...)`;
+* a container declares its children with `.children(...)`;
+* a custom component extends the Solim component it is closest to, rather than binding itself into the engine through a token.
+
+If a behaviour has no declarative path, add that path to Solim. Never reach into the engine from `mod`.
+
+`mod/src/test/java/mindustrytool/SolimEncapsulationGuardTest` enforces this and must keep rejecting every seam above in mod sources.
+
 ## Dialogs, Buttons & Layout Conventions — Mandatory
 
 ### Settings Dialogs & Views Specification — Mandatory
@@ -451,7 +512,7 @@ All feature settings dialogs and views must strictly follow the unified layout, 
 
 #### 1. Dialog Viewport: Top-Aligned, Centered & Width-Constrained
 - Dialogs must call `maxWidth(500f)`.
-- The view's root must align to the top on the Y-axis and center on the X-axis (`top().center()`) so dialogs never float vertically when content is short.
+- The view's root must align to the top on the Y-axis and center on the X-axis (`.props(top(), center())`) so dialogs never float vertically when content is short.
 - Use `SettingScaffold.build(() -> { ... })` for the view root.
 
 ```java
@@ -482,7 +543,7 @@ Spacing across setting views follows a clean, compact hierarchy based on multipl
 - **Inter-Card Spacing (`unit(3)` = 12px)**: Vertical gap between adjacent section cards in the viewport scroll column (`gap(unit(3))`).
 
 #### 3. Section Cards — Mandatory
-Every logical group of settings must be enclosed in a distinct card (`SettingCard.card()` or `card().padding(unit(2.5f)).gap(unit(2)).rounded(unit(2), WebStyles.Colors.SECTION_BG).border(1f, WebStyles.Colors.SECTION_BORDER)`).
+Every logical group of settings must be enclosed in a distinct card (`SettingCard.card()` or `card().props(padding(unit(2.5f)), gap(unit(2)), rounded(unit(2), WebStyles.Colors.SECTION_BG), border(1f, WebStyles.Colors.SECTION_BORDER))`).
 
 #### 4. Header Card Structure — Mandatory
 The first card in every setting view is the primary Feature Header Card:
@@ -492,14 +553,14 @@ The first card in every setting view is the primary Feature Header Card:
 
 #### 5. Section Cards Structure — Mandatory
 Every subsequent card starts with an accent section header row:
-- `[Pal.accent]` section icon + section name (`icon(Icon.wrench).size(unit(5)).color(Pal.accent)` and `text(title).color(Pal.accent).growX().left()`).
+- `[Pal.accent]` section icon + section name (`icon(Icon.wrench).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))).color(Pal.accent)` and `text(title).color(Pal.accent).props(growX(), left())`).
 - Use `SettingCard.section(icon, title, () -> { ... })` helper.
 
 #### 6. Sliders: Above-Track & Background-less Value Readout — Mandatory
 - Sliders must **never** be placed inline with their title.
 - The title (left) and formatted value readout (right) must be placed in a row **above** the slider track.
 - The value readout must **not** have a background (do NOT wrap in a `badge(...)` pill). Use clean text (`color(WebStyles.Colors.GHOST_FG)` or `Pal.accent`).
-- The slider track must span full width (`.growX()`).
+- The slider track must span full width (`.props(growX())`).
 - Use `SettingSlider.of(...)` helper.
 
 ```java
@@ -518,9 +579,8 @@ Standard buttons use a uniform size of `unit(11)` with an icon size of `unit(6)`
 ```java
 button()
         .style(WebStyles.ghost())
-        .size(unit(11))
-        .tooltip(...)
-        .children(() -> icon(Icon.add).size(unit(6)));
+        .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(...))
+        .children(() -> icon(Icon.add).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
 ```
 
 Small inline exceptions (e.g. dense list rows) may use smaller sizes, but default to `unit(11)` / `unit(6)`.
@@ -559,13 +619,13 @@ Prefer declarative Solim code:
 
 ```java
 column()
-        .grow()
+        .props(grow())
         .gap(unit(2))
         .children(() -> {
             text("Title");
 
             row()
-                    .gap(unit(1))
+                    .props(gap(unit(1)))
                     .children(() -> {
                         text("Label");
                         button("Action", this::onAction);
@@ -582,6 +642,26 @@ Direct Arc usage is allowed only when:
 When direct Arc usage is necessary, isolate it behind Solim abstractions when practical.
 
 **Do not bypass Solim for convenience.**
+
+### Do Not Wrap Solim Behind Helpers — Mandatory
+
+Call Solim declaratively, at the point of use. Do not add a helper, factory, or wrapper that callers must go through every time they need a Solim capability.
+
+❌ Avoid:
+
+```java
+static Column gapColumn(float spacing) {
+    return new Column().props(gap(spacing));
+}
+```
+
+✅ Good:
+
+```java
+column().props(gap(unit(2))).children(() -> { ... });
+```
+
+A helper earns its place only when it adds behaviour Solim does not express — declarative integration, automatic ownership, reactive binding, reusable behaviour. Renaming or re-ordering Solim calls is not behaviour.
 
 ---
 
@@ -602,6 +682,51 @@ protected Element build() {
 }
 ```
 
+## Layout Modifiers Go Through `.props(...)` — Mandatory
+
+The chained layout modifiers are gone. Every layout, spacing, alignment, sizing and
+decorative property is applied through a single `props(...)` call whose arguments are the
+static factories on `solim.modifier.Values`.
+
+```java
+row()
+        .props(growX(), padding(unit(2)), left())
+        .children(() -> {
+            // children
+        });
+```
+
+`props(...)` is deferred: building one resolves no Arc type and creates no binding. The
+properties drain inside the component's ownership window, so every reactive binding they
+install is owned by the component being configured and is disposed with it. This holds
+whether the component is already realized or still pending — a not-yet-realized host
+records the props and applies them when `element()` runs.
+
+Component-specific methods are unaffected and stay chained: `style(...)`, `color(...)`,
+`text(...)`, `icon(...)`, `onClick(...)`, `checked(...)`, `enabled(...)`, `name(...)`,
+`gap(...)` on a gap container, and every `children(...)` / `items(...)` terminal.
+
+```java
+column()
+        .props(grow(), padding(unit(2)))
+        .gap(unit(2))
+        .children(() -> {
+            text("Title");
+        });
+```
+
+Sizing props that also constrain the cell — `width`, `height` and `size` — need their cell
+counterpart spelled out, because the cell constraint is a separate property:
+
+```java
+icon(Icon.add).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
+```
+
+The factories come from `solim.modifier.Values`; import them explicitly
+(`import static solim.modifier.Values.growX;`). Do not rely on a wildcard `solim.UI.*`
+import to reach them, and qualify any factory whose name is also an inherited method on the
+host (`Values.rounded(...)` inside a `SolimDialog` subclass, for example).
+
 ## Modifier Order
 
 Keep modifiers visually associated with their component.
@@ -609,21 +734,15 @@ Keep modifiers visually associated with their component.
 Use this general order:
 
 1. Create component
-2. Size and growth
-3. Spacing
-4. Alignment
-5. Visual styling
-6. Behavior and events
-7. `children()` last
+2. One `props(...)` call for size, growth, spacing, alignment, visual styling and behavior
+3. Component-specific methods (`style`, `color`, `text`, `icon`, `onClick`, …)
+4. `children()` last
 
 Example:
 
 ```java
 row()
-        .growX()
-        .padding(unit(2))
-        .gap(unit(1))
-        .left()
+        .props(growX(), padding(unit(2)), gap(unit(1)), left())
         .children(() -> {
             // children
         });
@@ -674,14 +793,12 @@ Pass the `Readable<T>` / `Signal<T>` directly to the component, or use `.map()` 
 @Override
 protected Element build() {
     float scale = scaleSignal.get(); // ❌ Severed! Will not update on scale change
-    int cols = colsSignal.get();       // ❌ Severed!
-    String name = nameSignal.get();    // ❌ Severed!
+    String name = nameSignal.get();  // ❌ Severed!
 
     return column(() -> {
         text(name);
         text(countSignal.get() + " items"); // ❌ Not reactive!
-        grid(cols).children(() -> ...);
-        button().size(48f * scale);         // ❌ Static size!
+        button().props(size(48f * scale));   // ❌ Static size!
     });
 }
 ```
@@ -696,11 +813,13 @@ protected Element build() {
     return column(() -> {
         text(nameSignal);
         text(countText);
-        grid(colsSignal).children(() -> ...);
-        button().size(buttonSize);
+        button().props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize));
     });
 }
 ```
+
+For a dynamic keyed collection, pass the readable source to `reactiveGrid(...)` rather than
+resolving it — see the Collections rule below.
 
 ---
 
@@ -721,11 +840,11 @@ Properties should support reactive values where appropriate:
 text(status);
 
 button("Save")
-        .visible(canSave)
+        .props(visible(canSave))
         .enabled(canSave);
 
 card()
-        .width(cardWidth);
+        .props(width(cardWidth), prefWidth(cardWidth));
 
 button()
         .color(enabled.map(value ->
@@ -1038,6 +1157,7 @@ Verify:
 * [ ] Nullable values use `arc.util.Nullable`.
 * [ ] Fully qualified class names are forbidden and replaced with imports (use regex to check).
 * [ ] Ternary operator is preferred over `if` for simple conditions and assignments.
+* [ ] No raw types, and no cast or `@SuppressWarnings` that the type system makes unnecessary.
 
 ### Architecture
 
@@ -1049,6 +1169,8 @@ Verify:
 
 * [ ] Solim was used instead of direct Arc UI where possible.
 * [ ] UI is declarative and readable.
+* [ ] No helper or wrapper stands between the caller and a Solim API the caller could use directly.
+* [ ] No solim internal or lifecycle API is referenced outside the solim modules.
 * [ ] Reactive properties use automatic component bindings.
 * [ ] Effects are only used for genuine side effects.
 * [ ] Bindings and resources are automatically owned and disposed.

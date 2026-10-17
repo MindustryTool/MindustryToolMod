@@ -116,6 +116,7 @@ class TeamResourceRateTest extends MindustryTestEnv {
         }
         table2.setSize(300, 100);
         table2.layout();
+        // Arc's Table.getCells() is declared as Seq<Cell>, with a raw Cell argument that cannot be recovered from that API.
         @SuppressWarnings("rawtypes")
         Seq<Cell> cells2 = table2.getCells();
         assertEquals(4, cells2.size);

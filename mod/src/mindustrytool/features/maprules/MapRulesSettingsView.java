@@ -1,6 +1,7 @@
 package mindustrytool.features.maprules;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
 
 import arc.Core;
 import arc.scene.Element;
@@ -39,12 +40,12 @@ public class MapRulesSettingsView extends Component {
     private Component optionsCard() {
         return SettingCard.section(Icon.settings, Core.bundle.get("feature.map-rules.settings.title"), () -> {
             checkbox(Core.bundle.get("feature.map-rules.settings.show-permission"),
-                    feature.showPermissionConfig.signal()).growX();
+                    feature.showPermissionConfig.signal()).props(growX());
 
             divider().color(WebStyles.Colors.SECTION_BORDER);
 
             checkbox(Core.bundle.get("feature.map-rules.settings.show-descriptions"),
-                    feature.showDescriptionsConfig.signal()).growX();
+                    feature.showDescriptionsConfig.signal()).props(growX());
         });
     }
 }

@@ -1,6 +1,7 @@
 package mindustrytool.components;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
 
 import arc.Core;
 import arc.struct.Seq;
@@ -28,7 +29,7 @@ public final class SettingKeybindCard {
             return null;
         }
         return SettingCard.section(Icon.settings, title, () -> {
-            column().growX().gap(unit(2)).children(() -> {
+            column().props(growX(), gap(unit(2))).children(() -> {
                 for (int i = 0; i < keybinds.size; i++) {
                     if (i > 0) {
                         divider().color(WebStyles.Colors.SECTION_BORDER);

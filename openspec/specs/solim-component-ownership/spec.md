@@ -41,7 +41,7 @@ TBD - created by archiving change solim-ownership-unification. Update Purpose af
 
 ### Requirement: Reactive resources auto-own
 
-A reactive primitive SHALL be registered with the component that configures it, without per-method bookkeeping or ad-hoc fallback adapter classes. Ownership of such a resource SHALL be automatic and unconditional via active ambient build scope.
+A reactive primitive SHALL be registered with the component that configures it, without per-method bookkeeping or ad-hoc fallback adapter classes. Ownership of such a resource SHALL be automatic and unconditional via the active ambient `build()` scope.
 
 #### Scenario: A reactive modifier needs no self-registration
 - **WHEN** a component configures itself from a `Readable`, for example `icon(icon).color(readable)`
@@ -58,6 +58,10 @@ A reactive primitive SHALL be registered with the component that configures it, 
 #### Scenario: The component returned by a factory receives factory output
 - **WHEN** a collection factory constructs resources around the component it returns
 - **THEN** those resources are adopted by that component and disposed with it, whether or not the component type is known to the reconciler
+
+#### Scenario: A component declares its reactive state in one place
+- **WHEN** a component needs a reactive binding
+- **THEN** it is created with the component as the active ambient owner, and the component is its owner for the component's whole lifetime
 
 ### Requirement: No closures in the ownership path
 
@@ -94,4 +98,35 @@ Collections and dynamic factories SHALL own any reactive cell constraints and te
 #### Scenario: ReactiveGrid empty state temporary bindings are disposed
 - **WHEN** a `ReactiveGrid` transitions from empty to populated
 - **THEN** any bindings and components created by `empty(Runnable)` or `empty(Prov)` are disposed
+
+### Requirement: No public ownership mutation API
+`Component` SHALL NOT expose `own()`. Ownership of a resource SHALL be established only by the ambient `OwnershipContext`, never by a call written on the owning component. There SHALL be no replacement method, no renamed alias, and no package-private substitute.
+
+#### Scenario: External code cannot manually own
+- **WHEN** application code, mod code, or tests instantiate a `Component`
+- **THEN** no ownership method can be invoked on it directly; resource binding happens through ambient context registration during `build()`
+
+#### Scenario: Modifier methods register nothing by hand
+- **WHEN** a modifier in `CellConfig`, `ElementConfig`, or `TableConfig` installs a reactive `Effect`
+- **THEN** the modifier contains no self-registration call, because the owning component is already the active ambient owner
+
+### Requirement: Strict single ownership for all Disposables
+A `Disposable` SHALL only ever be owned by at most one `DisposableOwner` at a time. Adopting a `Disposable` already held by a live owner SHALL throw `IllegalStateException` rather than silently re-owning it. Ownership SHALL be detectable without global mutable state, so that no registration can outlive its owner.
+
+#### Scenario: Adopting an already-owned Disposable is rejected
+- **WHEN** a `Disposable` is already adopted by a live owner reachable from `SessionRoot`
+- **AND** another owner attempts to adopt the same `Disposable`
+- **THEN** adoption throws `IllegalStateException` naming both owners and the resource, and the resource stays with its original owner
+
+#### Scenario: A collector is not treated as an owner
+- **WHEN** a resource is created inside an `OwnershipScope` and later moved onto a component
+- **THEN** the move is not a violation, because an `OwnershipScope` is a transient collector, is not reachable as a live owner, and has already relinquished the resource
+
+#### Scenario: A reactive resource is not registered with two owners
+- **WHEN** a reconciler produces a binding for a reconciled item
+- **THEN** the binding is adopted by exactly one component, rather than being registered in both a reconciler-owned binding list and the item component
+
+#### Scenario: Non-component helpers do not allocate reactive primitives
+- **WHEN** a static helper outside the component model would return a `Computed`
+- **THEN** it is re-expressed as a plain value helper, so no reactive primitive is allocated by a call site that has no owner to adopt it
 

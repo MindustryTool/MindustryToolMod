@@ -1,6 +1,19 @@
 package mindustrytool.features.settings;
 
 import static solim.UI.*;
+import static solim.modifier.Values.border;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.paddingBottom;
+import static solim.modifier.Values.paddingLeft;
+import static solim.modifier.Values.paddingTop;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.rounded;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
+import static solim.modifier.Values.visible;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -15,6 +28,7 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.web.WebFeature;
 import mindustrytool.features.web.WebFeatureCard;
+import solim.core.Units;
 import solim.core.Component;
 import solim.reactive.Computed;
 import solim.reactive.Signal;
@@ -25,7 +39,7 @@ public final class FeatureSettingsView extends Component {
     @Override
     protected Element build() {
 
-        Computed<Float> contentWidth = dvw(90f).map(w -> w - unit(10));
+        Computed<Float> contentWidth = Units.dvw.map(w -> w * 0.9f - unit(10));
         Computed<Integer> columnCount = contentWidth.map(w -> Math.max(1, (int) (w / 400f)));
 
         Computed<Seq<Feature>> filteredFeatures = Signal.computed(() -> {
@@ -72,50 +86,53 @@ public final class FeatureSettingsView extends Component {
             return !Boolean.TRUE.equals(hf) && (w == null || w.isEmpty());
         });
 
-        return column().grow().gap(unit(2)).children(() -> {
+        return column().props(grow(), gap(unit(2))).children(() -> {
             toolbar();
-            scroll().grow().scrollX(false).children(() -> {
-                column().growX().gap(unit(3)).children(() -> {
+            scroll().props(grow()).scrollX(false).children(() -> {
+                column().props(growX(), gap(unit(3))).children(() -> {
 
-                    column().growX().gap(unit(2)).visible(hasFavorites).children(() -> {
-                        row().growX().paddingTop(unit(1)).paddingBottom(unit(1)).children(() -> {
+                    column().props(growX(), visible(hasFavorites), gap(unit(2))).children(() -> {
+                        row().props(growX(), paddingTop(unit(1)), paddingBottom(unit(1))).children(() -> {
                             text(Core.bundle.get("feature.section.favorites", "Favorites"))
                                     .style(Styles.defaultLabel)
                                     .left();
                         });
                         reactiveGrid(favoritedFeatures).columns(columnCount)
-                                .key(feature -> feature.getMetadata().getId()).gap(unit(2))
-                                .children(feature -> new FeatureCard(feature, reorderAllowed));
+                                .key(feature -> feature.getMetadata().getId())
+                                .props(gap(unit(2)))
+                                .items(feature -> new FeatureCard(feature, reorderAllowed));
                     });
 
-                    divider().visible(Signal.computed(() -> Boolean.TRUE.equals(hasFavorites.get())
-                            && Boolean.TRUE.equals(hasStandardFeatures.get())));
+                    divider().props(visible(Signal.computed(() -> Boolean.TRUE.equals(hasFavorites.get())
+                            && Boolean.TRUE.equals(hasStandardFeatures.get()))));
 
-                    column().growX().gap(unit(2)).visible(hasStandardFeatures).children(() -> {
-                        row().growX().paddingTop(unit(1)).paddingBottom(unit(1)).children(() -> {
+                    column().props(growX(), visible(hasStandardFeatures), gap(unit(2))).children(() -> {
+                        row().props(growX(), paddingTop(unit(1)), paddingBottom(unit(1))).children(() -> {
                             text(Core.bundle.get("feature.section.mod-features", "Mod Features"))
                                     .style(Styles.defaultLabel)
                                     .left();
                         });
                         reactiveGrid(standardFeatures).columns(columnCount)
-                                .key(feature -> feature.getMetadata().getId()).gap(unit(2))
-                                .children(feature -> new FeatureCard(feature, reorderAllowed));
+                                .key(feature -> feature.getMetadata().getId())
+                                .props(gap(unit(2)))
+                                .items(feature -> new FeatureCard(feature, reorderAllowed));
                     });
 
-                    divider().visible(Signal.computed(
-                            () -> Boolean.TRUE.equals(hasFeatures.get()) && Boolean.TRUE.equals(hasWebFeatures.get())));
+                    divider().props(visible(Signal.computed(
+                            () -> Boolean.TRUE.equals(hasFeatures.get()) && Boolean.TRUE.equals(hasWebFeatures.get()))));
 
-                    column().growX().gap(unit(2)).visible(hasWebFeatures).children(() -> {
-                        row().growX().paddingTop(unit(3)).paddingBottom(unit(1)).children(() -> {
+                    column().props(growX(), visible(hasWebFeatures), gap(unit(2))).children(() -> {
+                        row().props(growX(), paddingTop(unit(3)), paddingBottom(unit(1))).children(() -> {
                             text(Core.bundle.get("web-feature.section.title", "Web Tools & Community"))
                                     .style(Styles.defaultLabel)
                                     .left();
                         });
-                        reactiveGrid(filteredWebFeatures).columns(columnCount).key(WebFeature::getId).gap(unit(2))
-                                .children(WebFeatureCard::new);
+                        reactiveGrid(filteredWebFeatures).columns(columnCount).key(WebFeature::getId)
+                                .props(gap(unit(2)))
+                                .items(WebFeatureCard::new);
                     });
 
-                    row().growX().center().visible(isEmpty).children(() -> {
+                    row().props(growX(), visible(isEmpty), center()).children(() -> {
                         text(Core.bundle.get("feature.search.empty", "No features found"))
                                 .color(Color.gray)
                                 .padding(unit(4));
@@ -126,36 +143,28 @@ public final class FeatureSettingsView extends Component {
     }
 
     private void toolbar() {
-        column().growX().gap(unit(2)).children(() -> {
-            row().growX().gap(unit(2))
-                    .rounded(unit(3))
-                    .paddingLeft(unit(2))
-                    .height(unit(12f))
-                    .center()
-                    .border(1.5f, Color.darkGray).children(() -> {
-                        icon(Icon.zoom).size(unit(6));
-                        textField(filter).growX().style(WebStyles.clearInput())
+        column().props(growX(), gap(unit(2))).children(() -> {
+            row().props(growX(), gap(unit(2)), rounded(unit(3)), paddingLeft(unit(2)), height(unit(12f)), prefHeight(unit(12f)), center(), border(1.5f, Color.darkGray)).children(() -> {
+                        icon(Icon.zoom).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
+                        textField(filter).props(growX()).style(WebStyles.clearInput())
                                 .placeholder(Core.bundle.get("feature.search.placeholder"));
                     });
 
-            wrap().growX().top().left().gap(unit(2)).children(() -> {
-                button(FeatureManager::reenable).style(WebStyles.secondary()).height(unit(11))
-                        .tooltip(Core.bundle.get("feature.button.re-enable.tooltip")).gap(unit(2)).children(() -> {
-                            icon(Icon.refresh).size(unit(6));
+            wrap().props(growX(), top(), left(), gap(unit(2))).children(() -> {
+                button(FeatureManager::reenable).style(WebStyles.secondary()).props(height(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.button.re-enable.tooltip")), gap(unit(2))).children(() -> {
+                            icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                             text(Core.bundle.get("feature.button.re-enable"));
                         });
 
                 button(() -> Core.app.openURI(Config.PROJECT_SUGGESTION_URL)).style(WebStyles.secondary())
-                        .height(unit(11))
-                        .tooltip(Core.bundle.get("feature.button.create-suggestion.tooltip")).gap(unit(2))
+                        .props(height(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.button.create-suggestion.tooltip")), gap(unit(2)))
                         .children(() -> {
-                            icon(Icon.link).size(unit(6));
+                            icon(Icon.link).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                             text(Core.bundle.get("feature.button.create-suggestion"));
                         });
 
-                button(() -> new GeneralSettingsDialog().show()).style(WebStyles.primary()).height(unit(11))
-                        .tooltip(Core.bundle.get("feature.button.settings")).gap(unit(2)).children(() -> {
-                            icon(Icon.settings).size(unit(6));
+                button(() -> new GeneralSettingsDialog().show()).style(WebStyles.primary()).props(height(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.button.settings")), gap(unit(2))).children(() -> {
+                            icon(Icon.settings).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                             text(Core.bundle.get("feature.button.settings"));
                         });
             });

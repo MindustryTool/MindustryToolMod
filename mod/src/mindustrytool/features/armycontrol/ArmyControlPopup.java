@@ -1,6 +1,11 @@
 package mindustrytool.features.armycontrol;
 
 import static solim.UI.*;
+import static solim.modifier.Values.border;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.rounded;
+import static solim.modifier.Values.width;
 
 import arc.Core;
 import arc.scene.Element;
@@ -38,7 +43,7 @@ public final class ArmyControlPopup {
         }
         if (menu == null) {
             menu = popup();
-            menu.children(ArmyControlPopup::buildContent);
+            menu.items(ArmyControlPopup::buildContent);
         }
         feature.refreshActiveSelection();
         QuickAccessPopupHelper.show(menu, feature, quickAccessBar);
@@ -69,11 +74,7 @@ public final class ArmyControlPopup {
         }
 
         return column()
-                .width(unit(65))
-                .padding(unit(2.5f))
-                .gap(unit(2))
-                .rounded(unit(2), WebStyles.Colors.SECTION_BG)
-                .border(1f, WebStyles.Colors.SECTION_BORDER)
+                .props(width(unit(65)), prefWidth(unit(65)), padding(unit(2.5f)), rounded(unit(2), WebStyles.Colors.SECTION_BG), border(1f, WebStyles.Colors.SECTION_BORDER), gap(unit(2)))
                 .children(() -> {
                     new ArmyControlCompactContent(feature, Readable.of(1f));
                 });

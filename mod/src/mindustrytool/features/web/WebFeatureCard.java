@@ -1,6 +1,18 @@
 package mindustrytool.features.web;
 
 import static solim.UI.*;
+import static solim.modifier.Values.backgroundColor;
+import static solim.modifier.Values.border;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.onClick;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.rounded;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -20,26 +32,20 @@ public class WebFeatureCard extends Component {
     @Override
     protected Element build() {
 
-        return card(Styles.black8).name("WebFeatureCard-" + webFeature.getId()).height(unit(60)).growX()
-                .rounded(unit(4))
-                .border(1.5f, Color.darkGray)
-                .padding(unit(1))
-                .backgroundColor(Color.black)
-                .onClick(this::openWebFeature)
+        return card(Styles.black8).name("WebFeatureCard-" + webFeature.getId()).props(height(unit(60)), prefHeight(unit(60)), growX(), rounded(unit(4)), border(1.5f, Color.darkGray), padding(unit(1)), backgroundColor(Color.black), onClick(this::openWebFeature))
                 .children(() -> {
-                    column().grow().padding(unit(2)).gap(unit(2)).children(() -> {
-                        row().growX().children(() -> {
-                            row().center().gap(unit(2)).children(() -> {
-                                icon(webFeature.getIcon()).size(unit(7));
+                    column().props(grow(), padding(unit(2)), gap(unit(2))).children(() -> {
+                        row().props(growX()).children(() -> {
+                            row().props(center(), gap(unit(2))).children(() -> {
+                                icon(webFeature.getIcon()).props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7)));
                                 text(webFeature.getName()).style(Styles.defaultLabel).color(Color.white).ellipsis(true)
                                         .left();
                             });
 
                             spacer();
 
-                            button(this::openWebFeature).style(Styles.clearNonei).size(unit(11))
-                                    .tooltip(Core.bundle.get("web-feature.button.open", "Open in browser"))
-                                    .children(() -> icon(FileIcon.of("external-link.png")).size(unit(7)));
+                            button(this::openWebFeature).style(Styles.clearNonei).props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("web-feature.button.open", "Open in browser")))
+                                    .children(() -> icon(FileIcon.of("external-link.png")).props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7))));
                         });
 
                         text(webFeature.getDescription()).color(Color.lightGray).fontScale(0.9f).wrap(true).left();

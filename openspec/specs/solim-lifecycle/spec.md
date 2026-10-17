@@ -45,18 +45,18 @@ Custom components SHALL be normal Java classes with constructor parameters as pr
 - **THEN** clicking button updates `text` via reactive binding without rebuilding `Counter`
 
 ### Requirement: Component as child via ElementResolver
-Layouts and parents SHALL accept children that are `Element` or `Component`; `Component` children SHALL be automatically resolved to `component.element()` without requiring callers to write `new Header().element()`. Additionally, `BaseComponent` subclasses instantiated inside a `children()` block SHALL be automatically attached to the current parent without requiring an explicit `component()` call — the `component()` call is now optional inside `children()` scopes.
+Layouts and parents SHALL accept children that are `Element` or `Component`; `Component` children SHALL be automatically resolved to `component.element()` without requiring callers to write `new Header().element()`. Components instantiated inside a `children()` block SHALL be automatically attached to the current parent via the pending attachment mechanism, and a component is never moved between ownership contexts to make it attach.
 
 #### Scenario: Direct Component child without component() call
-- **WHEN** `column(() -> { new Header(); new ChatPanel(); })` where `Header` and `ChatPanel` extend `BaseComponent`
+- **WHEN** `column(() -> { new Header(); new ChatPanel(); })` where `Header` and `ChatPanel` extend `Component`
 - **THEN** parent column contains their resolved `Element`s in order, without any `component()` call
 
 #### Scenario: Mixed Element and Component children
 - **WHEN** `column(() -> { text("Hello"); new UserCard(user); image(tex); })`
-- **THEN** all three children are attached correctly: `text` and `image` via `attachToParent`, `UserCard` via the auto-attach pending mechanism
+- **THEN** all three children are attached correctly without requiring manual `.element()` calls
 
 #### Scenario: Explicit component() still valid
-- **WHEN** `column(() -> { component(new Header()); })` (old style)
+- **WHEN** `column(() -> { component(new Header()); })`
 - **THEN** the element is attached exactly once; no duplicate child is added
 
 ### Requirement: Component lifecycle and explicit disposal
@@ -184,21 +184,6 @@ If `build()` returns `null`, the component SHALL throw `IllegalStateException` w
 
 Confine raw ownership primitives to framework internals so application modules use only lifecycle-safe declarative paths.
 
-### Requirement: Internal-only ownership primitive
-The framework SHALL confine the raw ownership primitive `BaseComponent.own()` to package `solim.core` (no access modifier) so it is callable only by framework internals and rejected by the compiler in application modules.
-
-#### Scenario: Mod code calling own() fails to compile
-- **WHEN** application code outside `solim.core` calls `own(disposable)`
-- **THEN** compilation fails with an access error (`own() has package access in BaseComponent`)
-
-#### Scenario: Framework internals register via OwnershipContext
-- **WHEN** framework code outside `solim.core` (e.g. layouts, structural components) needs to own a resource
-- **THEN** it calls `OwnershipContext.register(disposable)` or `OwnershipContext.registerChild(child)`, which delegates to the owning component
-
-#### Scenario: Mod lifecycle needs are covered without own()
-- **WHEN** mod code needs event unregistration or reactive effects tied to component disposal
-- **THEN** it uses instance `listen()`, `createSignal()`, or `effect()` declared inside `build()`, which are auto-owned without any manual call
-
 ### Requirement: No manual ownership API on the mod path
 Application components SHALL have no callable manual ownership method. `OwnershipContext.register()/registerChild()` is the canonical internal path; `listen()`/`createSignal()`/`effect()` are the canonical mod-facing lifecycle-safe paths.
 
@@ -209,19 +194,27 @@ Application components SHALL have no callable manual ownership method. `Ownershi
 **Source: scoped-context-api**
 
 ### Requirement: Ambient Lifecycle Ownership in Component Build
-The Solim framework SHALL automatically track child components, disposables, and Solim controls instantiated or attached during a component's `build()` execution without requiring explicit `own()` or `ownChild()` invocations. Ambient ownership SHALL be the sole ownership path for application code; manual ownership calls in application modules SHALL be rejected by the compiler.
+The Solim framework SHALL automatically track child components, disposables, and Solim controls instantiated or attached while a component is the active ambient owner — inside its `build()` or inside a `children()` block — without requiring explicit ownership invocations. Ambient ownership SHALL be the only ownership path for application code and framework code alike. A component's constructor SHALL allocate plain values only, because the component is not the active ambient owner while its own constructor runs.
 
 #### Scenario: Child component created in build context
 - **WHEN** a component instantiates child components or Solim controls within its `build()` method
 - **THEN** the child components and controls are automatically registered with the parent component's disposable registry and disposed when the parent is disposed
 
+#### Scenario: Child component created in a children block
+- **WHEN** a component instantiates child components or Solim controls within its own `children()` block
+- **THEN** the children are registered against that component, not against the enclosing scope
+
+#### Scenario: Constructor allocates plain values only
+- **WHEN** a component's constructor body runs
+- **THEN** the component is not the active ambient owner, so any owned resource it would create belongs to that resource's own construction site rather than the component
+
 #### Scenario: Clean stack unwinding on build failure
 - **WHEN** a component's `build()` method throws an exception during construction
 - **THEN** the ambient build context stack is cleanly unwound and does not leak context to subsequent component builds
 
-#### Scenario: Manual own() in application code is a compile error
-- **WHEN** application code outside `solim.core` calls `own(...)` or `ownChild(...)`
-- **THEN** compilation fails, and the author migrates to `effect()`, instance `listen()`, or plain declarative bindings inside `build()`
+#### Scenario: No manual ownership call exists to misuse
+- **WHEN** framework or application code needs to bind a resource to the current component
+- **THEN** no ownership method can be called on the component, because ownership is expressed solely by the ambient context the resource is created in
 
 ### Requirement: OwnershipContext is the canonical internal registration path
 Framework code outside `solim.core` that must own a resource SHALL use `OwnershipContext.register(disposable)` or `OwnershipContext.registerChild(child)` instead of calling `own()` directly. These methods SHALL be null-safe, pause-aware, and delegate to the ambient owning component.
@@ -469,35 +462,16 @@ The `Component` interface SHALL extend `Disposable` so that components can be pa
 - **WHEN** a class implements `Component`
 - **THEN** it compiles as a `Disposable` and can be passed to any method accepting `Disposable`
 
-### Requirement: Single own() method on BaseComponent
-`BaseComponent` SHALL expose a single internal-only `own(T extends Disposable)` method (package-private, no access modifier) that adds the given resource to the component's disposal list and returns it. If the component is already disposed, `own()` SHALL ignore the disposable and not register it. It SHALL be callable only within package `solim.core`; application modules and public consumers SHALL NOT be able to call it. `LeafComponent` SHALL NOT expose a public `own()` method.
-
-#### Scenario: own() adds to disposal list
-- **WHEN** `own(disposable)` is called on a component from within `solim.core`
-- **THEN** the disposable is added to the component's internal list and disposed when the component is disposed
-
-#### Scenario: own() on disposed component is ignored
-- **WHEN** `own(disposable)` is called on a component that has already been disposed
-- **THEN** the disposable is not added to the internal list
-
-#### Scenario: own() returns the disposable
-- **WHEN** `T result = own(disposable)` is called from within `solim.core`
-- **THEN** `result` is the same instance as `disposable`
-
-#### Scenario: own(null) is safe
-- **WHEN** `own(null)` is called
-- **THEN** no exception is thrown and nothing is added to the disposal list
-
-#### Scenario: own() is not callable from application code
-- **WHEN** code outside package `solim.core` attempts to call `own(disposable)`
-- **THEN** a compile-time access error is raised and compilation fails
-
 ### Requirement: Legacy ownership APIs are removed or deprecated
-`registerDisposable(...)`, `ownChild(...)`, and any other ownership alias methods SHALL be deprecated and all internal call sites SHALL be migrated to `own(...)`.
+`registerDisposable(...)`, `ownChild(...)`, `own(...)`, and any other ownership alias method SHALL be removed outright. There SHALL be no deprecation shim and no replacement method.
 
-#### Scenario: Deprecated API still compiles but warns
-- **WHEN** a deprecated ownership method is called
-- **THEN** a compiler deprecation warning is emitted but the call still functions identically to `own(...)`
+#### Scenario: No ownership method resolves
+- **WHEN** any module attempts to call `own(...)`, `ownChild(...)`, or `registerDisposable(...)`
+- **THEN** compilation fails with a missing symbol, and the author binds the resource by creating it where the component is the active ambient owner
+
+#### Scenario: No deprecation warning stands in for removal
+- **WHEN** code calls a legacy ownership alias
+- **THEN** no deprecation shim remains that lets the call compile and behave like `own()`
 
 ### Requirement: Dynamic and When parent stack isolation during root element build
 `Dynamic` and `When` SHALL isolate the `AttachmentStack` during the evaluation of captured root component elements (`root.element()`). Any component instantiated and built inside a void factory passed to `Dynamic` or `When` SHALL NOT attach its element to an ambient parent container on the stack, and SHALL attach exclusively to the `Dynamic` or `When` container.
@@ -520,4 +494,45 @@ The `Component` interface SHALL extend `Disposable` so that components can be pa
 #### Scenario: Owner is queryable
 - **WHEN** a component or resource is asked for its owning node
 - **THEN** the owning node is returned, and a component can report whether it is an ancestor of another component
+
+### Requirement: Single lazy realization upon parent attachment
+Component `element()` SHALL be invoked lazily when the component is attached to its parent container by `AttachmentStack.pop()`. Factory methods in `solim.UI` SHALL NOT eagerly realize `element()`; `AttachmentStack.attachPendingComponents()` SHALL be the sole mechanism that resolves a pending component's element.
+
+#### Scenario: Factory chaining before realization
+- **WHEN** `button("Click").minWidth(100f).size(40f).padding(unit(2))` is called inside a `children()` block
+- **THEN** `element()` is not invoked by the factory while the parent `children()` scope is still open; it is resolved when that scope closes and attaches its pending children
+
+#### Scenario: Element realized exactly once
+- **WHEN** a component is realized during attachment and `element()` is requested again later
+- **THEN** the cached element is returned and `build()` is not invoked a second time
+
+### Requirement: Immutable component ownership and no reparenting
+`Component` SHALL NOT provide a `reparentTo` method. A component's lifecycle and ownership SHALL remain immutable once instantiated. When a new parent requires a component structure, a new component instance SHALL be instantiated.
+
+#### Scenario: Components do not mutate parent ownership
+- **WHEN** a component is created in an ownership scope
+- **THEN** it cannot be reassigned or adopted into another owner via `reparentTo`.
+
+#### Scenario: Element resolution does not reparent
+- **WHEN** `ElementResolver` resolves a `Component` child to an `Element`
+- **THEN** it resolves the element without moving the component to a different owner.
+
+#### Scenario: Reconciled items do not reparent
+- **WHEN** a reconciler mounts an item component
+- **THEN** the item is attached through the attachment pipeline and is never moved to a different owner to make it attach.
+
+### Requirement: The ambient ownership frame is unwound deterministically
+A component SHALL install itself as the active ambient owner for exactly the duration of its `build()` and of each `children()` block, and SHALL unwind that frame deterministically when the block returns or throws, so the enclosing scope is restored and the `OwnershipContext` LIFO invariant holds.
+
+#### Scenario: Scope teardown stays balanced
+- **WHEN** a `build()` or `children()` block returns
+- **THEN** the enclosing owner is the active ambient owner again and the stack is not left holding an orphan frame
+
+#### Scenario: A throwing block still unwinds
+- **WHEN** a `build()` or `children()` block throws
+- **THEN** the ambient frame is cleared and the exception propagates to the caller
+
+#### Scenario: The component is the owner only inside a window
+- **WHEN** a resource is created before or after every window for that component
+- **THEN** the component does not claim ownership of it, so the resource belongs to the scope that was actually ambient at creation time
 

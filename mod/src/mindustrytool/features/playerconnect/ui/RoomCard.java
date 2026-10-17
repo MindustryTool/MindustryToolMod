@@ -1,6 +1,15 @@
 package mindustrytool.features.playerconnect.ui;
 
 import static solim.UI.*;
+import static solim.modifier.Values.background;
+import static solim.modifier.Values.border;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -70,15 +79,10 @@ public class RoomCard extends Component {
 
         return card()
                 .name("pc-card")
-                .background(Styles.black8)
-                .border(1.5f, Color.darkGray)
-                .gap(unit(1.5f))
-                .padding(unit(2))
-                .left()
-                .grow()
+                .props(background(Styles.black8), border(1.5f, Color.darkGray), padding(unit(2)), gap(unit(1.5f)), left(), grow())
                 .children(() -> {
 
-                    row().growX().height(unit(6)).gap(unit(2)).children(() -> {
+                    row().props(growX(), height(unit(6)), prefHeight(unit(6)), gap(unit(2))).children(() -> {
                         text(title)
                                 .style(Styles.outlineLabel)
                                 .fontScale(displayPlayerList ? 1.1f : 0.95f)
@@ -93,19 +97,19 @@ public class RoomCard extends Component {
                                 Vars.ui.showInfoFade("@copied");
                             })
                                     .style(WebStyles.ghost())
-                                    .size(unit(11))
-                                    .children(() -> icon(Icon.copy).size(unit(6)));
+                                    .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)))
+                                    .children(() -> icon(Icon.copy).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
                         }
                     });
 
                     if (!displayPlayerList) {
 
-                        row().growX().height(unit(4.5f)).children(() -> {
+                        row().props(growX(), height(unit(4.5f)), prefHeight(unit(4.5f))).children(() -> {
                             text(!mapMode.isEmpty() ? mapMode : Core.bundle.get("none", "None"))
                                     .growX().ellipsis().left();
                         });
 
-                        row().growX().height(unit(4.5f)).children(() -> {
+                        row().props(growX(), height(unit(4.5f)), prefHeight(unit(4.5f))).children(() -> {
                             String verStr = room.getData() != null && room.getData().getVersion() != null
                                     ? room.getData().getVersion()
                                     : Version.combined();
@@ -117,7 +121,7 @@ public class RoomCard extends Component {
                                 : (!missingMods.isEmpty() || !unneededMods.isEmpty()
                                         ? "[orange]" + Core.bundle.get("feature.chat.ui.mods-required", "Mods Required")
                                         : "");
-                        row().growX().height(unit(4.5f)).children(() -> {
+                        row().props(growX(), height(unit(4.5f)), prefHeight(unit(4.5f))).children(() -> {
                             text(playerInfo).color(Color.lightGray).ellipsis().growX().left();
                             if (!compatBadge.isEmpty()) {
                                 text(compatBadge).fontScale(0.85f).right();
@@ -162,16 +166,14 @@ public class RoomCard extends Component {
                         button(Core.bundle.get("feature.player-connect.incompatible", "Incompatible"), () -> {
                         })
                                 .style(WebStyles.outline())
-                                .growX()
-                                .height(unit(11))
+                                .props(growX(), height(unit(11)), prefHeight(unit(11)))
                                 .enabled(Signal.of(false));
                     } else {
-                        row().gap(unit(1)).growX().height(unit(11)).children(() -> {
+                        row().props(growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(1))).children(() -> {
                             button(Core.bundle.get("join", "Join"),
                                     () -> promptJoin(secured, missingMods, unneededMods))
                                     .style(displayPlayerList ? WebStyles.secondary() : WebStyles.primary())
-                                    .growX()
-                                    .height(unit(11));
+                                    .props(growX(), height(unit(11)), prefHeight(unit(11)));
 
                             if (!displayPlayerList) {
                                 button(() -> {
@@ -179,8 +181,8 @@ public class RoomCard extends Component {
                                     Vars.ui.showInfoFade("@copied");
                                 })
                                         .style(WebStyles.outline())
-                                        .size(unit(11))
-                                        .children(() -> icon(Icon.copy).size(unit(5)));
+                                        .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)))
+                                        .children(() -> icon(Icon.copy).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))));
                             }
                         });
                     }

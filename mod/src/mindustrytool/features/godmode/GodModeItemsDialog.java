@@ -1,6 +1,14 @@
 package mindustrytool.features.godmode;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
+import static solim.modifier.Values.width;
 
 import arc.Core;
 import arc.scene.style.TextureRegionDrawable;
@@ -11,6 +19,7 @@ import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.type.Item;
 import mindustrytool.components.WebStyles;
+import solim.modifier.Values;
 import solim.overlay.SolimDialog;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
@@ -51,35 +60,28 @@ public class GodModeItemsDialog extends SolimDialog {
         });
 
         children(() -> {
-            column().gap(unit(2.5f)).padding(unit(3)).children(() -> {
-                row().growX().gap(unit(1.5f))
-                        .padding(unit(1.5f))
-                        .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
-                        .border(1.5f, WebStyles.Colors.BORDER_INPUT)
-                        .center()
+            column().props(padding(unit(3)), gap(unit(2.5f))).children(() -> {
+                row().props(growX(), padding(unit(1.5f)), Values.rounded(unit(2), WebStyles.Colors.SECONDARY_BG), Values.border(1.5f, WebStyles.Colors.BORDER_INPUT), gap(unit(1.5f)), center())
                         .children(() -> {
-                            icon(Icon.zoom).size(unit(4.5f)).color(WebStyles.Colors.GHOST_FG);
+                            icon(Icon.zoom).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f))).color(WebStyles.Colors.GHOST_FG);
                             textField(searchQuery)
-                                    .growX()
-                                    .height(unit(8))
+                                    .props(growX(), height(unit(8)), prefHeight(unit(8)))
                                     .style(WebStyles.clearInput())
                                     .placeholder(Core.bundle.get("feature.god-mode.common.search"));
                         });
 
                 text(Core.bundle.get("feature.god-mode.items.select-item")).color(WebStyles.Colors.GHOST_FG);
 
-                scroll().size(440f, 130f).children(() -> {
-                    dynamic(filteredItems, items -> wrap().left().gap(unit(1.5f)).children(() -> {
+                scroll().props(size(440f, 130f), prefWidth(440f), prefHeight(130f)).children(() -> {
+                    dynamic(filteredItems, items -> wrap().props(left(), gap(unit(1.5f))).children(() -> {
                         if (items != null) {
                             for (Item it : items) {
                                 button()
                                         .style(WebStyles.filterChip())
                                         .checked(selectedItem.map(sel -> sel == it))
                                         .onClick(() -> selectedItem.set(it))
-                                        .size(unit(10), unit(10))
-                                        .padding(unit(1))
-                                        .tooltip(it.localizedName)
-                                        .children(() -> image(new TextureRegionDrawable(it.uiIcon)).size(unit(6.5f)));
+                                        .props(size(unit(10), unit(10)), prefWidth(unit(10)), prefHeight(unit(10)), padding(unit(1)), tooltip(it.localizedName))
+                                        .children(() -> image(new TextureRegionDrawable(it.uiIcon)).props(size(unit(6.5f)), prefWidth(unit(6.5f)), prefHeight(unit(6.5f))));
                             }
                         }
                     }));
@@ -87,17 +89,17 @@ public class GodModeItemsDialog extends SolimDialog {
 
                 text(Core.bundle.get("feature.god-mode.items.target-team")).color(WebStyles.Colors.GHOST_FG);
 
-                scroll().size(440f, 65f).children(() -> {
-                    wrap().left().gap(unit(1.5f)).children(() -> {
+                scroll().props(size(440f, 65f), prefWidth(440f), prefHeight(65f)).children(() -> {
+                    wrap().props(left(), gap(unit(1.5f))).children(() -> {
                         for (Team t : Team.baseTeams) {
                             button()
                                     .style(WebStyles.filterChip())
                                     .checked(selectedTeam.map(sel -> sel == t))
                                     .onClick(() -> selectedTeam.set(t))
-                                    .padding(unit(1.5f))
+                                    .props(padding(unit(1.5f)))
                                     .children(() -> {
-                                        row().gap(unit(1.5f)).center().children(() -> {
-                                            image(Tex.whiteui).size(unit(3)).color(t.color);
+                                        row().props(gap(unit(1.5f)), center()).children(() -> {
+                                            image(Tex.whiteui).props(size(unit(3)), prefWidth(unit(3)), prefHeight(unit(3))).color(t.color);
                                             text(t.localized()).color(t.color);
                                         });
                                     });
@@ -105,33 +107,29 @@ public class GodModeItemsDialog extends SolimDialog {
                     });
                 });
 
-                row().growX().gap(unit(2)).center().children(() -> {
+                row().props(growX(), gap(unit(2)), center()).children(() -> {
                     text(Core.bundle.get("feature.god-mode.items.amount") + ": ").color(WebStyles.Colors.GHOST_FG);
 
                     row()
-                            .padding(unit(1))
-                            .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
-                            .border(1.5f, WebStyles.Colors.BORDER_INPUT)
+                            .props(padding(unit(1)), Values.rounded(unit(2), WebStyles.Colors.SECONDARY_BG), Values.border(1.5f, WebStyles.Colors.BORDER_INPUT))
                             .children(() -> {
                                 textField(amountString)
-                                        .width(unit(22))
-                                        .height(unit(8))
+                                        .props(width(unit(22)), prefWidth(unit(22)), height(unit(8)), prefHeight(unit(8)))
                                         .style(WebStyles.clearInput());
                             });
                 });
 
-                wrap().gap(unit(1.5f)).center().children(() -> {
-                    button(() -> addDelta(10)).style(WebStyles.outline()).padding(unit(1)).size(unit(13), unit(7)).children(() -> text("+10"));
-                    button(() -> addDelta(100)).style(WebStyles.outline()).padding(unit(1)).size(unit(13), unit(7)).children(() -> text("+100"));
-                    button(() -> addDelta(1000)).style(WebStyles.outline()).padding(unit(1)).size(unit(15), unit(7)).children(() -> text("+1000"));
-                    button(() -> addDelta(10000)).style(WebStyles.outline()).padding(unit(1)).size(unit(15), unit(7)).children(() -> text("+10k"));
-                    button(this::setMaxAmount).style(WebStyles.secondary()).padding(unit(1)).size(unit(13), unit(7)).children(() -> text("Max"));
+                wrap().props(gap(unit(1.5f)), center()).children(() -> {
+                    button(() -> addDelta(10)).style(WebStyles.outline()).props(padding(unit(1)), size(unit(13), unit(7)), prefWidth(unit(13)), prefHeight(unit(7))).children(() -> text("+10"));
+                    button(() -> addDelta(100)).style(WebStyles.outline()).props(padding(unit(1)), size(unit(13), unit(7)), prefWidth(unit(13)), prefHeight(unit(7))).children(() -> text("+100"));
+                    button(() -> addDelta(1000)).style(WebStyles.outline()).props(padding(unit(1)), size(unit(15), unit(7)), prefWidth(unit(15)), prefHeight(unit(7))).children(() -> text("+1000"));
+                    button(() -> addDelta(10000)).style(WebStyles.outline()).props(padding(unit(1)), size(unit(15), unit(7)), prefWidth(unit(15)), prefHeight(unit(7))).children(() -> text("+10k"));
+                    button(this::setMaxAmount).style(WebStyles.secondary()).props(padding(unit(1)), size(unit(13), unit(7)), prefWidth(unit(13)), prefHeight(unit(7))).children(() -> text("Max"));
                 });
 
                 button()
                         .style(WebStyles.primary())
-                        .growX()
-                        .padding(unit(2))
+                        .props(growX(), padding(unit(2)))
                         .onClick(() -> {
                             Item it = selectedItem.get();
                             Team tm = selectedTeam.get();

@@ -14,9 +14,10 @@ import solim.core.OwnershipContext;
 import solim.display.Text;
 import solim.reactive.Signal;
 import solim.runtime.AttachmentStack;
-import solim.test.SolimEnv;
+import solim.test.OwnershipEnv;
 
-class SolimCollapserDisposalTest extends SolimEnv {
+class SolimCollapserDisposalTest extends OwnershipEnv {
+
 
     @BeforeEach
     void setUp() {
@@ -106,7 +107,7 @@ class SolimCollapserDisposalTest extends SolimEnv {
         Signal<Float> gap = Signal.of(4f);
         Element first = new Element();
         Element second = new Element();
-        SolimCollapser collapser = new SolimCollapser().gap(gap);
+        SolimCollapser collapser = new SolimCollapser().props(solim.modifier.Values.gap(gap));
         collapser.children(() -> {
             AttachmentStack.add(first);
             AttachmentStack.add(second);

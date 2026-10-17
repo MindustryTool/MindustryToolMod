@@ -1,6 +1,13 @@
 package mindustrytool.features.chat;
 
 import static solim.UI.*;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
 
 import arc.Core;
 import arc.func.Cons;
@@ -28,24 +35,23 @@ public class AttachContentDialog extends SolimDialog {
         this.callback = callback;
 
         addCloseButton();
-        maxWidth(Vars.mobile ? dvh(80).get() : dvh(40).get());
+        maxWidth(dvh(Vars.mobile ? 80f : 40f));
 
         children(() -> {
-            column().grow().padding(unit(3)).gap(unit(2)).children(() -> {
+            column().props(grow(), padding(unit(3)), gap(unit(2))).children(() -> {
                 when(uploading)
-                        .thenDo(() -> row().growX().padding(unit(4)).center().gap(unit(2)).children(() -> {
-                            image(Icon.refresh).size(unit(6), unit(6)).color(Color.white);
+                        .thenDo(() -> row().props(growX(), padding(unit(4)), center(), gap(unit(2))).children(() -> {
+                            image(Icon.refresh).props(size(unit(6), unit(6)), prefWidth(unit(6)), prefHeight(unit(6))).color(Color.white);
                             text(Core.bundle.get("chat.uploading-image", "Uploading image..."))
                                     .color(Color.lightGray);
                         }))
-                        .elseDo(() -> column().growX().gap(unit(2)).children(() -> {
+                        .elseDo(() -> column().props(growX(), gap(unit(2))).children(() -> {
                             button(this::selectImageFile)
                                     .style(Styles.defaultb)
-                                    .growX()
-                                    .height(unit(12))
+                                    .props(growX(), height(unit(12)), prefHeight(unit(12)))
                                     .children(() -> {
-                                        row().growX().gap(unit(2)).children(() -> {
-                                            image(Icon.image).size(unit(6), unit(6));
+                                        row().props(growX(), gap(unit(2))).children(() -> {
+                                            image(Icon.image).props(size(unit(6), unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                                             text(Core.bundle.get("chat.select-image", "Image (.png)"))
                                                     .color(Color.white)
                                                     .left();
@@ -54,11 +60,10 @@ public class AttachContentDialog extends SolimDialog {
 
                             button(this::selectSchematicFile)
                                     .style(Styles.defaultb)
-                                    .growX()
-                                    .height(unit(12))
+                                    .props(growX(), height(unit(12)), prefHeight(unit(12)))
                                     .children(() -> {
-                                        row().growX().gap(unit(2)).children(() -> {
-                                            image(Icon.file).size(unit(6), unit(6));
+                                        row().props(growX(), gap(unit(2))).children(() -> {
+                                            image(Icon.file).props(size(unit(6), unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                                             text(Core.bundle.get("chat.select-file", "Select File (.msch)"))
                                                     .color(Color.white)
                                                     .left();
@@ -67,11 +72,10 @@ public class AttachContentDialog extends SolimDialog {
 
                             button(this::selectSaveFile)
                                     .style(Styles.defaultb)
-                                    .growX()
-                                    .height(unit(12))
+                                    .props(growX(), height(unit(12)), prefHeight(unit(12)))
                                     .children(() -> {
-                                        row().growX().gap(unit(2)).children(() -> {
-                                            image(Icon.map).size(unit(6), unit(6));
+                                        row().props(growX(), gap(unit(2))).children(() -> {
+                                            image(Icon.map).props(size(unit(6), unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                                             text(Core.bundle.get("map", "Map / Save (.msav)"))
                                                     .color(Color.white)
                                                     .left();
@@ -80,18 +84,17 @@ public class AttachContentDialog extends SolimDialog {
 
                             button(this::pasteFromClipboard)
                                     .style(Styles.defaultb)
-                                    .growX()
-                                    .height(unit(12))
+                                    .props(growX(), height(unit(12)), prefHeight(unit(12)))
                                     .children(() -> {
-                                        row().growX().gap(unit(2)).children(() -> {
-                                            image(Icon.paste).size(unit(6), unit(6));
+                                        row().props(growX(), gap(unit(2))).children(() -> {
+                                            image(Icon.paste).props(size(unit(6), unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                                             text(Core.bundle.get("chat.paste-link", "Paste from Clipboard"))
                                                     .color(Color.white)
                                                     .left();
                                         });
                                     });
                         }))
-                        .grow();
+                        .props(grow());
             });
         });
     }

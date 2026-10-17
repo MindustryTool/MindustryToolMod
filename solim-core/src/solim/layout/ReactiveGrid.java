@@ -1,17 +1,14 @@
 package solim.layout;
 
-import solim.modifier.CellConfig;
 
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
-import java.util.*;
 import arc.func.Func2;
 import arc.func.Func;
 import arc.func.Prov;
 import solim.core.Component;
-import solim.core.Disposable;
 import solim.core.SolimToken;
 import solim.core.OwnershipContext;
 import solim.runtime.OwnershipScope;
@@ -20,18 +17,22 @@ import solim.runtime.StructuralReconciler;
 import solim.reactive.Computed;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
-import solim.reactive.Signal;
 import solim.core.Units;
-import solim.modifier.ElementConfig;
+import solim.reactive.Signal;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
+import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
 import solim.modifier.PendingCellConfig;
-import solim.modifier.TableConfig;
+import solim.modifier.Prop;
+import solim.modifier.Props;
+import solim.modifier.TableCapability;
 
 public final class ReactiveGrid<T> extends Component
-        implements CellConfig<ReactiveGrid<T>>, ElementConfig<ReactiveGrid<T>>, TableConfig<ReactiveGrid<T>>,
-        GapContainer {
+        implements GapContainer, Configurable<ReactiveGrid<T>>, TableCapability, CellCapability, ContainerCapability<ReactiveGrid<T>>, AlignmentCapability {
     private final Signal<Float> tableWidth = Signal.of(0f);
     private final Signal<Float> gapSignal = Signal.of(0f);
-    private final Computed<Float> itemWidth;
+    private @Nullable Computed<Float> itemWidth;
     private final GridItemContext context;
 
     private final Table table = new Table() {
@@ -49,17 +50,13 @@ public final class ReactiveGrid<T> extends Component
     };
 
     private final PendingCellConfig constraints = new PendingCellConfig();
+    private @Nullable Props<ReactiveGrid<T>> pending;
     private final Signal<Readable<Integer>> columnSource = Signal.of(Readable.of(1));
-    private final Computed<Integer> resolvedColumnCount = new Computed<>(() -> {
-        Readable<Integer> src = columnSource.get();
-        Integer val = src != null ? src.get() : null;
-        return Math.max(1, val != null ? val : 1);
-    });
-    private final Readable<? extends Iterable<T>> items;
+    private @Nullable Computed<Integer> resolvedColumnCount;
+    private final Readable<? extends Iterable<T>> itemsSource;
     private Func<T, ?> keyExtractor = v -> v;
     private final Signal<Func2<T, GridItemContext, Component>> itemFactorySignal = Signal.of(null);
     private final StructuralReconciler<Object, Component> reconciler = new StructuralReconciler<>();
-    private final List<Disposable> itemBindings = new ArrayList<>();
 
     private Runnable emptyRunnable;
     private Prov<Component> emptyViewSupplier;
@@ -72,22 +69,7 @@ public final class ReactiveGrid<T> extends Component
         this.table.top().left();
         this.table.defaults().top().left();
         this.table.update(() -> checkWidth(this.table.getWidth()));
-        this.items = items;
-
-        this.itemWidth = new Computed<>(() -> {
-            float tw = tableWidth.get();
-            int cols = resolvedColumnCount.get();
-            float g = gapSignal.get();
-            float horizontalMargin = table.getMarginLeft() + table.getMarginRight();
-            float availableWidth = Math.max(0f, tw - horizontalMargin);
-            float totalGaps = (cols - 1) * g;
-            if (tw <= 0f) {
-                float sw = Units.screenWidth();
-                float fallbackW = sw > 0f ? sw - 32f : 300f;
-                return Math.max(0f, (fallbackW - totalGaps) / cols);
-            }
-            return Math.max(0f, (availableWidth - totalGaps) / cols);
-        });
+        this.itemsSource = items;
 
         this.context = new GridItemContext() {
             @Override
@@ -122,16 +104,19 @@ public final class ReactiveGrid<T> extends Component
         return this;
     }
 
-    public void children(@Nullable Func<T, Component> itemFactory) {
-        children(itemFactory != null ? (item, ctx) -> itemFactory.get(item) : null);
+    public ReactiveGrid<T> items(@Nullable Func<T, Component> itemFactory) {
+        items(itemFactory != null ? (item, ctx) -> itemFactory.get(item) : null);
+        return this;
     }
 
-    public void children(@Nullable Func2<T, GridItemContext, Component> itemFactory) {
+    public ReactiveGrid<T> items(@Nullable Func2<T, GridItemContext, Component> itemFactory) {
         this.itemFactorySignal.set(itemFactory);
         if (itemFactory != null && isBuilt()) {
-            Integer cols = resolvedColumnCount.peek();
-            updateItemsAndReflow(items.peek(), Math.max(1, cols != null ? cols : 1), itemFactory);
+            Computed<Integer> columns = resolvedColumnCount;
+            Integer cols = columns != null ? columns.peek() : null;
+            updateItemsAndReflow(itemsSource.peek(), Math.max(1, cols != null ? cols : 1), itemFactory);
         }
+        return this;
     }
 
     private Object extractKey(T item) {
@@ -162,11 +147,11 @@ public final class ReactiveGrid<T> extends Component
         return this;
     }
 
-    public ReactiveGrid<T> gap(float gap) {
+    @Override
+    public void setGap(float gap) {
         this.gap = gap;
         this.gapSignal.set(gap);
         respace();
-        return this;
     }
 
     @Override
@@ -181,29 +166,47 @@ public final class ReactiveGrid<T> extends Component
 
     @Override
     public void respace() {
-        int cols = resolvedColumnCount.peek() != null ? resolvedColumnCount.peek() : 1;
-        respace(cols);
+        Computed<Integer> columns = resolvedColumnCount;
+        Integer cols = columns != null ? columns.peek() : null;
+        respace(cols != null ? cols : 1);
     }
 
     private void respace(int cols) {
         GapContainer.applyGridSpacing(table, cols, gap);
     }
 
-    public ReactiveGrid<T> gap(@Nullable Readable<Float> gapSignal) {
-        if (gapSignal != null) {
-            OwnershipContext.register(Effect.of(() -> {
-                Float g = gapSignal.get();
-                if (g != null) {
-                    gap(g);
-                }
-            }));
+    @Override
+    public Table table() {
+        return table;
+    }
+
+    
+    public ReactiveGrid<T> children(@Nullable Runnable block) {
+        applyPendingProps();
+        OwnershipContext.push(this);
+        try {
+            if (block != null) {
+                block.run();
+            }
+        } finally {
+            OwnershipContext.pop();
         }
         return this;
     }
 
     @Override
-    public Table table() {
-        return table;
+    public @Nullable Props<ReactiveGrid<T>> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<ReactiveGrid<T>> props) {
+        this.pending = props;
+    }
+
+    @Override
+    protected void onRealized(Element element) {
+        applyPendingProps();
     }
 
     @Override
@@ -221,9 +224,32 @@ public final class ReactiveGrid<T> extends Component
     protected Element build() {
         table.top().left();
 
+        resolvedColumnCount = new Computed<>(() -> {
+            Readable<Integer> src = columnSource.get();
+            Integer val = src != null ? src.get() : null;
+            return Math.max(1, val != null ? val : 1);
+        });
+
+        itemWidth = new Computed<>(() -> {
+            float tw = tableWidth.get();
+            Computed<Integer> columns = resolvedColumnCount;
+            int cols = columns != null && columns.get() != null ? columns.get() : 1;
+            float g = gapSignal.get();
+            float horizontalMargin = table.getMarginLeft() + table.getMarginRight();
+            float availableWidth = Math.max(0f, tw - horizontalMargin);
+            float totalGaps = (cols - 1) * g;
+            if (tw <= 0f) {
+                float sw = Units.screenWidth();
+                float fallbackW = sw > 0f ? sw - 32f : 300f;
+                return Math.max(0f, (fallbackW - totalGaps) / cols);
+            }
+            return Math.max(0f, (availableWidth - totalGaps) / cols);
+        });
+
         Effect.of(() -> {
-            Iterable<T> itemList = items.get();
-            int cols = resolvedColumnCount.get();
+            Iterable<T> itemList = itemsSource.get();
+            Computed<Integer> columns = resolvedColumnCount;
+            int cols = columns != null && columns.get() != null ? columns.get() : 1;
             Func2<T, GridItemContext, Component> factory = itemFactorySignal.get();
             if (factory == null) {
                 return;
@@ -247,11 +273,6 @@ public final class ReactiveGrid<T> extends Component
     }
 
     private void reflow(int cols) {
-        for (Disposable d : itemBindings) {
-            d.dispose();
-        }
-        itemBindings.clear();
-
         table.clear();
         table.top().left();
 
@@ -301,18 +322,16 @@ public final class ReactiveGrid<T> extends Component
         int col = 0;
         for (Component comp : reconciler.activeComponents().values()) {
             Element el = comp.element();
-            Cell<?> cell = table.add(el).top().left();
+            Cell<?> cell = AttachmentStack.attach(table, el, null, comp);
+            if (cell == null) {
+                continue;
+            }
+            cell.top().left();
             PendingCellConfig sc = PendingCellConfig.find(comp);
             if (sc == null) {
                 sc = PendingCellConfig.find(el);
             }
-            if (sc != null) {
-                List<Disposable> effects = sc.applyToCell(cell);
-                itemBindings.addAll(effects);
-                if (sc.growX || !sc.hasExplicitWidth()) {
-                    cell.growX().uniformX();
-                }
-            } else {
+            if (sc == null || sc.growX || !sc.hasExplicitWidth()) {
                 cell.growX().uniformX();
             }
             if (++col % cols == 0) {
@@ -330,14 +349,15 @@ public final class ReactiveGrid<T> extends Component
 
     @Override
     protected void onDispose() {
-        for (Disposable d : itemBindings) {
-            d.dispose();
-        }
-        itemBindings.clear();
-
         reconciler.dispose();
-        itemWidth.dispose();
-        resolvedColumnCount.dispose();
+        if (itemWidth != null) {
+            itemWidth.dispose();
+            itemWidth = null;
+        }
+        if (resolvedColumnCount != null) {
+            resolvedColumnCount.dispose();
+            resolvedColumnCount = null;
+        }
 
         if (currentEmptyComponent != null) {
             currentEmptyComponent.dispose();

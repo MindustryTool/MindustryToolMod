@@ -3,7 +3,6 @@ package solim.runtime;
 import arc.scene.Element;
 import arc.util.Nullable;
 import solim.core.Component;
-import solim.core.OwnershipContext;
 
 public final class ElementResolver {
     private static final int MAX_PREVIEW = 80;
@@ -17,7 +16,6 @@ public final class ElementResolver {
         }
         if (child instanceof Component) {
             Component c = (Component) child;
-            c.reparentTo(OwnershipContext.current());
             return AttachmentStack.isolate(c::element);
         }
         throw new IllegalArgumentException("Cannot resolve child to Element: " + describe(child));

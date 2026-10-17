@@ -3,6 +3,17 @@ package solim.modifier;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.marginTop;
+import static solim.modifier.Values.margin;
+import static solim.modifier.Values.marginBottom;
+import static solim.modifier.Values.marginLeft;
+import static solim.modifier.Values.marginRight;
+import static solim.modifier.Values.marginX;
+import static solim.modifier.Values.marginY;
+import static solim.modifier.Values.maxHeight;
+import static solim.modifier.Values.maxWidth;
+import static solim.modifier.Values.minHeight;
+import static solim.modifier.Values.minWidth;
 
 import org.junit.jupiter.api.Test;
 
@@ -15,16 +26,17 @@ import solim.layout.Row;
 import solim.reactive.Signal;
 import solim.test.BuildScopeHost;
 import solim.test.ModifierScope;
-import solim.test.SolimEnv;
+import solim.test.OwnershipEnv;
 
-class CellConfigDisposalTest extends SolimEnv {
+class CellConfigDisposalTest extends OwnershipEnv {
+
 
     @Test
     void minimumSizeBindingsStopOnDispose() {
         forScope((target, scope) -> {
             Signal<Float> minWidth = Signal.of(50f);
             Signal<Float> minHeight = Signal.of(30f);
-            target.component.minWidth(minWidth).minHeight(minHeight);
+            target.component.props(minWidth(minWidth), minHeight(minHeight));
             assertEquals(50f, CellAccess.minWidth(target.cell), 0.01f, scope + ": initial min width");
             assertEquals(30f, CellAccess.minHeight(target.cell), 0.01f, scope + ": initial min height");
 
@@ -51,7 +63,7 @@ class CellConfigDisposalTest extends SolimEnv {
         forScope((target, scope) -> {
             Signal<Float> maxWidth = Signal.of(200f);
             Signal<Float> maxHeight = Signal.of(150f);
-            target.component.maxWidth(maxWidth).maxHeight(maxHeight);
+            target.component.props(maxWidth(maxWidth), maxHeight(maxHeight));
             assertEquals(200f, CellAccess.maxWidth(target.cell), 0.01f, scope + ": initial max width");
             assertEquals(150f, CellAccess.maxHeight(target.cell), 0.01f, scope + ": initial max height");
 
@@ -77,7 +89,7 @@ class CellConfigDisposalTest extends SolimEnv {
     void marginBindingStopsOnDispose() {
         forScope((target, scope) -> {
             Signal<Float> margin = Signal.of(4f);
-            target.component.margin(margin);
+            target.component.props(margin(margin));
             assertPads(target.cell, 4f, scope + ": initial margin");
 
             margin.set(9f);
@@ -100,7 +112,7 @@ class CellConfigDisposalTest extends SolimEnv {
             Signal<Float> bottom = Signal.of(2f);
             Signal<Float> left = Signal.of(3f);
             Signal<Float> right = Signal.of(4f);
-            target.component.marginTop(top).marginBottom(bottom).marginLeft(left).marginRight(right);
+            target.component.props(marginTop(top), marginBottom(bottom), marginLeft(left), marginRight(right));
             assertPads(target.cell, 3f, 1f, 2f, 4f, scope + ": initial per-edge margins");
 
             top.set(11f);
@@ -130,7 +142,7 @@ class CellConfigDisposalTest extends SolimEnv {
         forScope((target, scope) -> {
             Signal<Float> horizontal = Signal.of(6f);
             Signal<Float> vertical = Signal.of(7f);
-            target.component.marginX(horizontal).marginY(vertical);
+            target.component.props(marginX(horizontal), marginY(vertical));
             assertPads(target.cell, 6f, 7f, 7f, 6f, scope + ": initial axis margins");
 
             horizontal.set(16f);
@@ -158,7 +170,7 @@ class CellConfigDisposalTest extends SolimEnv {
         BuildScopeHost host = new BuildScopeHost(() -> {
             Row row = new Row();
             target[0] = new Target(row, parent.add(row.element()));
-            row.minWidth(minWidth).marginTop(marginTop);
+            row.props(minWidth(minWidth), marginTop(marginTop));
         });
         host.element();
         Target built = target[0];

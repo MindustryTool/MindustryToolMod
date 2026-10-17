@@ -8,4 +8,5 @@ dependencies {
     implementation("org.java-websocket:Java-WebSocket:1.5.7")
 
     testImplementation("Anuken:Mindustry:$mindustryVersion")
+    testImplementation(project(":solim-test"))
 }

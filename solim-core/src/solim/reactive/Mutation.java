@@ -58,6 +58,8 @@ public final class Mutation<T, R> implements Disposable {
         return this;
     }
 
+    // arc.func.Cons2<R, C> is invariant in C, and C is known only per call while the callback is stored on a
+    // Mutation<T, R>, so the erased context cannot be handed back through Arc's Cons2 signature without this cast.
     @SuppressWarnings("unchecked")
     public <C> Mutation<T, R> onSuccess(Cons2<R, C> onSuccess) {
         this.onSuccess = (Cons2<R, Object>) onSuccess;
@@ -73,6 +75,8 @@ public final class Mutation<T, R> implements Disposable {
         return this;
     }
 
+    // arc.func.Cons2<Throwable, C> is invariant in C, and C is known only per call while the callback is stored on
+    // a Mutation<T, R>, so the erased context cannot be handed back through Arc's Cons2 signature without this cast.
     @SuppressWarnings("unchecked")
     public <C> Mutation<T, R> onError(Cons2<Throwable, C> onError) {
         this.onError = (Cons2<Throwable, Object>) onError;

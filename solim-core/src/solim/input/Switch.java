@@ -3,21 +3,47 @@ package solim.input;
 import solim.reactive.TwoWayBinding;
 
 import arc.scene.ui.TextButton;
+import arc.scene.ui.layout.Table;
+import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.DisposableAction;
+import solim.core.OwnershipContext;
 import solim.reactive.Signal;
-import solim.modifier.ElementConfig;
-import solim.modifier.CellConfig;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
+import solim.modifier.CheckableCapability;
+import solim.modifier.Configurable;
+import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.Props;
+import solim.reactive.Effect;
+import solim.reactive.Readable;
 
-public final class Switch extends Component implements ElementConfig<Switch>, CellConfig<Switch> {
+public final class Switch extends Component
+        implements Configurable<Switch>, ElementCapability, CellCapability, AlignmentCapability, CheckableCapability {
     private final TextButton button;
     private final PendingCellConfig constraints = new PendingCellConfig();
+    private @Nullable Props<Switch> pending;
     private boolean state;
 
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
+    }
+
+    @Override
+    public @Nullable Table table() {
+        return null;
+    }
+
+    @Override
+    public @Nullable Props<Switch> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<Switch> props) {
+        this.pending = props;
     }
 
     public Switch(Signal<Boolean> signal) {
@@ -30,20 +56,25 @@ public final class Switch extends Component implements ElementConfig<Switch>, Ce
         button.name = "solim-switch-switchBox";
         state = Boolean.TRUE.equals(signal.peek());
         button.setText(state ? "ON" : "OFF");
-        own(new TwoWayBinding<>(
-                signal,
-                () -> state,
-                val -> {
-                    state = Boolean.TRUE.equals(val);
-                    button.setText(state ? "ON" : "OFF");
-                },
-                onChange -> {
-                    button.changed(() -> {
-                        state = !state;
-                        onChange.run();
+        OwnershipContext.push(this);
+        try {
+            new TwoWayBinding<>(
+                    signal,
+                    () -> state,
+                    val -> {
+                        state = Boolean.TRUE.equals(val);
+                        button.setText(state ? "ON" : "OFF");
+                    },
+                    onChange -> {
+                        button.changed(() -> {
+                            state = !state;
+                            onChange.run();
+                        });
+                        return DisposableAction.empty();
                     });
-                    return DisposableAction.empty();
-                }));
+        } finally {
+            OwnershipContext.pop();
+        }
     }
 
     public static Switch of(Signal<Boolean> signal) {
@@ -57,6 +88,26 @@ public final class Switch extends Component implements ElementConfig<Switch>, Ce
     public Switch name(String name) {
         setName(name);
         return this;
+    }
+
+    public Switch checked(@Nullable Readable<Boolean> source) {
+        if (source != null) {
+            OwnershipContext.push(this);
+            try {
+                Effect.of(() -> {
+                    state = Boolean.TRUE.equals(source.get());
+                    button.setText(state ? "ON" : "OFF");
+                    button.setChecked(state);
+                });
+            } finally {
+                OwnershipContext.pop();
+            }
+        }
+        return this;
+    }
+
+    public boolean isChecked() {
+        return state;
     }
 
     @Override

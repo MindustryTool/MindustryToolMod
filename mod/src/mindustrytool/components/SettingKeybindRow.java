@@ -1,6 +1,14 @@
 package mindustrytool.components;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.paddingX;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
+import static solim.modifier.Values.visible;
 
 import arc.Core;
 import arc.Events;
@@ -53,15 +61,11 @@ public class SettingKeybindRow extends Component {
         });
 
         return row()
-                .growX()
-                .gap(unit(2))
-                .center()
+                .props(growX(), gap(unit(2)), center())
                 .children(() -> {
 
                     column()
-                            .growX()
-                            .gap(unit(0.5f))
-                            .left()
+                            .props(growX(), gap(unit(0.5f)), left())
                             .children(() -> {
                                 text(resolveBindName())
                                         .color(Color.white)
@@ -71,7 +75,7 @@ public class SettingKeybindRow extends Component {
                                         "Press Esc to cancel, Backspace to clear"))
                                         .color(WebStyles.Colors.GHOST_FG)
                                         .left()
-                                        .visible(listening);
+                                        .props(visible(listening));
                             });
 
                     spacer();
@@ -80,22 +84,21 @@ public class SettingKeybindRow extends Component {
                             .style(listening.map(l -> Boolean.TRUE.equals(l)
                                     ? WebStyles.keybindListening().style()
                                     : WebStyles.keybindChip().style()))
-                            .height(unit(8))
-                            .paddingX(unit(2.5f))
+                            .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)))
                             .onClick(this::toggleListening)
                             .children(() -> text(keyText).color(keyTextColor));
 
                     button()
                             .style(WebStyles.ghost())
-                            .size(unit(8))
+                            .props(size(unit(8)), prefWidth(unit(8)), prefHeight(unit(8)))
                             .enabled(keybind.keySignal().map(k -> !keybind.isDefault()))
-                            .tooltip(Core.bundle.get("keybind.button.reset", "Reset to default"))
+                            .props(tooltip(Core.bundle.get("keybind.button.reset", "Reset to default")))
                             .onClick(() -> {
                                 cancelListening();
                                 Core.app.post(keybind::resetToDefault);
                             })
                             .children(() -> icon(Icon.refresh)
-                                    .size(unit(5))
+                                    .props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)))
                                     .color(keybind.keySignal().map(k -> keybind.isDefault()
                                             ? WebStyles.Colors.DISABLED_FG
                                             : WebStyles.Colors.GHOST_FG)));

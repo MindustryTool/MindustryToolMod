@@ -6,6 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.visible;
+import static solim.modifier.Values.width;
 
 import arc.scene.Element;
 import arc.scene.style.Drawable;
@@ -29,9 +33,10 @@ import solim.reactive.ForEach;
 import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
 import solim.test.CollectingOwner;
-import solim.test.SolimCoreEnv;
+import solim.test.OwnershipEnv;
 
-class ComponentOwnershipContractTest extends SolimCoreEnv {
+class ComponentOwnershipContractTest extends OwnershipEnv {
+
 
     private static class Lazy extends Component {
         int builds;
@@ -88,10 +93,10 @@ class ComponentOwnershipContractTest extends SolimCoreEnv {
         return new Lazy() {
             @Override
             protected Element build() {
-                own(DisposableAction.of(() -> log.add("leaf-1")));
-                own(DisposableAction.of(() -> log.add("leaf-2")));
-                own(child);
-                child.own(DisposableAction.of(() -> log.add("child-onDispose")));
+                adopt(DisposableAction.of(() -> log.add("leaf-1")));
+                adopt(DisposableAction.of(() -> log.add("leaf-2")));
+                adopt(child);
+                child.adopt(DisposableAction.of(() -> log.add("child-onDispose")));
                 return new Element();
             }
 
@@ -121,7 +126,7 @@ class ComponentOwnershipContractTest extends SolimCoreEnv {
     void aReactiveModifierIsOwnedWithNoRegistrationCallAtTheCallSite() {
         Signal<Boolean> shown = Signal.of(false);
         SolimImage image = new SolimImage();
-        image.visible(shown);
+        image.props(visible(shown));
         Element element = image.element();
 
         image.dispose();
@@ -139,7 +144,7 @@ class ComponentOwnershipContractTest extends SolimCoreEnv {
         grid.children(() -> {
             Button button = new Button();
             button.icon(Signal.of((Drawable) null));
-            button.grow();
+            button.props(grow());
             buttons.add(button);
         });
 
@@ -155,10 +160,10 @@ class ComponentOwnershipContractTest extends SolimCoreEnv {
         List<Component> created = new ArrayList<>();
 
         ForEach<String> forEach = ForEach.of(Signal.of(Arrays.asList("a", "b")));
-        forEach.children(item -> {
+        forEach.items(item -> {
             Row row = new Row();
             Text text = Text.of(item);
-            text.visible(shown);
+            text.props(visible(shown));
             row.children(text::label);
             created.add(row);
             created.add(text);
@@ -210,9 +215,9 @@ class ComponentOwnershipContractTest extends SolimCoreEnv {
             @Override
             protected Element build() {
 
-                own(child[0] = new Lazy());
+                adopt(child[0] = new Lazy());
                 child[0].element();
-                child[0].own(grandchild[0] = new Lazy());
+                child[0].adopt(grandchild[0] = new Lazy());
                 return new Element();
             }
         };
@@ -238,7 +243,7 @@ class ComponentOwnershipContractTest extends SolimCoreEnv {
         List<Button> created = new ArrayList<>();
 
         ReactiveGrid<String> grid = ReactiveGrid.of(Signal.of(Arrays.asList("a")));
-        grid.children(item -> {
+        grid.items(item -> {
             Button button = new Button();
             button.icon(icon);
             created.add(button);
@@ -280,7 +285,7 @@ class ComponentOwnershipContractTest extends SolimCoreEnv {
             @Override
             protected Element build() {
                 Text child = new Text("hello");
-                child.width(widthSignal);
+                child.props(width(widthSignal), prefWidth(widthSignal));
                 childHolder[0] = child;
                 return child.element();
             }
@@ -291,7 +296,8 @@ class ComponentOwnershipContractTest extends SolimCoreEnv {
 
         Text child = childHolder[0];
         assertNotNull(child);
-        assertEquals(1, widthSignal.observerCount(), "Modifier effect must observe widthSignal");
+        assertEquals(2, widthSignal.observerCount(),
+                "Both the element-width binding and the cell-width binding must observe widthSignal");
 
         child.dispose();
 

@@ -19,15 +19,19 @@ import arc.scene.style.Drawable;
 import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
+import arc.util.Nullable;
 import solim.core.Component;
+import solim.core.SolimToken;
 import solim.core.OwnershipContext;
 import solim.graphics.RoundedDrawable;
+import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.test.BuildScopeHost;
 import solim.test.ModifierScope;
-import solim.test.SolimEnv;
+import solim.test.OwnershipEnv;
 
-class TableConfigDisposalTest extends SolimEnv {
+class TableConfigDisposalTest extends OwnershipEnv {
+
 
     private final List<RoundedDrawable> drawables = new ArrayList<>();
 
@@ -262,9 +266,12 @@ class TableConfigDisposalTest extends SolimEnv {
         assertMargins(built, 9f, "Host disposal must freeze build-scoped padding");
     }
 
-    private static final class TableTarget extends Component implements TableConfig<TableTarget> {
+    private static final class TableTarget extends Component
+            implements Configurable<TableTarget>, TableCapability, CellCapability, ContainerCapability<TableTarget> {
 
         private final Table table;
+        private final PendingCellConfig constraints = new PendingCellConfig();
+        private @Nullable Props<TableTarget> pending;
 
         TableTarget() {
             this(new Table());
@@ -273,6 +280,68 @@ class TableConfigDisposalTest extends SolimEnv {
         private TableTarget(Table table) {
             super(table);
             this.table = table;
+            SolimToken.bind(table, this, constraints);
+        }
+
+        public TableTarget padding(@Nullable Readable<Float> padding) {
+            props(Values.padding(padding));
+            return this;
+        }
+
+        public TableTarget padding(@Nullable Readable<Float> top, @Nullable Readable<Float> left,
+                @Nullable Readable<Float> bottom, @Nullable Readable<Float> right) {
+            props(Values.padding(top, left, bottom, right));
+            return this;
+        }
+
+        public TableTarget paddingTop(@Nullable Readable<Float> top) {
+            props(Values.paddingTop(top));
+            return this;
+        }
+
+        public TableTarget paddingBottom(@Nullable Readable<Float> bottom) {
+            props(Values.paddingBottom(bottom));
+            return this;
+        }
+
+        public TableTarget paddingLeft(@Nullable Readable<Float> left) {
+            props(Values.paddingLeft(left));
+            return this;
+        }
+
+        public TableTarget paddingRight(@Nullable Readable<Float> right) {
+            props(Values.paddingRight(right));
+            return this;
+        }
+
+        public TableTarget paddingX(@Nullable Readable<Float> x) {
+            props(Values.paddingX(x));
+            return this;
+        }
+
+        public TableTarget paddingY(@Nullable Readable<Float> y) {
+            props(Values.paddingY(y));
+            return this;
+        }
+
+        public TableTarget gap(@Nullable Readable<Float> gap) {
+            props(Values.gap(gap));
+            return this;
+        }
+
+        public TableTarget background(@Nullable Readable<Drawable> background) {
+            props(Values.background(background));
+            return this;
+        }
+
+        public TableTarget rounded(int radius, @Nullable Readable<Color> color) {
+            props(Values.rounded(radius, color));
+            return this;
+        }
+
+        public TableTarget border(float stroke, @Nullable Readable<Color> color) {
+            props(Values.border(stroke, color));
+            return this;
         }
 
         @Override
@@ -281,12 +350,39 @@ class TableConfigDisposalTest extends SolimEnv {
         }
 
         @Override
+        public PendingCellConfig cellConfig() {
+            return constraints;
+        }
+
+        
+        public TableTarget children(@Nullable Runnable block) {
+            applyPendingProps();
+            OwnershipContext.push(this);
+            try {
+                if (block != null) {
+                    block.run();
+                }
+            } finally {
+                OwnershipContext.pop();
+            }
+            return this;
+        }
+
+        @Override
+        public @Nullable Props<TableTarget> pendingProps() {
+            return pending;
+        }
+
+        @Override
+        public void setPendingProps(@Nullable Props<TableTarget> props) {
+            this.pending = props;
+        }
+
         public TableTarget name(String name) {
             setName(name);
             return this;
         }
 
-        @Override
         public TableTarget self() {
             return this;
         }

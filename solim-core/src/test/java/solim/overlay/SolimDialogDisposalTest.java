@@ -29,9 +29,9 @@ import solim.core.DisposableAction;
 import solim.display.Text;
 import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
-import solim.test.SolimEnv;
+import solim.test.OwnershipEnv;
 
-class SolimDialogDisposalTest extends SolimEnv {
+class SolimDialogDisposalTest extends OwnershipEnv {
 
 	static Font testFont() {
 		FontData fontData = new FontData() {
@@ -114,7 +114,7 @@ class SolimDialogDisposalTest extends SolimEnv {
 	void eventListenerUnregisteredOnDispose() {
 		SolimDialog dialog = new SolimDialog("Test");
 		AtomicInteger calls = new AtomicInteger(0);
-		dialog.listen(ResizeEvent.class, event -> calls.incrementAndGet());
+		dialog.withinOwnership(() -> dialog.listen(ResizeEvent.class, event -> calls.incrementAndGet()));
 
 		Events.fire(new ResizeEvent());
 		assertEquals(1, calls.get());

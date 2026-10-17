@@ -1,6 +1,8 @@
 package solim.overlay;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static solim.modifier.Values.draggable;
+import static solim.modifier.Values.position;
 
 import arc.Core;
 import arc.Events;
@@ -68,13 +70,13 @@ class HudTest extends SolimEnv {
         Hud hud = new Hud();
         hud.element().setSize(200f, 100f);
 
-        hud.position(1200f, 900f);
+        hud.props(position(1200f, 900f));
         hud.keepInScreen();
 
         assertEquals(824f, hud.element().x, 0.01f, "X should clamp to 1024 - 200 = 824");
         assertEquals(668f, hud.element().y, 0.01f, "Y should clamp to 768 - 100 = 668");
 
-        hud.position(-50f, -30f);
+        hud.props(position(-50f, -30f));
         hud.keepInScreen();
 
         assertEquals(0f, hud.element().x, 0.01f, "X should clamp to 0");
@@ -87,7 +89,7 @@ class HudTest extends SolimEnv {
     void resizeEventClamping() {
         Hud hud = new Hud();
         hud.element().setSize(200f, 100f);
-        hud.position(800f, 600f);
+        hud.props(position(800f, 600f));
         hud.keepInScreen();
 
         assertEquals(800f, hud.element().x, 0.01f);
@@ -108,7 +110,7 @@ class HudTest extends SolimEnv {
     void draggableMovementAndClamping() {
         Hud hud = new Hud();
         hud.element().setSize(200f, 100f);
-        hud.position(100f, 100f);
+        hud.props(position(100f, 100f));
 
         Signal<Float> xSig = Signal.of(100f);
         Signal<Float> ySig = Signal.of(100f);
@@ -149,7 +151,7 @@ class HudTest extends SolimEnv {
     void draggableStageCoordinates() {
         Hud hud = new Hud();
         hud.element().setSize(200f, 100f);
-        hud.position(100f, 100f);
+        hud.props(position(100f, 100f));
 
         Signal<Float> xSig = Signal.of(100f);
         Signal<Float> ySig = Signal.of(100f);
@@ -185,11 +187,11 @@ class HudTest extends SolimEnv {
         hud.children(() -> {
             Button button = new Button();
             AttachmentStack.attachToParent(button.element());
-            button.draggable(xSig, ySig);
+            button.props(draggable(xSig, ySig));
         });
 
         hud.element().setSize(100f, 50f);
-        hud.position(50f, 60f);
+        hud.props(position(50f, 60f));
 
         Element buttonEl = hud.container().getChildren().first();
         InputListener dragListener = null;
@@ -230,19 +232,19 @@ class HudTest extends SolimEnv {
         hud1.children(() -> {
             Button button1 = new Button();
             AttachmentStack.attachToParent(button1.element());
-            button1.draggable(x1, y1);
+            button1.props(draggable(x1, y1));
         });
         hud1.element().setSize(50f, 50f);
-        hud1.position(10f, 20f);
+        hud1.props(position(10f, 20f));
 
         Hud hud2 = new Hud();
         hud2.children(() -> {
             Button button2 = new Button();
             AttachmentStack.attachToParent(button2.element());
-            button2.draggable(x2, y2);
+            button2.props(draggable(x2, y2));
         });
         hud2.element().setSize(50f, 50f);
-        hud2.position(100f, 200f);
+        hud2.props(position(100f, 200f));
 
         Element btn1 = hud1.container().getChildren().first();
         Element btn2 = hud2.container().getChildren().first();
@@ -304,10 +306,10 @@ class HudTest extends SolimEnv {
         hud.children(() -> {
             Button button = new Button();
             AttachmentStack.attachToParent(button.element());
-            button.draggable(hud, x, y);
+            button.props(draggable(hud, x, y));
         });
         hud.element().setSize(50f, 50f);
-        hud.position(30f, 40f);
+        hud.props(position(30f, 40f));
 
         Element btn = hud.container().getChildren().first();
         InputListener drag = null;
@@ -364,7 +366,7 @@ class HudTest extends SolimEnv {
         hud.element().setSize(200f, 100f);
         Signal<Float> xSig = Signal.of(800f);
         Signal<Float> ySig = Signal.of(600f);
-        hud.position(xSig, ySig);
+        hud.props(position(xSig, ySig));
         hud.keepInScreen();
 
         mockGraphics.width = 800;
@@ -411,14 +413,14 @@ class HudTest extends SolimEnv {
     void keepInScreenOversizedAndClampingBothBounds() {
         Hud hud = new Hud();
         hud.element().setSize(1200f, 900f);
-        hud.position(500f, 500f);
+        hud.props(position(500f, 500f));
         hud.keepInScreen();
 
         assertEquals(0f, hud.element().x, 0.01f);
         assertEquals(0f, hud.element().y, 0.01f);
 
         hud.element().setSize(500f, 300f);
-        hud.position(800f, 600f);
+        hud.props(position(800f, 600f));
         hud.keepInScreen();
 
         assertEquals(524f, hud.element().x, 0.01f, "X should clamp to 1024 - 500 = 524");
@@ -431,7 +433,7 @@ class HudTest extends SolimEnv {
     void tableHandleDraggableAllowsChildButtonClicks() {
         Hud hud = new Hud();
         hud.element().setSize(200f, 100f);
-        hud.position(100f, 100f);
+        hud.props(position(100f, 100f));
 
         Signal<Float> xSig = Signal.of(100f);
         Signal<Float> ySig = Signal.of(100f);

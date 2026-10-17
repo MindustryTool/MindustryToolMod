@@ -1,6 +1,12 @@
 package mindustrytool.features.teamresource;
 
 import static solim.UI.*;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
 
 import arc.Core;
 import mindustry.gen.Tex;
@@ -18,23 +24,23 @@ public class TeamResourceAllTeamsDialog extends SolimDialog {
         maxWidth(500f);
 
         children(() -> {
-            column().grow().center().padding(unit(2)).children(() -> {
-                scroll().size(380f, 280f).children(() -> {
+            column().props(grow(), padding(unit(2)), center()).children(() -> {
+                scroll().props(size(380f, 280f), prefWidth(380f), prefHeight(280f)).children(() -> {
                     reactiveGrid(state.validTeamsSignal)
                             .columns(3)
                             .key(t -> String.valueOf(t.id))
-                            .gap(unit(1.5f))
-                            .children(team -> button()
+                            .props(gap(unit(1.5f)))
+                            .items(team -> button()
                                     .style(WebStyles.filterChip())
                                     .checked(state.selectedTeamSignal.map(sel -> sel == team))
                                     .onClick(() -> {
                                         state.setSelectedTeam(team);
                                         hide();
                                     })
-                                    .growX()
+                                    .props(growX())
                                     .children(() -> {
-                                        row().left().gap(unit(1.5f)).padding(unit(1)).children(() -> {
-                                            image(Tex.whiteui).size(unit(4)).color(team.color);
+                                        row().props(left(), gap(unit(1.5f)), padding(unit(1))).children(() -> {
+                                            image(Tex.whiteui).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4))).color(team.color);
                                             text(team.localized()).color(team.color);
                                         });
                                     }));

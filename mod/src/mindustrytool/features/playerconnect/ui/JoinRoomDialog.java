@@ -1,6 +1,15 @@
 package mindustrytool.features.playerconnect.ui;
 
 import static solim.UI.*;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.margin;
+import static solim.modifier.Values.maxHeight;
+import static solim.modifier.Values.minWidth;
+import static solim.modifier.Values.paddingX;
+import static solim.modifier.Values.paddingY;
+import static solim.modifier.Values.prefHeight;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -10,6 +19,8 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.features.playerconnect.net.PlayerConnectClient;
 import mindustrytool.features.playerconnect.net.PlayerConnectLink;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
+import solim.core.Units;
+import solim.modifier.Values;
 import solim.core.Component;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
@@ -77,35 +88,28 @@ public class JoinRoomDialog extends SolimDialog {
                                     .orElse(true));
 
             return column()
-                    .growX()
-                    .maxWidth(dvw(90f).map(w -> Math.min(w, 1000f)))
-                    .maxHeight(dvh(85f).map(h -> Math.min(h, 800f)))
-                    .margin(unit(5))
-                    .gap(unit(4))
-                    .center()
+                    .props(growX(), Values.maxWidth(Units.dvw.map(w -> Math.min(w * 0.9f, 1000f))), maxHeight(Units.dvh.map(h -> Math.min(h * 0.85f, 800f))), margin(unit(5)), gap(unit(4)), center())
                     .children(() -> {
 
-                        column().growX().gap(unit(1.5f)).left().children(() -> {
+                        column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                             text(Core.bundle.get("feature.player-connect.join-link", "Link:")).left();
-                            row().growX().height(unit(11)).border(1.5f, Color.darkGray).paddingX(unit(2))
-                                    .rounded(unit(2))
+                            row().props(growX(), height(unit(11)), prefHeight(unit(11)), Values.border(1.5f, Color.darkGray), paddingX(unit(2)), Values.rounded(unit(2)))
                                     .children(() -> {
                                         textField(linkSignal)
-                                                .grow()
+                                                .props(grow())
                                                 .style(WebStyles.clearInput());
                                     });
                         });
 
                         when(hasPassword)
-                                .growX()
+                                .props(growX())
                                 .thenDo(() -> {
-                                    column().growX().gap(unit(1.5f)).left().children(() -> {
+                                    column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                                         text(Core.bundle.get("feature.player-connect.password", "Password:")).left();
-                                        row().growX().height(unit(11)).border(1.5f, Color.darkGray).paddingX(unit(2))
-                                                .rounded(unit(2))
+                                        row().props(growX(), height(unit(11)), prefHeight(unit(11)), Values.border(1.5f, Color.darkGray), paddingX(unit(2)), Values.rounded(unit(2)))
                                                 .children(() -> {
                                                     textField(passwordSignal)
-                                                            .grow()
+                                                            .props(grow())
                                                             .style(WebStyles.clearInput());
                                                 });
                                     });
@@ -116,10 +120,7 @@ public class JoinRoomDialog extends SolimDialog {
 
                         button(Core.bundle.get("join", "Join"), () -> join(linkSignal.peek(), passwordSignal.peek()))
                                 .style(WebStyles.primary())
-                                .height(unit(11))
-                                .paddingX(unit(8))
-                                .paddingY(unit(2.5f))
-                                .minWidth(unit(36))
+                                .props(height(unit(11)), prefHeight(unit(11)), paddingX(unit(8)), paddingY(unit(2.5f)), minWidth(unit(36)))
                                 .enabled(isValid);
                     }).element();
         }

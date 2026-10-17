@@ -19,6 +19,7 @@ import solim.test.SolimEnv;
 
 class MapSignalTest extends SolimEnv {
 
+
     @Test
     void wholeMapReactivity() {
         MapSignal<String, Integer> map = MapSignal.of();
@@ -271,19 +272,19 @@ class MapSignalTest extends SolimEnv {
 
     @Test
     void doesNotRegisterWithOwnershipContext() {
+        int ambient = OwnershipContext.size();
         CollectingOwner registered = new CollectingOwner();
         OwnershipContext.push(registered);
         try {
-            int before = OwnershipContext.size();
             MapSignal<String, Integer> map = MapSignal.of();
             map.readable("k");
             map.readable("k").peek();
             assertTrue(registered.collected().isEmpty(), "MapSignal must not auto-register with OwnershipContext");
-            assertEquals(before, OwnershipContext.size());
+            assertEquals(ambient + 1, OwnershipContext.size());
         } finally {
             OwnershipContext.pop();
         }
-        assertEquals(0, OwnershipContext.size());
+        assertEquals(ambient, OwnershipContext.size());
     }
 
     @Test

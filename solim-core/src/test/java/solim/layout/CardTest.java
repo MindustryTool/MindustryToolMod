@@ -5,6 +5,21 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.marginLeft;
+import static solim.modifier.Values.marginTop;
+import static solim.modifier.Values.maxHeight;
+import static solim.modifier.Values.maxWidth;
+import static solim.modifier.Values.minHeight;
+import static solim.modifier.Values.minWidth;
+import static solim.modifier.Values.onClick;
+import static solim.modifier.Values.position;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.visible;
+import static solim.modifier.Values.width;
+import static solim.modifier.Values.x;
+import static solim.modifier.Values.y;
 
 import org.junit.jupiter.api.Test;
 
@@ -67,7 +82,7 @@ class CardTest extends SolimEnv {
     @Test
     void onClickExecutesCallback() {
         boolean[] clicked = { false };
-        Card c = new Card().onClick(() -> clicked[0] = true);
+        Card c = new Card().props(onClick(() -> clicked[0] = true));
 
         InputEvent event = new InputEvent();
         c.table().getListeners().forEach(listener -> {
@@ -83,7 +98,7 @@ class CardTest extends SolimEnv {
     @Test
     void onClickDoesNotExecuteWhenEventStopped() {
         boolean[] clicked = { false };
-        Card c = new Card().onClick(() -> clicked[0] = true);
+        Card c = new Card().props(onClick(() -> clicked[0] = true));
 
         InputEvent stoppedEvent = new InputEvent();
         stoppedEvent.stop();
@@ -99,9 +114,9 @@ class CardTest extends SolimEnv {
 
     @Test
     void repeatedOnClickDoesNotStackListeners() {
-        Card c = new Card().onClick(() -> {
-        }).onClick(() -> {
-        });
+        Card c = new Card().props(onClick(() -> {
+        }), onClick(() -> {
+        }));
 
         int clicks = 0;
         for (Object listener : c.table().getListeners()) {
@@ -137,7 +152,7 @@ class CardTest extends SolimEnv {
     void reactiveWidthUpdatesTablePrefWidth() {
         Signal<Float> widthSig = Signal.of(200f);
         Card c = new Card();
-        c.width(widthSig);
+        c.props(width(widthSig), prefWidth(widthSig));
         assertEquals(200f, c.table().getWidth(), 0.01f);
         assertEquals(200f, c.cellConfig().prefWidth.get(), 0.01f);
 
@@ -152,7 +167,7 @@ class CardTest extends SolimEnv {
     void reactiveHeightUpdatesTablePrefHeight() {
         Signal<Float> heightSig = Signal.of(150f);
         Card c = new Card();
-        c.height(heightSig);
+        c.props(height(heightSig), prefHeight(heightSig));
         assertEquals(150f, c.table().getHeight(), 0.01f);
         assertEquals(150f, c.cellConfig().prefHeight.get(), 0.01f);
 
@@ -167,10 +182,10 @@ class CardTest extends SolimEnv {
     void visibleModifierChangesTableVisibility() {
         Card c = new Card();
 
-        c.visible(false);
+        c.props(visible(false));
         assertFalse(c.table().visible);
 
-        c.visible(true);
+        c.props(visible(true));
         assertTrue(c.table().visible);
         c.dispose();
     }
@@ -178,7 +193,7 @@ class CardTest extends SolimEnv {
     @Test
     void reactiveVisibleUpdatesTableVisibility() {
         Signal<Boolean> vis = Signal.of(true);
-        Card c = new Card().visible(vis);
+        Card c = new Card().props(visible(vis));
         assertTrue(c.table().visible);
 
         vis.set(false);
@@ -191,13 +206,13 @@ class CardTest extends SolimEnv {
     void positionSetsTableCoordinates() {
         Card c = new Card();
 
-        c.x(10f);
+        c.props(x(10f));
         assertEquals(10f, c.table().x, 0.01f);
 
-        c.y(20f);
+        c.props(y(20f));
         assertEquals(20f, c.table().y, 0.01f);
 
-        c.position(30f, 40f);
+        c.props(position(30f, 40f));
         assertEquals(30f, c.table().x, 0.01f);
         assertEquals(40f, c.table().y, 0.01f);
         c.dispose();
@@ -240,7 +255,7 @@ class CardTest extends SolimEnv {
     @Test
     void minHeightSetsParentCellFloor() {
         Row parent = new Row();
-        Card card = new Card().minHeight(120f);
+        Card card = new Card().props(minHeight(120f));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 20f));
@@ -257,7 +272,7 @@ class CardTest extends SolimEnv {
     void reactiveMinHeightFollowsSignal() {
         Signal<Float> minSig = Signal.of(120f);
         Row parent = new Row();
-        Card card = new Card().minHeight(minSig);
+        Card card = new Card().props(minHeight(minSig));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 20f));
@@ -277,7 +292,7 @@ class CardTest extends SolimEnv {
     @Test
     void minHeightLiftsShortContent() {
         Row parent = new Row();
-        Card card = new Card().minHeight(120f);
+        Card card = new Card().props(minHeight(120f));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 20f));
@@ -293,7 +308,7 @@ class CardTest extends SolimEnv {
     @Test
     void minHeightLeavesTallContentUntouched() {
         Row parent = new Row();
-        Card card = new Card().minHeight(120f);
+        Card card = new Card().props(minHeight(120f));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 300f));
@@ -309,7 +324,7 @@ class CardTest extends SolimEnv {
     @Test
     void negativeMinHeightClampsToZero() {
         Row parent = new Row();
-        Card card = new Card().minHeight(-50f);
+        Card card = new Card().props(minHeight(-50f));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 20f));
@@ -325,7 +340,7 @@ class CardTest extends SolimEnv {
     @Test
     void maxHeightSetsParentCellCeiling() {
         Row parent = new Row();
-        Card card = new Card().maxHeight(120f);
+        Card card = new Card().props(maxHeight(120f));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 20f));
@@ -342,7 +357,7 @@ class CardTest extends SolimEnv {
     void reactiveMaxHeightFollowsSignal() {
         Signal<Float> maxSig = Signal.of(120f);
         Row parent = new Row();
-        Card card = new Card().maxHeight(maxSig);
+        Card card = new Card().props(maxHeight(maxSig));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 20f));
@@ -362,7 +377,7 @@ class CardTest extends SolimEnv {
     @Test
     void maxHeightCapsTallContent() {
         Row parent = new Row();
-        Card card = new Card().maxHeight(120f);
+        Card card = new Card().props(maxHeight(120f));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 300f));
@@ -379,7 +394,7 @@ class CardTest extends SolimEnv {
     @Test
     void maxHeightLeavesShortContentUntouched() {
         Row parent = new Row();
-        Card card = new Card().maxHeight(120f);
+        Card card = new Card().props(maxHeight(120f));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 20f));
@@ -395,7 +410,7 @@ class CardTest extends SolimEnv {
     @Test
     void minWidthSetsParentCellFloor() {
         Row parent = new Row();
-        Card card = new Card().minWidth(120f);
+        Card card = new Card().props(minWidth(120f));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 20f));
@@ -412,7 +427,7 @@ class CardTest extends SolimEnv {
     void reactiveMinWidthFollowsSignal() {
         Signal<Float> minSig = Signal.of(120f);
         Row parent = new Row();
-        Card card = new Card().minWidth(minSig);
+        Card card = new Card().props(minWidth(minSig));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 20f));
@@ -435,7 +450,7 @@ class CardTest extends SolimEnv {
         Signal<Float> maxHeightSig = Signal.of(60f);
 
         Row parent = new Row();
-        Card card = new Card().minWidth(minWidthSig).maxHeight(maxHeightSig);
+        Card card = new Card().props(minWidth(minWidthSig), maxHeight(maxHeightSig));
         parent.children(() -> card.children(() -> AttachmentStack.add(fixedSize(20f, 20f))));
 
         Cell<?> cell = parent.table().getCell(card.table());
@@ -461,7 +476,7 @@ class CardTest extends SolimEnv {
         Signal<Float> padLeftSig = Signal.of(8f);
 
         Row parent = new Row();
-        Card card = new Card().marginTop(padTopSig).marginLeft(padLeftSig);
+        Card card = new Card().props(marginTop(padTopSig), marginLeft(padLeftSig));
         parent.children(() -> card.children(() -> AttachmentStack.add(fixedSize(20f, 20f))));
 
         Cell<?> cell = parent.table().getCell(card.table());
@@ -485,7 +500,7 @@ class CardTest extends SolimEnv {
     @Test
     void minWidthWidensNarrowContent() {
         Row parent = new Row();
-        Card card = new Card().minWidth(120f);
+        Card card = new Card().props(minWidth(120f));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 20f));
@@ -501,7 +516,7 @@ class CardTest extends SolimEnv {
     @Test
     void minWidthLeavesWideContentUntouched() {
         Row parent = new Row();
-        Card card = new Card().minWidth(120f);
+        Card card = new Card().props(minWidth(120f));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(300f, 20f));
@@ -517,7 +532,7 @@ class CardTest extends SolimEnv {
     @Test
     void maxWidthSetsParentCellCeiling() {
         Row parent = new Row();
-        Card card = new Card().maxWidth(120f);
+        Card card = new Card().props(maxWidth(120f));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 20f));
@@ -534,7 +549,7 @@ class CardTest extends SolimEnv {
     void reactiveMaxWidthFollowsSignal() {
         Signal<Float> maxSig = Signal.of(120f);
         Row parent = new Row();
-        Card card = new Card().maxWidth(maxSig);
+        Card card = new Card().props(maxWidth(maxSig));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 20f));
@@ -554,7 +569,7 @@ class CardTest extends SolimEnv {
     @Test
     void maxWidthCapsWideContent() {
         Row parent = new Row();
-        Card card = new Card().maxWidth(120f);
+        Card card = new Card().props(maxWidth(120f));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(300f, 20f));
@@ -571,7 +586,7 @@ class CardTest extends SolimEnv {
     @Test
     void maxWidthLeavesNarrowContentUntouched() {
         Row parent = new Row();
-        Card card = new Card().maxWidth(120f);
+        Card card = new Card().props(maxWidth(120f));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 20f));
@@ -587,7 +602,7 @@ class CardTest extends SolimEnv {
     @Test
     void heightBeforeAttachSetsParentCellFixedSlot() {
         Row parent = new Row();
-        Card card = new Card().height(70f);
+        Card card = new Card().props(height(70f));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 20f));
@@ -605,7 +620,7 @@ class CardTest extends SolimEnv {
     @Test
     void heightAfterAttachMatchesBeforeAttach() {
         Row beforeParent = new Row();
-        Card before = new Card().height(70f);
+        Card before = new Card().props(height(70f));
         beforeParent.children(() -> {
             before.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 20f));
@@ -619,7 +634,7 @@ class CardTest extends SolimEnv {
                 AttachmentStack.add(fixedSize(20f, 20f));
             });
         });
-        after.height(70f);
+        after.props(height(70f));
 
         beforeParent.table().validate();
         beforeParent.table().layout();
@@ -635,7 +650,7 @@ class CardTest extends SolimEnv {
     @Test
     void heightLiftsShortContentToFixedSlot() {
         Row parent = new Row();
-        Card card = new Card().height(70f);
+        Card card = new Card().props(height(70f));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 20f));
@@ -651,7 +666,7 @@ class CardTest extends SolimEnv {
     @Test
     void heightClampsTallContentToFixedSlot() {
         Row parent = new Row();
-        Card card = new Card().height(70f);
+        Card card = new Card().props(height(70f));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 300f));
@@ -668,7 +683,7 @@ class CardTest extends SolimEnv {
     @Test
     void heightInColumnParentMatchesRow() {
         Column parent = new Column();
-        Card card = new Card().height(70f);
+        Card card = new Card().props(height(70f));
         parent.children(() -> {
             card.children(() -> {
                 AttachmentStack.add(fixedSize(20f, 20f));

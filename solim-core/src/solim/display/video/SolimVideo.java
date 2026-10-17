@@ -19,21 +19,29 @@ import arc.util.Time;
 import mindustry.gen.Icon;
 import solim.core.Component;
 import solim.core.Disposable;
+import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.core.Units;
 import solim.display.Text;
 import solim.input.Button;
 import solim.input.SolimSlider;
-import solim.modifier.CellConfig;
-import solim.modifier.ElementConfig;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
+import solim.modifier.Configurable;
+import solim.modifier.ElementCapability;
+import solim.modifier.IconCapability;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.Props;
+import solim.modifier.Values;
+import solim.modifier.VideoCapability;
 import solim.reactive.Computed;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.runtime.AttachmentStack;
 
-public final class SolimVideo extends Component implements CellConfig<SolimVideo>, ElementConfig<SolimVideo> {
+public final class SolimVideo extends Component
+        implements Configurable<SolimVideo>, ElementCapability, CellCapability, AlignmentCapability, VideoCapability, IconCapability {
 
     private static final long OVERLAY_HIDE_DELAY = 2500;
 
@@ -107,6 +115,7 @@ public final class SolimVideo extends Component implements CellConfig<SolimVideo
     private @Nullable Drawable muteIcon;
     private @Nullable Drawable placeholder;
     private @Nullable Drawable fallback;
+    private @Nullable Props<SolimVideo> pending;
     private Scaling scaling = Scaling.fit;
 
     private @Nullable VideoPlayer player;
@@ -142,10 +151,15 @@ public final class SolimVideo extends Component implements CellConfig<SolimVideo
         overlay.bottom();
         element.add(overlay);
 
-        AttachmentStack.isolate(() -> {
-            buildOverlay();
-            return null;
-        });
+        OwnershipContext.push(this);
+        try {
+            AttachmentStack.isolate(() -> {
+                buildOverlay();
+                return null;
+            });
+        } finally {
+            OwnershipContext.pop();
+        }
 
         videoImage.addListener(new InputListener() {
             @Override
@@ -166,8 +180,13 @@ public final class SolimVideo extends Component implements CellConfig<SolimVideo
             }
         });
 
-        Effect.of(() -> overlay.visible = controlsEnabled.get() && overlayShown.get());
-        Effect.of(this::onScrub);
+        OwnershipContext.push(this);
+        try {
+            Effect.of(() -> overlay.visible = controlsEnabled.get() && overlayShown.get());
+            Effect.of(this::onScrub);
+        } finally {
+            OwnershipContext.pop();
+        }
     }
 
     public SolimVideo(String url) {
@@ -183,11 +202,9 @@ public final class SolimVideo extends Component implements CellConfig<SolimVideo
     private void buildOverlay() {
         Button playButton = new Button(this::togglePlay);
         playButton.icon(playing.map(active -> active ? pauseIconOrDefault() : playIconOrDefault()));
-        playButton.size(Units.unit(11));
-        own(playButton);
+        playButton.props(Values.size(Units.unit(11)), Values.prefWidth(Units.unit(11)), Values.prefHeight(Units.unit(11)));
 
         SolimSlider scrub = SolimSlider.of(progress, 0f, 1f, 0.001f);
-        own(scrub);
         scrub.element().addListener(new InputListener() {
             @Override
             public boolean touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
@@ -205,17 +222,14 @@ public final class SolimVideo extends Component implements CellConfig<SolimVideo
 
         Text time = Text
                 .of(new Computed<>(() -> formatTime(positionSig.get()) + " / " + formatTime(durationSig.get())));
-        own(time);
 
         Button replayButton = new Button(this::replay);
         replayButton.icon(replayIconOrDefault());
-        replayButton.size(Units.unit(11));
-        own(replayButton);
+        replayButton.props(Values.size(Units.unit(11)), Values.prefWidth(Units.unit(11)), Values.prefHeight(Units.unit(11)));
 
         Button muteButton = new Button(this::toggleMute);
         muteButton.icon(mutedState.map(muted -> muted ? muteIconOrDefault() : volumeIconOrDefault()));
-        muteButton.size(Units.unit(11));
-        own(muteButton);
+        muteButton.props(Values.size(Units.unit(11)), Values.prefWidth(Units.unit(11)), Values.prefHeight(Units.unit(11)));
 
         overlay.add(playButton.element()).size(Units.unit(11)).pad(Units.unit(1));
         overlay.add(scrub.element()).growX().pad(Units.unit(1));
@@ -344,7 +358,7 @@ public final class SolimVideo extends Component implements CellConfig<SolimVideo
             controlsBinding = null;
         }
         if (controls != null) {
-            controlsBinding = own(Effect.of(() -> controlsEnabled.set(controls.get())));
+            withinOwnership(() -> controlsBinding = Effect.of(() -> controlsEnabled.set(controls.get())));
         }
         return this;
     }
@@ -364,7 +378,7 @@ public final class SolimVideo extends Component implements CellConfig<SolimVideo
             urlBinding = null;
         }
         if (url != null) {
-            urlBinding = own(Effect.of(() -> loadUrl(url.get())));
+            withinOwnership(() -> urlBinding = Effect.of(() -> loadUrl(url.get())));
         }
         return this;
     }
@@ -576,6 +590,22 @@ public final class SolimVideo extends Component implements CellConfig<SolimVideo
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
+    }
+
+    // TODO: Those component arent table, they should not impl these method and having children function causing user missuse 
+    @Override
+    public @Nullable Table table() {
+        return null;
+    }
+
+    @Override
+    public @Nullable Props<SolimVideo> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<SolimVideo> props) {
+        this.pending = props;
     }
 
     @Override

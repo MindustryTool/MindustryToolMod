@@ -59,7 +59,7 @@ class PathfindingFeatureTest extends MindustryTestEnv {
         feature.drawAlliesConfig.set(true);
         feature.zoomThresholdConfig.set(1.5f);
         feature.opacityConfig.set(0.6f);
-        feature.costTypeConfigs[0].set(false);
+        feature.costTypeConfigs.get(0).set(false);
         flushEffects();
 
         assertFalse(feature.drawUnitPathConfig.get());
@@ -67,7 +67,7 @@ class PathfindingFeatureTest extends MindustryTestEnv {
         assertTrue(feature.drawAlliesConfig.get());
         assertEquals(1.5f, feature.zoomThresholdConfig.get(), 0.001f);
         assertEquals(0.6f, feature.opacityConfig.get(), 0.001f);
-        assertFalse(feature.costTypeConfigs[0].get());
+        assertFalse(feature.costTypeConfigs.get(0).get());
         assertFalse(feature.isCostTypeEnabled(0));
 
         feature.resetToDefaults();
@@ -77,7 +77,7 @@ class PathfindingFeatureTest extends MindustryTestEnv {
         assertFalse(feature.drawAlliesConfig.get());
         assertEquals(0.5f, feature.zoomThresholdConfig.get(), 0.001f);
         assertEquals(1.0f, feature.opacityConfig.get(), 0.001f);
-        assertTrue(feature.costTypeConfigs[0].get());
+        assertTrue(feature.costTypeConfigs.get(0).get());
         assertTrue(feature.isCostTypeEnabled(0));
     }
 

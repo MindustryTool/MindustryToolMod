@@ -1,5 +1,9 @@
 package solim.core;
 
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.right;
+import java.util.concurrent.atomic.AtomicReference;
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
@@ -24,11 +28,17 @@ public final class SettingsPanel extends Component {
 
     private final Signal<Boolean> dirty = Signal.of(false);
 
-    private final Computed<String> saveText = dirty
-            .map(value -> value ? t("solim.settings.save-dirty", "● Save Changes")
-                    : t("solim.settings.save", "Save Changes"));
+    private final Computed<String> saveText;
 
     private Effect logger;
+
+    public SettingsPanel() {
+        AtomicReference<Computed<String>> holder = new AtomicReference<>();
+        withinOwnership(() -> holder.set(dirty
+                .map(value -> value ? t("solim.settings.save-dirty", "● Save Changes")
+                        : t("solim.settings.save", "Save Changes"))));
+        this.saveText = holder.get();
+    }
 
     private static String t(String key, String fallback) {
         if (Core.bundle != null && Core.bundle.has(key)) {
@@ -61,8 +71,7 @@ public final class SettingsPanel extends Component {
             Log.info("Dirty state: @", dirty.get());
         });
 
-        return new Column().padding(24)
-                .gap(16)
+        return new Column().props(padding(24), gap(16))
                 .children(() -> {
                     text(t("solim.settings.title", "Settings"));
 
@@ -85,7 +94,7 @@ public final class SettingsPanel extends Component {
                     Spacer spacer = new Spacer();
                     AttachmentStack.attachToParent(spacer.element());
 
-                    new Row().right().gap(8).children(() -> {
+                    new Row().props(right(), gap(8)).children(() -> {
                         button(() -> {
                             dirty.set(false);
                         }).children(() -> text(t("solim.settings.discard", "Discard")));

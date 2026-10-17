@@ -1,6 +1,8 @@
 package mindustrytool.features.armycontrol;
 
 import static solim.UI.*;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.padding;
 
 import arc.Core;
 import arc.scene.Element;
@@ -27,26 +29,25 @@ public class ArmyControlCompactContent extends Component {
                 .map(groups -> groups != null && groups.size > 0);
 
         return column()
-                .growX()
-                .gap(unit(2))
+                .props(growX(), gap(unit(2)))
                 .children(() -> {
                     new ArmyControlToolbar(feature, scale);
 
                     when(hasSelection)
-                            .growX()
+                            .props(growX())
                             .thenDo(() -> divider().color(WebStyles.Colors.SECTION_BORDER));
 
                     new ActiveSelectionBar(feature);
 
                     when(hasGroups)
-                            .growX()
+                            .props(growX())
                             .thenDo(() -> divider().color(WebStyles.Colors.SECTION_BORDER));
 
                     new ControlGroupList(feature);
 
                     when(feature.contentEmptySignal())
-                            .growX()
-                            .thenDo(() -> row().growX().padding(unit(1)).children(() -> {
+                            .props(growX())
+                            .thenDo(() -> row().props(growX(), padding(unit(1))).children(() -> {
                                 text(Core.bundle.get("feature.army-control.empty.all", "Nothing selected yet"))
                                         .color(WebStyles.Colors.DISABLED_FG)
                                         .left();

@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.minWidth;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,9 +14,9 @@ import org.junit.jupiter.api.Test;
 import solim.core.OwnershipContext;
 import solim.display.Text;
 import solim.layout.Row;
-import solim.test.SolimCoreEnv;
+import solim.test.OwnershipEnv;
 
-class WhenDisposalTest extends SolimCoreEnv {
+class WhenDisposalTest extends OwnershipEnv {
 
     @BeforeEach
     void setUp() {
@@ -99,7 +101,7 @@ class WhenDisposalTest extends SolimCoreEnv {
         Text[] elseBranch = new Text[1];
 
         When when = When.of(condition)
-                .thenDo(() -> new Row().growX().minWidth(minWidth))
+                .thenDo(() -> new Row().props(growX(), minWidth(minWidth)))
                 .elseDo(() -> elseBranch[0] = Text.of(elseLabel));
         when.element();
         flushEffects();

@@ -1,6 +1,10 @@
 package solim.layout;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.marginLeft;
+import static solim.modifier.Values.marginTop;
+import static solim.modifier.Values.padding;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +30,7 @@ public class ReactiveSpacingAlignmentTest extends SolimEnv {
         Card card = new Card();
         Signal<Float> pad = Signal.of(8f);
 
-        card.padding(pad);
+        card.props(padding(pad));
         assertEquals(8f, card.table().getMarginTop(), 0.01f);
         assertEquals(8f, card.table().getMarginLeft(), 0.01f);
         assertEquals(8f, card.table().getMarginBottom(), 0.01f);
@@ -47,7 +51,7 @@ public class ReactiveSpacingAlignmentTest extends SolimEnv {
         Signal<Float> leftMargin = Signal.of(10f);
 
         Button btn = new Button();
-        btn.marginTop(topMargin).marginLeft(leftMargin);
+        btn.props(marginTop(topMargin), marginLeft(leftMargin));
 
         Column parent = new Column();
         parent.children(() -> {
@@ -69,7 +73,7 @@ public class ReactiveSpacingAlignmentTest extends SolimEnv {
     @Test
     void testReactiveGapUpdatesSpacingAcrossSiblings() {
         Signal<Float> gapSignal = Signal.of(10f);
-        Column col = new Column().gap(gapSignal);
+        Column col = new Column().props(gap(gapSignal));
 
         Button b1 = new Button();
         Button b2 = new Button();
@@ -102,7 +106,7 @@ public class ReactiveSpacingAlignmentTest extends SolimEnv {
     @Test
     void testDisposalCleansUpReactiveEffects() {
         Signal<Float> gapSignal = Signal.of(12f);
-        Column col = new Column().gap(gapSignal);
+        Column col = new Column().props(gap(gapSignal));
 
         Button b1 = new Button();
         Button b2 = new Button();

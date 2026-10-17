@@ -1,6 +1,5 @@
 package solim.layout;
 
-import solim.modifier.CellConfig;
 
 import arc.Core;
 import arc.scene.Element;
@@ -15,20 +14,26 @@ import java.util.Map;
 import arc.func.Cons;
 import arc.func.Func;
 import solim.core.Component;
+import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.runtime.StructuralReconciler;
-import solim.modifier.ElementConfig;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
+import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.TableCapability;
 import solim.modifier.PendingCellConfig;
-import solim.modifier.TableConfig;
+import solim.modifier.Props;
 
 public final class VirtualList<T> extends Component
-        implements CellConfig<VirtualList<T>>, ElementConfig<VirtualList<T>>, TableConfig<VirtualList<T>> {
+        implements Configurable<VirtualList<T>>, GapHost, TableCapability, CellCapability, ContainerCapability<VirtualList<T>>, AlignmentCapability {
 
     private final Table outer;
     private final PendingCellConfig constraints = new PendingCellConfig();
+    private @Nullable Props<VirtualList<T>> pending;
     private final @Nullable ScrollPane pane;
     private final VirtualContainer content;
 
@@ -108,11 +113,12 @@ public final class VirtualList<T> extends Component
         return this;
     }
 
-    public void children(@Nullable Func<T, Component> itemFactory) {
+    public VirtualList<T> items(@Nullable Func<T, Component> itemFactory) {
         this.itemFactory = itemFactory;
         if (itemFactory != null && isBuilt()) {
             onCollectionChanged();
         }
+        return this;
     }
 
     private Object extractKey(T item) {
@@ -124,10 +130,10 @@ public final class VirtualList<T> extends Component
         return this;
     }
 
-    public VirtualList<T> gap(float gap) {
+    @Override
+    public void setGap(float gap) {
         this.gap = Math.max(0f, gap);
         recalculateHeights(content.getWidth());
-        return this;
     }
 
     public @Nullable ScrollPane pane() {
@@ -213,6 +219,35 @@ public final class VirtualList<T> extends Component
     @Override
     public Table table() {
         return outer;
+    }
+
+    
+    public VirtualList<T> children(@Nullable Runnable block) {
+        applyPendingProps();
+        OwnershipContext.push(this);
+        try {
+            if (block != null) {
+                block.run();
+            }
+        } finally {
+            OwnershipContext.pop();
+        }
+        return this;
+    }
+
+    @Override
+    public @Nullable Props<VirtualList<T>> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<VirtualList<T>> props) {
+        this.pending = props;
+    }
+
+    @Override
+    protected void onRealized(Element element) {
+        applyPendingProps();
     }
 
     @Override

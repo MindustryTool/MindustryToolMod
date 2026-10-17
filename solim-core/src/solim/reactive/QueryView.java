@@ -5,27 +5,30 @@ import arc.graphics.Color;
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
+import arc.util.Align;
 import arc.util.Nullable;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import arc.func.Func2;
 import arc.func.Func;
 import arc.func.Prov;
 import solim.core.Component;
-import solim.core.Disposable;
+import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.display.Text;
 import solim.input.Button;
 import solim.layout.CollapseHelper;
-import solim.modifier.CellConfig;
-import solim.modifier.ElementConfig;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
+import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.TableCapability;
 import solim.modifier.PendingCellConfig;
-import solim.modifier.TableConfig;
+import solim.modifier.Props;
+import solim.runtime.AttachmentStack;
 import solim.runtime.OwnershipScope;
 
 public final class QueryView<T> extends Component
-        implements CellConfig<QueryView<T>>, TableConfig<QueryView<T>>, ElementConfig<QueryView<T>> {
+        implements Configurable<QueryView<T>>, TableCapability, CellCapability, ContainerCapability<QueryView<T>>, AlignmentCapability {
 
     private enum ViewState {
         NONE,
@@ -34,8 +37,6 @@ public final class QueryView<T> extends Component
         DATA,
         EMPTY
     }
-
-    private static final Object SENTINEL = new Object();
 
     private static Prov<Component> defaultLoadingFactory = () -> {
         Table table = new Table();
@@ -81,11 +82,11 @@ public final class QueryView<T> extends Component
     private @Nullable Func<Throwable, Component> errorFactory;
 
     private Component currentComponent;
-    private final List<Disposable> currentBindings = new ArrayList<>();
+    private @Nullable Props<QueryView<T>> pending;
 
     private ViewState currentViewState = ViewState.NONE;
-    @SuppressWarnings("unchecked")
-    private T lastData = (T) SENTINEL;
+    private @Nullable T lastData;
+    private boolean hasData;
     private @Nullable Throwable lastError = null;
     private @Nullable Boolean lastFetching = null;
 
@@ -164,6 +165,35 @@ public final class QueryView<T> extends Component
         return container;
     }
 
+    
+    public QueryView<T> children(@Nullable Runnable block) {
+        applyPendingProps();
+        OwnershipContext.push(this);
+        try {
+            if (block != null) {
+                block.run();
+            }
+        } finally {
+            OwnershipContext.pop();
+        }
+        return this;
+    }
+
+    @Override
+    public @Nullable Props<QueryView<T>> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<QueryView<T>> props) {
+        this.pending = props;
+    }
+
+    @Override
+    protected void onRealized(Element element) {
+        applyPendingProps();
+    }
+
     @Override
     public QueryView<T> name(@Nullable String name) {
         setName(name);
@@ -175,9 +205,8 @@ public final class QueryView<T> extends Component
         return constraints;
     }
 
-    @Override
     public QueryView<T> align(int align) {
-        TableConfig.super.align(align);
+        table().align(align);
         constraints.align = align;
         constraints.applyAlignToParentCell(element());
         container.defaults().align(align);
@@ -189,9 +218,8 @@ public final class QueryView<T> extends Component
         return this;
     }
 
-    @Override
     public QueryView<T> center() {
-        TableConfig.super.center();
+        table().center();
         constraints.alignCenter();
         constraints.applyAlignToParentCell(element());
         container.defaults().center();
@@ -203,9 +231,8 @@ public final class QueryView<T> extends Component
         return this;
     }
 
-    @Override
     public QueryView<T> top() {
-        TableConfig.super.top();
+        table().top();
         constraints.alignTop();
         constraints.applyAlignToParentCell(element());
         container.defaults().top();
@@ -217,9 +244,8 @@ public final class QueryView<T> extends Component
         return this;
     }
 
-    @Override
     public QueryView<T> bottom() {
-        TableConfig.super.bottom();
+        table().bottom();
         constraints.alignBottom();
         constraints.applyAlignToParentCell(element());
         container.defaults().bottom();
@@ -231,9 +257,8 @@ public final class QueryView<T> extends Component
         return this;
     }
 
-    @Override
     public QueryView<T> left() {
-        TableConfig.super.left();
+        table().left();
         constraints.alignLeft();
         constraints.applyAlignToParentCell(element());
         container.defaults().left();
@@ -245,9 +270,8 @@ public final class QueryView<T> extends Component
         return this;
     }
 
-    @Override
     public QueryView<T> right() {
-        TableConfig.super.right();
+        table().right();
         constraints.alignRight();
         constraints.applyAlignToParentCell(element());
         container.defaults().right();
@@ -291,7 +315,7 @@ public final class QueryView<T> extends Component
         if (currentComponent != null && targetState == currentViewState) {
             if (targetState == ViewState.DATA) {
                 boolean isFetchingRelevant = dataWithFetchingFactory != null;
-                if (Objects.equals(data, lastData)
+                if (hasData && Objects.equals(data, lastData)
                         && (!isFetchingRelevant || Objects.equals(isFetching, lastFetching))) {
                     return;
                 }
@@ -303,6 +327,7 @@ public final class QueryView<T> extends Component
         }
 
         currentViewState = targetState;
+        hasData = true;
         lastData = data;
         lastError = err;
         lastFetching = isFetching;
@@ -331,16 +356,13 @@ public final class QueryView<T> extends Component
         });
         if (currentComponent != null) {
             Element el = currentComponent.element();
-            Cell<?> cell = container.add(el);
-            cell.minWidth(0f);
-            PendingCellConfig sc = PendingCellConfig.find(currentComponent);
-            if (sc == null) {
-                sc = PendingCellConfig.find(el);
-            }
-            if (sc != null) {
-                currentBindings.addAll(sc.applyToCell(cell));
-            } else if (SolimToken.isExpandingChild(el)) {
-                cell.growX();
+            Cell<?> cell = AttachmentStack.attach(container, el, null, currentComponent);
+            if (cell != null) {
+                cell.minWidth(0f);
+                if (PendingCellConfig.find(currentComponent) == null && PendingCellConfig.find(el) == null
+                        && SolimToken.isExpandingChild(el)) {
+                    cell.growX();
+                }
             }
         }
 
@@ -354,10 +376,6 @@ public final class QueryView<T> extends Component
             currentComponent.dispose();
             currentComponent = null;
         }
-        for (Disposable d : currentBindings) {
-            d.dispose();
-        }
-        currentBindings.clear();
         container.clearChildren();
     }
 
@@ -370,7 +388,7 @@ public final class QueryView<T> extends Component
     }
 
     private void updateParentCell() {
-        CollapseHelper.updateParentCell(container, currentComponent != null, constraints);
+        CollapseHelper.updateParentCell(container, currentComponent != null, constraints, this);
     }
     @Override
     protected void onDispose() {

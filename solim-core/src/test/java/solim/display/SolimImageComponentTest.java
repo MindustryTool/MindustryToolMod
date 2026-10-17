@@ -1,6 +1,13 @@
 package solim.display;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static solim.modifier.Values.position;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.visible;
+import static solim.modifier.Values.x;
+import static solim.modifier.Values.y;
 
 import arc.graphics.Color;
 import org.junit.jupiter.api.Test;
@@ -14,7 +21,7 @@ class SolimImageComponentTest extends SolimEnv {
 	@Test
 	void sizeSetsImageDimensions() {
 		SolimImage img = new SolimImage();
-		img.size(64f, 48f);
+		img.props(size(64f, 48f), prefWidth(64f), prefHeight(48f));
 		assertEquals(64f, img.image().getWidth(), 0.01f);
 		assertEquals(48f, img.image().getHeight(), 0.01f);
 	}
@@ -41,10 +48,10 @@ class SolimImageComponentTest extends SolimEnv {
 	void visibleModifierChangesImageVisibility() {
 		SolimImage img = new SolimImage();
 
-		img.visible(false);
+		img.props(visible(false));
 		assertFalse(img.image().visible);
 
-		img.visible(true);
+		img.props(visible(true));
 		assertTrue(img.image().visible);
 	}
 
@@ -52,13 +59,13 @@ class SolimImageComponentTest extends SolimEnv {
 	void positionSetsImageCoordinates() {
 		SolimImage img = new SolimImage();
 
-		img.x(10f);
+		img.props(x(10f));
 		assertEquals(10f, img.image().x, 0.01f);
 
-		img.y(20f);
+		img.props(y(20f));
 		assertEquals(20f, img.image().y, 0.01f);
 
-		img.position(30f, 40f);
+		img.props(position(30f, 40f));
 		assertEquals(30f, img.image().x, 0.01f);
 		assertEquals(40f, img.image().y, 0.01f);
 	}

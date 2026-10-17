@@ -1,6 +1,9 @@
 package mindustrytool.features.chat;
 
 import static solim.UI.*;
+import static solim.modifier.Values.background;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
 
 import arc.graphics.Color;
 import arc.scene.Element;
@@ -9,6 +12,7 @@ import solim.core.Component;
 import solim.display.NetworkImage;
 import solim.layout.Column;
 import solim.layout.SolimStack;
+import solim.modifier.Values;
 import solim.reactive.Readable;
 
 public class ChatAvatar extends Component {
@@ -59,13 +63,13 @@ public class ChatAvatar extends Component {
         int radius = cornerRadius;
 
         SolimStack stack = new SolimStack()
-                .size(size, size)
+                .props(Values.size(size, size), prefWidth(size), prefHeight(size))
                 .layer(() -> {
                     Column fallback = column()
-                            .size(size, size)
-                            .center();
+                            .props(Values.size(size, size), prefWidth(size), prefHeight(size),
+                                    radius > 0 ? Values.rounded(radius, background) : background(background), center());
 
-                    return (radius > 0 ? fallback.rounded(radius, background) : fallback.background(background))
+                    return fallback
                             .children(() -> {
                                 text(initial)
                                         .color(Color.white)

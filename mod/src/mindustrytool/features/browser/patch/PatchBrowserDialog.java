@@ -1,6 +1,15 @@
 package mindustrytool.features.browser.patch;
 
 import static solim.UI.*;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growY;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.paddingLeft;
+import static solim.modifier.Values.paddingX;
+import static solim.modifier.Values.paddingY;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.width;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -21,6 +30,7 @@ import mindustrytool.features.browser.common.BrowserSearchHeader;
 import mindustrytool.features.browser.common.BrowserState;
 import mindustrytool.models.response.ContentPatchData;
 import mindustrytool.services.MindustryTool;
+import solim.core.Units;
 import solim.core.Component;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
@@ -76,8 +86,8 @@ public class PatchBrowserDialog extends SolimDialog {
         @Override
         protected Element build() {
 
-            Computed<Float> viewportWidth = dvw(100f);
-            Computed<Float> viewportHeight = dvh(100f);
+            Signal<Float> viewportWidth = Units.dvw;
+            Signal<Float> viewportHeight = Units.dvh;
 
             Computed<Integer> columnCount = new Computed<>(() -> {
                 Float width = viewportWidth.get();
@@ -125,9 +135,9 @@ public class PatchBrowserDialog extends SolimDialog {
                 expandVisible(visibleCount, total, page != null ? page : 0);
             });
 
-            return column().grow().center().paddingX(BrowserLayout.HORIZONTAL_PADDING).paddingY(unit(2))
+            return column().props(grow(), paddingX(BrowserLayout.HORIZONTAL_PADDING), paddingY(unit(2)), center())
                     .children(() -> {
-                        column().width(contentWidth).growY().gap(unit(2)).children(() -> {
+                        column().props(width(contentWidth), prefWidth(contentWidth), growY(), gap(unit(2))).children(() -> {
                             new BrowserSearchHeader(state, () -> filterDialog.show());
                             body(columnCount, cardSize, visibleItems);
                             new BrowserFooter(state, Config.UPLOAD_PATCH_URL, onClose);
@@ -158,9 +168,9 @@ public class PatchBrowserDialog extends SolimDialog {
         private void body(Computed<Integer> columnCount, Computed<Float> cardSize,
                 Computed<Seq<ContentPatchData>> visibleItems) {
             query(state.query())
-                    .grow()
+                    .props(grow())
                     .loading(Loader::centered)
-                    .error(err -> row().grow().gap(unit(1)).children(() -> {
+                    .error(err -> row().props(grow(), gap(unit(1))).children(() -> {
                         Throwable cause = err != null && err.getCause() != null ? err.getCause() : err;
                         String msg = cause != null && cause.getMessage() != null ? cause.getMessage()
                                 : (cause != null ? cause.toString() : "");
@@ -168,23 +178,23 @@ public class PatchBrowserDialog extends SolimDialog {
                         text(msg).color(Color.scarlet).wrap(true).growX();
                         button(Core.bundle.get("browser.retry"), () -> state.refresh())
                                 .style(WebStyles.outlineText())
-                                .height(unit(10));
+                                .props(height(unit(10)), prefHeight(unit(10)));
                     }))
                     .data((list, fetching) -> fetching ? Loader.centered() : items(columnCount, cardSize, visibleItems))
-                    .grow();
+                    .props(grow());
         }
 
         private Component items(Computed<Integer> columnCount, Computed<Float> cardSize,
                 Computed<Seq<ContentPatchData>> visibleItems) {
-            return scroll().style(Styles.noBarPane).grow().paddingLeft(BrowserLayout.SCROLLBAR_GUTTER)
+            return scroll().style(Styles.noBarPane).props(grow(), paddingLeft(BrowserLayout.SCROLLBAR_GUTTER))
                     .children(() -> {
                         reactiveGrid(visibleItems)
                                 .columns(columnCount)
                                 .key(ContentPatchData::getItemId)
+                                .props(gap(BrowserLayout.CARD_GAP))
                                 .empty(() -> text(Core.bundle.get("browser.empty")).color(Color.gray)
                                         .padding(unit(4)))
-                                .gap(BrowserLayout.CARD_GAP)
-                                .children(item -> new PatchCard(item, cardSize,
+                                .items(item -> new PatchCard(item, cardSize,
                                         () -> showDetails(item),
                                         () -> PatchActions.copyToClipboard(item.getItemId()),
                                         () -> PatchActions.saveToFile(item.getItemId(), item.getName()),

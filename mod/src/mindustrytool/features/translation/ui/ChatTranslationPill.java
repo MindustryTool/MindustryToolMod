@@ -1,6 +1,14 @@
 package mindustrytool.features.translation.ui;
 
 import static solim.UI.*;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.position;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
+import static solim.modifier.Values.visible;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -55,25 +63,23 @@ public class ChatTranslationPill extends Component {
                 && Boolean.TRUE.equals(feature.showPillConfig.get())
                 && Boolean.TRUE.equals(isChatShown.get()));
 
-        hud = hud(() -> row().gap(unit(1)).padding(unit(1)).children(() -> {
-            card().padding(unit(1), unit(2), unit(1), unit(2)).children(() -> row().gap(unit(1)).children(() -> {
+        hud = hud(() -> row().props(padding(unit(1)), gap(unit(1))).children(() -> {
+            card().props(padding(unit(1), unit(2), unit(1), unit(2))).children(() -> row().props(gap(unit(1))).children(() -> {
 
                 button(() -> feature.outgoingEnabledConfig
                         .set(!Boolean.TRUE.equals(feature.outgoingEnabledConfig.get())))
                         .style(WebStyles.ghost())
-                        .size(unit(9), unit(8))
-                        .tooltip(Core.bundle.get("feature.translation.outgoing.enable"))
-                        .children(() -> icon(FileIcon.of("translate.png")).size(unit(5)).color(statusColor));
+                        .props(size(unit(9), unit(8)), prefWidth(unit(9)), prefHeight(unit(8)), tooltip(Core.bundle.get("feature.translation.outgoing.enable")))
+                        .children(() -> icon(FileIcon.of("translate.png")).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))).color(statusColor));
 
                 button(targetLangCode, feature::showLanguageDialog)
                         .style(WebStyles.secondaryText())
-                        .height(unit(8))
-                        .tooltip(Core.bundle.get("feature.translation.outgoing.select-lang"));
+                        .props(height(unit(8)), prefHeight(unit(8)), tooltip(Core.bundle.get("feature.translation.outgoing.select-lang")));
             }));
         }));
 
-        hud.position(pillX, pillY);
-        hud.visible(shouldShowPill);
+        hud.props(position(pillX, pillY));
+        hud.props(visible(shouldShowPill));
         hud.element().update(this::updatePosition);
 
         return hud.element();

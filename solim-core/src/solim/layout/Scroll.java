@@ -1,6 +1,5 @@
 package solim.layout;
 
-import solim.modifier.CellConfig;
 
 import arc.func.Cons;
 
@@ -15,16 +14,23 @@ import arc.scene.ui.ScrollPane;
 import arc.scene.ui.ScrollPane.ScrollPaneStyle;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
+import arc.util.Align;
 import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.SolimToken;
-import solim.modifier.ElementConfig;
-import solim.modifier.TableConfig;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
+import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.TableCapability;
+import solim.modifier.Props;
+import solim.modifier.ScrollCapability;
 import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.modifier.PendingCellConfig;
 
-public final class Scroll extends Component implements CellConfig<Scroll>, ElementConfig<Scroll>, TableConfig<Scroll> {
+public final class Scroll extends Component
+        implements Configurable<Scroll>, TableCapability, CellCapability, ContainerCapability<Scroll>, AlignmentCapability, ScrollCapability {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -40,6 +46,7 @@ public final class Scroll extends Component implements CellConfig<Scroll>, Eleme
     private final Table content;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private final ScrollPane pane;
+    private @Nullable Props<Scroll> pending;
     private boolean centered = false;
     private boolean disableX = true;
     private boolean disableY = false;
@@ -244,9 +251,8 @@ public final class Scroll extends Component implements CellConfig<Scroll>, Eleme
         return this;
     }
 
-    @Override
     public Scroll align(int align) {
-        TableConfig.super.align(align);
+        table().align(align);
         constraints.align = align;
         constraints.applyAlignToParentCell(element());
         outer.align(align);
@@ -258,9 +264,8 @@ public final class Scroll extends Component implements CellConfig<Scroll>, Eleme
         return this;
     }
 
-    @Override
     public Scroll top() {
-        TableConfig.super.top();
+        table().top();
         constraints.alignTop();
         constraints.applyAlignToParentCell(element());
         outer.top();
@@ -272,9 +277,8 @@ public final class Scroll extends Component implements CellConfig<Scroll>, Eleme
         return this;
     }
 
-    @Override
     public Scroll bottom() {
-        TableConfig.super.bottom();
+        table().bottom();
         constraints.alignBottom();
         constraints.applyAlignToParentCell(element());
         outer.bottom();
@@ -286,7 +290,6 @@ public final class Scroll extends Component implements CellConfig<Scroll>, Eleme
         return this;
     }
 
-    @Override
     public Scroll center() {
         this.centered = true;
         constraints.alignCenter();
@@ -300,7 +303,6 @@ public final class Scroll extends Component implements CellConfig<Scroll>, Eleme
         return this;
     }
 
-    @Override
     public Scroll left() {
         this.centered = false;
         constraints.alignLeft();
@@ -314,7 +316,6 @@ public final class Scroll extends Component implements CellConfig<Scroll>, Eleme
         return this;
     }
 
-    @Override
     public Scroll right() {
         this.centered = false;
         constraints.alignRight();
@@ -338,7 +339,6 @@ public final class Scroll extends Component implements CellConfig<Scroll>, Eleme
         return constraints;
     }
 
-    @Override
     public Scroll x(float x) {
         Element el = element();
         if (el != null)
@@ -346,7 +346,6 @@ public final class Scroll extends Component implements CellConfig<Scroll>, Eleme
         return this;
     }
 
-    @Override
     public Scroll y(float y) {
         Element el = element();
         if (el != null)
@@ -354,7 +353,6 @@ public final class Scroll extends Component implements CellConfig<Scroll>, Eleme
         return this;
     }
 
-    @Override
     public Scroll position(float x, float y) {
         Element el = element();
         if (el != null)
@@ -362,7 +360,6 @@ public final class Scroll extends Component implements CellConfig<Scroll>, Eleme
         return this;
     }
 
-    @Override
     public Scroll visible(boolean visible) {
         Element el = element();
         if (el == null)
@@ -375,6 +372,7 @@ public final class Scroll extends Component implements CellConfig<Scroll>, Eleme
     }
 
     public Scroll children(@Nullable Runnable r) {
+        applyPendingProps();
         AttachmentStack.Attacher attacher = (table, child) -> {
             Cell<?> cell = table.add(child);
             if (centered) {
@@ -420,14 +418,35 @@ public final class Scroll extends Component implements CellConfig<Scroll>, Eleme
     }
 
     @Override
+    public @Nullable Props<Scroll> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<Scroll> props) {
+        this.pending = props;
+    }
+
+    @Override
     public Scroll name(@Nullable String name) {
         setName(name);
         return this;
     }
 
     @Override
+    public void alignCoordinated(@Nullable Integer explicit, int named) {
+        if (named == Align.center || (explicit != null && explicit == Align.center)) {
+            this.centered = true;
+        }
+        AlignmentCapability.coordinateTable(content, constraints, explicit, named);
+        int a = constraints.align != null ? constraints.align : named;
+        table().align(a);
+        outer.align(a);
+        constraints.applyAlignToParentCell(element());
+    }
+
+    @Override
     public Scroll self() {
         return this;
     }
-
 }

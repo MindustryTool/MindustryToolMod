@@ -1,6 +1,18 @@
 package mindustrytool.features.timecontrol;
 
 import static solim.UI.*;
+import static solim.modifier.Values.border;
+import static solim.modifier.Values.draggable;
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.marginLeft;
+import static solim.modifier.Values.position;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.rounded;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.tooltip;
+import static solim.modifier.Values.width;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -39,16 +51,14 @@ public class TimeControlHudView extends Component {
             when(feature.hideDragHandleConfig.signal())
                     .elseDo(() -> button()
                             .style(WebStyles.ghost())
-                            .size(buttonSize)
-                            .children(() -> icon(Icon.move).size(dragIconSize))
-                            .draggable(feature.xSignal, feature.ySignal));
+                            .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize))
+                            .children(() -> icon(Icon.move).props(size(dragIconSize), prefWidth(dragIconSize), prefHeight(dragIconSize)))
+                            .props(draggable(feature.xSignal, feature.ySignal)));
 
             buildControls(feature, null);
-        }).gap(unit(1));
+        }).props(gap(unit(1)));
 
-        hud.position(feature.xSignal, feature.ySignal)
-                .rounded(unit(2), WebStyles.Colors.SECTION_BG)
-                .border(1.5f, WebStyles.Colors.BORDER);
+        hud.props(position(feature.xSignal, feature.ySignal), rounded(unit(2), WebStyles.Colors.SECTION_BG), border(1.5f, WebStyles.Colors.BORDER));
 
         listen(ResizeEvent.class, e -> {
             keepInScreen();
@@ -120,8 +130,7 @@ public class TimeControlHudView extends Component {
 
         Button btn = button()
                 .style(WebStyles.ghost())
-                .height(buttonSize)
-                .width(presetWidth)
+                .props(height(buttonSize), prefHeight(buttonSize), width(presetWidth), prefWidth(presetWidth))
                 .onClick(() -> feature.selectPreset(preset))
                 .children(() -> text(label).color(color).fontScale(fontScale));
         return canEdit != null ? btn.enabled(canEdit) : btn;
@@ -138,12 +147,10 @@ public class TimeControlHudView extends Component {
         Readable<Float> labelWidth = feature.scaleConfig.signal().map(s -> unit(20) * (s != null ? s : 1f));
 
         return row()
-                .gap(unit(1))
-                .marginLeft(unit(1))
+                .props(gap(unit(1)), marginLeft(unit(1)))
                 .children(() -> {
 
-                    row().rounded(unit(2), WebStyles.Colors.SECONDARY_BG).border(1f, WebStyles.Colors.BORDER)
-                            .height(buttonSize).center().children(() -> {
+                    row().props(rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1f, WebStyles.Colors.BORDER), height(buttonSize), prefHeight(buttonSize), center()).children(() -> {
                                 SolimSlider slider = slider(feature.sliderPositionSignal(),
                                         TimeControlFeature.SLIDER_MIN_U,
                                         TimeControlFeature.SLIDER_MAX_U,
@@ -163,17 +170,16 @@ public class TimeControlHudView extends Component {
                                 });
                             });
 
-                    row().rounded(unit(2), WebStyles.Colors.SECONDARY_BG).border(1f, WebStyles.Colors.BORDER).center()
-                            .height(buttonSize).width(labelWidth).children(() -> {
+                    row().props(rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1f, WebStyles.Colors.BORDER), center(),
+                            height(buttonSize), prefHeight(buttonSize), width(labelWidth), prefWidth(labelWidth)).children(() -> {
                                 text(label).center().fontScale(fontScale);
                             });
 
                     Button resetBtn = button()
                             .style(WebStyles.ghost())
-                            .size(buttonSize)
-                            .tooltip(Core.bundle.get("feature.time-control.slider.reset.tooltip"))
+                            .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(Core.bundle.get("feature.time-control.slider.reset.tooltip")))
                             .onClick(() -> feature.resetSlider())
-                            .children(() -> icon(Icon.refresh).size(resetIconSize));
+                            .children(() -> icon(Icon.refresh).props(size(resetIconSize), prefWidth(resetIconSize), prefHeight(resetIconSize)));
                     if (canEdit != null) {
                         resetBtn.enabled(canEdit);
                     }

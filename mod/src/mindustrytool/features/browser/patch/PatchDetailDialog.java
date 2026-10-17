@@ -1,6 +1,14 @@
 package mindustrytool.features.browser.patch;
 
 import static solim.UI.*;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.growY;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.width;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -61,16 +69,16 @@ public class PatchDetailDialog extends SolimDialog {
 
         @Override
         protected Element build() {
-            return column().grow().padding(unit(2)).gap(unit(2)).children(() -> {
+            return column().props(grow(), padding(unit(2)), gap(unit(2))).children(() -> {
                 when(isPortrait())
                         .thenDo(this::portraitLayout)
                         .elseDo(this::landscapeLayout)
-                        .grow();
+                        .props(grow());
             }).element();
         }
 
         private Component portraitLayout() {
-            return scroll().grow().children(() -> column().grow().top().left().gap(unit(4)).children(() -> {
+            return scroll().props(grow()).children(() -> column().props(grow(), top(), left(), gap(unit(4))).children(() -> {
                 details();
                 codeSection();
                 actionButtons();
@@ -78,23 +86,23 @@ public class PatchDetailDialog extends SolimDialog {
         }
 
         private Component landscapeLayout() {
-            return row().grow().top().gap(unit(4)).children(() -> {
-                scroll().growY().growX().children(() -> column().growX().top().gap(unit(3)).children(() -> {
+            return row().props(grow(), top(), gap(unit(4))).children(() -> {
+                scroll().props(growY(), growX()).children(() -> column().props(growX(), top(), gap(unit(3))).children(() -> {
                     details();
                     actionButtons();
                 }));
-                column().grow().top().children(this::codeSection);
+                column().props(grow(), top()).children(this::codeSection);
             });
         }
 
         private void details() {
-            column().growX().gap(unit(2)).children(() -> {
-                card(WebStyles.previewCardBackground()).padding(unit(4)).gap(unit(2)).growX().children(() -> {
-                    row().growX().gap(unit(1)).children(() -> {
+            column().props(growX(), gap(unit(2))).children(() -> {
+                card(WebStyles.previewCardBackground()).props(padding(unit(4)), growX(), gap(unit(2))).children(() -> {
+                    row().props(growX(), gap(unit(1))).children(() -> {
                         text(Core.bundle.get("browser.detail.author")).color(Color.lightGray).fontScale(1.1f);
                         if (authorQuery != null) {
                             query(authorQuery)
-                                    .growX()
+                                    .props(growX())
                                     .loading(() -> text(authorId != null ? authorId : "").color(Color.white)
                                             .fontScale(1.1f))
                                     .error(err -> text(authorId != null ? authorId : "").color(Color.white)
@@ -111,13 +119,13 @@ public class PatchDetailDialog extends SolimDialog {
                             : Core.bundle.get("browser.patch.type.data");
                     Color typeColor = isPack ? Color.royal : Color.coral;
 
-                    row().growX().gap(unit(1)).children(() -> {
+                    row().props(growX(), gap(unit(1))).children(() -> {
                         text(Core.bundle.get("browser.detail.type")).color(Color.lightGray);
                         text(typeLabel).color(typeColor);
                     });
                 });
 
-                card(WebStyles.previewCardBackground()).padding(unit(4)).gap(unit(2)).growX().children(() -> {
+                card(WebStyles.previewCardBackground()).props(padding(unit(4)), growX(), gap(unit(2))).children(() -> {
                     new BrowserStatsBadge(
                             BrowserImages.count(detail.getLikes()),
                             BrowserImages.count(detail.getComments()),
@@ -129,7 +137,7 @@ public class PatchDetailDialog extends SolimDialog {
                 }
 
                 if (detail.getDescription() != null && !detail.getDescription().trim().isEmpty()) {
-                    card(WebStyles.previewCardBackground()).padding(unit(4)).gap(unit(2)).growX().children(() -> {
+                    card(WebStyles.previewCardBackground()).props(padding(unit(4)), growX(), gap(unit(2))).children(() -> {
                         text(detail.getDescription().trim()).color(Color.lightGray).wrap(true).left().growX();
                     });
                 }
@@ -146,17 +154,17 @@ public class PatchDetailDialog extends SolimDialog {
             String highlightedCode = HjsonHighlighter.highlight(formattedData);
             String lineNumbers = HjsonHighlighter.buildLineNumbers(formattedData);
 
-            card(WebStyles.previewCardBackground()).grow().padding(unit(3)).gap(unit(2)).children(() -> {
+            card(WebStyles.previewCardBackground()).props(grow(), padding(unit(3)), gap(unit(2))).children(() -> {
                 text(Core.bundle.get("browser.patch.data-section")).color(Color.white).growX().left();
-                scroll().grow().scrollX(true).scrollY(true).children(() -> {
-                    row().top().left().children(() -> {
+                scroll().props(grow()).scrollX(true).scrollY(true).children(() -> {
+                    row().props(top(), left()).children(() -> {
                         text(lineNumbers)
                                 .style(Styles.monoLabel)
                                 .color(Color.gray)
                                 .wrap(false)
                                 .right();
 
-                        column().width(unit(4));
+                        column().props(width(unit(4)), prefWidth(unit(4)));
 
                         text(highlightedCode)
                                 .style(Styles.monoLabel)
@@ -171,18 +179,16 @@ public class PatchDetailDialog extends SolimDialog {
             String patchData = detail.getData() != null ? detail.getData() : "";
             String patchName = detail.getName() != null ? detail.getName() : "patch";
 
-            row().growX().gap(unit(2)).children(() -> {
+            row().props(growX(), gap(unit(2))).children(() -> {
                 button(Core.bundle.get("browser.patch.copy"),
                         () -> PatchActions.copyTextToClipboard(patchData))
                         .style(WebStyles.primary())
-                        .growX()
-                        .height(unit(11));
+                        .props(growX(), height(unit(11)), prefHeight(unit(11)));
 
                 button(Core.bundle.get("browser.patch.save"),
                         () -> PatchActions.saveTextToFile(patchData, patchName))
                         .style(WebStyles.primary())
-                        .growX()
-                        .height(unit(11));
+                        .props(growX(), height(unit(11)), prefHeight(unit(11)));
             });
         }
     }

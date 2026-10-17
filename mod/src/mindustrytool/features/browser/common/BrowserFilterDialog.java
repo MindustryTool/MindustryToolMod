@@ -1,6 +1,16 @@
 package mindustrytool.features.browser.common;
 
 import static solim.UI.*;
+import static solim.modifier.Values.backgroundColor;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.paddingLeft;
+import static solim.modifier.Values.paddingX;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -19,6 +29,7 @@ import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustry.world.Block;
+import solim.graphics.ColoredDrawable;
 import mindustrytool.Config;
 import mindustrytool.components.Loader;
 import mindustrytool.components.WebStyles;
@@ -27,6 +38,7 @@ import mindustrytool.models.response.Sort;
 import mindustrytool.models.response.TagCategory;
 import mindustrytool.models.response.TagData;
 import mindustrytool.services.MindustryTool;
+import solim.modifier.Values;
 import solim.core.Component;
 import solim.layout.Direction;
 import solim.overlay.SolimDialog;
@@ -45,7 +57,7 @@ public class BrowserFilterDialog extends SolimDialog {
         closeOnBack();
         fillParent(true);
         children(() -> new FilterContent(state, tagGroup, useBlocks, usePlanets));
-        dialog().background(colored(Color.black, Tex.whiteui));
+        dialog().background(ColoredDrawable.of(Color.black, Tex.whiteui));
     }
 
     private class FilterContent extends Component {
@@ -79,10 +91,10 @@ public class BrowserFilterDialog extends SolimDialog {
 
         @Override
         protected Element build() {
-            return column().grow().padding(unit(4)).gap(unit(4)).children(() -> {
+            return column().props(grow(), padding(unit(4)), gap(unit(4))).children(() -> {
                 searchRow();
-                scroll().grow().children(() -> {
-                    column().growX().left().gap(unit(4)).children(() -> {
+                scroll().props(grow()).children(() -> {
+                    column().props(growX(), left(), gap(unit(4))).children(() -> {
                         sectionPanel(Core.bundle.get("browser.filter.sort"), () -> renderSortOptions());
 
                         sectionPanel(Core.bundle.get("browser.filter.verification"), () -> renderVerificationOptions());
@@ -102,18 +114,12 @@ public class BrowserFilterDialog extends SolimDialog {
         }
 
         private void searchRow() {
-            row().growX().left()
-                    .gap(unit(1))
-                    .height(unit(11))
-                    .rounded(unit(3))
-                    .border(1.5f, Color.darkGray)
-                    .paddingLeft(unit(2))
-                    .center()
+            row().props(growX(), left(), gap(unit(1)), height(unit(11)), prefHeight(unit(11)), Values.rounded(unit(3)), Values.border(1.5f, Color.darkGray), paddingLeft(unit(2)), center())
                     .children(() -> {
-                        icon(Icon.zoom).size(unit(6)).color(Color.gray);
+                        icon(Icon.zoom).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))).color(Color.gray);
 
                         textField(filterText)
-                                .growX()
+                                .props(growX())
                                 .style(WebStyles.clearInput())
                                 .placeholder(Core.bundle.get("browser.search.placeholder"));
                         divider(Direction.VERTICAL);
@@ -124,7 +130,7 @@ public class BrowserFilterDialog extends SolimDialog {
         private void clearAllButton() {
             button(Core.bundle.get("browser.filter.clear-all"), this::clearAll)
                     .style(WebStyles.clearFiltersText())
-                    .height(unit(10));
+                    .props(height(unit(10)), prefHeight(unit(10)));
         }
 
         private void sectionPanel(String title, Runnable content) {
@@ -132,11 +138,7 @@ public class BrowserFilterDialog extends SolimDialog {
         }
 
         private void sectionPanel(String title, Runnable content, Color color) {
-            column().growX().left()
-                    .rounded(unit(2))
-                    .backgroundColor(Color.rgb(24, 24, 24))
-                    .padding(unit(3))
-                    .gap(unit(2))
+            column().props(growX(), left(), Values.rounded(unit(2)), backgroundColor(Color.rgb(24, 24, 24)), padding(unit(3)), gap(unit(2)))
                     .children(() -> {
                         text(title).style(Styles.defaultLabel).color(color).left();
                         content.run();
@@ -144,15 +146,15 @@ public class BrowserFilterDialog extends SolimDialog {
         }
 
         private void renderSortOptions() {
-            wrap().gap(unit(1)).left().children(() -> {
+            wrap().props(gap(unit(1)), left()).children(() -> {
                 for (Sort sortOption : Config.sorts) {
                     String sortValue = sortOption.getValue();
                     Readable<Boolean> checked = state.sort().map(current -> sortValue.equals(current));
                     button(() -> state.setSort(sortValue))
                             .style(WebStyles.filterChipText())
-                            .paddingX(unit(3))
+                            .props(paddingX(unit(3)))
                             .checked(checked)
-                            .height(unit(9))
+                            .props(height(unit(9)), prefHeight(unit(9)))
                             .children(() -> {
                                 text(sortOption.getName()).color(checked.map(c -> c ? Color.white : Color.gray));
                             });
@@ -168,16 +170,16 @@ public class BrowserFilterDialog extends SolimDialog {
                     "browser.filter.verification.verified",
                     "browser.filter.verification.rejected"
             };
-            wrap().gap(unit(1)).left().children(() -> {
+            wrap().props(gap(unit(1)), left()).children(() -> {
                 for (int i = 0; i < options.length; i++) {
                     String optionValue = options[i];
                     String label = Core.bundle.get(keys[i]);
                     Readable<Boolean> checked = state.verification().map(current -> optionValue.equals(current));
                     button(() -> state.setVerification(optionValue))
                             .style(WebStyles.filterChipText())
-                            .paddingX(unit(3))
+                            .props(paddingX(unit(3)))
                             .checked(checked)
-                            .height(unit(9))
+                            .props(height(unit(9)), prefHeight(unit(9)))
                             .children(() -> {
                                 text(label).color(checked.map(c -> c ? Color.white : Color.gray));
                             });
@@ -191,8 +193,8 @@ public class BrowserFilterDialog extends SolimDialog {
             }
 
             query(planetsQuery)
-                    .grow()
-                    .loading(() -> row().growX().center().padding(unit(2)).children(() -> new Loader(unit(6))))
+                    .props(grow())
+                    .loading(() -> row().props(growX(), padding(unit(2)), center()).children(() -> new Loader(unit(6))))
                     .data(mods -> {
                         if (mods == null || mods.isEmpty()) {
                             return row();
@@ -207,7 +209,7 @@ public class BrowserFilterDialog extends SolimDialog {
                                 return pa - pb;
                             }
                         });
-                        return wrap().left().gap(unit(1)).children(() -> {
+                        return wrap().props(left(), gap(unit(1))).children(() -> {
                             for (ModData mod : sorted) {
                                 renderPlanet(mod);
                             }
@@ -222,9 +224,9 @@ public class BrowserFilterDialog extends SolimDialog {
                     selected -> selected != null && modId != null && selected.contains(modId));
             button(() -> togglePlanet(modId))
                     .style(WebStyles.filterChipText())
-                    .paddingX(unit(3))
+                    .props(paddingX(unit(3)))
                     .checked(checked)
-                    .height(unit(9))
+                    .props(height(unit(9)), prefHeight(unit(9)))
                     .children(() -> {
                         text(chipLabel).color(checked.map(c -> c ? Color.white : Color.gray));
                     });
@@ -295,10 +297,10 @@ public class BrowserFilterDialog extends SolimDialog {
 
         private void renderTagCategories() {
             query(tagsQuery)
-                    .growX()
-                    .loading(() -> row().growX().center().padding(unit(4)).children(() -> new Loader(unit(6))))
+                    .props(growX())
+                    .loading(() -> row().props(growX(), padding(unit(4)), center()).children(() -> new Loader(unit(6))))
                     .data(tags -> dynamic(visibleCategories, categories -> {
-                        column().growX().gap(unit(4)).children(() -> {
+                        column().props(growX(), gap(unit(4))).children(() -> {
                             if (categories == null || categories.isEmpty()) {
                                 text(Core.bundle.get("browser.empty")).color(Color.gray).left();
                                 return;
@@ -308,12 +310,12 @@ public class BrowserFilterDialog extends SolimDialog {
                                 renderCategory(category);
                             }
                         });
-                    }).growX());
+                    }).props(growX()));
         }
 
         private void renderCategory(CategoryViewModel category) {
             sectionPanel(Strings.capitalize(category.name), () -> {
-                wrap().growX().left().gap(unit(1)).children(() -> {
+                wrap().props(growX(), left(), gap(unit(1))).children(() -> {
                     for (TagData tag : category.tags) {
                         renderTag(tag);
                     }
@@ -356,10 +358,8 @@ public class BrowserFilterDialog extends SolimDialog {
 
             button(() -> state.toggleTag(key))
                     .style(WebStyles.filterChipText())
-                    .paddingX(unit(3))
+                    .props(paddingX(unit(3)), height(unit(9)), prefHeight(unit(9)), gap(unit(1)))
                     .checked(checked)
-                    .height(unit(9))
-                    .gap(unit(1))
                     .children(() -> {
                         if (tag.getIcon() != null) {
                             networkImage(tag.getIcon()).fallback(Icon.imageSmall).size(unit(6));
@@ -376,7 +376,7 @@ public class BrowserFilterDialog extends SolimDialog {
                 if (blocks.isEmpty()) {
                     text(Core.bundle.get("browser.filter.blocks.empty")).color(Color.gray).left();
                 } else {
-                    wrap().left().gap(unit(1)).children(() -> {
+                    wrap().props(left(), gap(unit(1))).children(() -> {
                         for (int i = 0; i < blocks.size; i++) {
                             Block block = blocks.get(i);
                             if (block == null || block.localizedName == null) {
@@ -395,13 +395,11 @@ public class BrowserFilterDialog extends SolimDialog {
 
                             button(() -> state.toggleBlock(blockName))
                                     .style(WebStyles.filterChipText())
-                                    .paddingX(unit(3))
+                                    .props(paddingX(unit(3)), height(unit(9)), prefHeight(unit(9)), gap(unit(1)))
                                     .checked(checked)
-                                    .height(unit(9))
-                                    .gap(unit(1))
                                     .children(() -> {
                                         if (block.uiIcon != null) {
-                                            icon(new TextureRegionDrawable(block.uiIcon)).size(unit(6));
+                                            icon(new TextureRegionDrawable(block.uiIcon)).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                                         }
                                         text(chipLabel).color(checked.map(c -> c ? Color.white : Color.gray));
                                     });

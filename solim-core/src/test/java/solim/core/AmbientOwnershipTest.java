@@ -10,9 +10,10 @@ import solim.input.SolimTextField;
 import solim.reactive.Signal;
 import solim.reactive.Effect;
 import solim.runtime.SignalDispatcher;
-import solim.test.SolimEnv;
+import solim.test.OwnershipEnv;
 
-class AmbientOwnershipTest extends SolimEnv {
+class AmbientOwnershipTest extends OwnershipEnv {
+
 
     static class ChildComponent extends Component {
         final AtomicBoolean disposedFlag;

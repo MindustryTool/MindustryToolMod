@@ -5,18 +5,28 @@ import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.Disposable;
+import solim.core.OwnershipContext;
+import solim.core.SolimToken;
 import solim.graphics.RoundedDrawable;
-import solim.modifier.CellConfig;
+import solim.layout.Row;
+import solim.modifier.RoundedHelper;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
+import solim.modifier.Configurable;
+import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
-import solim.modifier.TableConfig;
+import solim.modifier.Props;
+import solim.modifier.TableCapability;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
+import solim.runtime.AttachmentStack;
 
-public final class Badge extends Component implements CellConfig<Badge>, TableConfig<Badge> {
+public final class Badge extends Component implements Configurable<Badge>, TableCapability, CellCapability, AlignmentCapability {
 
     private final Table element;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private final Text label;
+    private @Nullable Props<Badge> pending;
     private boolean hideOnZero = false;
     private @Nullable Effect visibilityEffect;
     private @Nullable Readable<Integer> countSignal;
@@ -34,13 +44,21 @@ public final class Badge extends Component implements CellConfig<Badge>, TableCo
         this.element = element;
         this.element.name = "solim-badge-table";
         this.element.center();
+        SolimToken.bind(element, this, constraints);
 
-        rounded(8, new Color(1f, 1f, 1f, 0.12f));
-        border(1f, new Color(1f, 1f, 1f, 0.25f));
+        RoundedDrawable badgeBackground = RoundedHelper.getOrCreateRounded(element, 8);
+        badgeBackground.radius(8);
+        badgeBackground.fillColor(new Color(1f, 1f, 1f, 0.12f));
+        badgeBackground.border(1f, new Color(1f, 1f, 1f, 0.25f));
         element.margin(2f, 8f, 2f, 8f);
 
         this.label = Text.of(text);
-        own(label);
+        OwnershipContext.push(this);
+        try {
+            OwnershipContext.register(label);
+        } finally {
+            OwnershipContext.pop();
+        }
         element.add(label.label()).center();
     }
 
@@ -57,11 +75,12 @@ public final class Badge extends Component implements CellConfig<Badge>, TableCo
     }
 
     public static Badge ofCount(Readable<Integer> count) {
-        Readable<String> text = count.map(c -> c != null ? String.valueOf(c) : "0");
-        Badge badge = new Badge(text);
-        if (text instanceof Disposable) {
-            badge.own((Disposable) text);
-        }
+        Badge badge = new Badge(String.valueOf(count != null ? count.peek() : 0));
+        badge.withinOwnership(() -> {
+            Readable<String> text = count.map(c -> c != null ? String.valueOf(c) : "0");
+            badge.label.text(text);
+            OwnershipContext.register((Disposable) text);
+        });
         badge.countSignal = count;
         badge.hideOnZero(true);
         return badge;
@@ -83,14 +102,19 @@ public final class Badge extends Component implements CellConfig<Badge>, TableCo
             visibilityEffect = null;
         }
         if (countSignal != null) {
-            visibilityEffect = own(Effect.of(() -> {
-                Integer c = countSignal.get();
-                if (hideOnZero) {
-                    element.visible = (c != null && c > 0);
-                } else {
-                    element.visible = true;
-                }
-            }));
+            OwnershipContext.push(this);
+            try {
+                visibilityEffect = Effect.of(() -> {
+                    Integer c = countSignal.get();
+                    if (hideOnZero) {
+                        element.visible = (c != null && c > 0);
+                    } else {
+                        element.visible = true;
+                    }
+                });
+            } finally {
+                OwnershipContext.pop();
+            }
         }
     }
 
@@ -129,6 +153,16 @@ public final class Badge extends Component implements CellConfig<Badge>, TableCo
     @Override
     public Table table() {
         return element;
+    }
+
+    @Override
+    public @Nullable Props<Badge> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<Badge> props) {
+        this.pending = props;
     }
 
     @Override

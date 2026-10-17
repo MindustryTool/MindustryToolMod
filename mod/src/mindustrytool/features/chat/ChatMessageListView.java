@@ -1,6 +1,22 @@
 package mindustrytool.features.chat;
 
 import static solim.UI.*;
+import static solim.modifier.Values.background;
+import static solim.modifier.Values.border;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.marginBottom;
+import static solim.modifier.Values.marginRight;
+import static solim.modifier.Values.marginTop;
+import static solim.modifier.Values.onClick;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.stopClickPropagation;
+import static solim.modifier.Values.tooltip;
+import static solim.modifier.Values.width;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -167,14 +183,14 @@ public class ChatMessageListView extends Component {
 
         scrollToBottom();
 
-        return column().name("chat-list").grow().top().left().gap(unit(1)).padding(unit(2)).children(() -> {
+        return column().name("chat-list").props(grow(), padding(unit(2)), top(), left(), gap(unit(1))).children(() -> {
             dynamic(hasChannel, channelSelected -> {
                 if (!Boolean.TRUE.equals(channelSelected)) {
                     query(store.channels().channelsQuery())
-                            .grow()
+                            .props(grow())
                             .loading(Loader::centered)
-                            .error(chanErr -> column().grow().center().gap(unit(2)).padding(unit(4)).children(() -> {
-                                icon(Icon.warning).size(unit(6)).color(Color.scarlet);
+                            .error(chanErr -> column().props(grow(), padding(unit(4)), center(), gap(unit(2))).children(() -> {
+                                icon(Icon.warning).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))).color(Color.scarlet);
                                 text(Core.bundle.get("feature.chat.ui.channels-failed", "Channels failed to load."))
                                         .color(Color.scarlet)
                                         .fontScale(1.0f)
@@ -190,27 +206,27 @@ public class ChatMessageListView extends Component {
                                     }
                                 })
                                         .style(WebStyles.secondary())
-                                        .height(unit(10))
+                                        .props(height(unit(10)), prefHeight(unit(10)))
                                         .children(() -> {
-                                            icon(Icon.refresh).size(unit(4));
+                                            icon(Icon.refresh).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)));
                                             text(Core.bundle.get("feature.chat.ui.retry-channels",
                                                     "Retry Channels"));
                                         });
                             }))
-                            .data(channels -> column().padding(unit(4)).top().left().children(() -> {
+                            .data(channels -> column().props(padding(unit(4)), top(), left()).children(() -> {
                                 text(Core.bundle.get("feature.chat.ui.empty-channels", "No channels available."))
                                         .color(Color.gray)
                                         .fontScale(0.9f)
                                         .left();
-                            })).grow();
+                            })).props(grow());
                 } else {
 
-                    column().grow().top().left().gap(unit(1)).children(() -> {
+                    column().props(grow(), top(), left(), gap(unit(1))).children(() -> {
                         when(showRefreshErrorBanner)
                                 .thenDo(() -> {
-                                    card().growX().padding(unit(1.5f)).children(() -> {
-                                        row().growX().gap(unit(1)).center().children(() -> {
-                                            icon(Icon.warning).size(unit(4)).color(Color.scarlet);
+                                    card().props(growX(), padding(unit(1.5f))).children(() -> {
+                                        row().props(growX(), gap(unit(1)), center()).children(() -> {
+                                            icon(Icon.warning).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4))).color(Color.scarlet);
                                             text(Core.bundle.get("feature.chat.ui.refresh-failed",
                                                     "Failed to refresh messages."))
                                                     .color(Color.scarlet)
@@ -224,9 +240,9 @@ public class ChatMessageListView extends Component {
                                                 }
                                             })
                                                     .style(WebStyles.secondary())
-                                                    .height(unit(8))
+                                                    .props(height(unit(8)), prefHeight(unit(8)))
                                                     .children(() -> {
-                                                        icon(Icon.refresh).size(unit(4));
+                                                        icon(Icon.refresh).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)));
                                                         text(Core.bundle.get("feature.chat.ui.retry", "Retry"));
                                                     });
                                         });
@@ -235,7 +251,7 @@ public class ChatMessageListView extends Component {
 
                         when(showEndOfHistory)
                                 .thenDo(() -> {
-                                    row().top().center().growX().padding(unit(2)).children(() -> {
+                                    row().props(top(), center(), growX(), padding(unit(2))).children(() -> {
                                         text(Core.bundle.get("feature.chat.ui.end-of-history",
                                                 "Beginning of chat history"))
                                                 .color(Color.gray)
@@ -245,7 +261,7 @@ public class ChatMessageListView extends Component {
 
                         when(store.messages().loadingOlder())
                                 .thenDo(() -> {
-                                    row().top().left().padding(unit(2)).children(() -> {
+                                    row().props(top(), left(), padding(unit(2))).children(() -> {
                                         text(Core.bundle.get("feature.chat.ui.loading-older",
                                                 "Loading older messages..."))
                                                 .color(Color.gray)
@@ -256,10 +272,12 @@ public class ChatMessageListView extends Component {
 
                         when(hasMessages)
                                 .thenDo(() -> {
-                                    VirtualList<MessageGroup> list = virtualList(
+                                    virtualList = virtualList(
                                             groupedMessages,
-                                            ChatMessageHeightCalculator::calculateHeight);
-                                    list.key(MessageGroup::getKey).grow().gap(unit(0.75f)).overscan(3)
+                                            ChatMessageHeightCalculator::calculateHeight)
+                                            .key(MessageGroup::getKey)
+                                            .props(grow(), gap(unit(0.75f)), marginBottom(unit(2)))
+                                            .overscan(3)
                                             .onReachTop(50f, () -> {
                                                 String activeId = store.channels().currentActiveId();
                                                 List<ChatMessage> msgs = store.messages().currentActive();
@@ -269,9 +287,8 @@ public class ChatMessageListView extends Component {
                                                         && !store.messages().isFullyLoaded(activeId)) {
                                                     service.fetchOlderMessages(activeId);
                                                 }
-                                            }).marginBottom(unit(2));
-                                    list.children(item -> new MessageGroupView(item, store, service));
-                                    virtualList = list;
+                                            })
+                                            .items(item -> new MessageGroupView(item, store, service));
                                 })
                                 .elseDo(() -> {
                                     when(store.messages().activeLoadingInitial())
@@ -279,9 +296,9 @@ public class ChatMessageListView extends Component {
                                             .elseDo(() -> {
                                                 dynamic(store.messages().activeError(), err -> {
                                                     if (err != null && !err.trim().isEmpty()) {
-                                                        column().grow().center().gap(unit(2)).padding(unit(4))
+                                                        column().props(grow(), padding(unit(4)), center(), gap(unit(2)))
                                                                 .children(() -> {
-                                                                    icon(Icon.warning).size(unit(6))
+                                                                    icon(Icon.warning).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)))
                                                                             .color(Color.scarlet);
                                                                     text(Core.bundle.get(
                                                                             "feature.chat.ui.error.messages",
@@ -302,16 +319,16 @@ public class ChatMessageListView extends Component {
                                                                                 }
                                                                             })
                                                                             .style(WebStyles.secondary())
-                                                                            .height(unit(10))
+                                                                            .props(height(unit(10)), prefHeight(unit(10)))
                                                                             .children(() -> {
-                                                                                icon(Icon.refresh).size(unit(4));
+                                                                                icon(Icon.refresh).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)));
                                                                                 text(Core.bundle.get(
                                                                                         "feature.chat.ui.retry",
                                                                                         "Retry"));
                                                                             });
                                                                 });
                                                     } else {
-                                                        column().padding(unit(4)).top().left().children(() -> {
+                                                        column().props(padding(unit(4)), top(), left()).children(() -> {
                                                             text(Core.bundle.get("feature.chat.ui.empty-messages",
                                                                     "No messages yet."))
                                                                     .color(Color.gray)
@@ -319,14 +336,14 @@ public class ChatMessageListView extends Component {
                                                                     .left();
                                                         });
                                                     }
-                                                }).grow();
+                                                }).props(grow());
                                             })
-                                            .grow();
+                                            .props(grow());
                                 })
-                                .grow();
-                    }).grow();
+                                .props(grow());
+                    }).props(grow());
                 }
-            }).grow();
+            }).props(grow());
         }).element();
     }
 
@@ -388,20 +405,17 @@ public class ChatMessageListView extends Component {
             String timeStr = formatTime(group.getCreatedAt());
 
             return row()
-                    .growX()
-                    .top().left()
-                    .gap(ChatMessageHeightCalculator.AVATAR_GAP)
-                    .padding(ChatMessageHeightCalculator.UNIT_1)
+                    .props(growX(), top(), left(), gap(ChatMessageHeightCalculator.AVATAR_GAP), padding(ChatMessageHeightCalculator.UNIT_1))
                     .children(() -> {
 
                         new ChatAvatar(authorName, avatarUrl, authorId, ChatMessageHeightCalculator.AVATAR_SIZE);
 
-                        column().growX().top().left().children(() -> {
+                        column().props(growX(), top(), left()).children(() -> {
 
-                            row().growX().top().left()
-                                    .gap(unit(2))
-                                    .height(ChatMessageHeightCalculator.HEADER_HEIGHT
-                                            + ChatMessageHeightCalculator.HEADER_GAP)
+                            row().props(growX(), top(), left(), gap(unit(2)),
+                                    height(ChatMessageHeightCalculator.HEADER_HEIGHT
+                                            + ChatMessageHeightCalculator.HEADER_GAP), prefHeight(ChatMessageHeightCalculator.HEADER_HEIGHT
+                                            + ChatMessageHeightCalculator.HEADER_GAP))
                                     .children(() -> {
                                         text(authorName)
                                                 .color(authorColor)
@@ -422,12 +436,12 @@ public class ChatMessageListView extends Component {
                                         actionsButton
                                                 .onClick(() -> openActions(first, actionsButton.element()))
                                                 .style(Styles.clearNonei)
-                                                .size(unit(6), unit(6))
+                                                .props(size(unit(6), unit(6)), prefWidth(unit(6)), prefHeight(unit(6)))
                                                 .children(() -> icon(FileIcon.of("ellipsis-vertical.png"))
-                                                        .size(unit(6), unit(6)));
+                                                        .props(size(unit(6), unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
                                     });
 
-                            column().growX().top().left().children(() -> {
+                            column().props(growX(), top(), left()).children(() -> {
                                 List<ParsedChatMessage> messages = group.getMessages();
                                 for (int i = 0; i < messages.size(); i++) {
                                     buildMessageRow(messages.get(i), i > 0);
@@ -445,24 +459,24 @@ public class ChatMessageListView extends Component {
             Readable<Boolean> isPending = store.delivery().isPending(msgId);
             Readable<Boolean> isFailed = store.delivery().isFailed(msgId);
 
-            Card card = card().growX().top().left();
+            Card card = card().props(growX(), top(), left());
 
-            card.onClick(() -> openActions(parsed, card.element()));
+            card.props(onClick(() -> openActions(parsed, card.element())));
             if (hasPrevious) {
-                card.marginTop(ChatMessageHeightCalculator.MESSAGE_GAP);
+                card.props(marginTop(ChatMessageHeightCalculator.MESSAGE_GAP));
             }
 
             card.children(() -> {
-                row().growX().top().left()
+                row().props(growX(), top(), left())
                         .children(() -> {
                             if (mentioned) {
-                                divider(Direction.Y).color(Pal.accent).width(unit(1)).marginRight(unit(1));
+                                divider(Direction.Y).color(Pal.accent).width(unit(1)).props(marginRight(unit(1)));
                             }
 
-                            column().growX().top().left().children(() -> {
+                            column().props(growX(), top(), left()).children(() -> {
                                 if (raw.getReplyTo() != null && !raw.getReplyTo().isEmpty()) {
                                     buildReplyPreview(raw.getReplyTo());
-                                    column().growX().top().left().marginTop(ChatMessageHeightCalculator.REPLY_GAP)
+                                    column().props(growX(), marginTop(ChatMessageHeightCalculator.REPLY_GAP), top(), left())
                                             .children(() -> {
                                                 buildMessageBody(parsed, isPending, isFailed);
                                             });
@@ -509,8 +523,8 @@ public class ChatMessageListView extends Component {
             }
 
             final String displaySnippet = targetSnippet;
-            row().growX().top().left().height(ChatMessageHeightCalculator.REPLY_PREVIEW_HEIGHT).children(() -> {
-                icon(Icon.rightSmall).size(unit(4), unit(4)).color(Color.gray).marginRight(unit(1));
+            row().props(growX(), height(ChatMessageHeightCalculator.REPLY_PREVIEW_HEIGHT), prefHeight(ChatMessageHeightCalculator.REPLY_PREVIEW_HEIGHT), top(), left()).children(() -> {
+                icon(Icon.rightSmall).props(size(unit(4), unit(4)), prefWidth(unit(4)), prefHeight(unit(4))).color(Color.gray).marginRight(unit(1));
                 text(displaySnippet)
                         .color(Color.gray)
                         .fontScale(0.8f)
@@ -540,11 +554,10 @@ public class ChatMessageListView extends Component {
             if (parsed instanceof ImageMessage) {
                 ImageMessage img = (ImageMessage) parsed;
                 final String imageUrl = img.getImageUrl();
-                column().growX().top().left().gap(unit(1)).children(() -> {
+                column().props(growX(), top(), left(), gap(unit(1))).children(() -> {
                     text(imageUrl).color(Color.lightGray).fontScale(0.85f).wrap().left().growX();
                     networkImage(imageUrl)
-                            .onClick(() -> new ChatImagePreviewDialog(imageUrl).show())
-                            .stopClickPropagation(true)
+                            .props(onClick(() -> new ChatImagePreviewDialog(imageUrl).show()), stopClickPropagation(true))
                             .placeholder(Icon.image)
                             .fallback(Icon.cancel)
                             .size(unit(40), unit(30))
@@ -559,25 +572,25 @@ public class ChatMessageListView extends Component {
                 final String type = toolLink.getType();
                 final String itemId = toolLink.getItemId();
 
-                card().growX().top().left().height(ChatMessageHeightCalculator.TOOL_LINK_CARD_HEIGHT).children(() -> {
-                    column().grow().top().left().padding(unit(1.5f)).gap(unit(1)).children(() -> {
-                        row().growX().top().left().gap(unit(1)).children(() -> {
-                            icon("maps".equals(type) ? Icon.map : Icon.paste).size(unit(5), unit(5)).color(Pal.accent);
+                card().props(growX(), height(ChatMessageHeightCalculator.TOOL_LINK_CARD_HEIGHT), prefHeight(ChatMessageHeightCalculator.TOOL_LINK_CARD_HEIGHT), top(), left()).children(() -> {
+                    column().props(grow(), padding(unit(1.5f)), top(), left(), gap(unit(1))).children(() -> {
+                        row().props(growX(), top(), left(), gap(unit(1))).children(() -> {
+                            icon("maps".equals(type) ? Icon.map : Icon.paste).props(size(unit(5), unit(5)), prefWidth(unit(5)), prefHeight(unit(5))).color(Pal.accent);
                             text(("maps".equals(type) ? "Map: " : "Schematic: ") + itemId)
                                     .color(Pal.accent)
                                     .fontScale(0.95f)
                                     .ellipsis()
                                     .left();
                         });
-                        row().top().left().gap(unit(1)).children(() -> {
+                        row().props(top(), left(), gap(unit(1))).children(() -> {
                             button(Core.bundle.get("button.copy", "Copy Link"), () -> {
                                 Core.app.setClipboardText(fullUrl);
                                 Vars.ui.showInfoFade(Core.bundle.get("feature.chat.ui.copied", "Copied!"));
-                            }).style(Styles.defaultt).height(unit(7));
+                            }).style(Styles.defaultt).props(height(unit(7)), prefHeight(unit(7)));
 
                             button(Core.bundle.get("feature.chat.ui.view-web", "View in Browser"), () -> {
                                 Core.app.openURI(fullUrl);
-                            }).style(Styles.defaultt).height(unit(7));
+                            }).style(Styles.defaultt).props(height(unit(7)), prefHeight(unit(7)));
                         });
                     });
                 });
@@ -618,17 +631,17 @@ public class ChatMessageListView extends Component {
                 dynamic(viewState, state -> {
                     if (state != null && state.translated != null && !state.translated.trim().isEmpty()) {
                         String textToDisplay = state.showOriginal ? txt.getText() : state.translated;
-                        column().growX().top().left().children(() -> {
+                        column().props(growX(), top(), left()).children(() -> {
                             buildMessageText(textToDisplay, bodyColor);
                             buildTranslationToggleChip(translatedId, state.showOriginal);
                         });
                     } else {
-                        column().growX().top().left().children(() -> {
+                        column().props(growX(), top(), left()).children(() -> {
                             buildMessageText(txt.getText(), bodyColor);
                             if (state != null && state.translating) {
-                                row().growX().top().left().marginTop(unit(1)).gap(unit(1)).children(() -> {
+                                row().props(growX(), marginTop(unit(1)), top(), left(), gap(unit(1))).children(() -> {
                                     icon(FileIcon.of("translate.png", Icon.refresh))
-                                            .size(unit(3.5f), unit(3.5f))
+                                            .props(size(unit(3.5f), unit(3.5f)), prefWidth(unit(3.5f)), prefHeight(unit(3.5f)))
                                             .color(Color.lightGray);
                                     text(Core.bundle.get("feature.chat.ui.translating", "Translating..."))
                                             .color(Color.lightGray)
@@ -638,7 +651,7 @@ public class ChatMessageListView extends Component {
                             }
                         });
                     }
-                }).growX();
+                }).props(growX());
                 return;
             }
 
@@ -657,14 +670,12 @@ public class ChatMessageListView extends Component {
                 ChatMessageHeightCalculator.clearCache();
             })
                     .style(WebStyles.ghost())
-                    .padding(unit(0.5f), unit(1.5f), unit(0.5f), unit(1.5f))
-                    .height(unit(6))
-                    .marginTop(unit(1))
+                    .props(padding(unit(0.5f), unit(1.5f), unit(0.5f), unit(1.5f)), height(unit(6)), prefHeight(unit(6)), marginTop(unit(1)))
                     .left()
                     .children(() -> {
-                        row().gap(unit(1)).center().children(() -> {
+                        row().props(gap(unit(1)), center()).children(() -> {
                             icon(FileIcon.of("translate.png", Icon.refresh))
-                                    .size(unit(3.5f), unit(3.5f))
+                                    .props(size(unit(3.5f), unit(3.5f)), prefWidth(unit(3.5f)), prefHeight(unit(3.5f)))
                                     .color(Pal.accent);
                             text(showingOriginal
                                     ? Core.bundle.get("feature.chat.ui.show-translated", "Show translation")
@@ -718,23 +729,17 @@ public class ChatMessageListView extends Component {
                     buildFallbackRoomCardContent(link);
                 }
             })
-                    .height(ChatMessageHeightCalculator.INVITE_CARD_HEIGHT)
-                    .growX()
+                    .props(height(ChatMessageHeightCalculator.INVITE_CARD_HEIGHT), prefHeight(ChatMessageHeightCalculator.INVITE_CARD_HEIGHT), growX())
                     .name("pc-card-wrapper");
         }
 
         private Component buildFallbackRoomCardContent(String link) {
             return card()
                     .name("pc-card-fallback")
-                    .background(Styles.black8)
-                    .border(1.5f, Color.darkGray)
-                    .gap(unit(1.5f))
-                    .padding(unit(2))
-                    .left()
-                    .grow()
+                    .props(background(Styles.black8), border(1.5f, Color.darkGray), gap(unit(1.5f)), padding(unit(2)), left(), grow())
                     .children(() -> {
 
-                        row().growX().height(unit(6)).gap(unit(2)).children(() -> {
+                        row().props(growX(), height(unit(6)), prefHeight(unit(6)), gap(unit(2))).children(() -> {
                             text(Core.bundle.get("feature.chat.ui.room-invite", "Room Invite"))
                                     .style(Styles.outlineLabel)
                                     .fontScale(0.95f)
@@ -744,7 +749,7 @@ public class ChatMessageListView extends Component {
                             spacer();
                         });
 
-                        row().growX().height(unit(4.5f)).children(() -> {
+                        row().props(growX(), height(unit(4.5f)), prefHeight(unit(4.5f))).children(() -> {
                             text(Core.bundle.get("feature.chat.ui.unlisted-offline", "Unlisted or offline"))
                                     .color(Color.scarlet)
                                     .fontScale(0.9f)
@@ -753,7 +758,7 @@ public class ChatMessageListView extends Component {
                                     .left();
                         });
 
-                        row().growX().height(unit(4.5f)).children(() -> {
+                        row().props(growX(), height(unit(4.5f)), prefHeight(unit(4.5f))).children(() -> {
                             text(link.replace(PlayerConnectFeature.PLAYER_CONNECT_PROTOCOL, ""))
                                     .color(Color.lightGray)
                                     .fontScale(0.9f)
@@ -762,7 +767,7 @@ public class ChatMessageListView extends Component {
                                     .left();
                         });
 
-                        row().growX().height(unit(4.5f)).children(() -> {
+                        row().props(growX(), height(unit(4.5f)), prefHeight(unit(4.5f))).children(() -> {
                             text(Core.bundle.get("feature.player-connect.title", "Player Connect"))
                                     .color(Color.gray)
                                     .fontScale(0.85f)
@@ -771,7 +776,7 @@ public class ChatMessageListView extends Component {
                                     .left();
                         });
 
-                        row().gap(unit(1)).growX().height(unit(11)).children(() -> {
+                        row().props(gap(unit(1)), growX(), height(unit(11)), prefHeight(unit(11))).children(() -> {
 
                             PlayerConnectFeature connect = FeatureManager.getFeature(PlayerConnectFeature.class);
                             Readable<Boolean> connectEnabled = connect != null
@@ -781,24 +786,22 @@ public class ChatMessageListView extends Component {
                                     .thenDo(() -> button(Core.bundle.get("feature.chat.ui.try-connect", "Try Connect"),
                                             () -> promptDirectJoin(link))
                                             .style(WebStyles.secondary())
-                                            .growX()
-                                            .height(unit(11)))
+                                            .props(growX(), height(unit(11)), prefHeight(unit(11))))
                                     .elseDo(() -> button(
                                             Core.bundle.get("feature.chat.ui.enable-player-connect",
                                                     "Enable Player Connect"),
                                             () -> FeatureManager.getFeature(PlayerConnectFeature.class).enable())
                                             .style(WebStyles.secondary())
-                                            .growX()
-                                            .height(unit(11)))
-                                    .growX();
+                                            .props(growX(), height(unit(11)), prefHeight(unit(11))))
+                                    .props(growX());
 
                             button(() -> {
                                 Core.app.setClipboardText(link);
                                 Vars.ui.showInfoFade("@copied");
                             })
                                     .style(WebStyles.outline())
-                                    .size(unit(11))
-                                    .children(() -> icon(Icon.copy).size(unit(5)));
+                                    .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)))
+                                    .children(() -> icon(Icon.copy).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))));
                         });
                     });
         }
@@ -839,10 +842,10 @@ public class ChatMessageListView extends Component {
         }
 
         private void buildSchematicCard(Schematic schematic) {
-            card().top().left().height(ChatMessageHeightCalculator.SCHEMATIC_CARD_HEIGHT).children(() -> {
-                column().grow().top().left().gap(unit(1)).children(() -> {
+            card().props(height(ChatMessageHeightCalculator.SCHEMATIC_CARD_HEIGHT), prefHeight(ChatMessageHeightCalculator.SCHEMATIC_CARD_HEIGHT), top(), left()).children(() -> {
+                column().props(grow(), top(), left(), gap(unit(1))).children(() -> {
 
-                    row().growX().height(unit(6)).top().left().gap(unit(1)).children(() -> {
+                    row().props(growX(), height(unit(6)), prefHeight(unit(6)), top(), left(), gap(unit(1))).children(() -> {
                         text(schematic.name())
                                 .color(Pal.accent)
                                 .fontScale(0.95f)
@@ -858,40 +861,35 @@ public class ChatMessageListView extends Component {
 
                     button(() -> useSchematic(schematic))
                             .style(Styles.flatt)
-                            .height(unit(35))
-                            .width(width)
+                            .props(height(unit(35)), prefHeight(unit(35)), width(width), prefWidth(width))
                             .children(() -> {
                                 if (Vars.schematics != null) {
                                     arc(new SchematicImage(schematic).setScaling(Scaling.fit));
                                 } else {
-                                    icon(Icon.paste).size(unit(10));
+                                    icon(Icon.paste).props(size(unit(10)), prefWidth(unit(10)), prefHeight(unit(10)));
                                 }
                             });
 
-                    row().growX().height(unit(7)).top().left().gap(unit(1)).children(() -> {
+                    row().props(growX(), height(unit(7)), prefHeight(unit(7)), top(), left(), gap(unit(1))).children(() -> {
                         button(() -> Vars.ui.schematics.showInfo(schematic))
                                 .style(Styles.clearNonei)
-                                .size(unit(6), unit(6))
-                                .tooltip(Core.bundle.get("info.title", "Info"))
-                                .children(() -> icon(FileIcon.of("info.png")).size(unit(5), unit(5)));
+                                .props(size(unit(6), unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), tooltip(Core.bundle.get("info.title", "Info")))
+                                .children(() -> icon(FileIcon.of("info.png")).props(size(unit(5), unit(5)), prefWidth(unit(5)), prefHeight(unit(5))));
 
                         button(() -> Vars.ui.schematics.showExport(schematic))
                                 .style(Styles.clearNonei)
-                                .size(unit(6), unit(6))
-                                .tooltip(Core.bundle.get("editor.export"))
-                                .children(() -> icon(Icon.upload).size(unit(5), unit(5)));
+                                .props(size(unit(6), unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), tooltip(Core.bundle.get("editor.export")))
+                                .children(() -> icon(Icon.upload).props(size(unit(5), unit(5)), prefWidth(unit(5)), prefHeight(unit(5))));
 
                         button(() -> Vars.ui.schematics.showEdit(schematic))
                                 .style(Styles.clearNonei)
-                                .size(unit(6), unit(6))
-                                .tooltip(Core.bundle.get("schematic.edit"))
-                                .children(() -> icon(Icon.pencil).size(unit(5), unit(5)));
+                                .props(size(unit(6), unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), tooltip(Core.bundle.get("schematic.edit")))
+                                .children(() -> icon(Icon.pencil).props(size(unit(5), unit(5)), prefWidth(unit(5)), prefHeight(unit(5))));
 
                         button(() -> useSchematic(schematic))
                                 .style(Styles.clearNonei)
-                                .size(unit(6), unit(6))
-                                .tooltip(Core.bundle.get("feature.chat.ui.schematic.use", "Use"))
-                                .children(() -> icon(Icon.play).size(unit(5), unit(5)));
+                                .props(size(unit(6), unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), tooltip(Core.bundle.get("feature.chat.ui.schematic.use", "Use")))
+                                .children(() -> icon(Icon.play).props(size(unit(5), unit(5)), prefWidth(unit(5)), prefHeight(unit(5))));
                     });
                 });
             });
@@ -906,21 +904,20 @@ public class ChatMessageListView extends Component {
                     ? Core.bundle.get("feature.chat.ui.command.schematic.open", "Open Schematic Browser")
                     : Core.bundle.get("feature.chat.ui.command.map.open", "Open Map Browser");
 
-            card().name("command-card").growX().top().left().height(ChatMessageHeightCalculator.COMMAND_CARD_HEIGHT)
+            card().name("command-card").props(growX(), height(ChatMessageHeightCalculator.COMMAND_CARD_HEIGHT), prefHeight(ChatMessageHeightCalculator.COMMAND_CARD_HEIGHT), top(), left())
                     .children(() -> {
-                        column().growX().top().left().gap(unit(1)).children(() -> {
-                            row().growX().top().left().gap(unit(1)).children(() -> {
-                                icon(schematic ? Icon.paste : Icon.map).size(unit(5), unit(5)).color(Pal.accent);
+                        column().props(growX(), top(), left(), gap(unit(1))).children(() -> {
+                            row().props(growX(), top(), left(), gap(unit(1))).children(() -> {
+                                icon(schematic ? Icon.paste : Icon.map).props(size(unit(5), unit(5)), prefWidth(unit(5)), prefHeight(unit(5))).color(Pal.accent);
                                 text(title)
                                         .color(Pal.accent)
                                         .ellipsis()
                                         .left();
                             });
-                            row().growX().top().left().children(() -> {
+                            row().props(growX(), top(), left()).children(() -> {
                                 button(openLabel, () -> openCommandBrowser(kind))
                                         .style(WebStyles.secondary())
-                                        .growX()
-                                        .height(unit(11));
+                                        .props(growX(), height(unit(11)), prefHeight(unit(11)));
                             });
                         });
                     });
@@ -987,10 +984,10 @@ public class ChatMessageListView extends Component {
             }
             final String highlighted = marked.toString();
             final List<String> linkUrls = new ArrayList<>(urls);
-            return column().growX().top().left().children(() -> {
+            return column().props(growX(), top(), left()).children(() -> {
                 text(highlighted).color(bodyColor).fontScale(1.0f).left().wrap().growX();
 
-                row().growX().top().left().gap(unit(1)).children(() -> {
+                row().props(growX(), top(), left(), gap(unit(1))).children(() -> {
                     for (String linkUrl : linkUrls) {
                         final String chipUrl = linkUrl;
                         Text chip = text(chipUrl)
@@ -1015,19 +1012,19 @@ public class ChatMessageListView extends Component {
             dialog.addCloseButton();
             dialog.maxWidth(400f);
             dialog.children(() -> {
-                column().growX().padding(unit(3)).gap(unit(2)).children(() -> {
+                column().props(growX(), padding(unit(3)), gap(unit(2))).children(() -> {
                     text(Core.bundle.format("feature.chat.link.dialog.prompt", url))
                             .wrap()
                             .growX()
                             .left();
-                    row().gap(unit(1)).children(() -> {
+                    row().props(gap(unit(1))).children(() -> {
                         button(Core.bundle.get("feature.chat.link.dialog.cancel"), dialog::hide)
                                 .style(Styles.defaultt)
-                                .height(unit(7));
+                                .props(height(unit(7)), prefHeight(unit(7)));
                         button(Core.bundle.get("feature.chat.link.dialog.open"), () -> {
                             Core.app.openURI(url);
                             dialog.hide();
-                        }).style(Styles.defaultb).height(unit(7));
+                        }).style(Styles.defaultb).props(height(unit(7)), prefHeight(unit(7)));
                     });
                 });
             });

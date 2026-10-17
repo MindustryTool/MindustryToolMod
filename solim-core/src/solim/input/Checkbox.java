@@ -5,23 +5,49 @@ import solim.reactive.TwoWayBinding;
 import arc.Core;
 import arc.scene.ui.CheckBox;
 import arc.scene.ui.CheckBox.CheckBoxStyle;
+import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import arc.func.Cons;
 import solim.core.Component;
 import solim.core.DisposableAction;
-import solim.modifier.ElementConfig;
-import solim.modifier.CellConfig;
+import solim.core.OwnershipContext;
+import solim.modifier.AlignmentCapability;
+import solim.modifier.CellCapability;
+import solim.modifier.CheckableCapability;
+import solim.modifier.Configurable;
+import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.Props;
+import solim.modifier.WrappableCapability;
+import solim.reactive.Effect;
+import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-public final class Checkbox extends Component implements ElementConfig<Checkbox>, CellConfig<Checkbox> {
+public final class Checkbox extends Component
+        implements Configurable<Checkbox>, ElementCapability, CellCapability, AlignmentCapability, CheckableCapability, WrappableCapability {
 
     private final CheckBox checkBox;
     private final PendingCellConfig constraints = new PendingCellConfig();
+    private @Nullable Props<Checkbox> pending;
 
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
+    }
+
+    @Override
+    public Table table() {
+        return null;
+    }
+
+    @Override
+    public @Nullable Props<Checkbox> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<Checkbox> props) {
+        this.pending = props;
     }
 
     public Checkbox(String label, Signal<Boolean> signal) {
@@ -38,15 +64,20 @@ public final class Checkbox extends Component implements ElementConfig<Checkbox>
         checkBox.top().left();
         checkBox.name = "solim-checkbox-checkBox";
         checkBox.setChecked(signal.peek());
-        own(new TwoWayBinding<>(
-                signal,
-                checkBox::isChecked,
-                checkBox::setChecked,
-                onChange -> {
-                    checkBox.changed(onChange::run);
+        OwnershipContext.push(this);
+        try {
+            new TwoWayBinding<>(
+                    signal,
+                    checkBox::isChecked,
+                    checkBox::setChecked,
+                    onChange -> {
+                        checkBox.changed(onChange::run);
 
-                    return DisposableAction.empty();
-                }));
+                        return DisposableAction.empty();
+                    });
+        } finally {
+            OwnershipContext.pop();
+        }
     }
 
     private static CheckBox create(String label, @Nullable CheckBoxStyle style) {
@@ -103,6 +134,22 @@ public final class Checkbox extends Component implements ElementConfig<Checkbox>
             checkBox.getLabelCell().growX().minWidth(0f);
         }
         return this;
+    }
+
+    public Checkbox checked(@Nullable Readable<Boolean> source) {
+        if (source != null) {
+            OwnershipContext.push(this);
+            try {
+                Effect.of(() -> checkBox.setChecked(Boolean.TRUE.equals(source.get())));
+            } finally {
+                OwnershipContext.pop();
+            }
+        }
+        return this;
+    }
+
+    public boolean isChecked() {
+        return checkBox.isChecked();
     }
 
     @Override
