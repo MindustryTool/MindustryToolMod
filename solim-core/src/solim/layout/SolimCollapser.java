@@ -1,10 +1,15 @@
 package solim.layout;
 
+import arc.graphics.g2d.Draw;
+import arc.math.Interp;
+import arc.scene.actions.TemporalAction;
+import arc.scene.event.Touchable;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Collapser;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.core.Component;
+import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.modifier.AlignmentCapability;
 import solim.modifier.CellCapability;
@@ -15,7 +20,6 @@ import solim.modifier.Props;
 import solim.modifier.TableCapability;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
-import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 
 public final class SolimCollapser extends Component
@@ -24,21 +28,28 @@ public final class SolimCollapser extends Component
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
         cell.top().left();
-        if (SolimToken.isExpandingChild(child)) {
-            cell.growY();
-        }
-        cell.row();
         GapContainer gc = GapContainer.find(table);
+        Direction dir = gc != null ? gc.direction() : Direction.VERTICAL;
+        if (SolimToken.isExpandingChild(child)) {
+            if (dir == Direction.HORIZONTAL) {
+                cell.growX();
+            } else {
+                cell.growY();
+            }
+        }
+        if (dir == Direction.VERTICAL) {
+            cell.row();
+        }
         if (gc != null) {
-            GapContainer.spaceAttachedCell(table, cell, Direction.VERTICAL, gc.gap());
+            GapContainer.spaceAttachedCell(table, cell, dir, gc.gap());
         }
         return cell;
     };
 
     private final Table content;
-    private final Collapser collapser;
+    private final DirectionalCollapser collapser;
     private final PendingCellConfig constraints = new PendingCellConfig();
-    private @Nullable Props<SolimCollapser> pending;
+    private Direction axis = Direction.VERTICAL;
     private boolean animated = true;
     private boolean initialized = false;
     private float gap = 0f;
@@ -59,7 +70,8 @@ public final class SolimCollapser extends Component
         this.content.top().left();
         this.content.defaults().top().left();
 
-        this.collapser = new Collapser(content, collapsed);
+        this.collapser = new DirectionalCollapser(content, collapsed);
+        SolimToken.bind(this.collapser, this, constraints);
         this.collapser.name = "solim-collapser";
         this.collapser.setDuration(0.2f);
     }
@@ -82,8 +94,25 @@ public final class SolimCollapser extends Component
         return constraints;
     }
 
+    public SolimCollapser direction(Direction direction) {
+        this.axis = direction != null ? direction : Direction.VERTICAL;
+        this.collapser.setDirection(this.axis);
+        respace();
+        return this;
+    }
+
     public SolimCollapser duration(float seconds) {
         collapser.setDuration(seconds);
+        return this;
+    }
+
+    public SolimCollapser duration(float seconds, @Nullable Interp interp) {
+        collapser.setDuration(seconds, interp);
+        return this;
+    }
+
+    public SolimCollapser interp(@Nullable Interp interp) {
+        collapser.setInterpolation(interp);
         return this;
     }
 
@@ -159,7 +188,7 @@ public final class SolimCollapser extends Component
 
     @Override
     public Direction direction() {
-        return Direction.VERTICAL;
+        return axis;
     }
 
     @Override
@@ -169,7 +198,7 @@ public final class SolimCollapser extends Component
 
     @Override
     public void respace() {
-        GapContainer.applySpacing(content, Direction.VERTICAL, gap);
+        GapContainer.applySpacing(content, axis, gap);
     }
 
     @Override
@@ -191,5 +220,194 @@ public final class SolimCollapser extends Component
     @Override
     public SolimCollapser self() {
         return this;
+    }
+
+    private static final class DirectionalCollapser extends Collapser {
+        private final Table contentTable;
+        private final AxisCollapseAction axisAction = new AxisCollapseAction();
+        private Direction axis = Direction.VERTICAL;
+        private boolean isCollapsedState;
+        private boolean running;
+        private float curWidth;
+        private float curHeight;
+
+        DirectionalCollapser(Table contentTable, boolean collapsed) {
+            super(contentTable, collapsed);
+            this.contentTable = contentTable;
+            this.isCollapsedState = collapsed;
+            setTransform(true);
+            updateTouchableState();
+            this.axisAction.setDuration(0.2f);
+            this.axisAction.setInterpolation(Interp.linear);
+        }
+
+        void setDirection(Direction direction) {
+            this.axis = direction != null ? direction : Direction.VERTICAL;
+            if (!running) {
+                if (this.axis == Direction.HORIZONTAL) {
+                    curWidth = isCollapsedState ? 0f : contentTable.getPrefWidth();
+                    curHeight = contentTable.getPrefHeight();
+                } else {
+                    curWidth = contentTable.getPrefWidth();
+                    curHeight = isCollapsedState ? 0f : contentTable.getPrefHeight();
+                }
+            }
+            invalidateHierarchy();
+        }
+
+        void setInterpolation(@Nullable Interp interp) {
+            this.axisAction.setInterpolation(interp != null ? interp : Interp.linear);
+        }
+
+        @Override
+        public Collapser setDuration(float seconds) {
+            super.setDuration(seconds);
+            this.axisAction.setDuration(seconds);
+            return this;
+        }
+
+        Collapser setDuration(float seconds, @Nullable Interp interp) {
+            setDuration(seconds);
+            setInterpolation(interp);
+            return this;
+        }
+
+        @Override
+        public boolean isCollapsed() {
+            return isCollapsedState;
+        }
+
+        @Override
+        public void setCollapsed(boolean collapse, boolean animate) {
+            this.isCollapsedState = collapse;
+            updateTouchableState();
+            removeAction(axisAction);
+            if (animate) {
+                this.running = true;
+                if (axis == Direction.HORIZONTAL) {
+                    curWidth = collapse ? contentTable.getPrefWidth() : 0f;
+                    curHeight = contentTable.getPrefHeight();
+                } else {
+                    curWidth = contentTable.getPrefWidth();
+                    curHeight = collapse ? contentTable.getPrefHeight() : 0f;
+                }
+                axisAction.restart();
+                addAction(axisAction);
+            } else {
+                this.running = false;
+                if (axis == Direction.HORIZONTAL) {
+                    curWidth = collapse ? 0f : contentTable.getPrefWidth();
+                    curHeight = contentTable.getPrefHeight();
+                } else {
+                    curWidth = contentTable.getPrefWidth();
+                    curHeight = collapse ? 0f : contentTable.getPrefHeight();
+                }
+                invalidateHierarchy();
+            }
+        }
+
+        @Override
+        public void setCollapsed(boolean collapse) {
+            setCollapsed(collapse, true);
+        }
+
+        private void updateTouchableState() {
+            this.touchable = isCollapsedState ? Touchable.disabled : Touchable.enabled;
+        }
+
+        @Override
+        public void draw() {
+            if (curWidth > 1f && curHeight > 1f) {
+                Draw.flush();
+                if (clipBegin(x, y, curWidth, curHeight)) {
+                    validate();
+                    if (isTransform()) {
+                        applyTransform(computeTransform());
+                        drawChildren();
+                        resetTransform();
+                    } else {
+                        drawChildren();
+                    }
+                    Draw.flush();
+                    clipEnd();
+                }
+            }
+        }
+
+        @Override
+        protected void drawChildren() {
+            if (isCollapsedState && !running) {
+                return;
+            }
+            super.drawChildren();
+        }
+
+        @Override
+        public void layout() {
+            contentTable.setBounds(0f, 0f, getWidth(), getHeight());
+            if (!running) {
+                if (axis == Direction.HORIZONTAL) {
+                    curWidth = isCollapsedState ? 0f : contentTable.getPrefWidth();
+                    curHeight = getHeight();
+                } else {
+                    curWidth = getWidth();
+                    curHeight = isCollapsedState ? 0f : contentTable.getPrefHeight();
+                }
+            } else {
+                if (axis == Direction.HORIZONTAL) {
+                    curHeight = getHeight();
+                } else {
+                    curWidth = getWidth();
+                }
+            }
+        }
+
+        @Override
+        public float getPrefWidth() {
+            if (axis != Direction.HORIZONTAL) {
+                return contentTable.getPrefWidth();
+            }
+            if (!running) {
+                return isCollapsedState ? 0f : contentTable.getPrefWidth();
+            }
+            return curWidth;
+        }
+
+        @Override
+        public float getPrefHeight() {
+            if (axis != Direction.VERTICAL) {
+                return contentTable.getPrefHeight();
+            }
+            if (!running) {
+                return isCollapsedState ? 0f : contentTable.getPrefHeight();
+            }
+            return curHeight;
+        }
+
+        private final class AxisCollapseAction extends TemporalAction {
+            @Override
+            protected void begin() {
+                running = true;
+            }
+
+            @Override
+            protected void update(float percent) {
+                float ratio = isCollapsedState ? (1f - percent) : percent;
+                if (axis == Direction.HORIZONTAL) {
+                    curWidth = ratio * contentTable.getPrefWidth();
+                    curHeight = contentTable.getPrefHeight();
+                } else {
+                    curWidth = contentTable.getPrefWidth();
+                    curHeight = ratio * contentTable.getPrefHeight();
+                }
+                invalidateHierarchy();
+            }
+
+            @Override
+            protected void end() {
+                running = false;
+                invalidateHierarchy();
+            }
+        }
     }
 }
