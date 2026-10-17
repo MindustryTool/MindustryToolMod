@@ -321,16 +321,6 @@ Use `if` statements when branches involve multiple statements, side effects, ear
 
 ---
 
-# Legacy Code
-
-**Ignore the `old/` folder entirely.**
-
-Do not modify or refactor it unless explicitly requested.
-
-Treat it as legacy code outside the scope of normal tasks.
-
----
-
 # Architecture & Coding Style
 
 ## Feature-Oriented Architecture
@@ -1054,7 +1044,6 @@ Verify:
 * [ ] The implementation follows feature-oriented game-mod architecture.
 * [ ] No unnecessary enterprise layers or abstractions were introduced.
 * [ ] State has a clear source of truth.
-* [ ] `old/` was not modified unless explicitly requested.
 
 ### UI & Cleanup
 
