@@ -4,6 +4,7 @@ val mindustryVersion: String by rootProject.extra
 
 dependencies {
     implementation(project(":solim-core"))
+    implementation(project(":solim-reactive"))
     implementation(project(":solim-runtime"))
     implementation("org.java-websocket:Java-WebSocket:1.5.7")
 

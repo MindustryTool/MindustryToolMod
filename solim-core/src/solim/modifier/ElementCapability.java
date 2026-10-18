@@ -1,6 +1,7 @@
 package solim.modifier;
 
 import arc.scene.Element;
+import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Align;
 import arc.util.Nullable;
@@ -49,7 +50,7 @@ public interface ElementCapability extends HostCapability {
             constraints.applyAlignToParentCell(table);
         }
         table.defaults().align(a);
-        for (arc.scene.ui.layout.Cell<?> c : table.getCells()) {
+        for (Cell<?> c : table.getCells()) {
             if (c != null) {
                 c.align(a);
             }
