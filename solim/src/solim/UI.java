@@ -230,9 +230,7 @@ public final class UI {
     }
 
     public static SolimImage image(Readable<Drawable> drawable) {
-        SolimImage img = new SolimImage();
-        img.drawable(drawable);
-        return img;
+        return new SolimImage(drawable.map(ImageSource::of));
     }
 
     public static SolimImage icon(Drawable drawable) {
@@ -1255,7 +1253,7 @@ public final class UI {
         return Values.src(value);
     }
 
-    public static Prop<ImageCapability, Object> src(@Nullable Readable<?> source) {
+    public static <T> Prop<ImageCapability, T> src(@Nullable Readable<T> source) {
         return Values.src(source);
     }
 

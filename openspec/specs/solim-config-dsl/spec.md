@@ -232,12 +232,17 @@ When a property reaches application, it SHALL produce its documented effect or t
 
 ### Requirement: Configuration is declared only through props
 
-Configuration of a Solim host SHALL be declared exclusively through `.props(...)`. A chained configuration method SHALL NOT exist for any value the host renders, lays out, or exposes as state; the only chained methods that remain SHALL be content (appends a child), behaviour (registers a callback or performs an imperative action), structure (`children`/`items`/`tab`/`show`/`hide`), and accessors (getters). Properties SHALL be applied after any fluent content declared before them, and when two properties in the same `props(...)` call write the same target the later one SHALL win.
+Configuration of a Solim host SHALL be declared exclusively through `.props(...)`. A chained configuration method SHALL NOT exist for any value the host renders, lays out, or exposes as state, and a chained method SHALL NOT exist that accepts a `Readable` for such a value, because declaring a value reactively is not a separate configuration mode; the only chained methods that remain SHALL be content (appends a child), behaviour (registers a callback or performs an imperative action), structure (`children`/`items`/`tab`/`show`/`hide`), and accessors (getters). Properties SHALL be applied after any fluent content declared before them, and when two properties in the same `props(...)` call write the same non-reactive target the later one SHALL win.
 
 #### Scenario: A configuration setter is absent
 
 - **WHEN** the public API of a host is inspected for a configuration setter such as `Text.wrap(boolean)`, `Button.checked(Readable<Boolean>)`, `SolimVideo.autoplay(boolean)`, `SolimCollapser.collapsed(boolean)`, or `Grid.columns(int)`
 - **THEN** the setter does not exist, and the equivalent property factory is declared instead
+
+#### Scenario: A reactive applier is absent
+
+- **WHEN** the public API of a host is inspected for a reactive configuration applier such as `Text.setText(Readable<String>)`, `Grid.setColumns(Readable<Integer>)`, `Button.setChecked(Readable<Boolean>)`, `Button.setEnabled(Readable<Boolean>)`, `SolimCollapser.setCollapsed(Readable<Boolean>)`, `SolimTextField.setDisabled(Readable<Boolean>)`, `SolimImage.src(Readable<ImageSource>)`, `SolimImage.drawable(Readable<Drawable>)`, `SolimImage.icon(Readable<Drawable>)`, `SolimVideo.src(Readable<VideoSource>)`, or `SolimVideo.setControls(Readable<Boolean>)`
+- **THEN** the applier does not exist, and the value is declared only through the property factory for that host
 
 #### Scenario: Content and behaviour stay fluent
 
@@ -246,11 +251,35 @@ Configuration of a Solim host SHALL be declared exclusively through `.props(...)
 
 #### Scenario: Later property wins
 
-- **WHEN** a single `props(...)` call contains two properties writing the same target
+- **WHEN** a single `props(...)` call contains two properties writing the same non-reactive target
 - **THEN** the later property is the effective value
 
 #### Scenario: Props apply after fluent content
 
 - **WHEN** fluent content is declared and configuration is declared in `props(...)`
 - **THEN** the configuration applies to the host after the content exists, so the configured value is the effective one
+
+### Requirement: A reactive property owns its binding and is declared once
+
+A property given a `Readable` SHALL install its binding while the host is the ambient owner, so the host adopts the binding and disposes it with itself. The binding SHALL be created by the property application path rather than by a method called on the host, so no host exposes an ownership window and no property body registers ownership by hand. A reactive value SHALL be declared once per target: the framework SHALL NOT replace or cancel a previously declared binding when a further property writes the same target, and a value that must change over time SHALL be expressed as a `Signal` or a derived `Readable`.
+
+#### Scenario: A reactive property needs no ownership call
+
+- **WHEN** a property carrying a `Readable` is applied to a realized host
+- **THEN** the resulting binding is owned by that host and disposed with it, and neither the property factory nor any host method opened an ownership window
+
+#### Scenario: A reactive property applied during realization
+
+- **WHEN** a property carrying a `Readable` is recorded on a lazy host and applied when the host is realized
+- **THEN** the binding is created inside the realization window and is owned by the realized host
+
+#### Scenario: A live value changes through its source
+
+- **WHEN** an application needs a displayed value to change after the host is built
+- **THEN** it declares the value from a `Readable` once and writes to the underlying `Signal`, rather than declaring the value a second time
+
+#### Scenario: Declaring a reactive target twice is unsupported
+
+- **WHEN** two properties that carry a source write the same target of the same host
+- **THEN** the framework does not define which binding is effective, because no binding replacement occurs, and applications SHALL NOT rely on a later declaration overriding an earlier one
 

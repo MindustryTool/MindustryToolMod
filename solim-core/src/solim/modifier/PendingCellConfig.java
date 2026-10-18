@@ -29,11 +29,11 @@ public final class PendingCellConfig {
 
         if (config != null) {
             if (comp != null) {
-                comp.openSelfWindow();
+                OwnershipContext.push(comp);
                 try {
                     config.applyToCell(cell);
                 } finally {
-                    comp.closeSelfWindow();
+                    OwnershipContext.pop(comp);
                 }
             } else {
                 config.applyToCell(cell);

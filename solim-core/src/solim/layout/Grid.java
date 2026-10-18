@@ -5,7 +5,6 @@ import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.ContainerCapability;
 import solim.modifier.Props;
-import solim.modifier.TableCapability;
 
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
@@ -16,12 +15,10 @@ import solim.core.Component;
 import solim.core.SolimToken;
 import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
-import solim.reactive.Effect;
-import solim.reactive.Readable;
 import solim.modifier.PendingCellConfig;
 
 public final class Grid extends Component
-        implements GapContainer, Configurable<Grid>, TableCapability, CellCapability, ContainerCapability<Grid>, AlignmentCapability {
+        implements GapContainer, Configurable<Grid>, CellCapability, ContainerCapability<Grid>, AlignmentCapability {
 
     private final Table table;
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -66,18 +63,6 @@ public final class Grid extends Component
 
     public int getColumns() {
         return columns;
-    }
-
-    public void setColumns(@Nullable Readable<Integer> c) {
-        if (c != null) {
-            withinOwnership(() -> Effect.of(() -> {
-                Integer cols = c.get();
-                if (cols != null) {
-                    this.columns = Math.max(1, cols);
-                    reflow();
-                }
-            }));
-        }
     }
 
     @Override

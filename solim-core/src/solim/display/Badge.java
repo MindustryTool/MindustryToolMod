@@ -3,8 +3,6 @@ import arc.graphics.Color;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.core.Component;
-import solim.core.Disposable;
-import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.graphics.RoundedDrawable;
 import solim.modifier.RoundedHelper;
@@ -12,30 +10,30 @@ import solim.modifier.AlignmentCapability;
 import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.Prop;
 import solim.modifier.Props;
 import solim.modifier.TableCapability;
-import solim.reactive.Effect;
+import solim.modifier.TextCapability;
 import solim.reactive.Readable;
 
-public final class Badge extends Component implements Configurable<Badge>, TableCapability, CellCapability, AlignmentCapability {
+public final class Badge extends Component implements Configurable<Badge>, TableCapability, CellCapability, AlignmentCapability, TextCapability {
 
     private final Table element;
     private final PendingCellConfig constraints = new PendingCellConfig();
-    private final Text label;
+    private @Nullable Text label;
     private @Nullable Props<Badge> pending;
     private boolean hideOnZero = false;
-    private @Nullable Effect visibilityEffect;
     private @Nullable Readable<Integer> countSignal;
 
     public Badge(String text) {
         this(Readable.of(text));
     }
 
-    public Badge(Readable<String> text) {
+    public Badge(@Nullable Readable<String> text) {
         this(new Table(), text);
     }
 
-    private Badge(Table element, Readable<String> text) {
+    private Badge(Table element, @Nullable Readable<String> text) {
         super(element);
         this.element = element;
         this.element.name = "solim-badge-table";
@@ -48,14 +46,8 @@ public final class Badge extends Component implements Configurable<Badge>, Table
         badgeBackground.border(1f, new Color(1f, 1f, 1f, 0.25f));
         element.margin(2f, 8f, 2f, 8f);
 
-        this.label = Text.of(text);
-        OwnershipContext.push(this);
-        try {
-            OwnershipContext.register(label);
-        } finally {
-            OwnershipContext.pop();
-        }
-        element.add(label.label()).center();
+        props(Prop.elementSource(TextCapability.class, "text", text != null ? text : Readable.of(""),
+                (host, value) -> setText(value)));
     }
 
     public static Badge of(String text) {
@@ -71,42 +63,31 @@ public final class Badge extends Component implements Configurable<Badge>, Table
     }
 
     public static Badge ofCount(Readable<Integer> count) {
-        Badge badge = new Badge(String.valueOf(count != null ? count.peek() : 0));
-        badge.withinOwnership(() -> {
-            Readable<String> text = count.map(c -> c != null ? String.valueOf(c) : "0");
-            badge.label.setText(text);
-            OwnershipContext.register((Disposable) text);
-        });
+        Badge badge = new Badge("");
         badge.countSignal = count;
-        badge.setHideOnZero(true);
+        badge.hideOnZero = true;
+        badge.props(
+                Prop.elementSource(TextCapability.class, "text",
+                        count.map(c -> c != null ? String.valueOf(c) : "0"),
+                        (element, v) -> badge.setText(v)),
+                Prop.tableSource(TableCapability.class, "visibleOnCount", count,
+                        (table, v) -> table.visible = !badge.hideOnZero || (v != null && v > 0)));
         return badge;
     }
 
     public void setHideOnZero(boolean hide) {
         this.hideOnZero = hide;
-        updateVisibilityBinding();
+        if (countSignal != null) {
+            applyCountVisibility(countSignal.peek());
+        }
     }
 
-    private void updateVisibilityBinding() {
-        if (visibilityEffect != null) {
-            visibilityEffect.dispose();
-            visibilityEffect = null;
-        }
-        if (countSignal != null) {
-            OwnershipContext.push(this);
-            try {
-                visibilityEffect = Effect.of(() -> {
-                    Integer c = countSignal.get();
-                    if (hideOnZero) {
-                        element.visible = (c != null && c > 0);
-                    } else {
-                        element.visible = true;
-                    }
-                });
-            } finally {
-                OwnershipContext.pop();
-            }
-        }
+    private void applyCountVisibility(@Nullable Integer count) {
+        element.visible = !hideOnZero || (count != null && count > 0);
+    }
+
+    public void setText(@Nullable String value) {
+        label().setText(value != null ? value : "");
     }
 
     public void setBadgeColor(Color color) {
@@ -116,17 +97,28 @@ public final class Badge extends Component implements Configurable<Badge>, Table
             if (color != null) {
                 rd.fillColor(new Color(color.r, color.g, color.b, 0.16f));
                 rd.border(1f, new Color(color.r, color.g, color.b, 0.55f));
-                label.element().setColor(color);
+                label().element().setColor(color);
             }
         }
     }
 
     public void setTextColor(Color color) {
-        label.element().setColor(color);
+        label().element().setColor(color);
     }
 
     public Text text() {
-        return label;
+        return label();
+    }
+
+    private Text label() {
+        Text existing = label;
+        if (existing != null) {
+            return existing;
+        }
+        Text created = Text.of("");
+        element.add(created.label()).center();
+        label = created;
+        return created;
     }
 
     public Badge name(@Nullable String name) {

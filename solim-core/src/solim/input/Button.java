@@ -1,6 +1,5 @@
 package solim.input;
 
-import arc.func.Boolp;
 import arc.graphics.g2d.Font;
 import arc.input.KeyCode;
 import arc.scene.Element;
@@ -11,12 +10,10 @@ import arc.scene.ui.Label;
 import arc.scene.ui.Label.LabelStyle;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
-import arc.util.Log;
 import arc.util.Nullable;
 import arc.util.Scaling;
 import arc.func.Cons;
 import solim.core.Component;
-import solim.core.ReactiveSource;
 import solim.core.SolimToken;
 import solim.core.Units;
 import solim.display.SolimImage;
@@ -63,10 +60,7 @@ public final class Button
     private long pressTime = -1L;
     private boolean hasClickListener = false;
     private boolean hasLongClickListener = false;
-    private boolean hasCheckedReassertListener = false;
-    private @Nullable Readable<Boolean> checkedBinding;
     private @Nullable Props<Button> pending;
-    private static boolean checkedWarningLogged = false;
 
     public Button() {
         this(new arc.scene.ui.Button(new ButtonStyle()));
@@ -146,8 +140,8 @@ public final class Button
         children(() -> {
             if (drawable != null) {
                 SolimImage img = new SolimImage();
-                img.drawable(drawable.map(Drawables::scalable));
-                img.props(Values.scaling(Scaling.fit), Values.size(Units.unit(6)), Values.prefWidth(Units.unit(6)),
+                img.props(Values.src(drawable.map(Drawables::scalable)), Values.scaling(Scaling.fit),
+                        Values.size(Units.unit(6)), Values.prefWidth(Units.unit(6)),
                         Values.prefHeight(Units.unit(6)));
                 AttachmentStack.attachToParent(img.element());
             }
@@ -231,71 +225,13 @@ public final class Button
         return this;
     }
 
-    public void setEnabled(@Nullable Readable<Boolean> signal) {
-        if (signal != null) {
-            withinOwnership(() -> Effect.of(() -> button.setDisabled(!Boolean.TRUE.equals(signal.get()))));
-        }
-    }
-
-    public void setDisabled(Boolp prov) {
-        button.setDisabled(prov);
-    }
-
-    public void setChecked(@Nullable Readable<Boolean> signal) {
-        if (signal != null) {
-            withinOwnership(() -> Effect.of(() -> button.setChecked(Boolean.TRUE.equals(signal.get()))));
-
-            if (signal instanceof ReactiveSource) {
-                checkedBinding = signal;
-                ensureCheckedReassertListener();
-            }
-
-            ButtonStyle current = button.getStyle();
-            if (current != null && current.checked == null) {
-                warnCheckedWithoutVisual();
-            }
-        }
-    }
-
-    private void ensureCheckedReassertListener() {
-        if (hasCheckedReassertListener) {
-            return;
-        }
-        hasCheckedReassertListener = true;
-        button.addListener(new ClickListener() {
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                Readable<Boolean> binding = checkedBinding;
-                if (binding != null) {
-                    Button.this.button.setChecked(Boolean.TRUE.equals(binding.peek()));
-                }
-            }
-        });
-    }
-
-    private static void warnCheckedWithoutVisual() {
-        if (checkedWarningLogged) {
-            return;
-        }
-        checkedWarningLogged = true;
-        Log.warn(
-                "[Solim] .checked(...) bound to a style with no checked visual — the selected state will not render. Use a style that declares a checked state; action-chip styles deliberately have none.");
+    public void setDisabled(boolean disabled) {
+        button.setDisabled(disabled);
     }
 
     public void setStyle(@Nullable ButtonStyle style) {
         if (style != null) {
             button.setStyle(style);
-        }
-    }
-
-    public void setStyle(@Nullable Readable<? extends ButtonStyle> style) {
-        if (style != null) {
-            withinOwnership(() -> Effect.of(() -> {
-                ButtonStyle s = style.get();
-                if (s != null) {
-                    button.setStyle(s);
-                }
-            }));
         }
     }
 
@@ -309,7 +245,7 @@ public final class Button
             applyResolvedStyle(builder.build());
         } else {
             applyResolvedStyle(builder.build());
-            withinOwnership(() -> Effect.of(() -> applyResolvedStyle(builder.build())));
+            Effect.of(() -> applyResolvedStyle(builder.build()));
         }
     }
 

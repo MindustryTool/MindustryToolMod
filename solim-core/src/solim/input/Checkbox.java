@@ -15,16 +15,14 @@ import solim.modifier.AlignmentCapability;
 import solim.modifier.CellCapability;
 import solim.modifier.CheckableCapability;
 import solim.modifier.Configurable;
-import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.modifier.WrappableCapability;
-import solim.reactive.Effect;
-import solim.reactive.Readable;
 import solim.reactive.Signal;
 
 public final class Checkbox extends Component
-        implements Configurable<Checkbox>, ElementCapability, CellCapability, AlignmentCapability, CheckableCapability, WrappableCapability {
+        implements Configurable<Checkbox>, CellCapability, AlignmentCapability, CheckableCapability,
+        WrappableCapability {
 
     private final CheckBox checkBox;
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -128,17 +126,6 @@ public final class Checkbox extends Component
         }
         if (checkBox.getLabelCell() != null && wrap) {
             checkBox.getLabelCell().growX().minWidth(0f);
-        }
-    }
-
-    public void setChecked(@Nullable Readable<Boolean> source) {
-        if (source != null) {
-            OwnershipContext.push(this);
-            try {
-                Effect.of(() -> checkBox.setChecked(Boolean.TRUE.equals(source.get())));
-            } finally {
-                OwnershipContext.pop();
-            }
         }
     }
 

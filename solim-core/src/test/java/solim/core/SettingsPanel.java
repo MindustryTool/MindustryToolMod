@@ -5,7 +5,6 @@ import static solim.modifier.Values.*;
 import static solim.modifier.Values.gap;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.right;
-import java.util.concurrent.atomic.AtomicReference;
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
@@ -30,17 +29,9 @@ public final class SettingsPanel extends Component {
 
     private final Signal<Boolean> dirty = Signal.of(false);
 
-    private final Computed<String> saveText;
+    private Computed<String> saveText;
 
     private Effect logger;
-
-    public SettingsPanel() {
-        AtomicReference<Computed<String>> holder = new AtomicReference<>();
-        withinOwnership(() -> holder.set(dirty
-                .map(value -> value ? t("solim.settings.save-dirty", "● Save Changes")
-                        : t("solim.settings.save", "Save Changes"))));
-        this.saveText = holder.get();
-    }
 
     private static String t(String key, String fallback) {
         if (Core.bundle != null && Core.bundle.has(key)) {
@@ -68,6 +59,10 @@ public final class SettingsPanel extends Component {
 
     @Override
     protected Element build() {
+
+        saveText = dirty
+                .map(value -> value ? t("solim.settings.save-dirty", "● Save Changes")
+                        : t("solim.settings.save", "Save Changes"));
 
         logger = Effect.of(() -> {
             Log.info("Dirty state: @", dirty.get());
@@ -142,6 +137,7 @@ public final class SettingsPanel extends Component {
     }
 
     public Computed<String> saveText() {
+        element();
         return saveText;
     }
 

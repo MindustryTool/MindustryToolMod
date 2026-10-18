@@ -17,10 +17,10 @@ import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.LabelCapability;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.Prop;
 import solim.modifier.Props;
 import solim.modifier.TextCapability;
 import solim.modifier.WrappableCapability;
-import solim.reactive.Effect;
 import solim.reactive.Readable;
 
 public final class Text extends Component
@@ -90,7 +90,7 @@ public final class Text extends Component
 
     public Text(Readable<String> readable) {
         this("");
-        setText(readable);
+        props(Prop.elementSource(TextCapability.class, "text", readable, (element, v) -> label.setText(v != null ? v : "")));
     }
 
     public static Text of(String text) {
@@ -103,12 +103,6 @@ public final class Text extends Component
 
     public void setText(String text) {
         label.setText(text != null ? text : "");
-    }
-
-    public void setText(Readable<String> text) {
-        if (text != null) {
-            withinOwnership(() -> Effect.of(() -> label.setText(text.get() != null ? text.get() : "")));
-        }
     }
 
     public void setFontScale(float scale) {

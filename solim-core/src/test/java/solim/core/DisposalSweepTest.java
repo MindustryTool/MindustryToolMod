@@ -404,7 +404,7 @@ class DisposalSweepTest extends OwnershipEnv {
         AtomicInteger loads = new AtomicInteger(0);
         SolimImage.setImageLoader((url, radius, targetW, targetH, onSuccess, onError) -> loads.incrementAndGet());
         Signal<String> url = Signal.of("sweep://a");
-        SolimImage image = new SolimImage().src(url.map(u -> ImageSource.of(u)));
+        SolimImage image = new SolimImage(url.map(u -> ImageSource.of(u)));
         assertEquals(1, loads.get());
         assertFalse(image.isDisposed());
 

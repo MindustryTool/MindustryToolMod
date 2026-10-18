@@ -6,6 +6,7 @@ import arc.Core;
 import arc.scene.Element;
 import org.junit.jupiter.api.Test;
 import arc.scene.ui.layout.Table;
+import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
 class SettingsPanelTest extends SolimEnv {
@@ -18,10 +19,12 @@ class SettingsPanelTest extends SolimEnv {
 		assertTrue(panel.saveText().get().contains("Save Changes"));
 
 		panel.dirty().set(true);
+		SignalDispatcher.flush();
 		assertTrue(panel.dirty().get());
 		assertTrue(panel.saveText().get().contains("●"));
 
 		panel.darkMode().set(true);
+		SignalDispatcher.flush();
 		assertTrue(panel.darkMode().get());
 
 		panel.dispose();

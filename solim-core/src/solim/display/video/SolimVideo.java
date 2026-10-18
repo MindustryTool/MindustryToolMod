@@ -19,7 +19,6 @@ import arc.util.Time;
 import java.util.Objects;
 import mindustry.gen.Icon;
 import solim.core.Component;
-import solim.core.Disposable;
 import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.core.Units;
@@ -124,8 +123,6 @@ public final class SolimVideo extends Component
     private @Nullable VideoSource source;
     private long loadGeneration = 0;
     private boolean failed = false;
-    private @Nullable Disposable sourceBinding;
-    private @Nullable Disposable controlsBinding;
 
     private boolean autoplay = false;
     private boolean loop = true;
@@ -203,7 +200,9 @@ public final class SolimVideo extends Component
 
     public SolimVideo(@Nullable Readable<VideoSource> source) {
         this();
-        src(source);
+        if (source != null) {
+            props(Values.src(source));
+        }
     }
 
     private void buildOverlay() {
@@ -315,22 +314,17 @@ public final class SolimVideo extends Component
     }
 
     public void bindMutedSignal(Signal<Boolean> signal) {
-        OwnershipContext.push(this);
-        try {
-            new TwoWayBinding<>(
-                    signal,
-                    mutedState::peek,
-                    this::setMuted,
-                    onChange -> {
-                        Effect.of(() -> {
-                            mutedState.get();
-                            onChange.run();
-                        });
-                        return DisposableAction.empty();
+        new TwoWayBinding<>(
+                signal,
+                mutedState::peek,
+                this::setMuted,
+                onChange -> {
+                    Effect.of(() -> {
+                        mutedState.get();
+                        onChange.run();
                     });
-        } finally {
-            OwnershipContext.pop();
-        }
+                    return DisposableAction.empty();
+                });
     }
 
     public void setRounded(int radius) {
@@ -364,48 +358,20 @@ public final class SolimVideo extends Component
     }
 
     public void setControls(boolean controls) {
-        if (controlsBinding != null) {
-            controlsBinding.dispose();
-            controlsBinding = null;
-        }
         controlsEnabled.set(controls);
     }
 
-    public void setControls(@Nullable Readable<Boolean> controls) {
-        if (controlsBinding != null) {
-            controlsBinding.dispose();
-            controlsBinding = null;
-        }
-        if (controls != null) {
-            withinOwnership(() -> controlsBinding = Effect.of(() -> controlsEnabled.set(controls.get())));
-        }
-    }
-
     public void src(@Nullable VideoSource source) {
-        disposeSourceBinding();
         loadSource(source);
-    }
-
-    public void src(@Nullable Readable<VideoSource> source) {
-        disposeSourceBinding();
-        if (source != null) {
-            withinOwnership(() -> sourceBinding = Effect.of(() -> {
-                VideoSource next = source.get();
-                if (!Objects.equals(next, this.source)) {
-                    loadSource(next);
-                }
-            }));
-        }
     }
 
     public void src(@Nullable String url) {
         src(VideoSource.of(url));
     }
 
-    private void disposeSourceBinding() {
-        if (sourceBinding != null) {
-            sourceBinding.dispose();
-            sourceBinding = null;
+    public void loadSourceIfChanged(@Nullable VideoSource next) {
+        if (!Objects.equals(next, source)) {
+            loadSource(next);
         }
     }
 
@@ -628,11 +594,6 @@ public final class SolimVideo extends Component
     protected void onDispose() {
         loadGeneration++;
         stopPlayer();
-        disposeSourceBinding();
-        if (controlsBinding != null) {
-            controlsBinding.dispose();
-            controlsBinding = null;
-        }
     }
 
     @Override

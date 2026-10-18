@@ -57,17 +57,22 @@ The video engine SHALL extract the AAC audio track from the MP4 container and de
 
 ### Requirement: Declarative SolimVideo Component
 
-`SolimVideo` SHALL be a declarative Solim component created via `solim.UI.video(...)` supporting static and reactive URL sources (`Readable<String>`), and declaring its configuration through `.props(...)`: sizing, rounded corner masking, and the media properties `autoplay`, `loop`, `volume`, `muted`, and `controls`. `autoplay`, `duration`-equivalent timing, and the overlay icons SHALL take plain values because they are read once; `loop`, `volume`, `muted`, and `controls` SHALL accept reactive sources. `muted` SHALL accept a `Signal<Boolean>` and bind two-way, so the overlay's mute toggle writes back to the caller's signal, and SHALL route through the component's internal mute state so there is a single source of truth. The chained setters `autoplay(boolean)`, `loop(boolean)`, `volume(float)`, `muted(boolean)`, `controls(...)`, `url(...)`, `placeholder(...)`, `fallback(...)`, `scaling(...)`, and the overlay-icon methods SHALL NOT exist. When the component is disposed, all allocated GL textures, pixel buffers, `Music` instances, and decode worker tasks SHALL be released immediately.
+`SolimVideo` SHALL be a declarative Solim component created via `solim.ui.video(...)` supporting static and reactive source properties (`Readable<String>` and `Readable<VideoSource>`), and declaring its configuration through `.props(...)`: sizing, rounded corner masking, and the media properties `autoplay`, `loop`, `volume`, `muted`, and `controls`. `autoplay`, `duration`-equivalent timing, and the overlay icons SHALL take plain values because they are read once; `loop`, `volume`, `muted`, and `controls` SHALL accept reactive sources. `muted` SHALL accept a `Signal<Boolean>` and bind two-way, so the overlay's mute toggle writes back to the caller's signal, and SHALL route through the component's internal mute state so there is a single source of truth. The component SHALL NOT hold a binding field for its source or its controls: the reactive binding SHALL be created by property application and owned by the component, and a source that changes over time SHALL be declared once as a `Readable` rather than re-declared. The chained setters `autoplay(boolean)`, `loop(boolean)`, `volume(float)`, `muted(boolean)`, `controls(...)`, `url(...)`, `placeholder(...)`, `fallback(...)`, `scaling(...)`, and the overlay-icon methods SHALL NOT exist, including their `Readable` overloads. When the component is disposed, all allocated GL textures, pixel buffers, `Music` instances, and decode worker tasks SHALL be released immediately.
 
 #### Scenario: Declarative creation and playback
 
-- **WHEN** `solim.UI.video("https://.../demo.mp4").props(autoplay(true))` is constructed in a Solim tree
+- **WHEN** `solim.ui.video("https://.../demo.mp4").props(autoplay(true))` is constructed in a Solim tree
 - **THEN** the component SHALL initiate loading and display frames upon download completion
 
 #### Scenario: Reactive URL update
 
-- **WHEN** a reactive `Readable<String>` URL property changes to a new video URL
-- **THEN** the current playback SHALL stop, previous resources SHALL be cleaned, and the new video SHALL begin loading
+- **WHEN** a reactive source property declared from a `Readable` changes to a new video source
+- **THEN** the current playback SHALL stop, previous resources SHALL be cleaned, and the new source SHALL begin loading
+
+#### Scenario: The source binding is owned by the component
+
+- **WHEN** a video is disposed while a reactive source property is still live
+- **THEN** the source binding is disposed with the component, and no component-held binding field survives disposal
 
 #### Scenario: Mute toggle writes back
 
@@ -100,7 +105,7 @@ The video engine SHALL extract the AAC audio track from the MP4 container and de
 
 ### Requirement: Configurable Controls Toggle
 
-`SolimVideo` SHALL support disabling the control overlay through the `controls` property declared in `.props(...)`, taking a plain `boolean` or a `Readable<Boolean>`. When controls are disabled (`false`), the control overlay elements and hover listeners SHALL NOT be displayed, allowing the component to function as an uncluttered looping motion graphic or banner. The chained `controls(...)` methods SHALL NOT exist.
+`SolimVideo` SHALL support disabling the control overlay through the `controls` property declared in `.props(...)`, taking a plain `boolean` or a `Readable<Boolean>`. When controls are disabled (`false`), the control overlay elements and hover listeners SHALL NOT be displayed, allowing the component to function as an uncluttered looping motion graphic or banner. The reactive form SHALL bind through the property application path and be owned by the component; the component SHALL NOT retain a controls binding field, and the chained `controls(...)` methods, including the `Readable` overload, SHALL NOT exist.
 
 #### Scenario: Disabling controls hides all overlay elements
 
@@ -109,8 +114,13 @@ The video engine SHALL extract the AAC audio track from the MP4 container and de
 
 #### Scenario: Reactive control visibility toggle
 
-- **WHEN** a reactive `Readable<Boolean>` control property switches from `true` to `false`
+- **WHEN** a reactive `Readable<Boolean>` controls property switches from `true` to `false`
 - **THEN** the control overlay SHALL be removed from display immediately
+
+#### Scenario: Controls binding is owned by the component
+
+- **WHEN** a video with a reactive controls property is disposed
+- **THEN** the controls binding is disposed with the component, and no controls binding field remains referenced
 
 ### Requirement: Video Source Configuration
 `SolimVideo` SHALL accept a `VideoSource` representing the source of the video stream, via constructor (`new SolimVideo(VideoSource)`), builder method (`src(VideoSource)`), and declarative property (`Values.src(VideoSource)` or `Values.src(Readable<VideoSource>)`), with convenience overloads for URL strings.

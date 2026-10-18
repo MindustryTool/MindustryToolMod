@@ -19,6 +19,7 @@ import arc.scene.ui.TextField.TextFieldStyle;
 import arc.scene.ui.Tooltip;
 import arc.scene.ui.layout.Table;
 import arc.util.Align;
+import arc.util.Log;
 import arc.util.Nullable;
 import arc.scene.ui.Slider;
 import arc.util.Scaling;
@@ -26,7 +27,7 @@ import java.util.List;
 import solim.core.Component;
 import solim.core.DisposableAction;
 import solim.core.HostCapability;
-import solim.core.OwnershipContext;
+import solim.core.ReactiveSource;
 import solim.core.SolimToken;
 import solim.display.Badge;
 import solim.display.ImageSource;
@@ -326,7 +327,8 @@ public final class Values {
             });
         }
         if (right != null) {
-            return Prop.tableSource(TableCapability.class, "padding", right, (table, val) -> table.margin(0f, 0f, 0f, val != null ? val : 0f));
+            return Prop.tableSource(TableCapability.class, "padding", right,
+                    (table, val) -> table.margin(0f, 0f, 0f, val != null ? val : 0f));
         }
         return Prop.table(TableCapability.class, "padding", 0f, (table, val) -> {
         });
@@ -563,7 +565,8 @@ public final class Values {
     }
 
     public static Prop<CellCapability, Float> width(float v) {
-        return Prop.cell(CellCapability.class, "width", Math.max(0f, v), (config, val) -> config.prefWidth = Readable.of(val));
+        return Prop.cell(CellCapability.class, "width", Math.max(0f, v),
+                (config, val) -> config.prefWidth = Readable.of(val));
     }
 
     public static Prop<CellCapability, Float> width(Readable<Float> v) {
@@ -571,7 +574,8 @@ public final class Values {
     }
 
     public static Prop<CellCapability, Float> height(float v) {
-        return Prop.cell(CellCapability.class, "height", Math.max(0f, v), (config, val) -> config.prefHeight = Readable.of(val));
+        return Prop.cell(CellCapability.class, "height", Math.max(0f, v),
+                (config, val) -> config.prefHeight = Readable.of(val));
     }
 
     public static Prop<CellCapability, Float> height(Readable<Float> v) {
@@ -604,7 +608,8 @@ public final class Values {
             return Prop.cellSource(CellCapability.class, "size", width, (config, source) -> config.prefWidth = width);
         }
         if (height != null) {
-            return Prop.cellSource(CellCapability.class, "size", height, (config, source) -> config.prefHeight = height);
+            return Prop.cellSource(CellCapability.class, "size", height,
+                    (config, source) -> config.prefHeight = height);
         }
         return Prop.cell(CellCapability.class, "size", 0f, (config, val) -> {
         });
@@ -857,19 +862,24 @@ public final class Values {
     }
 
     public static Prop<ElementCapability, Void> draggable() {
-        return Prop.raw(ElementCapability.class, "draggable", Prop.Kind.ELEMENT, target -> Hud.makeDraggable((Element) target, null, null, null));
+        return Prop.raw(ElementCapability.class, "draggable", Prop.Kind.ELEMENT,
+                target -> Hud.makeDraggable((Element) target, null, null, null));
     }
 
     public static Prop<ElementCapability, Void> draggable(@Nullable Signal<Float> x, @Nullable Signal<Float> y) {
-        return Prop.raw(ElementCapability.class, "draggable", Prop.Kind.ELEMENT, target -> Hud.makeDraggable((Element) target, null, x, y));
+        return Prop.raw(ElementCapability.class, "draggable", Prop.Kind.ELEMENT,
+                target -> Hud.makeDraggable((Element) target, null, x, y));
     }
 
     public static Prop<ElementCapability, Void> draggable(@Nullable Hud hud) {
-        return Prop.raw(ElementCapability.class, "draggable", Prop.Kind.ELEMENT, target -> Hud.makeDraggable((Element) target, hud, null, null));
+        return Prop.raw(ElementCapability.class, "draggable", Prop.Kind.ELEMENT,
+                target -> Hud.makeDraggable((Element) target, hud, null, null));
     }
 
-    public static Prop<ElementCapability, Void> draggable(@Nullable Hud hud, @Nullable Signal<Float> x, @Nullable Signal<Float> y) {
-        return Prop.raw(ElementCapability.class, "draggable", Prop.Kind.ELEMENT, target -> Hud.makeDraggable((Element) target, hud, x, y));
+    public static Prop<ElementCapability, Void> draggable(@Nullable Hud hud, @Nullable Signal<Float> x,
+            @Nullable Signal<Float> y) {
+        return Prop.raw(ElementCapability.class, "draggable", Prop.Kind.ELEMENT,
+                target -> Hud.makeDraggable((Element) target, hud, x, y));
     }
 
     public static Prop<ElementCapability, Cons<Element>> update(Cons<Element> fn) {
@@ -927,7 +937,8 @@ public final class Values {
             if (host instanceof Text) {
                 ((Text) host).setStyle(v);
             } else {
-                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept " + v.getClass().getName());
+                throw new IllegalArgumentException(
+                        "Host " + host.getClass().getName() + " cannot accept " + v.getClass().getName());
             }
         });
     }
@@ -940,7 +951,8 @@ public final class Values {
             if (host instanceof Button) {
                 ((Button) host).setStyle(v);
             } else {
-                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept " + v.getClass().getName());
+                throw new IllegalArgumentException(
+                        "Host " + host.getClass().getName() + " cannot accept " + v.getClass().getName());
             }
         });
     }
@@ -954,7 +966,8 @@ public final class Values {
             if (host instanceof Button) {
                 ((Button) host).setStyle(config);
             } else {
-                throw new IllegalArgumentException("Host " + (host != null ? host.getClass().getName() : "null") + " cannot accept SolimButtonStyleBuilder config");
+                throw new IllegalArgumentException("Host " + (host != null ? host.getClass().getName() : "null")
+                        + " cannot accept SolimButtonStyleBuilder config");
             }
         });
     }
@@ -967,7 +980,8 @@ public final class Values {
             if (host instanceof Button) {
                 ((Button) host).setStyle(v);
             } else {
-                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept " + v.getClass().getName());
+                throw new IllegalArgumentException(
+                        "Host " + host.getClass().getName() + " cannot accept " + v.getClass().getName());
             }
         });
     }
@@ -980,7 +994,8 @@ public final class Values {
             if (host instanceof SolimTextField) {
                 ((SolimTextField) host).setStyle(v);
             } else {
-                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept " + v.getClass().getName());
+                throw new IllegalArgumentException(
+                        "Host " + host.getClass().getName() + " cannot accept " + v.getClass().getName());
             }
         });
     }
@@ -993,7 +1008,8 @@ public final class Values {
             if (host instanceof SolimTextField) {
                 ((SolimTextField) host).setStyle(v);
             } else {
-                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept " + v.getClass().getName());
+                throw new IllegalArgumentException(
+                        "Host " + host.getClass().getName() + " cannot accept " + v.getClass().getName());
             }
         });
     }
@@ -1006,7 +1022,8 @@ public final class Values {
             if (host instanceof Scroll) {
                 ((Scroll) host).setStyle(v);
             } else {
-                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept " + v.getClass().getName());
+                throw new IllegalArgumentException(
+                        "Host " + host.getClass().getName() + " cannot accept " + v.getClass().getName());
             }
         });
     }
@@ -1019,7 +1036,8 @@ public final class Values {
             if (host instanceof SolimSlider) {
                 ((SolimSlider) host).setStyle(v);
             } else {
-                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept " + v.getClass().getName());
+                throw new IllegalArgumentException(
+                        "Host " + host.getClass().getName() + " cannot accept " + v.getClass().getName());
             }
         });
     }
@@ -1039,6 +1057,8 @@ public final class Values {
                 ((Text) host).setText(v);
             } else if (host instanceof SolimTextField) {
                 ((SolimTextField) host).setPlaceholder(v);
+            } else if (host instanceof Badge) {
+                ((Badge) host).setText(v);
             } else {
                 throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept text prop");
             }
@@ -1054,14 +1074,19 @@ public final class Values {
             if (host instanceof Button) {
                 ((Button) host).text(source);
             } else if (host instanceof Text) {
-                ((Text) host).setText(source);
+                Text text = (Text) host;
+                Effect.of(() -> {
+                    String value = source.get();
+                    text.setText(value != null ? value : "");
+                });
             } else if (host instanceof SolimTextField) {
-                OwnershipContext.push(host);
-                try {
-                    Effect.of(() -> ((SolimTextField) host).setPlaceholder(source.get()));
-                } finally {
-                    OwnershipContext.pop();
-                }
+                Effect.of(() -> ((SolimTextField) host).setPlaceholder(source.get()));
+            } else if (host instanceof Badge) {
+                Badge badge = (Badge) host;
+                Effect.of(() -> {
+                    String value = source.get();
+                    badge.setText(value != null ? value : "");
+                });
             } else if (host != null) {
                 throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept text prop");
             }
@@ -1103,7 +1128,8 @@ public final class Values {
             Component host = hostOf(target);
             if (host instanceof Button) {
                 Button btn = (Button) host;
-                btn.setChecked(signal);
+                warnCheckedWithoutVisual(btn);
+                Effect.of(() -> btn.button().setChecked(Boolean.TRUE.equals(signal.get())));
                 btn.button().addListener(new ClickListener() {
                     @Override
                     public void clicked(InputEvent event, float x, float y) {
@@ -1112,38 +1138,28 @@ public final class Values {
                 });
             } else if (host instanceof Checkbox) {
                 Checkbox cb = (Checkbox) host;
-                OwnershipContext.push(cb);
-                try {
-                    new TwoWayBinding<>(
-                            signal,
-                            () -> cb.checkBox().isChecked(),
-                            val -> cb.checkBox().setChecked(Boolean.TRUE.equals(val)),
-                            onChange -> {
-                                cb.checkBox().changed(onChange::run);
-                                return DisposableAction.empty();
-                            });
-                } finally {
-                    OwnershipContext.pop();
-                }
+                new TwoWayBinding<>(
+                        signal,
+                        () -> cb.checkBox().isChecked(),
+                        val -> cb.checkBox().setChecked(Boolean.TRUE.equals(val)),
+                        onChange -> {
+                            cb.checkBox().changed(onChange::run);
+                            return DisposableAction.empty();
+                        });
             } else if (host instanceof Switch) {
                 Switch sw = (Switch) host;
-                OwnershipContext.push(sw);
-                try {
-                    new TwoWayBinding<>(
-                            signal,
-                            sw::isChecked,
-                            val -> {
-                                boolean state = Boolean.TRUE.equals(val);
-                                sw.button().setText(state ? "ON" : "OFF");
-                                sw.button().setChecked(state);
-                            },
-                            onChange -> {
-                                sw.button().changed(onChange::run);
-                                return DisposableAction.empty();
-                            });
-                } finally {
-                    OwnershipContext.pop();
-                }
+                new TwoWayBinding<>(
+                        signal,
+                        sw::isChecked,
+                        val -> {
+                            boolean state = Boolean.TRUE.equals(val);
+                            sw.button().setText(state ? "ON" : "OFF");
+                            sw.button().setChecked(state);
+                        },
+                        onChange -> {
+                            sw.button().changed(onChange::run);
+                            return DisposableAction.empty();
+                        });
             } else if (host != null) {
                 throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept checked prop");
             }
@@ -1157,15 +1173,39 @@ public final class Values {
             }
             Component host = hostOf(target);
             if (host instanceof Button) {
-                ((Button) host).setChecked(source);
+                Button btn = (Button) host;
+                warnCheckedWithoutVisual(btn);
+                if (source instanceof ReactiveSource) {
+                    btn.button().addListener(new ClickListener() {
+                        @Override
+                        public void clicked(InputEvent event, float x, float y) {
+                            btn.button().setChecked(Boolean.TRUE.equals(source.peek()));
+                        }
+                    });
+                }
+                Effect.of(() -> btn.button().setChecked(Boolean.TRUE.equals(source.get())));
             } else if (host instanceof Checkbox) {
-                ((Checkbox) host).setChecked(source);
+                Checkbox cb = (Checkbox) host;
+                Effect.of(() -> cb.checkBox().setChecked(Boolean.TRUE.equals(source.get())));
             } else if (host instanceof Switch) {
-                ((Switch) host).setChecked(source);
+                Switch sw = (Switch) host;
+                Effect.of(() -> sw.setChecked(Boolean.TRUE.equals(source.get())));
             } else if (host != null) {
                 throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept checked prop");
             }
         });
+    }
+
+    private static boolean checkedWarningLogged;
+
+    private static void warnCheckedWithoutVisual(Button button) {
+        ButtonStyle style = button.button().getStyle();
+        if (style == null || style.checked != null || checkedWarningLogged) {
+            return;
+        }
+        checkedWarningLogged = true;
+        Log.warn(
+                "[Solim] .checked(...) bound to a style with no checked visual — the selected state will not render. Use a style that declares a checked state; action-chip styles deliberately have none.");
     }
 
     public static Prop<CheckableCapability, Boolean> checked(boolean value) {
@@ -1181,20 +1221,15 @@ public final class Values {
             if (host instanceof SolimSlider) {
                 SolimSlider s = (SolimSlider) host;
                 Slider slider = s.slider();
-                OwnershipContext.push(s);
-                try {
-                    new TwoWayBinding<>(
-                            signal,
-                            slider::getValue,
-                            slider::setValue,
-                            onChange -> {
-                                slider.changed(onChange::run);
-                                return DisposableAction.empty();
-                            },
-                            (a, b) -> a != null && b != null && Math.abs(a - b) <= 0.0001f);
-                } finally {
-                    OwnershipContext.pop();
-                }
+                new TwoWayBinding<>(
+                        signal,
+                        slider::getValue,
+                        slider::setValue,
+                        onChange -> {
+                            slider.changed(onChange::run);
+                            return DisposableAction.empty();
+                        },
+                        (a, b) -> a != null && b != null && Math.abs(a - b) <= 0.0001f);
             } else if (host != null) {
                 throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept value prop");
             }
@@ -1213,71 +1248,56 @@ public final class Values {
             Component host = hostOf(target);
             if (host instanceof SolimSlider) {
                 SolimSlider s = (SolimSlider) host;
-                OwnershipContext.push(s);
-                try {
-                    Effect.of(() -> {
-                        Float v = source.get();
-                        if (v != null) {
-                            s.slider().setValue(v);
-                        }
-                    });
-                } finally {
-                    OwnershipContext.pop();
-                }
+                Effect.of(() -> {
+                    Float v = source.get();
+                    if (v != null) {
+                        s.slider().setValue(v);
+                    }
+                });
             } else if (host != null) {
                 throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept value prop");
             }
         });
     }
 
-    @SuppressWarnings("unchecked")
     public static <T> Prop<SelectCapability, T> selected(@Nullable Signal<T> signal) {
         return hostOwnedProp(SelectCapability.class, "selected", target -> {
             if (signal == null) {
                 return;
             }
             Component host = hostOf(target);
-            if (host instanceof SolimSelect) {
-                SolimSelect<T> sel = (SolimSelect<T>) host;
-                OwnershipContext.push(sel);
-                try {
-                    Effect.of(() -> {
-                        T v = signal.get();
-                        if (v != null) {
-                            sel.selectBox().setText(String.valueOf(v));
-                        }
-                    });
-                } finally {
-                    OwnershipContext.pop();
-                }
+            if (host instanceof SolimSelect<?>) {
+                SolimSelect<?> sel = (SolimSelect<?>) host;
+                Effect.of(() -> {
+                    T v = signal.get();
+                    if (v != null) {
+                        sel.selectBox().setText(String.valueOf(v));
+                    }
+                });
             } else if (host != null) {
-                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept selected prop");
+                throw new IllegalArgumentException(
+                        "Host " + host.getClass().getName() + " cannot accept selected prop");
             }
         });
     }
 
-    @SuppressWarnings("unchecked")
     public static <T> Prop<SelectCapability, T> selected(@Nullable Readable<T> source) {
         return hostOwnedProp(SelectCapability.class, "selected", target -> {
             if (source == null) {
                 return;
             }
             Component host = hostOf(target);
-            if (host instanceof SolimSelect) {
-                SolimSelect<T> sel = (SolimSelect<T>) host;
-                OwnershipContext.push(sel);
-                try {
-                    Effect.of(() -> {
-                        T v = source.get();
-                        if (v != null) {
-                            sel.selectBox().setText(String.valueOf(v));
-                        }
-                    });
-                } finally {
-                    OwnershipContext.pop();
-                }
+            if (host instanceof SolimSelect<?>) {
+                SolimSelect<?> sel = (SolimSelect<?>) host;
+                Effect.of(() -> {
+                    T v = source.get();
+                    if (v != null) {
+                        sel.selectBox().setText(String.valueOf(v));
+                    }
+                });
             } else if (host != null) {
-                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept selected prop");
+                throw new IllegalArgumentException(
+                        "Host " + host.getClass().getName() + " cannot accept selected prop");
             }
         });
     }
@@ -1303,13 +1323,9 @@ public final class Values {
     }
 
     public static Prop<TableCapability, Integer> columns(@Nullable Readable<Integer> count) {
-        return hostOwnedProp(TableCapability.class, "columns", target -> {
-            if (count == null) {
-                return;
-            }
-            Component host = hostOf(target);
-            if (host instanceof Grid) {
-                ((Grid) host).setColumns(count);
+        return hostProp(TableCapability.class, "columns", null, count, (element, v, host) -> {
+            if (v != null && host instanceof Grid) {
+                ((Grid) host).setColumns(v);
             }
         });
     }
@@ -1322,20 +1338,15 @@ public final class Values {
             Component host = hostOf(target);
             if (host instanceof Tabs) {
                 Tabs tabs = (Tabs) host;
-                OwnershipContext.push(tabs);
-                try {
-                    Effect.of(() -> {
-                        Integer idx = signal.get();
-                        if (idx != null) {
-                            List<Button> buttons = tabs.buttons();
-                            for (int i = 0; i < buttons.size(); i++) {
-                                buttons.get(i).button().setChecked(i == idx);
-                            }
+                Effect.of(() -> {
+                    Integer idx = signal.get();
+                    if (idx != null) {
+                        List<Button> buttons = tabs.buttons();
+                        for (int i = 0; i < buttons.size(); i++) {
+                            buttons.get(i).button().setChecked(i == idx);
                         }
-                    });
-                } finally {
-                    OwnershipContext.pop();
-                }
+                    }
+                });
             }
         });
     }
@@ -1352,20 +1363,15 @@ public final class Values {
             Component host = hostOf(target);
             if (host instanceof Tabs) {
                 Tabs tabs = (Tabs) host;
-                OwnershipContext.push(tabs);
-                try {
-                    Effect.of(() -> {
-                        Integer idx = source.get();
-                        if (idx != null) {
-                            List<Button> buttons = tabs.buttons();
-                            for (int i = 0; i < buttons.size(); i++) {
-                                buttons.get(i).button().setChecked(i == idx);
-                            }
+                Effect.of(() -> {
+                    Integer idx = source.get();
+                    if (idx != null) {
+                        List<Button> buttons = tabs.buttons();
+                        for (int i = 0; i < buttons.size(); i++) {
+                            buttons.get(i).button().setChecked(i == idx);
                         }
-                    });
-                } finally {
-                    OwnershipContext.pop();
-                }
+                    }
+                });
             }
         });
     }
@@ -1393,17 +1399,12 @@ public final class Values {
             }
             Component host = hostOf(target);
             if (host instanceof SolimVideo) {
-                OwnershipContext.push(host);
-                try {
-                    Effect.of(() -> {
-                        Float p = source.get();
-                        if (p != null) {
-                            ((SolimVideo) host).progressSignal().set(p);
-                        }
-                    });
-                } finally {
-                    OwnershipContext.pop();
-                }
+                Effect.of(() -> {
+                    Float p = source.get();
+                    if (p != null) {
+                        ((SolimVideo) host).progressSignal().set(p);
+                    }
+                });
             }
         });
     }
@@ -1439,12 +1440,7 @@ public final class Values {
             }
             Component host = hostOf(target);
             if (host instanceof SolimTextField) {
-                OwnershipContext.push(host);
-                try {
-                    Effect.of(() -> ((SolimTextField) host).setPlaceholder(source.get()));
-                } finally {
-                    OwnershipContext.pop();
-                }
+                Effect.of(() -> ((SolimTextField) host).setPlaceholder(source.get()));
             }
         });
     }
@@ -1505,17 +1501,12 @@ public final class Values {
             }
             Component host = hostOf(target);
             if (host instanceof Badge) {
-                OwnershipContext.push(host);
-                try {
-                    Effect.of(() -> {
-                        Color c = source.get();
-                        if (c != null) {
-                            ((Badge) host).setTextColor(c);
-                        }
-                    });
-                } finally {
-                    OwnershipContext.pop();
-                }
+                Effect.of(() -> {
+                    Color c = source.get();
+                    if (c != null) {
+                        ((Badge) host).setTextColor(c);
+                    }
+                });
             }
         });
     }
@@ -1534,13 +1525,9 @@ public final class Values {
     }
 
     public static Prop<TableCapability, Boolean> collapsed(@Nullable Readable<Boolean> source) {
-        return hostOwnedProp(TableCapability.class, "collapsed", target -> {
-            if (source == null) {
-                return;
-            }
-            Component host = hostOf(target);
-            if (host instanceof SolimCollapser) {
-                ((SolimCollapser) host).setCollapsed(source);
+        return hostProp(TableCapability.class, "collapsed", null, source, (element, v, host) -> {
+            if (v != null && host instanceof SolimCollapser) {
+                ((SolimCollapser) host).setCollapsed(v);
             }
         });
     }
@@ -1557,28 +1544,19 @@ public final class Values {
             Component host = hostOf(target);
             if (host instanceof SolimCollapser) {
                 SolimCollapser c = (SolimCollapser) host;
-                OwnershipContext.push(c);
-                try {
-                    new TwoWayBinding<>(
-                            signal,
-                            () -> !c.isCollapsed(),
-                            val -> c.setExpanded(Boolean.TRUE.equals(val)),
-                            onChange -> DisposableAction.empty());
-                } finally {
-                    OwnershipContext.pop();
-                }
+                new TwoWayBinding<>(
+                        signal,
+                        () -> !c.isCollapsed(),
+                        val -> c.setExpanded(Boolean.TRUE.equals(val)),
+                        onChange -> DisposableAction.empty());
             }
         });
     }
 
     public static Prop<TableCapability, Boolean> expanded(@Nullable Readable<Boolean> source) {
-        return hostOwnedProp(TableCapability.class, "expanded", target -> {
-            if (source == null) {
-                return;
-            }
-            Component host = hostOf(target);
-            if (host instanceof SolimCollapser) {
-                ((SolimCollapser) host).setExpanded(source);
+        return hostProp(TableCapability.class, "expanded", null, source, (element, v, host) -> {
+            if (v != null && host instanceof SolimCollapser) {
+                ((SolimCollapser) host).setExpanded(v);
             }
         });
     }
@@ -1612,23 +1590,9 @@ public final class Values {
     }
 
     public static Prop<VideoCapability, Boolean> loop(@Nullable Readable<Boolean> source) {
-        return hostOwnedProp(VideoCapability.class, "loop", target -> {
-            if (source == null) {
-                return;
-            }
-            Component host = hostOf(target);
-            if (host instanceof SolimVideo) {
-                OwnershipContext.push(host);
-                try {
-                    Effect.of(() -> {
-                        Boolean l = source.get();
-                        if (l != null) {
-                            ((SolimVideo) host).setLoop(l);
-                        }
-                    });
-                } finally {
-                    OwnershipContext.pop();
-                }
+        return hostProp(VideoCapability.class, "loop", null, source, (element, v, host) -> {
+            if (v != null && host instanceof SolimVideo) {
+                ((SolimVideo) host).setLoop(v);
             }
         });
     }
@@ -1642,23 +1606,9 @@ public final class Values {
     }
 
     public static Prop<VideoCapability, Float> volume(@Nullable Readable<Float> source) {
-        return hostOwnedProp(VideoCapability.class, "volume", target -> {
-            if (source == null) {
-                return;
-            }
-            Component host = hostOf(target);
-            if (host instanceof SolimVideo) {
-                OwnershipContext.push(host);
-                try {
-                    Effect.of(() -> {
-                        Float vol = source.get();
-                        if (vol != null) {
-                            ((SolimVideo) host).setVolume(vol);
-                        }
-                    });
-                } finally {
-                    OwnershipContext.pop();
-                }
+        return hostProp(VideoCapability.class, "volume", null, source, (element, v, host) -> {
+            if (v != null && host instanceof SolimVideo) {
+                ((SolimVideo) host).setVolume(v);
             }
         });
     }
@@ -1677,23 +1627,9 @@ public final class Values {
     }
 
     public static Prop<VideoCapability, Boolean> muted(@Nullable Readable<Boolean> source) {
-        return hostOwnedProp(VideoCapability.class, "muted", target -> {
-            if (source == null) {
-                return;
-            }
-            Component host = hostOf(target);
-            if (host instanceof SolimVideo) {
-                OwnershipContext.push(host);
-                try {
-                    Effect.of(() -> {
-                        Boolean m = source.get();
-                        if (m != null) {
-                            ((SolimVideo) host).setMuted(m);
-                        }
-                    });
-                } finally {
-                    OwnershipContext.pop();
-                }
+        return hostProp(VideoCapability.class, "muted", null, source, (element, v, host) -> {
+            if (v != null && host instanceof SolimVideo) {
+                ((SolimVideo) host).setMuted(v);
             }
         });
     }
@@ -1711,13 +1647,9 @@ public final class Values {
     }
 
     public static Prop<VideoCapability, Boolean> controls(@Nullable Readable<Boolean> source) {
-        return hostOwnedProp(VideoCapability.class, "controls", target -> {
-            if (source == null) {
-                return;
-            }
-            Component host = hostOf(target);
-            if (host instanceof SolimVideo) {
-                ((SolimVideo) host).setControls(source);
+        return hostProp(VideoCapability.class, "controls", null, source, (element, v, host) -> {
+            if (v != null && host instanceof SolimVideo) {
+                ((SolimVideo) host).setControls(v);
             }
         });
     }
@@ -1780,13 +1712,10 @@ public final class Values {
     }
 
     public static Prop<ElementCapability, Boolean> enabled(@Nullable Readable<Boolean> source) {
-        return hostOwnedProp(ElementCapability.class, "enabled", target -> {
-            if (source == null) {
-                return;
-            }
-            Component host = hostOf(target);
-            if (host instanceof Button) {
-                ((Button) host).setEnabled(source);
+        return hostProp(ElementCapability.class, "enabled", null, source, (element, v, host) -> {
+            if (v != null && host instanceof Button) {
+                boolean disabled = !Boolean.TRUE.equals(v);
+                ((Button) host).setDisabled(disabled);
             }
         });
     }
@@ -1797,21 +1726,18 @@ public final class Values {
             if (host instanceof SolimTextField) {
                 ((SolimTextField) host).setDisabled(disabled);
             } else if (host instanceof Button) {
-                ((Button) host).setDisabled(() -> disabled);
+                ((Button) host).setDisabled(disabled);
             }
         });
     }
 
     public static Prop<ElementCapability, Boolean> disabled(@Nullable Readable<Boolean> source) {
-        return hostOwnedProp("disabled", target -> {
-            if (source == null) {
-                return;
-            }
-            Component host = hostOf(target);
+        return hostProp("disabled", null, source, (element, v, host) -> {
+            boolean disabled = Boolean.TRUE.equals(v);
             if (host instanceof SolimTextField) {
-                ((SolimTextField) host).setDisabled(source);
+                ((SolimTextField) host).setDisabled(disabled);
             } else if (host instanceof Button) {
-                ((Button) host).setDisabled(() -> Boolean.TRUE.equals(source.get()));
+                ((Button) host).setDisabled(disabled);
             }
         });
     }
@@ -1844,7 +1770,8 @@ public final class Values {
             if (host instanceof Text) {
                 ((Text) host).setEllipsis(v);
             } else {
-                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept ellipsis prop");
+                throw new IllegalArgumentException(
+                        "Host " + host.getClass().getName() + " cannot accept ellipsis prop");
             }
         });
     }
@@ -1861,7 +1788,8 @@ public final class Values {
             if (host instanceof Text) {
                 ((Text) host).setFontScale(v);
             } else {
-                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept fontScale prop");
+                throw new IllegalArgumentException(
+                        "Host " + host.getClass().getName() + " cannot accept fontScale prop");
             }
         });
     }
@@ -1874,7 +1802,8 @@ public final class Values {
             if (host instanceof Text) {
                 ((Text) host).setFontScale(v);
             } else {
-                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept fontScale prop");
+                throw new IllegalArgumentException(
+                        "Host " + host.getClass().getName() + " cannot accept fontScale prop");
             }
         });
     }
@@ -1911,28 +1840,17 @@ public final class Values {
         });
     }
 
-    public static Prop<ImageCapability, Object> src(@Nullable Readable<?> source) {
-        return hostOwnedProp(ImageCapability.class, "src", target -> {
-            if (source == null) {
-                return;
-            }
-            Component host = hostOf(target);
+    public static <T> Prop<ImageCapability, T> src(@Nullable Readable<T> source) {
+        return Prop.elementSource(ImageCapability.class, "src", source, (element, v) -> {
+            Component host = SolimToken.getComponent(element);
             if (host instanceof SolimVideo) {
-                ((SolimVideo) host).src(toVideoReadable(source));
+                ((SolimVideo) host).loadSourceIfChanged(toVideoSource(v));
             } else if (host instanceof SolimImage) {
-                ((SolimImage) host).src(toImageReadable(source));
+                ((SolimImage) host).applySourceIfChanged(toImageSource(v));
             } else if (host != null) {
                 throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept src prop");
             }
         });
-    }
-
-    private static <T> Readable<VideoSource> toVideoReadable(Readable<T> source) {
-        return source.map(Values::toVideoSource);
-    }
-
-    private static <T> Readable<ImageSource> toImageReadable(Readable<T> source) {
-        return source.map(Values::toImageSource);
     }
 
     private static VideoSource toVideoSource(@Nullable Object value) {
@@ -1971,7 +1889,8 @@ public final class Values {
             } else if (host instanceof SolimVideo) {
                 ((SolimVideo) host).setPlaceholder(v);
             } else {
-                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept placeholder prop");
+                throw new IllegalArgumentException(
+                        "Host " + host.getClass().getName() + " cannot accept placeholder prop");
             }
         });
     }
@@ -1986,7 +1905,8 @@ public final class Values {
             } else if (host instanceof SolimVideo) {
                 ((SolimVideo) host).setFallback(v);
             } else {
-                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept fallback prop");
+                throw new IllegalArgumentException(
+                        "Host " + host.getClass().getName() + " cannot accept fallback prop");
             }
         });
     }
@@ -1999,7 +1919,8 @@ public final class Values {
             if (host instanceof SolimVideo) {
                 ((SolimVideo) host).setAutoplay(v);
             } else {
-                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept autoplay prop");
+                throw new IllegalArgumentException(
+                        "Host " + host.getClass().getName() + " cannot accept autoplay prop");
             }
         });
     }
@@ -2014,12 +1935,14 @@ public final class Values {
             } else if (host instanceof SolimVideo) {
                 ((SolimVideo) host).setRounded(v);
             } else {
-                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept imageRounded prop");
+                throw new IllegalArgumentException(
+                        "Host " + host.getClass().getName() + " cannot accept imageRounded prop");
             }
         });
     }
 
-    public static <Req extends HostCapability> Prop<Req, Void> raw(Class<Req> requires, String label, Prop.Kind kind, Cons<Object> mutation) {
+    public static <Req extends HostCapability> Prop<Req, Void> raw(Class<Req> requires, String label, Prop.Kind kind,
+            Cons<Object> mutation) {
         return Prop.raw(requires, label, kind, mutation);
     }
 
@@ -2053,27 +1976,27 @@ public final class Values {
         } else if (value instanceof LabelStyle && host instanceof Text) {
             ((Text) host).setStyle((LabelStyle) value);
         } else {
-            throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept style value of type " + value.getClass().getName());
+            throw new IllegalArgumentException("Host " + host.getClass().getName()
+                    + " cannot accept style value of type " + value.getClass().getName());
         }
     }
 
-    private static <Req extends HostCapability, V> Prop<Req, V> hostOwnedProp(Class<Req> requires, String label, Cons<Object> action) {
+    private static <Req extends HostCapability, V> Prop<Req, V> hostOwnedProp(Class<Req> requires, String label,
+            Cons<Object> action) {
         return Prop.raw(requires, label, Prop.Kind.ELEMENT, action);
-    }
-
-    private static <V> Prop<ElementCapability, V> hostOwnedProp(String label, Cons<Object> action) {
-        return hostOwnedProp(ElementCapability.class, label, action);
     }
 
     private static @Nullable Component hostOf(@Nullable Object target) {
         return target instanceof Element ? SolimToken.getComponent((Element) target) : null;
     }
 
-    private static <Req extends HostCapability, V> Prop<Req, V> hostProp(Class<Req> requires, String label, @Nullable V value, HostAction<V> action) {
+    private static <Req extends HostCapability, V> Prop<Req, V> hostProp(Class<Req> requires, String label,
+            @Nullable V value, HostAction<V> action) {
         return hostProp(requires, label, value, null, action);
     }
 
-    private static <Req extends HostCapability, V> Prop<Req, V> hostProp(Class<Req> requires, String label, @Nullable V value, @Nullable Readable<V> source,
+    private static <Req extends HostCapability, V> Prop<Req, V> hostProp(Class<Req> requires, String label,
+            @Nullable V value, @Nullable Readable<V> source,
             HostAction<V> action) {
         Cons2<Element, V> setter = (element, resolved) -> {
             Component host = SolimToken.getComponent(element);
@@ -2089,7 +2012,8 @@ public final class Values {
         return hostProp(ElementCapability.class, label, value, null, action);
     }
 
-    private static <V> Prop<ElementCapability, V> hostProp(String label, @Nullable V value, @Nullable Readable<V> source,
+    private static <V> Prop<ElementCapability, V> hostProp(String label, @Nullable V value,
+            @Nullable Readable<V> source,
             HostAction<V> action) {
         return hostProp(ElementCapability.class, label, value, source, action);
     }

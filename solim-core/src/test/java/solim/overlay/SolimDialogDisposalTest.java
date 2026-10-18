@@ -114,7 +114,7 @@ class SolimDialogDisposalTest extends OwnershipEnv {
 	void eventListenerUnregisteredOnDispose() {
 		SolimDialog dialog = new SolimDialog("Test");
 		AtomicInteger calls = new AtomicInteger(0);
-		dialog.withinOwnership(() -> dialog.listen(ResizeEvent.class, event -> calls.incrementAndGet()));
+		dialog.listen(ResizeEvent.class, event -> calls.incrementAndGet());
 
 		Events.fire(new ResizeEvent());
 		assertEquals(1, calls.get());

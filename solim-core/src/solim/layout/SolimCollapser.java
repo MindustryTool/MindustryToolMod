@@ -12,9 +12,7 @@ import solim.modifier.Configurable;
 import solim.modifier.ContainerCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
-import solim.modifier.TableCapability;
 import solim.reactive.Effect;
-import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.reactive.TwoWayBinding;
 import solim.core.DisposableAction;
@@ -22,7 +20,8 @@ import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 
 public final class SolimCollapser extends Component
-        implements GapContainer, Configurable<SolimCollapser>, TableCapability, CellCapability, ContainerCapability<SolimCollapser>, AlignmentCapability {
+        implements GapContainer, Configurable<SolimCollapser>, CellCapability, ContainerCapability<SolimCollapser>,
+        AlignmentCapability {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -113,53 +112,21 @@ public final class SolimCollapser extends Component
     }
 
     public void bindCollapsedSignal(Signal<Boolean> signal) {
-        OwnershipContext.push(this);
-        try {
-            new TwoWayBinding<>(
-                    signal,
-                    this::isCollapsed,
-                    this::setCollapsed,
-                    onChange -> {
-                        Effect.of(() -> {
-                            collapsedState.get();
-                            onChange.run();
-                        });
-                        return DisposableAction.empty();
-                    }
-            );
-        } finally {
-            OwnershipContext.pop();
-        }
-    }
-
-    public void setCollapsed(@Nullable Readable<Boolean> collapsed) {
-        if (collapsed != null) {
-            withinOwnership(() -> Effect.of(() -> {
-                Boolean col = collapsed.get();
-                if (col != null) {
-                    boolean anim = initialized && animated;
-                    collapser.setCollapsed(col, anim);
-                    initialized = true;
-                }
-            }));
-        }
+        new TwoWayBinding<>(
+                signal,
+                this::isCollapsed,
+                this::setCollapsed,
+                onChange -> {
+                    Effect.of(() -> {
+                        collapsedState.get();
+                        onChange.run();
+                    });
+                    return DisposableAction.empty();
+                });
     }
 
     public void setExpanded(boolean expanded) {
         setCollapsed(!expanded);
-    }
-
-    public void setExpanded(@Nullable Readable<Boolean> expanded) {
-        if (expanded != null) {
-            withinOwnership(() -> Effect.of(() -> {
-                Boolean exp = expanded.get();
-                if (exp != null) {
-                    boolean anim = initialized && animated;
-                    collapser.setCollapsed(!exp, anim);
-                    initialized = true;
-                }
-            }));
-        }
     }
 
     public SolimCollapser children(@Nullable Runnable r) {

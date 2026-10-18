@@ -185,36 +185,47 @@ If `build()` returns `null`, the component SHALL throw `IllegalStateException` w
 Confine raw ownership primitives to framework internals so application modules use only lifecycle-safe declarative paths.
 
 ### Requirement: No manual ownership API on the mod path
-Application components SHALL have no callable manual ownership method. `OwnershipContext.register()/registerChild()` is the canonical internal path; `listen()`/`createSignal()`/`effect()` are the canonical mod-facing lifecycle-safe paths.
+
+Application components SHALL have no callable manual ownership method and no callable ownership window. `OwnershipContext.register()/registerChild()` is the canonical internal path; `listen()`/`createSignal()`/`effect()` are the canonical mod-facing lifecycle-safe paths. `Component.withinOwnership(...)`, `openSelfWindow()`, and `closeSelfWindow()` SHALL NOT exist.
 
 #### Scenario: Guard test rejects manual ownership references
-- **WHEN** the ownership guard test scans `:mod` sources
-- **THEN** zero references to `own(` or `ownChild(` exist outside comments, and the test fails otherwise
 
-**Source: scoped-context-api**
+- **WHEN** the ownership guard test scans `:mod` sources
+- **THEN** zero references to `own(`, `ownChild(`, `withinOwnership(`, `openSelfWindow(`, or `closeSelfWindow(` exist outside comments, and the test fails otherwise
 
 ### Requirement: Ambient Lifecycle Ownership in Component Build
-The Solim framework SHALL automatically track child components, disposables, and Solim controls instantiated or attached while a component is the active ambient owner — inside its `build()` or inside a `children()` block — without requiring explicit ownership invocations. Ambient ownership SHALL be the only ownership path for application code and framework code alike. A component's constructor SHALL allocate plain values only, because the component is not the active ambient owner while its own constructor runs.
+
+The Solim framework SHALL automatically track child components, disposables, and Solim controls instantiated or attached while a component is the active ambient owner — inside its `build()`, inside a `children()` block, or while its properties are applied — without requiring explicit ownership invocations. Ambient ownership SHALL be the only ownership path for application code and framework code alike. A component's constructor SHALL NOT open an ownership window: while its constructor runs the component is not the active ambient owner, so a constructor that needs an owned resource SHALL declare a property (which the host applies in its own window) or use a primitive that adopts to the host.
 
 #### Scenario: Child component created in build context
+
 - **WHEN** a component instantiates child components or Solim controls within its `build()` method
 - **THEN** the child components and controls are automatically registered with the parent component's disposable registry and disposed when the parent is disposed
 
 #### Scenario: Child component created in a children block
+
 - **WHEN** a component instantiates child components or Solim controls within its own `children()` block
 - **THEN** the children are registered against that component, not against the enclosing scope
 
-#### Scenario: Constructor allocates plain values only
-- **WHEN** a component's constructor body runs
-- **THEN** the component is not the active ambient owner, so any owned resource it would create belongs to that resource's own construction site rather than the component
+#### Scenario: Constructor declares a property instead of owning
+
+- **WHEN** a component's constructor needs a reactive value, or a child that must belong to it
+- **THEN** the constructor declares a property that the host applies in its own window, or uses a self-adopting primitive, and creates no owned resource while its constructor runs
+
+#### Scenario: Resources created during property application belong to the host
+
+- **WHEN** a property application creates a binding, a two-way binding, or a listener
+- **THEN** the resource is adopted by the host because property application runs with the host as the active ambient owner
 
 #### Scenario: Clean stack unwinding on build failure
+
 - **WHEN** a component's `build()` method throws an exception during construction
 - **THEN** the ambient build context stack is cleanly unwound and does not leak context to subsequent component builds
 
 #### Scenario: No manual ownership call exists to misuse
+
 - **WHEN** framework or application code needs to bind a resource to the current component
-- **THEN** no ownership method can be called on the component, because ownership is expressed solely by the ambient context the resource is created in
+- **THEN** no ownership method or ownership window can be called on the component, because ownership is expressed solely by the ambient context the resource is created in
 
 ### Requirement: OwnershipContext is the canonical internal registration path
 Framework code outside `solim.core` that must own a resource SHALL use `OwnershipContext.register(disposable)` or `OwnershipContext.registerChild(child)` instead of calling `own()` directly. These methods SHALL be null-safe, pause-aware, and delegate to the ambient owning component.

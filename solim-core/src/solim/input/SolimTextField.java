@@ -21,7 +21,6 @@ import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.modifier.TextCapability;
 import solim.modifier.WrappableCapability;
-import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.style.InputStyle;
@@ -33,7 +32,6 @@ public final class SolimTextField extends Component
     private final TextField field;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private @Nullable Props<SolimTextField> pending;
-    private Effect disabledEffect;
     private Boolf<String> validator;
     private final Signal<Boolean> valid = Signal.of(true);
 
@@ -120,13 +118,6 @@ public final class SolimTextField extends Component
 
     public void setDisabled(boolean disabled) {
         field.setDisabled(disabled);
-    }
-
-    public void setDisabled(Readable<Boolean> disabled) {
-        if (disabledEffect != null) {
-            disabledEffect.dispose();
-        }
-        withinOwnership(() -> disabledEffect = Effect.of(disabled, d -> field.setDisabled(Boolean.TRUE.equals(d))));
     }
 
     public void setPlaceholder(String placeholder) {

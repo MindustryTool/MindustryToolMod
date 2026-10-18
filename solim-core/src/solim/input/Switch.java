@@ -13,14 +13,11 @@ import solim.modifier.AlignmentCapability;
 import solim.modifier.CellCapability;
 import solim.modifier.CheckableCapability;
 import solim.modifier.Configurable;
-import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
-import solim.reactive.Effect;
-import solim.reactive.Readable;
 
 public final class Switch extends Component
-        implements Configurable<Switch>, ElementCapability, CellCapability, AlignmentCapability, CheckableCapability {
+        implements Configurable<Switch>, CellCapability, AlignmentCapability, CheckableCapability {
     private final TextButton button;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private @Nullable Props<Switch> pending;
@@ -90,19 +87,10 @@ public final class Switch extends Component
         return this;
     }
 
-    public void setChecked(@Nullable Readable<Boolean> source) {
-        if (source != null) {
-            OwnershipContext.push(this);
-            try {
-                Effect.of(() -> {
-                    state = Boolean.TRUE.equals(source.get());
-                    button.setText(state ? "ON" : "OFF");
-                    button.setChecked(state);
-                });
-            } finally {
-                OwnershipContext.pop();
-            }
-        }
+    public void setChecked(boolean checked) {
+        state = checked;
+        button.setText(checked ? "ON" : "OFF");
+        button.setChecked(checked);
     }
 
     public boolean isChecked() {

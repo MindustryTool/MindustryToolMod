@@ -50,33 +50,6 @@ public abstract class Component implements DisposableOwner, HostCapability {
         return true;
     }
 
-    /**
-     * Pushes this component as the ambient owner. Use it where a component creates owned
-     * resources outside its {@code build()} — in a constructor or in a modifier — so the ambient
-     * owner is unambiguous instead of whatever happened to be on the stack. Always pair with
-     * {@link #closeSelfWindow()} in a {@code finally} block.
-     */
-    public final void openSelfWindow() {
-        OwnershipContext.push(this);
-    }
-
-    public final void closeSelfWindow() {
-        OwnershipContext.pop(this);
-    }
-
-    /**
-     * Runs {@code block} with this component as the ambient owner, so every resource it creates
-     * is adopted by this component and disposed with it.
-     */
-    public final void withinOwnership(Runnable block) {
-        openSelfWindow();
-        try {
-            block.run();
-        } finally {
-            closeSelfWindow();
-        }
-    }
-
     protected Element build() {
         throw new UnsupportedOperationException(
                 getClass().getSimpleName() + " was constructed lazily but does not implement build()");
@@ -207,7 +180,9 @@ public abstract class Component implements DisposableOwner, HostCapability {
 
     public <T> Disposable listen(Class<T> eventType, Cons<T> listener) {
         Events.on(eventType, listener);
-        return OwnershipContext.register(DisposableAction.of(() -> Events.remove(eventType, listener)));
+        Disposable registration = DisposableAction.of(() -> Events.remove(eventType, listener));
+        adopt(registration);
+        return registration;
     }
 
     public final boolean isBuilt() {

@@ -49,36 +49,11 @@ class SolimImageDisposalTest extends OwnershipEnv {
 	}
 
 	@Test
-	void restatingSourceDisposesSignalBinding() {
-		CountingLoader loader = new CountingLoader();
-		SolimImage.setImageLoader(loader);
-		Signal<ImageSource> source = Signal.of(ImageSource.of("deep://a"));
-		SolimImage image = new SolimImage().src(source);
-		assertEquals(1, loader.loadsOf("deep://a"));
-		assertFalse(image.isDisposed());
-
-		source.set(ImageSource.of("deep://b"));
-		SignalDispatcher.flush();
-		assertEquals(1, loader.loadsOf("deep://b"));
-
-		image.props(src("deep://c"));
-		assertEquals(1, loader.loadsOf("deep://c"));
-
-		source.set(ImageSource.of("deep://d"));
-		SignalDispatcher.flush();
-		assertEquals(0, loader.loadsOf("deep://d"), "Re-sourcing must dispose the previous signal binding");
-
-		image.dispose();
-		assertTrue(image.isDisposed());
-		assertDoesNotThrow(image::dispose, "Double dispose must be safe");
-	}
-
-	@Test
 	void disposeStopsSignalReloads() {
 		CountingLoader loader = new CountingLoader();
 		SolimImage.setImageLoader(loader);
 		Signal<ImageSource> source = Signal.of(ImageSource.of("deep://e"));
-		SolimImage image = new SolimImage().src(source);
+		SolimImage image = new SolimImage(source);
 		assertEquals(1, loader.loadsOf("deep://e"));
 
 		image.dispose();

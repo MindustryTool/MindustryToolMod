@@ -133,7 +133,7 @@ class MediaSourceTest extends SolimEnv {
                 success.get("https://example.com/a.png".equals(url) ? regionA : regionB));
 
         Signal<ImageSource> source = Signal.of(ImageSource.of("https://example.com/a.png"));
-        SolimImage image = new SolimImage().src(source);
+        SolimImage image = new SolimImage(source);
         assertSame(regionA, ((TextureRegionDrawable) image.image().getDrawable()).getRegion());
 
         source.set(ImageSource.of("https://example.com/b.png"));

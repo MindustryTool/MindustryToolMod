@@ -1,7 +1,6 @@
 package solim.overlay;
 
 import arc.Core;
-import arc.Events;
 import arc.func.Cons;
 import arc.input.KeyCode;
 import arc.scene.Element;
@@ -13,7 +12,6 @@ import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import mindustry.game.EventType.ResizeEvent;
 import solim.core.Component;
-import solim.core.DisposableAction;
 import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.layout.Row;
@@ -86,9 +84,7 @@ public class Hud extends Component
             keepInScreen();
             Core.app.post(this::keepInScreenIfLive);
         };
-        Events.on(ResizeEvent.class, resizeListener);
-        withinOwnership(() -> OwnershipContext.register(
-                DisposableAction.of(() -> Events.remove(ResizeEvent.class, resizeListener))));
+        listen(ResizeEvent.class, resizeListener);
     }
 
     private void keepInScreenIfLive() {

@@ -9,7 +9,7 @@ Mechanical merge of 12 specs per change `spec-domain-merge` (stage 4 framework-u
 
 ### Requirement: Text widget with static and reactive content
 
-`Text` SHALL display string content via `text(String)` and `text(Readable<String>)` (reactive). It SHALL wrap `arc.scene.ui.Label`, and its configuration SHALL be declared through `.props(...)`: `.props(color(...))`, `.props(style(LabelStyle))`, `.props(wrap(boolean))`, `.props(ellipsis(boolean))`, `.props(fontScale(float))`, alignment via `.props(left(), center(), right())`, and padding/margin via `.props(padding(...), margin(...))`. The chained configuration setters `.color(...)`, `.style(...)`, `.wrap(boolean)`, `.ellipsis(boolean)`, `.fontScale(float)`, the alignment setters, and the padding/margin setters SHALL NOT exist. Separate `text(Signal<String>)` and `text(Computed<String>)` overloads SHALL NOT exist; reactive sources bind through `Readable<String>` because `Signal` and `Computed` implement it. Reactive bindings SHALL be managed internally by the component lifecycle.
+`Text` SHALL display string content. Static content is supplied at construction through the `text(...)` facades, and reactive content is declared through `.props(text(Readable<String>))`; a `text(Signal<String>)` or `text(Computed<String>)` overload SHALL NOT exist because `Signal` and `Computed` implement `Readable`, and a reactive applier such as `setText(Readable<String>)` SHALL NOT exist. `Text` SHALL wrap `arc.scene.ui.Label`, and its configuration SHALL be declared through `.props(...)`: `.props(color(...))`, `.props(style(LabelStyle))`, `.props(wrap(boolean))`, `.props(ellipsis(boolean))`, `.props(fontScale(float))`, alignment via `.props(left(), center(), right())`, and padding/margin via `.props(padding(...), margin(...))`. The chained configuration setters `.color(...)`, `.style(...)`, `.wrap(boolean)`, `.ellipsis(boolean)`, `.fontScale(float)`, the alignment setters, and the padding/margin setters SHALL NOT exist. Reactive bindings SHALL be owned by the component that declares them and disposed with it.
 
 #### Scenario: Static Text
 
@@ -18,13 +18,18 @@ Mechanical merge of 12 specs per change `spec-domain-merge` (stage 4 framework-u
 
 #### Scenario: Reactive Text
 
-- **WHEN** `Computed<String> t = count.map(v -> "Count: " + v)` and `text(t)` then `count.set(5)`
-- **THEN** label text updates to "Count: 5" via binding without recreation
+- **WHEN** `text("").props(text(count.map(v -> "Count: " + v)))` is declared and `count.set(5)`
+- **THEN** the label text updates to "Count: 5" through the binding, without recreation
 
 #### Scenario: Signal binds through the Readable overload
 
-- **WHEN** `Signal<String> name = Signal.of("Alice")` and `text(name)` is declared
-- **THEN** it resolves to `text(Readable<String>)` and updates when `name` changes
+- **WHEN** `Signal<String> name = Signal.of("Alice")` is passed to the `text` property factory
+- **THEN** it resolves to `text(Readable<String>)` and the label updates when `name` changes
+
+#### Scenario: Reactive text needs no setter
+
+- **WHEN** the public API of `Text` is inspected
+- **THEN** no `setText(Readable<String>)` applier exists, and reactive text is declared only through the `text` property
 
 #### Scenario: Configuration declared in props
 
@@ -51,17 +56,26 @@ Mechanical merge of 12 specs per change `spec-domain-merge` (stage 4 framework-u
 - **THEN** the parent cell padding around the image reflects the combined padding and margin
 
 ### Requirement: Badge and Avatar lightweight components
-`Badge` SHALL be a lightweight label/container for counts/status. Count badges SHALL be created through `badge(int)` or `badge(Readable<String>)` (with caller-side formatting such as `"99+"`); a separate `badgeCount(...)` facade SHALL NOT exist. `Avatar` SHALL display user image with fallback.
+
+`Badge` SHALL be a lightweight label/container for counts/status. It SHALL declare its content through the shared `text` capability, so reactive badge text is declared with `.props(text(Readable<String>))` just as for `Text`. Count badges SHALL be created through `badge(int)` or `badge(Readable<String>)` (with caller-side formatting such as `"99+"`); a separate `badgeCount(...)` facade SHALL NOT exist. `Badge` SHALL own its internal label without manual ownership registration, and its zero-hiding behaviour SHALL be expressed as a reactive property rather than an imperative binding created outside a property application. `Avatar` SHALL display user image with fallback.
 
 #### Scenario: Badge count
+
 - **WHEN** `badge(count.map(v -> v > 99 ? "99+" : String.valueOf(v)))` is used
 - **THEN** badge text updates reactively
 
 #### Scenario: Static integer badge
+
 - **WHEN** `badge(3)` is used
 - **THEN** a count badge showing "3" is created and hidden when the count is zero
 
+#### Scenario: Reactive badge text is declared as a property
+
+- **WHEN** a badge is given a `Readable<String>` through the `text` property
+- **THEN** the internal label is owned by the badge and updated by the property binding, with no manual ownership registry call
+
 #### Scenario: badgeCount facade is absent
+
 - **WHEN** the public facade is inspected
 - **THEN** `badgeCount(...)` is not declared
 

@@ -10,15 +10,14 @@ import arc.util.Nullable;
 import arc.util.Scaling;
 import java.util.Objects;
 import solim.core.Component;
-import solim.core.Disposable;
 import solim.core.SolimToken;
 import solim.modifier.AlignmentCapability;
 import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.ImageCapability;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.Prop;
 import solim.modifier.Props;
-import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
@@ -28,7 +27,6 @@ public final class SolimImage extends Component
     private final Image element;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private @Nullable Props<SolimImage> pending;
-    private @Nullable Disposable sourceBinding;
     private @Nullable ImageSource source;
     private @Nullable Drawable placeholder;
     private @Nullable Drawable fallback;
@@ -61,7 +59,7 @@ public final class SolimImage extends Component
 
     public SolimImage(@Nullable Readable<ImageSource> source) {
         this();
-        src(source);
+        props(Prop.elementSource(ImageCapability.class, "src", source, (element, v) -> applySourceIfChanged(v)));
     }
 
     private SolimImage(Image element, Scaling scaling) {
@@ -77,7 +75,8 @@ public final class SolimImage extends Component
 
     public static SolimImage of(Signal<Drawable> drawable) {
         SolimImage image = new SolimImage();
-        image.drawable(drawable);
+        image.props(Prop.elementSource(ImageCapability.class, "src", drawable.map(ImageSource::of),
+                (element, v) -> image.applySourceIfChanged(v)));
         return image;
     }
 
@@ -134,24 +133,14 @@ public final class SolimImage extends Component
     }
 
     public SolimImage src(@Nullable ImageSource source) {
-        disposeSourceBinding();
         applySource(source);
         return this;
     }
 
-    public SolimImage src(@Nullable Readable<ImageSource> source) {
-        disposeSourceBinding();
-        if (source == null) {
-            applySource(null);
-            return this;
+    public void applySourceIfChanged(@Nullable ImageSource next) {
+        if (!Objects.equals(next, source)) {
+            applySource(next);
         }
-        withinOwnership(() -> sourceBinding = Effect.of(() -> {
-            ImageSource next = source.get();
-            if (!Objects.equals(next, this.source)) {
-                applySource(next);
-            }
-        }));
-        return this;
     }
 
     public SolimImage src(@Nullable String url) {
@@ -163,7 +152,6 @@ public final class SolimImage extends Component
     }
 
     public SolimImage drawable(@Nullable Drawable drawable) {
-        disposeSourceBinding();
         source = null;
         failed = false;
         loadGeneration++;
@@ -171,18 +159,7 @@ public final class SolimImage extends Component
         return this;
     }
 
-    public SolimImage drawable(@Nullable Readable<Drawable> drawable) {
-        if (drawable != null) {
-            withinOwnership(() -> Effect.of(() -> drawable(drawable.get())));
-        }
-        return this;
-    }
-
     public SolimImage icon(@Nullable Drawable drawable) {
-        return drawable(drawable);
-    }
-
-    public SolimImage icon(@Nullable Readable<Drawable> drawable) {
         return drawable(drawable);
     }
 
@@ -276,14 +253,6 @@ public final class SolimImage extends Component
     @Override
     protected void onDispose() {
         loadGeneration++;
-        disposeSourceBinding();
-    }
-
-    private void disposeSourceBinding() {
-        if (sourceBinding != null) {
-            sourceBinding.dispose();
-            sourceBinding = null;
-        }
     }
 
     private void applySource(@Nullable ImageSource source) {

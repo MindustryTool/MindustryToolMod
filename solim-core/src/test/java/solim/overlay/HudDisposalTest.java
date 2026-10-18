@@ -88,7 +88,7 @@ class HudDisposalTest extends OwnershipEnv {
 		Hud hud = new Hud();
 		hud.root().setSize(200f, 100f);
 		hud.props(position(800f, 600f));
-		hud.withinOwnership(() -> hud.keepInScreen());
+		hud.keepInScreen();
 		assertFalse(hud.isDisposed());
 
 		mockGraphics.width = 800;
