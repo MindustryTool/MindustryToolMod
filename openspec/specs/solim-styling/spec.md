@@ -3,12 +3,12 @@
 ## Purpose
 
 Mechanical merge of 8 specs per change `spec-domain-merge` (stage 4 framework-ui, concat-then-dedupe). Sources: solim-styling, pure-button-component, pure-solim-components, solim-badge, solim-card, solim-rounded, unified-border-background, web-styles. Each source below appears under a `**Source:` marker with its purpose body and requirement blocks verbatim; per-source `## Purpose` / `## Requirements` header lines are removed so all requirements parse inside the single `## Requirements` section. TBD purposes carried forward; requirement dedupe is follow-up work.
-
 ## Requirements
 
 **Source: solim-styling**
 
 TBD - created by archiving change create-solim-core. Update Purpose after archive.
+
 ### Requirement: Style immutable value object
 `Style` SHALL be an immutable object holding Arc-relevant styling data (e.g., `Drawable background`, `Color`, `font`, `pad`/`margin` variants relevant to widget, or a reference to Arc `TextButtonStyle`/`LabelStyle` wrapper) and SHALL NOT be mutated after creation. Predefined instances SHALL be provided via `Styles` constants (`PRIMARY`, `GHOST`, etc.).
 
@@ -57,7 +57,6 @@ A reactive style SHALL be declared as a capability-typed prop through `.props(..
 
 - **WHEN** a reactive style is declared whose value type is `Readable<LabelStyle>`
 - **THEN** it resolves to the label overload and requires the label capability
-
 
 ### Requirement: Style application without diffing or CSS
 Framework SHALL NOT implement CSS parsing, CSS Grid/Flexbox recreation, or style diffing beyond straightforward full re-apply. Do not attempt to diff individual style fields unless Arc internals require it.
@@ -127,6 +126,7 @@ The system SHALL maintain a thread-safe flyweight cache for static style configu
 **Source: pure-button-component**
 
 TBD - created by archiving change pure-solim-button-refactor. Update Purpose after archive.
+
 ### Requirement: Solim provides a pure composable button component
 The Solim UI framework SHALL provide a single `button()` container component that accepts an optional click listener, centers its child elements by default, and relies on `.children()` blocks for content layout and composition.
 
@@ -144,6 +144,7 @@ The system SHALL NOT provide `IconButton` or specialized text/icon factory overl
 **Source: pure-solim-components**
 
 TBD - created by archiving change pure-solim-button-refactor. Update Purpose after archive.
+
 ### Requirement: Solim components are unstyled by default
 Solim UI layout and input components SHALL NOT automatically inject or resolve default UI styles or skins (`ButtonStyle`, `ImageButtonStyle`, skin fallbacks).
 
@@ -180,6 +181,7 @@ The system SHALL provide a Badge component (solim.display.Badge, Ui.badge) for c
 **Source: solim-card**
 
 Clickable, styled card container component with declarative child composition, fluent chained reactive property bindings, and click event bubbling control.
+
 ### Requirement: Declarative Card Container Component
 The framework SHALL provide a `Card` component wrapping a single Arc `Table` as its clickable container element, such that `element()`, `table()`, and `container()` return the same instance. It SHALL support declarative child composition via `AttachmentStack`, custom click handling installed lazily only when `.onClick(Runnable)` is set, and event bubbling control.
 
@@ -199,13 +201,6 @@ The framework SHALL provide a `Card` component wrapping a single Arc `Table` as 
 - **WHEN** a card is created without `.onClick()`
 - **THEN** no `ClickListener` is installed on its table.
 
-### Requirement: Chained Reactive Property Bindings on Card
-The `Card` component SHALL provide fluent modifier methods for reactive and static properties including `.width(Readable<Float>)`, `.width(float)`, `.height(Readable<Float>)`, `.height(float)`, `.prefHeight(float)`, `.color(Readable<Color>)`, `.color(Color)`, `.background(Drawable)`, `.background(Color)`, `.name(String)`, and `.padding(float)` targeting the single card table. The reactive bindings SHALL be automatically managed and disposed by the component lifecycle.
-
-#### Scenario: Reactive width and color binding
-- **WHEN** `card(...).width(cardWidth).color(cardColor)` is rendered and the underlying signals update
-- **THEN** the card element's width and color are updated in place and layout is invalidated without reconstructing the card.
-
 ### Requirement: Click Event Bubbling Control in Card
 The `Card` component and child widgets SHALL support event bubbling control such that interactive child controls can consume click events without triggering the card's click handler.
 
@@ -223,6 +218,7 @@ The `Card` inner container SHALL default children to top-left alignment via both
 **Source: solim-rounded**
 
 TBD - created by archiving change add-squircle-background-and-border. Update Purpose after archive.
+
 ### Requirement: Procedural continuous-curvature rounded 9-patch generation
 The system SHALL generate pure white 9-patch drawables for continuous-curvature rounded shapes using the L4 superellipse norm (x^4 + y^4 <= r^4) with sub-pixel anti-aliasing.
 
@@ -317,7 +313,6 @@ The system SHALL automatically clamp the rendered corner radius in RoundedDrawab
 **Source: web-styles**
 
 Provides shadcn/ui-inspired semantic design-system button styles with a centralized color sheet, five shared variants (primary/secondary/outline/ghost/danger), continuous rounded borders and multi-state visuals with built-in padding for web and browser components without mutating Arc global styles.
-
 
 ### Requirement: Semantic Color Sheet (WebStyles.Colors)
 The system SHALL provide a nested `WebStyles.Colors` static class containing semantic color tokens derived from the shadcn/ui dark theme:

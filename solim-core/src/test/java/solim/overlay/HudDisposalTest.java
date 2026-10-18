@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.opacity;
 import static solim.modifier.Values.position;
+import static solim.modifier.Values.scale;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -113,8 +115,7 @@ class HudDisposalTest extends OwnershipEnv {
 		Signal<Float> opacity = Signal.of(1f);
 		Signal<Float> scale = Signal.of(1f);
 		Hud hud = new Hud();
-		hud.opacity(opacity);
-		hud.scale(scale);
+		hud.props(opacity(opacity), scale(scale));
 		assertFalse(hud.isDisposed());
 
 		opacity.set(0.5f);

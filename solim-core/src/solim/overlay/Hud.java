@@ -9,7 +9,6 @@ import arc.scene.Group;
 import arc.scene.event.InputEvent;
 import arc.scene.event.InputListener;
 import arc.scene.event.Touchable;
-import arc.scene.style.Drawable;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import mindustry.game.EventType.ResizeEvent;
@@ -23,8 +22,6 @@ import solim.modifier.TableCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.runtime.AttachmentStack;
-import solim.reactive.Effect;
-import solim.reactive.Readable;
 import solim.reactive.Signal;
 import arc.scene.event.ClickListener;
 import arc.scene.event.EventListener;
@@ -121,17 +118,7 @@ public class Hud extends Component
     }
 
     public Table table() {
-        return root;
-    }
-
-    public Hud touchable(Touchable touchable) {
-        root.touchable = touchable;
-        return this;
-    }
-
-    public Hud containerTouchable(Touchable touchable) {
-        container.touchable = touchable;
-        return this;
+        return container;
     }
 
     public Hud toFrontOnTouch() {
@@ -178,18 +165,6 @@ public class Hud extends Component
         return null;
     }
 
-    public Hud background(@Nullable Drawable bg) {
-        container.background(bg);
-        return this;
-    }
-
-    public Hud background(@Nullable Readable<Drawable> bg) {
-        if (bg != null) {
-            withinOwnership(() -> Effect.of(() -> container.background(bg.get())));
-        }
-        return this;
-    }
-
     public Hud children(@Nullable Runnable r) {
         applyPendingProps();
         OwnershipContext.push(this);
@@ -212,88 +187,6 @@ public class Hud extends Component
 
     public void bindYSignal(@Nullable Signal<Float> ySignal) {
         this.boundYSignal = ySignal;
-    }
-
-    public Hud x(Readable<Float> x) {
-        if (x instanceof Signal) {
-            this.boundXSignal = (Signal<Float>) x;
-        }
-        if (x != null) {
-            OwnershipContext.push(this);
-            try {
-                Effect.of(() -> {
-                    Float v = x.get();
-                    if (v != null) {
-                        Element el = element();
-                        if (el != null) {
-                            el.x = v;
-                        }
-                    }
-                });
-            } finally {
-                OwnershipContext.pop();
-            }
-        }
-        return this;
-    }
-
-    public Hud y(Readable<Float> y) {
-        if (y instanceof Signal) {
-            this.boundYSignal = (Signal<Float>) y;
-        }
-        if (y != null) {
-            OwnershipContext.push(this);
-            try {
-                Effect.of(() -> {
-                    Float v = y.get();
-                    if (v != null) {
-                        Element el = element();
-                        if (el != null) {
-                            el.y = v;
-                        }
-                    }
-                });
-            } finally {
-                OwnershipContext.pop();
-            }
-        }
-        return this;
-    }
-
-    public Hud opacity(float a) {
-        float val = Math.max(0f, Math.min(1f, a));
-        root.color.a = val;
-        container.color.a = val;
-        return this;
-    }
-
-    public Hud opacity(@Nullable Readable<Float> opacity) {
-        if (opacity == null)
-            return this;
-        withinOwnership(() -> Effect.of(() -> {
-            Float v = opacity.get();
-            if (v != null)
-                opacity(v);
-        }));
-        return this;
-    }
-
-    public Hud scale(float s) {
-        container.setScale(s);
-        return this;
-    }
-
-    public Hud scale(Readable<Float> s) {
-        if (s != null) {
-            withinOwnership(() -> Effect.of(() -> {
-                Float v = s.get();
-                if (v != null) {
-                    container.setScale(v);
-                    root.pack();
-                }
-            }));
-        }
-        return this;
     }
 
     public Hud draggable(Element handle) {

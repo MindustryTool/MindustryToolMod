@@ -721,9 +721,8 @@ public final class Values {
 
     public static Prop<ElementCapability, Float> x(Readable<Float> source) {
         return hostProp("x", null, source, (element, v, host) -> {
-            if (host instanceof Hud) {
-                ((Hud) host).x(source);
-                return;
+            if (host instanceof Hud && source instanceof Signal) {
+                ((Hud) host).bindXSignal((Signal<Float>) source);
             }
             if (v != null) {
                 element.x = v;
@@ -733,14 +732,34 @@ public final class Values {
 
     public static Prop<ElementCapability, Float> y(Readable<Float> source) {
         return hostProp("y", null, source, (element, v, host) -> {
-            if (host instanceof Hud) {
-                ((Hud) host).y(source);
-                return;
+            if (host instanceof Hud && source instanceof Signal) {
+                ((Hud) host).bindYSignal((Signal<Float>) source);
             }
             if (v != null) {
                 element.y = v;
             }
         });
+    }
+
+    public static Prop<ElementCapability, Float> scale(float scale) {
+        return hostProp("scale", scale, Values::applyScale);
+    }
+
+    public static Prop<ElementCapability, Float> scale(Readable<Float> source) {
+        return hostProp("scale", null, source, Values::applyScale);
+    }
+
+    private static void applyScale(Element element, @Nullable Float value, Component host) {
+        if (value == null) {
+            return;
+        }
+        if (host instanceof Hud) {
+            Hud hud = (Hud) host;
+            hud.container().setScale(value);
+            hud.pack();
+        } else {
+            element.setScale(value);
+        }
     }
 
     private static void fade(Element element, @Nullable Float value, Component host) {

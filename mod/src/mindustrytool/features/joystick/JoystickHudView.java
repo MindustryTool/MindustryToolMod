@@ -2,6 +2,7 @@ package mindustrytool.features.joystick;
 
 import static solim.UI.*;
 import static solim.modifier.Values.draggable;
+import static solim.modifier.Values.opacity;
 import static solim.modifier.Values.position;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
@@ -40,8 +41,9 @@ public class JoystickHudView extends Component {
             });
         });
 
-        hud.props(position(feature.posXConfig.signal(), feature.posYConfig.signal()));
-        hud.opacity(feature.opacityConfig.signal());
+        hud.props(
+                position(feature.posXConfig.signal(), feature.posYConfig.signal()),
+                opacity(feature.opacityConfig.signal()));
 
         listen(ResizeEvent.class, e -> {
             keepInScreen();

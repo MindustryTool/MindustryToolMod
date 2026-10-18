@@ -10,6 +10,7 @@ import static solim.modifier.Values.growX;
 import static solim.modifier.Values.growY;
 import static solim.modifier.Values.left;
 import static solim.modifier.Values.margin;
+import static solim.modifier.Values.opacity;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.position;
 import static solim.modifier.Values.prefHeight;
@@ -64,8 +65,9 @@ public class ChatOverlayHudView extends Component {
                     .elseDo(this::buildExpandedWindow);
         });
 
-        hud.opacity(feature.opacityConfig.signal());
-        hud.props(position(feature.xSignal, feature.ySignal));
+        hud.props(
+                opacity(feature.opacityConfig.signal()),
+                position(feature.xSignal, feature.ySignal));
         hud.toFrontOnTouch();
 
         listen(ResizeEvent.class, e -> {

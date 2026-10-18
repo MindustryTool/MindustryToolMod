@@ -1,6 +1,7 @@
 package mindustrytool.features.playerconnect.ui;
 
 import static solim.UI.*;
+import static solim.modifier.Values.background;
 import static solim.modifier.Values.color;
 import static solim.modifier.Values.height;
 import static solim.modifier.Values.margin;
@@ -36,10 +37,10 @@ public class JoinApprovalHudView extends Component {
             dynamic(feature.currentRequestSignal(), this::buildRequestBanner);
         });
 
-        hud.background(Styles.black8);
-        hud.props(visible(feature.currentRequestSignal().map(r -> r != null)));
-
-        hud.props(position(Units.screenWidth() / 2f, Units.screenHeight() - 50f));
+        hud.props(
+                background(Styles.black8),
+                visible(feature.currentRequestSignal().map(r -> r != null)),
+                position(Units.screenWidth() / 2f, Units.screenHeight() - 50f));
 
         return hud.element();
     }

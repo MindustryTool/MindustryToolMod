@@ -8,23 +8,28 @@ Mechanical merge of 12 specs per change `spec-domain-merge` (stage 4 framework-u
 **Source: solim-widgets**
 
 ### Requirement: Text widget with static and reactive content
-`Text` SHALL display string content via `text(String)` and `text(Readable<String>)` (reactive). It SHALL wrap `arc.scene.ui.Label` and provide fluent chained property modifiers including `.color(Color)`, `.color(Readable<Color>)`, `.style(LabelStyle)`, `.wrap(boolean)`, `.ellipsis(boolean)`, `.fontScale(float)`, text alignment (`.left()`, `.center()`, `.right()`), and padding/margin modifiers (`.padding(float)`, `.padding(float, float, float, float)`, `.paddingTop(float)`, `.paddingBottom(float)`, `.paddingLeft(float)`, `.paddingRight(float)`, `.margin(float)`, `.margin(float, float, float, float)`, `.marginTop(float)`, `.marginBottom(float)`, `.marginLeft(float)`, `.marginRight(float)`). Separate `text(Signal<String>)` and `text(Computed<String>)` overloads SHALL NOT exist; reactive sources bind through `Readable<String>` because `Signal` and `Computed` implement it. Reactive bindings SHALL be managed internally by the component lifecycle.
+
+`Text` SHALL display string content via `text(String)` and `text(Readable<String>)` (reactive). It SHALL wrap `arc.scene.ui.Label`, and its configuration SHALL be declared through `.props(...)`: `.props(color(...))`, `.props(style(LabelStyle))`, `.props(wrap(boolean))`, `.props(ellipsis(boolean))`, `.props(fontScale(float))`, alignment via `.props(left(), center(), right())`, and padding/margin via `.props(padding(...), margin(...))`. The chained configuration setters `.color(...)`, `.style(...)`, `.wrap(boolean)`, `.ellipsis(boolean)`, `.fontScale(float)`, the alignment setters, and the padding/margin setters SHALL NOT exist. Separate `text(Signal<String>)` and `text(Computed<String>)` overloads SHALL NOT exist; reactive sources bind through `Readable<String>` because `Signal` and `Computed` implement it. Reactive bindings SHALL be managed internally by the component lifecycle.
 
 #### Scenario: Static Text
+
 - **WHEN** `text("Settings")` is called
 - **THEN** a `Label` with "Settings" is created and added to current parent
 
 #### Scenario: Reactive Text
+
 - **WHEN** `Computed<String> t = count.map(v -> "Count: " + v)` and `text(t)` then `count.set(5)`
 - **THEN** label text updates to "Count: 5" via binding without recreation
 
 #### Scenario: Signal binds through the Readable overload
+
 - **WHEN** `Signal<String> name = Signal.of("Alice")` and `text(name)` is declared
 - **THEN** it resolves to `text(Readable<String>)` and updates when `name` changes
 
-#### Scenario: Chained text styling and layout modifiers
-- **WHEN** `text("Description").wrap(true).ellipsis(true).color(Color.lightGray).fontScale(0.9f)` is declared
-- **THEN** the underlying `Label` has word-wrapping, ellipsis truncation, light gray color, and 0.9 font scale configured directly
+#### Scenario: Configuration declared in props
+
+- **WHEN** `text("Description").props(wrap(true), ellipsis(true), color(Color.lightGray), fontScale(0.9f))` is declared
+- **THEN** the underlying `Label` has word-wrapping, ellipsis truncation, light gray color, and 0.9 font scale configured, and no chained setter is available for them
 
 ### Requirement: Image and Icon widgets
 `Image` SHALL display `Drawable`/`TextureRegion` with `image(Drawable)` and `image(Readable<Drawable>)`. `Icon` SHALL display icon drawable with `icon(Drawable)` and `icon(Readable<Drawable>)`, applying the standard treatment (scalable drawable, `Scaling.fit`, `unit(6)` sizing). A no-argument `icon()` facade SHALL NOT exist; empty images use `image()`/`image(Readable)`. Both SHALL support size/style bindings, as well as fluent padding and margin modifiers on `SolimImage` (`.padding(float)`, `.padding(float, float, float, float)`, `.paddingTop(float)`, `.paddingBottom(float)`, `.paddingLeft(float)`, `.paddingRight(float)`, `.margin(float)`, `.margin(float, float, float, float)`, `.marginTop(float)`, `.marginBottom(float)`, `.marginLeft(float)`, `.marginRight(float)`).
@@ -61,35 +66,18 @@ Mechanical merge of 12 specs per change `spec-domain-merge` (stage 4 framework-u
 - **THEN** `badgeCount(...)` is not declared
 
 ### Requirement: Button and IconButton with click handler and reactive props
-`Button` SHALL support the constructor/factory forms `button()`, `button(Runnable onClick)`, `button(String text, Runnable onClick)`, and `button(Readable<String> text, Runnable onClick)`. `Button` SHALL additionally provide fluent content methods `.text(String)`, `.text(Readable<String>)`, `.icon(Drawable)`, and `.icon(Readable<Drawable>)`, where `.icon(...)` applies the standard icon treatment (scalable, `Scaling.fit`, `unit(6)`). The overloads `button(Drawable)`, `button(Drawable, Runnable)`, `button(String, Drawable, Runnable)`, and both `button(text, onClick, Consumer<SolimButtonStyleBuilder>)` variants SHALL be removed. `Button` SHALL support chained modifiers `.enabled(Readable<Boolean>)` (null-tolerant), `.visible(Readable<Boolean>)`, `.size(float)`, `.tooltip(String)`, `.tooltip(Readable<String>)`, `.onLongClick(Runnable)`, `.onLongClick(long, Runnable)`, `.style(...)`, and `.stopClickPropagation()`. When a long click triggers, regular `onClick` SHALL be suppressed. Reactive bindings SHALL be managed internally by the component and disposed with it.
 
-#### Scenario: Button click handler
-- **WHEN** `button("Save", () -> save())` is clicked
-- **THEN** `save()` is invoked
+`Button` SHALL support the constructor/factory forms `button()`, `button(Runnable onClick)`, `button(String text, Runnable onClick)`, and `button(Readable<String> text, Runnable onClick)`. `Button` SHALL provide fluent content methods `.text(String)`, `.text(Readable<String>)`, `.icon(Drawable)`, and `.icon(Readable<Drawable>)`, where `.icon(...)` applies the standard icon treatment (scalable, `Scaling.fit`, `unit(6)`), and these SHALL remain the only chained content methods. `Button` SHALL declare its configuration through `.props(...)`: `.props(enabled(...))`, `.props(visible(...))`, `.props(size(...))`, `.props(tooltip(...))`, `.props(style(...))`, and `.props(checked(...))`. The chained configuration setters `.enabled(Readable<Boolean>)`, `.visible(Readable<Boolean>)`, `.size(float)`, `.tooltip(...)`, `.style(...)`, `.checked(...)`, and `.stopClickPropagation()` SHALL NOT exist; click-stop control SHALL be declared through its property factory. `.onLongClick(Runnable)` and `.onLongClick(long, Runnable)` SHALL remain fluent as behaviour. The overloads `button(Drawable)`, `button(Drawable, Runnable)`, `button(String, Drawable, Runnable)`, and both `button(text, onClick, Consumer<SolimButtonStyleBuilder>)` variants SHALL be removed. When a long click triggers, regular `onClick` SHALL be suppressed. Reactive bindings SHALL be managed internally by the component and disposed with it.
 
-#### Scenario: Fluent icon button replaces Drawable overloads
-- **WHEN** an icon-only button is needed
-- **THEN** it is declared as `button(onClick).icon(icon)` rather than `button(icon, onClick)`
+#### Scenario: Fluent content and prop configuration
 
-#### Scenario: Null-tolerant enabled chaining
-- **WHEN** `button(...).enabled(canEdit)` is declared with `@Nullable Readable<Boolean> canEdit`
-- **THEN** the binding is installed when non-null and the chain continues without an intermediate variable when null
+- **WHEN** `button().props(style(WebStyles.ghost()), size(unit(11)), tooltip(tip)).icon(Icon.add).onClick(r)` is declared
+- **THEN** the button has ghost styling at `unit(11)`, a `unit(6)` icon child, the tooltip, and the click handler, with no chained configuration setters
 
-#### Scenario: Button reactive text and style
-- **WHEN** `Computed<String> saveText = dirty.map(v -> v ? "● Save" : "Save")` and `button(saveText, onSave).enabled(dirty).style(Styles.PRIMARY)` then `dirty.set(true)`
-- **THEN** button text, enabled, and style update via bindings; click only enabled when dirty true
+#### Scenario: Long click suppresses click
 
-#### Scenario: Button long click handler
-- **WHEN** a user holds a button configured with `.onLongClick(onLongPressAction)` for >= 300ms
-- **THEN** `onLongPressAction` is executed and regular `onClick` is suppressed upon release
-
-#### Scenario: Button short click does not trigger long press
-- **WHEN** a user taps and releases a button configured with both `.onClick(clickAction)` and `.onLongClick(longAction)` in < 300ms
-- **THEN** `clickAction` is executed and `longAction` is not triggered
-
-#### Scenario: Reactive tooltip on Button
-- **WHEN** `button("Action", () -> {}).tooltip(tooltipSignal)` is declared and `tooltipSignal` emits a new string
-- **THEN** the button's tooltip text updates to reflect the new string value
+- **WHEN** a long click triggers on a button with both handlers
+- **THEN** the regular `onClick` handler is not invoked
 
 ### Requirement: TextField and TextArea with Signal binding
 `TextField` SHALL bind to `Signal<String>` via `textField(signal)` with two-way sync: typing updates signal, signal changes update field text (without cursor jump when possible). `TextArea` SHALL be multiline variant.
@@ -595,26 +583,32 @@ The `Popup` component SHALL perform no scene operations when no scene exists, ma
 - **THEN** no exception is thrown
 
 ### Requirement: Fluent chainable configuration
-The `Popup` component SHALL return its own instance from every configuration and control method (`children`, `rounded`, `border`, `show`, `hide`) so a menu is declared as a single chain.
 
-#### Scenario: Chained configuration yields one instance
-- **WHEN** a menu is configured through chained calls (`children(provider)`, `rounded()`, `border()`, `show()`, `hide()`) on a typed instance
-- **THEN** each call returns the same single menu instance in order (configuration starts from direct assignment, since generic inference does not propagate through chains rooted at the bare facade call)
+The `Popup` component SHALL return its own instance from every remaining control method (`children`, `show`, `hide`) so a menu is declared as a single chain. Its chrome SHALL be configured through `.props(...)`: `.props(rounded(...), border(...))`. The chained configuration methods `rounded` and `border` SHALL NOT exist.
+
+#### Scenario: Chained control yields one instance
+
+- **WHEN** a menu is configured through `children(provider)`, `show()`, and `hide()` on a typed instance
+- **THEN** each call returns the same single menu instance in order
+
+#### Scenario: Chrome declared in props
+
+- **WHEN** a menu's chrome is configured
+- **THEN** it is declared as `.props(rounded(...), border(...))` rather than chained calls
 
 ### Requirement: Default visible menu chrome
-The `Popup` component SHALL render with a default dark rounded menu background so an unstyled menu is visible, while existing `rounded()` and `border()` calls override the chrome.
+
+The `Popup` component SHALL render with a default dark rounded menu background so an unstyled menu is visible, while `rounded(...)` and `border(...)` declared through `.props(...)` override the chrome.
 
 #### Scenario: Unstyled menu is visible
+
 - **WHEN** a menu is shown without explicit chrome configuration
 - **THEN** the menu renders with the default dark rounded background
 
 #### Scenario: Explicit chrome overrides default
-- **WHEN** `rounded()` or `border()` is configured before showing
+
+- **WHEN** `props(rounded(...))` or `props(border(...))` is declared before showing
 - **THEN** the menu renders with the caller-specified chrome instead of the default
-
-**Source: solim-scroll-pagination**
-
-Provides reach-top and reach-bottom boundary triggers with debouncing on Solim Scroll containers for infinite pagination.
 
 ### Requirement: Scroll Boundary Triggers
 The system SHALL provide onReachTop(float thresholdPx, Runnable callback) and onReachBottom(float thresholdPx, Runnable callback) methods on solim.layout.Scroll.
@@ -705,19 +699,18 @@ The `VirtualList` SHALL detect changes to container width and trigger re-measure
 - **THEN** variable-height items are re-measured against the new width, the prefix-sum array is updated, and the visible window is re-computed
 
 ### Requirement: NetworkImage Layout Methods and Parent Cell Constraints
-NetworkImage SHALL implement CellConfig<NetworkImage> and ElementConfig<NetworkImage> for declarative layout geometry and parent cell constraints. Sizing methods (size(float, float), size(float), width(float), height(float), and reactive variants) SHALL set both element dimensions and preferred cell dimensions. Parent cell constraint modifiers (minWidth, maxWidth, minHeight, maxHeight, growX, growY, grow) SHALL be buffered in PendingCellConfig and automatically bound to the parent Cell when attached via AttachmentStack or applied immediately if already attached. NetworkImage SHALL NOT provide inner padding() or gap() methods and SHALL NOT implement SpacingAware.
 
-#### Scenario: Element dimension configuration
-- **WHEN** networkImage(url).size(64f, 48f) is configured
-- **THEN** the underlying Arc Image width is 64f and height is 48f, and the preferred width and height in cellConfig() are 64f and 48f.
+`NetworkImage` SHALL declare its layout geometry and parent cell constraints through `.props(...)`, providing sizing (`size`, `width`, `height` and their reactive forms), the parent cell constraints (`minWidth`, `maxWidth`, `minHeight`, `maxHeight`, `growX`, `growY`, `grow`), and reactive variants as property factories. Parent cell constraints SHALL be recorded in `PendingCellConfig` and automatically bound to the parent `Cell` when attached via `AttachmentStack`, or applied immediately if already attached. The chained sizing and constraint methods SHALL NOT exist. `NetworkImage` SHALL NOT provide inner `padding()` or `gap()` and SHALL NOT implement `SpacingAware`.
 
-#### Scenario: Reactive width and height
-- **WHEN** networkImage(url).width(widthSignal).height(heightSignal) is declared and the signals emit new values
-- **THEN** the underlying Arc Image width and height update to match the emitted values, and updates cease after dispose().
+#### Scenario: Declarative sizing
 
-#### Scenario: Parent cell grow and bounds constraints
-- **WHEN** networkImage(url).minWidth(20f).maxWidth(100f).growX() is added inside a parent Table
-- **THEN** the parent cell's minWidth is 20f, maxWidth is 100f, and expandX and fillX are enabled.
+- **WHEN** `networkImage(url).props(size(width, height))` is declared
+- **THEN** the sizing is recorded and applied on attachment with no chained sizing method
+
+#### Scenario: Parent cell constraint
+
+- **WHEN** `networkImage(url).props(growX())` is declared
+- **THEN** the grow constraint is buffered in its `PendingCellConfig` and applied to the parent cell on attachment
 
 ### Requirement: NetworkImage Declarative Alignment
 NetworkImage SHALL support declarative alignment via .top(), .left(), and .center(). Calling these methods before or after attachment to a parent Table SHALL configure the parent cell's alignment to the respective direction.

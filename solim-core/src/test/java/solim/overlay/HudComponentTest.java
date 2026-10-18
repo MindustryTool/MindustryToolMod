@@ -1,10 +1,16 @@
 package solim.overlay;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static solim.modifier.Values.background;
+import static solim.modifier.Values.opacity;
 import static solim.modifier.Values.position;
+import static solim.modifier.Values.scale;
+import static solim.modifier.Values.x;
+import static solim.modifier.Values.y;
 
 import arc.Core;
 import arc.Events;
+import arc.graphics.g2d.TextureRegion;
 import arc.input.KeyCode;
 import arc.mock.MockGraphics;
 import arc.scene.Element;
@@ -12,6 +18,8 @@ import arc.scene.event.EventListener;
 import arc.scene.event.InputEvent;
 import arc.scene.event.InputListener;
 import arc.scene.event.Touchable;
+import arc.scene.style.Drawable;
+import arc.scene.style.TextureRegionDrawable;
 import mindustry.game.EventType.ResizeEvent;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -84,7 +92,7 @@ class HudComponentTest extends SolimEnv {
         Hud hud = new Hud();
         Signal<Float> x = Signal.of(40f);
         Signal<Float> y = Signal.of(60f);
-        hud.x(x).y(y);
+        hud.props(x(x), y(y));
         assertEquals(40f, hud.element().x, 0.01f);
         assertEquals(60f, hud.element().y, 0.01f);
         x.set(150f);
@@ -99,7 +107,7 @@ class HudComponentTest extends SolimEnv {
     void hudReactiveOpacity() {
         Hud hud = new Hud();
         Signal<Float> opacity = Signal.of(0.7f);
-        hud.opacity(opacity);
+        hud.props(opacity(opacity));
         assertEquals(0.7f, hud.container().color.a, 0.01f);
         opacity.set(0.3f);
         SignalDispatcher.flush();
@@ -163,7 +171,7 @@ class HudComponentTest extends SolimEnv {
     void hudDisposeStopsReactiveUpdates() {
         Hud hud = new Hud();
         Signal<Float> x = Signal.of(40f);
-        hud.x(x);
+        hud.props(x(x));
         assertEquals(40f, hud.element().x, 0.01f);
 
         hud.dispose();
@@ -192,7 +200,7 @@ class HudComponentTest extends SolimEnv {
         float unscaledW = hud.root().getPrefWidth();
         assertTrue(unscaledW > 0f, "Root must have positive pref width before scaling");
 
-        hud.scale(scale);
+        hud.props(scale(scale));
         scale.set(0.8f);
 
         float scaledW = hud.root().getPrefWidth();
@@ -202,6 +210,15 @@ class HudComponentTest extends SolimEnv {
         assertTrue(scaledH >= 0f, "Root pref height must be non-negative after scale");
 
         SignalDispatcher.flush();
+        hud.dispose();
+    }
+
+    @Test
+    void hudBackgroundPropAppliesToContainer() {
+        Hud hud = new Hud();
+        Drawable bg = new TextureRegionDrawable(new TextureRegion());
+        hud.props(background(bg));
+        assertSame(bg, hud.container().getBackground());
         hud.dispose();
     }
 }

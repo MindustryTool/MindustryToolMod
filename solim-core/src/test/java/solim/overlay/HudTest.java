@@ -2,7 +2,10 @@ package solim.overlay;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static solim.modifier.Values.draggable;
+import static solim.modifier.Values.opacity;
 import static solim.modifier.Values.position;
+import static solim.modifier.Values.x;
+import static solim.modifier.Values.y;
 
 import arc.Core;
 import arc.Events;
@@ -342,7 +345,7 @@ class HudTest extends SolimEnv {
         Signal<Float> y = Signal.of(60f);
         Signal<Float> opacity = Signal.of(0.7f);
 
-        hud.x(x).y(y).opacity(opacity);
+        hud.props(x(x), y(y), opacity(opacity));
 
         assertEquals(40f, hud.element().x, 0.01f);
         assertEquals(60f, hud.element().y, 0.01f);
