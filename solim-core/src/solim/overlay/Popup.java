@@ -1,8 +1,5 @@
 package solim.overlay;
 
-
-import solim.modifier.ElementCapability;
-
 import arc.Core;
 import arc.Events;
 import arc.func.Cons;
@@ -31,7 +28,7 @@ import solim.runtime.AttachmentStack;
 import solim.runtime.OwnershipScope;
 
 public final class Popup<T> extends Component
-        implements Configurable<Popup<T>>, TableCapability, ElementCapability, ContainerCapability<Popup<T>> {
+        implements Configurable<Popup<T>>, TableCapability, ContainerCapability<Popup<T>> {
 
     public enum Edge {
         TOP,
@@ -319,7 +316,8 @@ public final class Popup<T> extends Component
     }
 
     private static final class PopupTable extends Table {
-        @Nullable Popup<?> owner;
+        @Nullable
+        Popup<?> owner;
 
         @Override
         public void validate() {

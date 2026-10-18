@@ -1,8 +1,5 @@
 package solim.reactive;
 
-
-import solim.modifier.ElementCapability;
-
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
@@ -29,7 +26,7 @@ import solim.runtime.AttachmentStack;
 import solim.runtime.OwnershipScope;
 
 public final class QueryView<T> extends Component
-        implements Configurable<QueryView<T>>, TableCapability, ElementCapability, ContainerCapability<QueryView<T>> {
+        implements Configurable<QueryView<T>>, TableCapability, ContainerCapability<QueryView<T>> {
 
     private enum ViewState {
         NONE,
@@ -53,7 +50,8 @@ public final class QueryView<T> extends Component
         table.center();
         String msg = throwable != null
                 ? (throwable.getMessage() != null ? throwable.getMessage() : throwable.toString())
-                : (Core.bundle != null ? Core.bundle.get("query.error.default", "An error occurred") : "An error occurred");
+                : (Core.bundle != null ? Core.bundle.get("query.error.default", "An error occurred")
+                        : "An error occurred");
         Text errorText = new Text(msg).props(Values.color(Color.scarlet));
         table.add(errorText.element()).padBottom(8f).row();
 
@@ -166,7 +164,6 @@ public final class QueryView<T> extends Component
         return container;
     }
 
-    
     public QueryView<T> children(@Nullable Runnable block) {
         applyPendingProps();
         OwnershipContext.push(this);
@@ -391,6 +388,7 @@ public final class QueryView<T> extends Component
     private void updateParentCell() {
         CollapseHelper.updateParentCell(container, currentComponent != null, constraints, this);
     }
+
     @Override
     protected void onDispose() {
         cleanupCurrent();

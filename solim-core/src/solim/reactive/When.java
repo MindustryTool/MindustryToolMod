@@ -1,8 +1,5 @@
 package solim.reactive;
 
-
-import solim.modifier.ElementCapability;
-
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
@@ -22,7 +19,8 @@ import solim.runtime.Fragment;
 import solim.runtime.ReactiveContext;
 
 public final class When extends Component
-        implements Configurable<When>, TableCapability, ElementCapability, ContainerCapability<When> {
+        implements Configurable<When>, TableCapability, ContainerCapability<When> {
+
     private static final Object SENTINEL = new Object();
     private final Table container = new Table();
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -69,7 +67,6 @@ public final class When extends Component
         return container;
     }
 
-    
     public When children(@Nullable Runnable block) {
         applyPendingProps();
         OwnershipContext.push(this);

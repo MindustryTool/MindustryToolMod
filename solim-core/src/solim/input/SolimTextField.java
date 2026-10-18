@@ -5,7 +5,6 @@ import solim.reactive.TwoWayBinding;
 import arc.Core;
 import arc.input.KeyCode;
 import arc.scene.ui.TextField;
-import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import arc.func.Cons;
 import arc.func.Boolf;

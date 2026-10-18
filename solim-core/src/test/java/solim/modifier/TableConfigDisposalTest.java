@@ -32,7 +32,6 @@ import solim.test.OwnershipEnv;
 
 class TableConfigDisposalTest extends OwnershipEnv {
 
-
     private final List<RoundedDrawable> drawables = new ArrayList<>();
 
     @AfterEach
@@ -267,7 +266,7 @@ class TableConfigDisposalTest extends OwnershipEnv {
     }
 
     private static final class TableTarget extends Component
-            implements Configurable<TableTarget>, TableCapability, ElementCapability, ContainerCapability<TableTarget> {
+            implements Configurable<TableTarget>, TableCapability, ContainerCapability<TableTarget> {
 
         private final Table table;
         private final PendingCellConfig constraints = new PendingCellConfig();
@@ -354,7 +353,6 @@ class TableConfigDisposalTest extends OwnershipEnv {
             return constraints;
         }
 
-        
         public TableTarget children(@Nullable Runnable block) {
             applyPendingProps();
             OwnershipContext.push(this);

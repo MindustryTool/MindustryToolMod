@@ -3,7 +3,6 @@ package solim.input;
 import solim.reactive.TwoWayBinding;
 
 import arc.scene.ui.TextButton;
-import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.DisposableAction;

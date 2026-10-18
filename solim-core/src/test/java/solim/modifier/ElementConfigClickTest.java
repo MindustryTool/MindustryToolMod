@@ -1,6 +1,5 @@
 package solim.modifier;
 
-
 import solim.core.Component;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -16,11 +15,9 @@ import arc.scene.event.InputEvent;
 import arc.scene.event.Touchable;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
-import solim.core.OwnershipContext;
 import solim.test.SolimEnv;
 
 class ElementConfigClickTest extends SolimEnv {
-
 
     @Test
     void onClickRunsHandlerAndEnablesTouchable() {
@@ -111,7 +108,6 @@ class ElementConfigClickTest extends SolimEnv {
 
     private static final class Clickable extends Component
             implements Configurable<Clickable>, ElementCapability {
-        private final Table table = new Table();
         private final PendingCellConfig constraints = new PendingCellConfig();
         private @Nullable Props<Clickable> pending;
 
@@ -129,27 +125,9 @@ class ElementConfigClickTest extends SolimEnv {
             return this;
         }
 
-        public Table table() {
-            return table;
-        }
-
         @Override
         public PendingCellConfig cellConfig() {
             return constraints;
-        }
-
-        
-        public Clickable children(@Nullable Runnable block) {
-            applyPendingProps();
-            OwnershipContext.push(this);
-            try {
-                if (block != null) {
-                    block.run();
-                }
-            } finally {
-                OwnershipContext.pop();
-            }
-            return this;
         }
 
         @Override

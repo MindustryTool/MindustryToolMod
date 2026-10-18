@@ -1,8 +1,5 @@
 package solim.overlay;
 
-
-import solim.modifier.ElementCapability;
-
 import arc.Core;
 import arc.func.Cons;
 import arc.input.KeyCode;
@@ -31,7 +28,7 @@ import arc.scene.ui.layout.Scl;
 import solim.modifier.ContainerCapability;
 
 public class Hud extends Component
-        implements Configurable<Hud>, TableCapability, ElementCapability, ContainerCapability<Hud> {
+        implements Configurable<Hud>, TableCapability, ContainerCapability<Hud> {
 
     private final Table root;
     private final Table container;

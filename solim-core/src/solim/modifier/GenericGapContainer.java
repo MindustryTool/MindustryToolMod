@@ -6,7 +6,6 @@ import solim.core.SolimToken;
 import solim.layout.Direction;
 import solim.layout.GapContainer;
 import solim.layout.GapHost;
-import solim.modifier.PendingCellConfig;
 
 final class GenericGapContainer extends Component implements GapContainer {
     private final Table table;

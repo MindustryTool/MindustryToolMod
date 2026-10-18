@@ -1,8 +1,5 @@
 package solim.reactive;
 
-
-import solim.modifier.ElementCapability;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -38,14 +35,13 @@ import solim.modifier.Configurable;
 import solim.modifier.ContainerCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
-import solim.modifier.TableCapability;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimCoreEnv;
 
 class ForEachComponentTest extends SolimCoreEnv {
 
     static class TestComponent extends Component
-            implements Configurable<TestComponent>, ElementCapability, ContainerCapability<TestComponent> {
+            implements Configurable<TestComponent>, ContainerCapability<TestComponent> {
         final String id;
         boolean wasDisposed = false;
         private final PendingCellConfig constraints = new PendingCellConfig();

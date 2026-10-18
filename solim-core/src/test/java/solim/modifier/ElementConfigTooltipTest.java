@@ -1,6 +1,5 @@
 package solim.modifier;
 
-
 import solim.core.Component;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -17,7 +16,6 @@ import arc.scene.ui.Label;
 import arc.scene.ui.Tooltip;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
-import solim.core.OwnershipContext;
 import solim.input.Button;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -127,7 +125,6 @@ class ElementConfigTooltipTest extends SolimEnv {
 
     private static final class TestTarget extends Component
             implements Configurable<TestTarget>, ElementCapability {
-        private final Table table = new Table();
         private final PendingCellConfig constraints = new PendingCellConfig();
         private @Nullable Props<TestTarget> pending;
 
@@ -150,27 +147,9 @@ class ElementConfigTooltipTest extends SolimEnv {
             return this;
         }
 
-        public Table table() {
-            return table;
-        }
-
         @Override
         public PendingCellConfig cellConfig() {
             return constraints;
-        }
-
-        
-        public TestTarget children(@Nullable Runnable block) {
-            applyPendingProps();
-            OwnershipContext.push(this);
-            try {
-                if (block != null) {
-                    block.run();
-                }
-            } finally {
-                OwnershipContext.pop();
-            }
-            return this;
         }
 
         @Override
