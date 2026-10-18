@@ -40,7 +40,6 @@ public class SchematicBrowserDialog extends SolimDialog {
         filterDialog = new BrowserFilterDialog(state, "schematics", true, false);
 
         closeOnBack();
-        props(fillParent(true));
         children(() -> new BrowserContent(this, state, filterDialog, this::hide));
         cont().background(Styles.black);
         shown(() -> state.start());

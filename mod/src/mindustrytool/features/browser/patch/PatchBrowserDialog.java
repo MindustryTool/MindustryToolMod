@@ -39,7 +39,6 @@ public class PatchBrowserDialog extends SolimDialog {
         filterDialog = new BrowserFilterDialog(state, "content-patches", false, false);
 
         closeOnBack();
-        props(fillParent(true));
         children(() -> new BrowserContent(this, state, filterDialog, this::hide));
         cont().background(Styles.black);
         shown(() -> state.start());

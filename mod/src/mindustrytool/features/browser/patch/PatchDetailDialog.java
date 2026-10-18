@@ -32,7 +32,6 @@ public class PatchDetailDialog extends SolimDialog {
 
         addCloseButton();
         closeOnBack();
-        props(fillParent(true));
         children(() -> new DetailContent(detail, itemId));
         actionButton(Core.bundle.get("browser.detail.open-online"), Icon.link,
                 () -> Core.app.openURI(Config.WEB_URL + "/content-patches/" + itemId));

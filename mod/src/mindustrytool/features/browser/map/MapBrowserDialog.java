@@ -38,7 +38,6 @@ public class MapBrowserDialog extends SolimDialog {
         filterDialog = new BrowserFilterDialog(state, "maps", false, true);
 
         closeOnBack();
-        props(fillParent(true));
         children(() -> new BrowserContent(state, filterDialog, this::hide));
         cont().background(Styles.black);
         shown(() -> state.start());

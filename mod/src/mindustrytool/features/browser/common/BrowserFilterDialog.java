@@ -44,7 +44,6 @@ public class BrowserFilterDialog extends SolimDialog {
 
         addCloseButton();
         closeOnBack();
-        props(fillParent(true));
         children(() -> new FilterContent(state, tagGroup, useBlocks, usePlanets));
         dialog().background(ColoredDrawable.of(Color.black, Tex.whiteui));
     }
