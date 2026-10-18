@@ -80,7 +80,7 @@ public class SettingKeybindRow extends Component {
 
                     button()
                             .props(
-                                    style(WebStyles.ghost()),
+                                    style(WebStyles.outline()),
                                     size(unit(8)),
                                     prefWidth(unit(8)),
                                     prefHeight(unit(8)),
