@@ -1,6 +1,8 @@
 package mindustrytool.features.chat;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
+import static solim.modifier.Values.fontScale;
 import static solim.modifier.Values.grow;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
@@ -9,8 +11,11 @@ import static solim.modifier.Values.paddingX;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.stopClickPropagation;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
 import static solim.modifier.Values.visible;
+import static solim.modifier.Values.wrap;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -52,18 +57,11 @@ public class ChatChannelListView extends Component {
                     .props(grow())
                     .loading(Loader::centered)
                     .error(err -> column().props(grow(), padding(unit(2)), center(), gap(unit(2))).children(() -> {
-                        icon(Icon.warning).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)))
-                                .color(Color.scarlet);
+                        icon(Icon.warning).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(Color.scarlet));
                         text(Core.bundle.get("feature.chat.ui.error.channels", "Failed to load channels."))
-                                .color(Color.scarlet)
-                                .fontScale(0.95f)
-                                .wrap()
-                                .center();
+                                .props(color(Color.scarlet), fontScale(0.95f), wrap(), solim.modifier.Values.center());
                         text(err != null ? err.getMessage() : "")
-                                .color(Color.gray)
-                                .fontScale(0.8f)
-                                .wrap()
-                                .center();
+                                .props(color(Color.gray), fontScale(0.8f), wrap(), solim.modifier.Values.center());
                         button(Core.bundle.get("feature.chat.ui.retry", "Retry"), () -> {
                             if (service != null) {
                                 service.refreshChannels();
@@ -71,8 +69,7 @@ public class ChatChannelListView extends Component {
                                 store.channels().channelsQuery().refetch();
                             }
                         })
-                                .style(WebStyles.secondary())
-                                .props(height(unit(9)), prefHeight(unit(9)))
+                                .props(style(WebStyles.secondary()), height(unit(9)), prefHeight(unit(9)))
                                 .children(() -> {
                                     icon(Icon.refresh).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)));
                                     text(Core.bundle.get("feature.chat.ui.retry", "Retry"));
@@ -88,8 +85,7 @@ public class ChatChannelListView extends Component {
                             } else {
                                 column().props(padding(unit(2))).children(() -> {
                                     text(Core.bundle.get("feature.chat.ui.empty-channels", "No channels available."))
-                                            .color(Color.gray)
-                                            .fontScale(0.9f);
+                                            .props(color(Color.gray), fontScale(0.9f));
                                 });
                             }
                         });
@@ -169,34 +165,25 @@ public class ChatChannelListView extends Component {
                     .props(growX(), height(unit(12)), prefHeight(unit(12)), padding(unit(1)), left())
                     .children(() -> {
                         button(() -> store.selectChannel(channel.getId()))
-                                .style(style)
-                                .left()
-                                .props(grow(), paddingX(unit(1)))
+                                .props(style(style), grow(), paddingX(unit(1)), left())
                                 .children(() -> {
-                                    text("# " + channel.getName()).left();
+                                    text("# " + channel.getName()).props(left());
 
                                     spacer();
 
                                     button(() -> store.notifications().toggleMuted(channel.getId()))
-                                            .stopClickPropagation(true)
-                                            .style(WebStyles.ghost())
-                                            .props(size(unit(8)), prefWidth(unit(8)), prefHeight(unit(8)),
-                                                    tooltip(bellTooltip))
-                                            .visible(isSelected)
+                                            .props(stopClickPropagation(true), style(WebStyles.ghost()), size(unit(8)), prefWidth(unit(8)), prefHeight(unit(8)),
+                                                    tooltip(bellTooltip), visible(isSelected))
                                             .children(() -> icon(bellIcon)
-                                                    .props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)))
-                                                    .color(Color.white));
+                                                    .props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)), color(Color.white)));
 
                                     image(FileIcon.of("bell-off.png"))
-                                            .props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)))
-                                            .color(Color.lightGray)
-                                            .props(tooltip(Core.bundle.get("feature.chat.channel.notifications.muted",
-                                                    "Muted")), visible(showUnselectedMuted));
+                                            .props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)),
+                                                    tooltip(Core.bundle.get("feature.chat.channel.notifications.muted",
+                                                            "Muted")), visible(showUnselectedMuted), color(Color.lightGray));
 
                                     image(circle())
-                                            .props(size(unit(3)), prefWidth(unit(3)), prefHeight(unit(3)))
-                                            .color(Color.white)
-                                            .props(visible(showUnreadDot));
+                                            .props(size(unit(3)), prefWidth(unit(3)), prefHeight(unit(3)), visible(showUnreadDot), color(Color.white));
                                 });
                     })
                     .element();

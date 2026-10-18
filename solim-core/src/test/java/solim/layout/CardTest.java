@@ -1,5 +1,7 @@
 package solim.layout;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -131,7 +133,7 @@ class CardTest extends SolimEnv {
     @Test
     void colorModifierUpdatesTableColor() {
         Card c = new Card();
-        c.color(Color.scarlet);
+        c.props(color(Color.scarlet));
         assertEquals(Color.scarlet, c.table().color);
         c.dispose();
     }
@@ -139,7 +141,7 @@ class CardTest extends SolimEnv {
     @Test
     void reactiveColorUpdatesTableColor() {
         Signal<Color> colorSig = Signal.of(Color.green);
-        Card c = new Card().color(colorSig);
+        Card c = new Card().props(color(colorSig));
         assertEquals(Color.green, c.table().color);
 
         colorSig.set(Color.blue);

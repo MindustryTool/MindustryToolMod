@@ -1,12 +1,15 @@
 package mindustrytool.features.pathfinding;
 
 import static solim.UI.*;
+import static solim.modifier.Values.checked;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
 import static solim.modifier.Values.paddingX;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.scene.Element;
@@ -56,12 +59,12 @@ public class PathfindingSettingsView extends Component {
                     checkbox(Core.bundle.get("feature.pathfinding.settings.draw-unit-path", "Draw Unit Paths"),
                             feature.drawUnitPathConfig.signal()).props(growX());
 
-                    divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
                     checkbox(Core.bundle.get("feature.pathfinding.settings.draw-spawn-path", "Draw Spawn Point Paths"),
                             feature.drawSpawnPathConfig.signal()).props(growX());
 
-                    divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
                     checkbox(Core.bundle.get("feature.pathfinding.settings.draw-allies", "Draw Ally Unit Paths"),
                             feature.drawAlliesConfig.signal()).props(growX());
@@ -108,9 +111,7 @@ public class PathfindingSettingsView extends Component {
                             button(Core.bundle.get(bundleKey, COST_KEY_SUFFIXES[index]),
                                     () -> feature.costTypeConfigs.get(index)
                                             .set(!Boolean.TRUE.equals(feature.costTypeConfigs.get(index).signal().peek())))
-                                    .style(WebStyles.filterChipText())
-                                    .checked(feature.costTypeConfigs.get(index).signal().map(v -> Boolean.TRUE.equals(v)))
-                                    .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2f)));
+                                    .props(style(WebStyles.filterChipText()), checked(feature.costTypeConfigs.get(index).signal().map(v -> Boolean.TRUE.equals(v))), height(unit(8)), prefHeight(unit(8)), paddingX(unit(2f)));
                         }
                     });
                 });
@@ -119,8 +120,7 @@ public class PathfindingSettingsView extends Component {
     private Component actionsCard() {
         return SettingCard.card().children(() -> {
             button(feature::resetToDefaults)
-                    .style(WebStyles.outline())
-                    .props(growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
+                    .props(style(WebStyles.outline()), growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
                     .children(() -> {
                         icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                         text(Core.bundle.get("feature.pathfinding.settings.reset", "Reset to Defaults"));

@@ -1,5 +1,7 @@
 package solim.layout;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -139,7 +141,7 @@ public class LayoutAndComponentsRegressionTest extends SolimEnv {
         Signal<Boolean> canClick = Signal.of(true);
         AtomicInteger clicks = new AtomicInteger(0);
 
-        Button btn = new Button(clicks::incrementAndGet).enabled(canClick);
+        Button btn = new Button(clicks::incrementAndGet).props(enabled(canClick));
         arc.scene.ui.Button arcBtn = (arc.scene.ui.Button) btn.element();
 
         assertFalse(arcBtn.isDisabled());

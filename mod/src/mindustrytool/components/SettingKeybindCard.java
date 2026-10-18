@@ -1,6 +1,7 @@
 package mindustrytool.components;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.growX;
 
 import arc.Core;
@@ -32,7 +33,7 @@ public final class SettingKeybindCard {
             column().props(growX(), gap(unit(2))).children(() -> {
                 for (int i = 0; i < keybinds.size; i++) {
                     if (i > 0) {
-                        divider().color(WebStyles.Colors.SECTION_BORDER);
+                        divider().props(color(WebStyles.Colors.SECTION_BORDER));
                     }
                     new SettingKeybindRow(keybinds.get(i));
                 }

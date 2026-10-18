@@ -1,12 +1,17 @@
 package mindustrytool.features.autoplay.tasks;
 
 import static solim.UI.*;
+import static solim.modifier.Values.checked;
+import static solim.modifier.Values.color;
+import static solim.modifier.Values.enabled;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
+import static solim.modifier.Values.left;
 import static solim.modifier.Values.paddingX;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
 
 import arc.Core;
@@ -336,8 +341,8 @@ public class MiningTask implements AutoplayTask {
     @Override
     public void buildSettings(AutoplayFeature feature) {
         column().props(growX(), gap(unit(1))).children(() -> {
-            text(Core.bundle.get("feature.autoplay.settings.mining.filter")).growX().left()
-                    .color(WebStyles.Colors.GHOST_FG);
+            text(Core.bundle.get("feature.autoplay.settings.mining.filter"))
+                    .props(color(WebStyles.Colors.GHOST_FG), growX(), left());
 
             wrap().props(growX(), gap(unit(1))).children(() -> {
                 Unit unit = Vars.player != null ? Vars.player.unit() : null;
@@ -362,16 +367,13 @@ public class MiningTask implements AutoplayTask {
                             toggleItem(item, !Boolean.TRUE.equals(checked.peek()));
                         }
                     })
-                            .style(WebStyles.filterChipText())
-                            .checked(checked)
-                            .enabled(Readable.of(canMine))
-                            .props(paddingX(unit(2)), height(unit(8)), prefHeight(unit(8)))
+                            .props(checked(checked), style(WebStyles.filterChipText()), enabled(Readable.of(canMine)), paddingX(unit(2)), height(unit(8)), prefHeight(unit(8)))
                             .children(() -> {
                                 icon(new TextureRegionDrawable(item.uiIcon)).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)));
                                 text(item.localizedName)
-                                        .color(checked.map(c -> Boolean.TRUE.equals(c)
+                                        .props(color(checked.map(c -> Boolean.TRUE.equals(c)
                                                 ? (canMine ? Color.white : Color.lightGray)
-                                                : Color.gray));
+                                                : Color.gray)));
                             });
 
                     if (!canMine) {

@@ -1,5 +1,7 @@
 package solim.display;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -72,8 +74,8 @@ class NetworkImageDecodeDeterminismTest extends SolimEnv {
         TextureRegion newRegion = new TextureRegion();
 
         NetworkImage image = new NetworkImage();
-        image.url(URL);
-        image.rounded(8);
+        image.props(url(URL));
+        image.props(imageRounded(8));
 
         assertEquals(2, loader.successes.size());
 
@@ -93,8 +95,8 @@ class NetworkImageDecodeDeterminismTest extends SolimEnv {
         TextureRegion region = new TextureRegion();
 
         NetworkImage image = new NetworkImage();
-        image.url(URL);
-        image.rounded(8);
+        image.props(url(URL));
+        image.props(imageRounded(8));
 
         assertEquals(2, loader.radii.size());
         assertEquals(0, loader.radii.get(0));

@@ -3,7 +3,6 @@ package solim.modifier;
 import arc.func.Cons;
 import arc.scene.Element;
 import arc.scene.ui.layout.Table;
-import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -129,4 +128,4 @@ public final class Props<T extends Configurable<T> & DisposableOwner> {
             }
         };
     }
-}
+}

@@ -1,9 +1,11 @@
 package mindustrytool.features.browser.common;
 
 import static solim.UI.*;
+import static solim.modifier.Values.enabled;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
 import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
 
 import arc.Core;
@@ -32,34 +34,27 @@ public class BrowserFooter extends Component {
         return row().props(growX(), gap(unit(2))).children(() -> {
             if (onClose != null) {
                 button(Core.bundle.get("browser.footer.close"), onClose)
-                        .style(WebStyles.outlineText())
-                        .props(height(unit(10)), prefHeight(unit(10)), tooltip(Core.bundle.get("browser.footer.close.tooltip")));
+                        .props(style(WebStyles.outlineText()), height(unit(10)), prefHeight(unit(10)), tooltip(Core.bundle.get("browser.footer.close.tooltip")));
             }
 
             spacer();
 
             button(() -> state.prevPage())
-                    .style(WebStyles.outlineText())
-                    .props(height(unit(10)), prefHeight(unit(10)))
-                    .enabled(state.page().map(page -> page != null && page > 0))
-                    .props(tooltip(Core.bundle.get("browser.footer.previous.tooltip")))
+                    .props(style(WebStyles.outlineText()), height(unit(10)), prefHeight(unit(10)), enabled(state.page().map(page -> page != null && page > 0)), tooltip(Core.bundle.get("browser.footer.previous.tooltip")))
                     .children(() -> icon(Icon.left));
 
             button(state.page().map(page -> Core.bundle.format("browser.footer.page", page != null ? page + 1 : 1)),
                     this::showPageJumpDialog)
-                    .style(WebStyles.outlineText())
-                    .props(height(unit(10)), prefHeight(unit(10)), tooltip(Core.bundle.get("browser.footer.page-jump.title")));
+                    .props(style(WebStyles.outlineText()), height(unit(10)), prefHeight(unit(10)), tooltip(Core.bundle.get("browser.footer.page-jump.title")));
 
             button(() -> state.nextPage())
-                    .style(WebStyles.outlineText())
-                    .props(height(unit(10)), prefHeight(unit(10)), tooltip(Core.bundle.get("browser.footer.next.tooltip")))
+                    .props(style(WebStyles.outlineText()), height(unit(10)), prefHeight(unit(10)), tooltip(Core.bundle.get("browser.footer.next.tooltip")))
                     .children(() -> icon(Icon.right));
 
             spacer();
 
             button(Core.bundle.get("browser.footer.upload"), () -> Core.app.openURI(uploadUrl))
-                    .style(WebStyles.outlineText())
-                    .props(height(unit(10)), prefHeight(unit(10)), tooltip(Core.bundle.get("browser.footer.upload.tooltip")));
+                    .props(style(WebStyles.outlineText()), height(unit(10)), prefHeight(unit(10)), tooltip(Core.bundle.get("browser.footer.upload.tooltip")));
         }).element();
     }
 

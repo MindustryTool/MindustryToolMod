@@ -2,16 +2,22 @@ package mindustrytool.features.settings;
 
 import static solim.UI.*;
 import static solim.modifier.Values.border;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.grow;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
+import static solim.modifier.Values.left;
+import static solim.modifier.Values.margin;
 import static solim.modifier.Values.paddingBottom;
 import static solim.modifier.Values.paddingLeft;
 import static solim.modifier.Values.paddingTop;
+import static solim.modifier.Values.placeholder;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.rounded;
+import static solim.modifier.Values.scrollX;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
 import static solim.modifier.Values.visible;
 
@@ -88,14 +94,13 @@ public final class FeatureSettingsView extends Component {
 
         return column().props(grow(), gap(unit(2))).children(() -> {
             toolbar();
-            scroll().props(grow()).scrollX(false).children(() -> {
+            scroll().props(grow(), scrollX(false)).children(() -> {
                 column().props(growX(), gap(unit(3))).children(() -> {
 
                     column().props(growX(), visible(hasFavorites), gap(unit(2))).children(() -> {
                         row().props(growX(), paddingTop(unit(1)), paddingBottom(unit(1))).children(() -> {
                             text(Core.bundle.get("feature.section.favorites", "Favorites"))
-                                    .style(Styles.defaultLabel)
-                                    .left();
+                                    .props(style(Styles.defaultLabel), left());
                         });
                         reactiveGrid(favoritedFeatures).columns(columnCount)
                                 .key(feature -> feature.getMetadata().getId())
@@ -109,8 +114,7 @@ public final class FeatureSettingsView extends Component {
                     column().props(growX(), visible(hasStandardFeatures), gap(unit(2))).children(() -> {
                         row().props(growX(), paddingTop(unit(1)), paddingBottom(unit(1))).children(() -> {
                             text(Core.bundle.get("feature.section.mod-features", "Mod Features"))
-                                    .style(Styles.defaultLabel)
-                                    .left();
+                                    .props(style(Styles.defaultLabel), left());
                         });
                         reactiveGrid(standardFeatures).columns(columnCount)
                                 .key(feature -> feature.getMetadata().getId())
@@ -124,8 +128,7 @@ public final class FeatureSettingsView extends Component {
                     column().props(growX(), visible(hasWebFeatures), gap(unit(2))).children(() -> {
                         row().props(growX(), paddingTop(unit(3)), paddingBottom(unit(1))).children(() -> {
                             text(Core.bundle.get("web-feature.section.title", "Web Tools & Community"))
-                                    .style(Styles.defaultLabel)
-                                    .left();
+                                    .props(style(Styles.defaultLabel), left());
                         });
                         reactiveGrid(filteredWebFeatures).columns(columnCount).key(WebFeature::getId)
                                 .props(gap(unit(2)))
@@ -134,8 +137,7 @@ public final class FeatureSettingsView extends Component {
 
                     row().props(growX(), visible(isEmpty), center()).children(() -> {
                         text(Core.bundle.get("feature.search.empty", "No features found"))
-                                .color(Color.gray)
-                                .padding(unit(4));
+                                .props(color(Color.gray), margin(unit(4)));
                     });
                 });
             });
@@ -146,24 +148,23 @@ public final class FeatureSettingsView extends Component {
         column().props(growX(), gap(unit(2))).children(() -> {
             row().props(growX(), gap(unit(2)), rounded(unit(3)), paddingLeft(unit(2)), height(unit(12f)), prefHeight(unit(12f)), center(), border(1.5f, Color.darkGray)).children(() -> {
                         icon(Icon.zoom).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
-                        textField(filter).props(growX()).style(WebStyles.clearInput())
-                                .placeholder(Core.bundle.get("feature.search.placeholder"));
+                        textField(filter).props(growX(), style(WebStyles.clearInput()), placeholder(Core.bundle.get("feature.search.placeholder")));
                     });
 
             wrap().props(growX(), top(), left(), gap(unit(2))).children(() -> {
-                button(FeatureManager::reenable).style(WebStyles.secondary()).props(height(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.button.re-enable.tooltip")), gap(unit(2))).children(() -> {
+                button(FeatureManager::reenable).props(style(WebStyles.secondary()), height(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.button.re-enable.tooltip")), gap(unit(2))).children(() -> {
                             icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                             text(Core.bundle.get("feature.button.re-enable"));
                         });
 
-                button(() -> Core.app.openURI(Config.PROJECT_SUGGESTION_URL)).style(WebStyles.secondary())
-                        .props(height(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.button.create-suggestion.tooltip")), gap(unit(2)))
+                button(() -> Core.app.openURI(Config.PROJECT_SUGGESTION_URL))
+                        .props(style(WebStyles.secondary()), height(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.button.create-suggestion.tooltip")), gap(unit(2)))
                         .children(() -> {
                             icon(Icon.link).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                             text(Core.bundle.get("feature.button.create-suggestion"));
                         });
 
-                button(() -> new GeneralSettingsDialog().show()).style(WebStyles.primary()).props(height(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.button.settings")), gap(unit(2))).children(() -> {
+                button(() -> new GeneralSettingsDialog().show()).props(style(WebStyles.primary()), height(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.button.settings")), gap(unit(2))).children(() -> {
                             icon(Icon.settings).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                             text(Core.bundle.get("feature.button.settings"));
                         });

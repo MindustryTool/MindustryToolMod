@@ -10,6 +10,9 @@ import static solim.modifier.Values.padding;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
+import static solim.modifier.Values.color;
+import static solim.modifier.Values.checked;
 import static solim.modifier.Values.tooltip;
 
 import arc.Core;
@@ -90,11 +93,10 @@ public class SchematicPickerDialog extends SolimDialog {
             column().props(grow(), padding(unit(3)), center(), gap(unit(2.5f))).children(() -> {
                 row().props(growX(), padding(unit(1.5f)), Values.rounded(unit(2), WebStyles.Colors.SECONDARY_BG), Values.border(1.5f, WebStyles.Colors.BORDER_INPUT), gap(unit(1.5f)), center())
                         .children(() -> {
-                            icon(Icon.zoom).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f))).color(WebStyles.Colors.GHOST_FG);
+                            icon(Icon.zoom).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f)), color(WebStyles.Colors.GHOST_FG));
                             textField(searchQuery)
-                                    .props(growX(), height(unit(8)), prefHeight(unit(8)))
-                                    .style(WebStyles.clearInput())
-                                    .placeholder(Core.bundle.get("feature.quick-schematic-grid.picker.search"));
+                                    .props(style(WebStyles.clearInput()), growX(), height(unit(8)), prefHeight(unit(8)),
+                                            Values.placeholder(Core.bundle.get("feature.quick-schematic-grid.picker.search")));
                         });
 
                 scroll().props(minHeight(unit(16)), growX()).children(() -> {
@@ -111,8 +113,7 @@ public class SchematicPickerDialog extends SolimDialog {
                     reactiveGrid(displayed).columns(columnCount).key(SchematicPickerDialog::keyOf)
                             .empty(() -> {
                                 text(Core.bundle.get("feature.quick-schematic-grid.picker.empty"))
-                                        .color(Color.gray)
-                                        .padding(unit(4));
+                                        .props(color(Color.gray), solim.modifier.Values.margin(unit(4)));
                             })
                             .props(gap(unit(3)))
                             .items(schematic -> new SchematicPickerCard(schematic, () -> {
@@ -127,8 +128,7 @@ public class SchematicPickerDialog extends SolimDialog {
                         if (count > 0) {
                             String label = Core.bundle.format("feature.quick-schematic-grid.picker.load-more", count);
                             button(label, () -> expandBatch(filtered))
-                                    .style(WebStyles.secondary())
-                                    .props(growX(), height(unit(9f)), prefHeight(unit(9f)));
+                                    .props(style(WebStyles.secondary()), growX(), height(unit(9f)), prefHeight(unit(9f)));
                         }
                     });
                 });
@@ -141,10 +141,8 @@ public class SchematicPickerDialog extends SolimDialog {
                 ? Core.bundle.get("feature.quick-schematic-grid.picker.tag.all")
                 : tag;
         return button()
-                .style(WebStyles.filterChip())
-                .checked(selectedTag.map(sel -> tag == null ? sel == null : tag.equals(sel)))
+                .props(style(WebStyles.filterChip()), checked(selectedTag.map(sel -> tag == null ? sel == null : tag.equals(sel))), padding(unit(1.5f)), tooltip(label))
                 .onClick(() -> selectedTag.set(tag))
-                .props(padding(unit(1.5f)), tooltip(label))
                 .children(() -> text(label));
     }
 
@@ -300,26 +298,18 @@ public class SchematicPickerDialog extends SolimDialog {
                                         .props(growX(), height(unit(42f)), prefHeight(unit(42f)), onClick(onClick), tooltip(title))
                                         .children(() -> {
                                             column().props(grow(), center(), gap(unit(1f))).children(() -> {
-                                                icon(Icon.image).props(size(unit(6f)), prefWidth(unit(6f)), prefHeight(unit(6f))).color(Color.lightGray);
+                                                icon(Icon.image).props(size(unit(6f)), prefWidth(unit(6f)), prefHeight(unit(6f)), color(Color.lightGray));
                                                 text(Core.bundle.get(
                                                         "feature.quick-schematic-grid.picker.preview-generating"))
-                                                        .color(Color.lightGray)
-                                                        .fontScale(0.8f)
-                                                        .center();
+                                                        .props(color(Color.lightGray), solim.modifier.Values.fontScale(0.8f), solim.modifier.Values.center());
                                             });
                                         }));
 
                         text(title)
-                                .growX()
-                                .left()
-                                .ellipsis(true)
-                                .color(Color.white);
+                                .props(color(Color.white), growX(), solim.modifier.Values.left(), solim.modifier.Values.ellipsis(true));
 
                         text(dimensions)
-                                .growX()
-                                .left()
-                                .color(Color.lightGray)
-                                .fontScale(0.85f);
+                                .props(color(Color.lightGray), growX(), solim.modifier.Values.left(), solim.modifier.Values.fontScale(0.85f));
                     }).element();
         }
     }

@@ -1,11 +1,14 @@
 package mindustrytool.features.armycontrol;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.right;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
 
 import arc.Core;
@@ -64,8 +67,7 @@ public class ControlGroupList extends Component {
                 .children(() -> {
 
                     button()
-                            .style(WebStyles.secondary())
-                            .props(growX(), padding(unit(1.5f)))
+                            .props(style(WebStyles.secondary()), growX(), padding(unit(1.5f)))
                             .onClick(() -> feature.recallGroup(group))
                             .children(() -> row().props(growX(), gap(unit(1.5f)), center()).children(() -> {
 
@@ -75,17 +77,13 @@ public class ControlGroupList extends Component {
                                     }
                                 });
 
-                                text(String.valueOf(livingTotal))
-                                        .color(Pal.accent)
-                                        .right();
+                                text(String.valueOf(livingTotal)).props(color(Pal.accent), right());
                             }));
 
                     button()
-                            .style(WebStyles.danger())
-                            .props(size(unit(9), unit(9)), prefWidth(unit(9)), prefHeight(unit(9)))
+                            .props(style(WebStyles.danger()), size(unit(9), unit(9)), prefWidth(unit(9)), prefHeight(unit(9)), tooltip(Core.bundle.get("button.delete", "Delete")))
                             .onClick(() -> feature.deleteGroup(group))
-                            .props(tooltip(Core.bundle.get("button.delete", "Delete")))
-                            .children(() -> icon(Icon.trash).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))).color(WebStyles.Colors.DANGER_FG));
+                            .children(() -> icon(Icon.trash).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)), color(WebStyles.Colors.DANGER_FG)));
                 });
     }
 }

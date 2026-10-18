@@ -8,7 +8,6 @@ import solim.modifier.Props;
 import solim.modifier.TableCapability;
 
 import arc.scene.Element;
-import arc.scene.style.Drawable;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.scene.ui.layout.WrapTable;
@@ -84,20 +83,7 @@ public final class Wrap extends Component
         respace();
     }
 
-    public Wrap background(@Nullable Drawable bg) {
-        table.background(bg);
-        return this;
-    }
 
-    public Wrap padding(float p) {
-        table.margin(p);
-        return this;
-    }
-
-    public Wrap padding(float top, float left, float bottom, float right) {
-        table.margin(top, left, bottom, right);
-        return this;
-    }
 
     public Wrap children(@Nullable Runnable r) {
         applyPendingProps();

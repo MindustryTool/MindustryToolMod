@@ -24,7 +24,6 @@ import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.ContainerCapability;
 import solim.modifier.PendingCellConfig;
-import solim.modifier.Prop;
 import solim.modifier.Props;
 import solim.modifier.TableCapability;
 

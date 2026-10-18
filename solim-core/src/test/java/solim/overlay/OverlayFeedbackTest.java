@@ -1,5 +1,7 @@
 package solim.overlay;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import arc.Core;
@@ -86,7 +88,7 @@ class OverlayFeedbackTest extends SolimEnv {
     void dialogDefaultsToFullScreen() {
         SolimDialog d = new SolimDialog("Full Screen Test");
         assertTrue(d.isFillParent(), "SolimDialog must default to full screen (fillParent == true)");
-        d.fillParent(false);
+        d.props(fillParent(false));
         assertFalse(d.isFillParent(), "fillParent(false) must allow disabling full screen");
         d.dispose();
     }

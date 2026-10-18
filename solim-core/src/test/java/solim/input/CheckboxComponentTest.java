@@ -1,5 +1,7 @@
 package solim.input;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import arc.Core;
@@ -62,10 +64,10 @@ class CheckboxComponentTest extends SolimEnv {
 		Checkbox cb = new Checkbox("Long checkbox label", Signal.of(false));
 		assertTrue(cb.checkBox().getLabel().getPrefWidth() > 0f);
 
-		cb.wrap();
+		cb.props(wrap(true));
 		assertEquals(0f, cb.checkBox().getLabel().getPrefWidth());
 
-		cb.wrap(false);
+		cb.props(wrap(false));
 		assertTrue(cb.checkBox().getLabel().getPrefWidth() > 0f);
 		cb.dispose();
 	}

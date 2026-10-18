@@ -1,10 +1,14 @@
 package mindustrytool.features.autoplay.tasks;
 
 import static solim.UI.*;
+import static solim.modifier.Values.checked;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
+import static solim.modifier.Values.left;
 import static solim.modifier.Values.paddingX;
 import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -105,17 +109,15 @@ public class FollowAssistTask implements AutoplayTask {
     @Override
     public void buildSettings(AutoplayFeature feature) {
         column().props(growX(), gap(unit(1))).children(() -> {
-            text(Core.bundle.get("feature.autoplay.settings.follow-assist.select-player")).growX().left().color(WebStyles.Colors.GHOST_FG);
+            text(Core.bundle.get("feature.autoplay.settings.follow-assist.select-player"))
+                    .props(color(WebStyles.Colors.GHOST_FG), growX(), left());
 
             wrap().props(gap(unit(1)), left()).children(() -> {
                 Readable<Boolean> anyChecked = targetPlayerName.signal().map(name -> name == null || name.trim().isEmpty());
                 button(() -> targetPlayerName.set(""))
-                        .style(WebStyles.filterChipText())
-                        .props(paddingX(unit(2)))
-                        .checked(anyChecked)
-                        .props(height(unit(8)), prefHeight(unit(8)))
+                        .props(checked(anyChecked), style(WebStyles.filterChipText()), paddingX(unit(2)), height(unit(8)), prefHeight(unit(8)))
                         .children(() -> text(Core.bundle.get("feature.autoplay.settings.follow-assist.any-builder"))
-                                .color(anyChecked.map(c -> c ? Color.white : Color.gray)));
+                                .props(color(anyChecked.map(c -> c ? Color.white : Color.gray))));
 
                 for (Player p : Groups.player) {
                     if (p == Vars.player || p.team() != Vars.player.team()) {
@@ -124,12 +126,9 @@ public class FollowAssistTask implements AutoplayTask {
                     String pName = p.name;
                     Readable<Boolean> playerChecked = targetPlayerName.signal().map(name -> pName.equals(name));
                     button(() -> targetPlayerName.set(pName))
-                            .style(WebStyles.filterChipText())
-                            .props(paddingX(unit(2)))
-                            .checked(playerChecked)
-                            .props(height(unit(8)), prefHeight(unit(8)))
+                            .props(checked(playerChecked), style(WebStyles.filterChipText()), paddingX(unit(2)), height(unit(8)), prefHeight(unit(8)))
                             .children(() -> text(pName)
-                                    .color(playerChecked.map(c -> c ? Color.white : Color.gray)));
+                                    .props(color(playerChecked.map(c -> c ? Color.white : Color.gray))));
                 }
             });
         });

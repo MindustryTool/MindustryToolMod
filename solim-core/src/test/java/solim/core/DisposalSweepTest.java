@@ -1,5 +1,7 @@
 package solim.core;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -254,7 +256,7 @@ class DisposalSweepTest extends OwnershipEnv {
     @Test
     void buttonCheckedBindingDies() {
         Signal<Boolean> checked = Signal.of(false);
-        Button button = new Button().checked(checked);
+        Button button = new Button().props(checked(checked));
         assertFalse(button.isDisposed());
 
         checked.set(true);
@@ -272,7 +274,7 @@ class DisposalSweepTest extends OwnershipEnv {
     @Test
     void cardColorBindingDies() {
         Signal<Color> color = Signal.of(Color.red.cpy());
-        Card card = new Card().color(color);
+        Card card = new Card().props(color(color));
         assertEquals(1f, card.table().color.r, 0.0001f);
 
         card.dispose();
@@ -290,7 +292,7 @@ class DisposalSweepTest extends OwnershipEnv {
         Signal<Integer> columns = Signal.of(2);
         Row row = new Row().props(gap(gap));
         Column column = new Column().props(gap(gap));
-        Grid grid = new Grid().columns(columns).props(gap(gap));
+        Grid grid = new Grid().props(columns(columns), gap(gap));
 
         gap.set(8f);
         columns.set(3);
@@ -336,7 +338,7 @@ class DisposalSweepTest extends OwnershipEnv {
     @Test
     void solimImageColorBindingDies() {
         Signal<Color> color = Signal.of(Color.red.cpy());
-        SolimImage image = new SolimImage().color(color);
+        SolimImage image = new SolimImage().props(color(color));
         assertFalse(image.isDisposed());
 
         image.dispose();
@@ -422,7 +424,7 @@ class DisposalSweepTest extends OwnershipEnv {
     void networkImageColorBindingDiesNested() {
         Signal<Color> color = Signal.of(Color.red.cpy());
         Probe<NetworkImage> probe = new Probe<>();
-        Nest nest = new Nest(() -> probe.setValue(new NetworkImage().color(color)));
+        Nest nest = new Nest(() -> probe.setValue(new NetworkImage().props(color(color))));
         nest.element();
 
         nest.dispose();

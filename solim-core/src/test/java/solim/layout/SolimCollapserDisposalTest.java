@@ -1,5 +1,7 @@
 package solim.layout;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -27,7 +29,7 @@ class SolimCollapserDisposalTest extends OwnershipEnv {
     @Test
     void collapsedBindingStopsOnDispose() {
         Signal<Boolean> collapsed = Signal.of(true);
-        SolimCollapser collapser = new SolimCollapser().collapsed(collapsed);
+        SolimCollapser collapser = new SolimCollapser().props(collapsed(collapsed));
         assertTrue(collapser.isCollapsed());
 
         collapsed.set(false);
@@ -45,7 +47,7 @@ class SolimCollapserDisposalTest extends OwnershipEnv {
     @Test
     void expandedBindingStopsOnDispose() {
         Signal<Boolean> expanded = Signal.of(false);
-        SolimCollapser collapser = new SolimCollapser().expanded(expanded);
+        SolimCollapser collapser = new SolimCollapser().props(expanded(expanded));
         assertTrue(collapser.isCollapsed());
 
         expanded.set(true);
@@ -63,10 +65,10 @@ class SolimCollapserDisposalTest extends OwnershipEnv {
     @Test
     void zeroDurationCollapseAppliesImmediatelyInsteadOfAnimating() {
 
-        SolimCollapser instant = new SolimCollapser().duration(0f);
+        SolimCollapser instant = new SolimCollapser().props(duration(0f));
         instant.children(() -> AttachmentStack.add(new Element()));
-        instant.collapsed(false);
-        instant.collapsed(true);
+        instant.props(collapsed(false));
+        instant.props(collapsed(true));
 
         assertTrue(instant.isCollapsed(), "A zero-duration collapse must apply immediately");
         assertEquals(0f, instant.collapser().getPrefHeight(), 0.001f);
@@ -126,7 +128,7 @@ class SolimCollapserDisposalTest extends OwnershipEnv {
     @Test
     void disposeIsIdempotent() {
         Signal<Boolean> collapsed = Signal.of(true);
-        SolimCollapser collapser = new SolimCollapser().collapsed(collapsed);
+        SolimCollapser collapser = new SolimCollapser().props(collapsed(collapsed));
 
         collapser.dispose();
         assertDoesNotThrow(collapser::dispose, "Double dispose must be safe");

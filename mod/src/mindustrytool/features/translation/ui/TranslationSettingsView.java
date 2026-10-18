@@ -4,12 +4,19 @@ import static solim.UI.*;
 import static solim.modifier.Values.border;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
+import static solim.modifier.Values.left;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.paddingX;
+import static solim.modifier.Values.placeholder;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.right;
 import static solim.modifier.Values.rounded;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
+import static solim.modifier.Values.checked;
+import static solim.modifier.Values.color;
+import static solim.modifier.Values.enabled;
 import static solim.modifier.Values.width;
 
 import arc.Core;
@@ -131,17 +138,12 @@ public class TranslationSettingsView extends Component {
                 Core.bundle.get("feature.translation.incoming.preview-title", "Live Message Preview"), () -> {
                     text(Core.bundle.get("feature.translation.incoming.preview-desc",
                             "Shows how other players' messages appear in your chat."))
-                            .color(WebStyles.Colors.GHOST_FG)
-                            .left()
-                            .wrap()
-                            .growX();
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), solim.modifier.Values.wrap(true), growX());
 
                     column().props(growX(), padding(unit(2)), rounded(6, WebStyles.Colors.SECONDARY), gap(unit(1)), left())
                             .children(() -> {
                                 text("[#ffa100]Alex: [white]Bonjour! Pouvons-nous construire du thorium?")
-                                        .left()
-                                        .wrap()
-                                        .growX();
+                                        .props(left(), solim.modifier.Values.wrap(true), growX());
 
                                 String sampleTranslation = Core.bundle.get(
                                         "feature.translation.preview.incoming-sample",
@@ -156,23 +158,17 @@ public class TranslationSettingsView extends Component {
                                             : colorTag + "[" + sampleTranslation + "][white]";
                                 });
                                 text(incomingTranslatedText)
-                                        .left()
-                                        .wrap()
-                                        .growX();
+                                        .props(left(), solim.modifier.Values.wrap(true), growX());
                             });
 
                     column().props(growX(), padding(unit(2)), rounded(6, WebStyles.Colors.SECONDARY), gap(unit(1)), left())
                             .children(() -> {
                                 row().props(growX(), gap(unit(1)), left()).children(() -> {
                                     text(Core.bundle.get("feature.translation.outgoing.title", "Outgoing Chat"))
-                                            .color(Color.lightGray)
-                                            .left()
-                                            .wrap()
-                                            .growX();
+                                            .props(color(Color.lightGray), left(), solim.modifier.Values.wrap(true), growX());
                                     text(feature.outgoingTargetLangConfig.signal()
                                             .map(lang -> "→ " + (lang != null ? lang : "English")))
-                                            .color(Pal.accent)
-                                            .right();
+                                            .props(color(Pal.accent), right());
                                 });
 
                                 String disabledPreview = Core.bundle.get(
@@ -194,9 +190,7 @@ public class TranslationSettingsView extends Component {
                                 });
 
                                 text(outgoingPreviewText)
-                                        .left()
-                                        .wrap()
-                                        .growX();
+                                        .props(left(), solim.modifier.Values.wrap(true), growX());
                             });
                 });
     }
@@ -206,19 +200,14 @@ public class TranslationSettingsView extends Component {
                 Core.bundle.get("feature.translation.appearance.title", "Appearance & Styling"), () -> {
                     column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                         text(Core.bundle.get("feature.translation.appearance.color", "Translation Color"))
-                                .left()
-                                .wrap()
-                                .growX()
-                                .color(Color.white);
+                                .props(color(Color.white), left(), solim.modifier.Values.wrap(true), growX());
 
                         wrap().props(growX(), gap(unit(1.5f))).children(() -> {
                             for (String hex : COLOR_PRESETS) {
                                 Readable<Boolean> isSelected = feature.translationColorConfig.signal()
                                         .map(c -> hex.equalsIgnoreCase(c != null ? c.trim() : ""));
                                 button(() -> feature.translationColorConfig.set(hex))
-                                        .style(WebStyles.filterChip())
-                                        .checked(isSelected)
-                                        .props(size(unit(8), unit(7)), prefWidth(unit(8)), prefHeight(unit(7)), padding(unit(1)))
+                                        .props(style(WebStyles.filterChip()), checked(isSelected), size(unit(8), unit(7)), prefWidth(unit(8)), prefHeight(unit(7)), padding(unit(1)))
                                         .children(() -> {
                                             row().props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f)), rounded(3, Color.valueOf(hex)));
                                         });
@@ -235,9 +224,7 @@ public class TranslationSettingsView extends Component {
                                                     }
                                                 })));
                                         textField(feature.translationColorConfig.signal())
-                                                .placeholder("#84f491")
-                                                .props(width(unit(18)), prefWidth(unit(18)))
-                                                .style(WebStyles.clearInput());
+                                                .props(style(WebStyles.clearInput()), width(unit(18)), prefWidth(unit(18)), placeholder("#84f491"));
                                     });
                         });
                     });
@@ -247,12 +234,12 @@ public class TranslationSettingsView extends Component {
                     checkbox(
                             Core.bundle.get("feature.translation.pref.show-original",
                                     "Show original message alongside translation"),
-                            feature.showOriginalConfig.signal()).wrap().props(growX());
+                            feature.showOriginalConfig.signal()).props(solim.modifier.Values.wrap(true), growX());
 
                     checkbox(
                             Core.bundle.get("feature.translation.appearance.show-pill",
                                     "Show quick translation pill above chat field"),
-                            feature.showPillConfig.signal()).wrap().props(growX());
+                            feature.showPillConfig.signal()).props(solim.modifier.Values.wrap(true), growX());
                 });
     }
 
@@ -262,36 +249,26 @@ public class TranslationSettingsView extends Component {
                     checkbox(
                             Core.bundle.get("feature.translation.outgoing.enable",
                                     "Translate outgoing chat messages automatically"),
-                            feature.outgoingEnabledConfig.signal()).wrap().props(growX());
+                            feature.outgoingEnabledConfig.signal()).props(solim.modifier.Values.wrap(true), growX());
 
                     row().props(growX(), gap(unit(2)), center()).children(() -> {
                         text(Core.bundle.get("feature.translation.outgoing.target-lang", "Outgoing Target Language"))
-                                .left()
-                                .wrap()
-                                .growX()
-                                .color(Color.white);
+                                .props(color(Color.white), left(), solim.modifier.Values.wrap(true), growX());
                         languageDropdown = new LanguageDropdown(feature);
                     });
 
                     column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                         text(Core.bundle.get("feature.translation.outgoing.format", "Outgoing Format"))
-                                .left()
-                                .wrap()
-                                .growX()
-                                .color(Color.white);
+                                .props(color(Color.white), left(), solim.modifier.Values.wrap(true), growX());
 
                         wrap().props(growX(), gap(unit(1.5f))).children(() -> {
                             button(() -> bothSignal.set(true))
-                                    .style(WebStyles.filterChip())
-                                    .checked(bothSignal)
-                                    .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)))
+                                    .props(style(WebStyles.filterChip()), checked(bothSignal), height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)))
                                     .children(() -> text(Core.bundle.get("feature.translation.outgoing.format.both",
                                              "Translated (Original)")));
 
                             button(() -> onlySignal.set(true))
-                                    .style(WebStyles.filterChip())
-                                    .checked(onlySignal)
-                                    .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)))
+                                    .props(style(WebStyles.filterChip()), checked(onlySignal), height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)))
                                     .children(() -> text(Core.bundle.get(
                                             "feature.translation.outgoing.format.translated-only", "Translated Only")));
                         });
@@ -299,13 +276,10 @@ public class TranslationSettingsView extends Component {
 
                     row().props(growX(), padding(unit(1.5f)), rounded(4, WebStyles.Colors.SECONDARY), gap(unit(1.5f)))
                             .children(() -> {
-                                icon(Icon.infoCircle).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4))).color(Pal.accent);
+                                icon(Icon.infoCircle).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)), color(Pal.accent));
                                 text(Core.bundle.get("feature.translation.outgoing.hint",
                                         "Tip: Press Shift + Enter to send without translating, or type // at the start of your message."))
-                                        .color(WebStyles.Colors.GHOST_FG)
-                                        .left()
-                                        .wrap()
-                                        .growX();
+                                        .props(color(WebStyles.Colors.GHOST_FG), left(), solim.modifier.Values.wrap(true), growX());
                             });
                 });
     }
@@ -318,16 +292,14 @@ public class TranslationSettingsView extends Component {
                             Readable<Boolean> isSelected = feature.providerConfig.signal()
                                     .map(id -> provider.getId().equals(id));
                             button(() -> feature.providerConfig.set(provider.getId()))
-                                    .style(WebStyles.filterChip())
-                                    .checked(isSelected)
-                                    .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)))
+                                    .props(style(WebStyles.filterChip()), checked(isSelected), height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)))
                                     .children(() -> {
                                         row().props(gap(unit(1)), center()).children(() -> {
                                             text(provider.getName());
                                             if (GoogleWebTranslationProvider.ID.equals(provider.getId())) {
                                                 badge(Core.bundle.get("feature.translation.provider.google-free-badge",
                                                         "Free"))
-                                                        .color(WebStyles.Colors.PRIMARY);
+                                                        .props(color(WebStyles.Colors.PRIMARY));
                                             }
                                         });
                                     });
@@ -341,20 +313,13 @@ public class TranslationSettingsView extends Component {
                     row().props(growX(), gap(unit(2)), center()).children(() -> {
                         column().props(growX(), gap(unit(0.5f)), left()).children(() -> {
                             text(Core.bundle.get("feature.translation.test.title", "Connection Test"))
-                                    .left()
-                                    .wrap()
-                                    .growX()
-                                    .color(Color.white);
+                                    .props(color(Color.white), left(), solim.modifier.Values.wrap(true), growX());
                             text(testStatusSignal)
-                                    .left()
-                                    .wrap()
-                                    .growX();
+                                    .props(left(), solim.modifier.Values.wrap(true), growX());
                         });
 
                         button(this::onTestConnection)
-                                .style(WebStyles.outline())
-                                .props(height(unit(8.5f)), prefHeight(unit(8.5f)), paddingX(unit(3)))
-                                .enabled(isTestingSignal.map(t -> !Boolean.TRUE.equals(t)))
+                                .props(style(WebStyles.outline()), enabled(isTestingSignal.map(t -> !Boolean.TRUE.equals(t))), height(unit(8.5f)), prefHeight(unit(8.5f)), paddingX(unit(3)))
                                 .children(() -> {
                                     row().props(gap(unit(1.5f)), center()).children(() -> {
                                         icon(Icon.play).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)));
@@ -367,12 +332,9 @@ public class TranslationSettingsView extends Component {
                         if (err != null && !err.trim().isEmpty()) {
                             row().props(growX(), padding(unit(1.5f)), rounded(4, WebStyles.Colors.SECONDARY), gap(unit(1.5f)))
                                     .children(() -> {
-                                        icon(Icon.warning).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4))).color(Color.scarlet);
+                                        icon(Icon.warning).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)), color(Color.scarlet));
                                         text(Core.bundle.format("feature.translation.last-error", err))
-                                                .color(Color.scarlet)
-                                                .left()
-                                                .wrap()
-                                                .growX();
+                                                .props(color(Color.scarlet), left(), solim.modifier.Values.wrap(true), growX());
                                     });
                         }
                     });
@@ -382,8 +344,7 @@ public class TranslationSettingsView extends Component {
     private Component resetActions() {
         return row().props(growX()).children(() -> {
             button(feature::resetToDefaults)
-                    .style(WebStyles.outline())
-                    .props(height(unit(9)), prefHeight(unit(9)), growX())
+                    .props(style(WebStyles.outline()), height(unit(9)), prefHeight(unit(9)), growX())
                     .children(() -> {
                         row().props(gap(unit(1.5f)), center()).children(() -> {
                             icon(Icon.refresh).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)));
@@ -398,63 +359,45 @@ public class TranslationSettingsView extends Component {
             return column().props(growX(), gap(unit(1))).children(() -> {
                 row().props(growX(), gap(unit(1)), center()).children(() -> {
                     text(Core.bundle.get("feature.translation.gemini.api-key", "Gemini API Key"))
-                            .left()
-                            .color(Color.lightGray)
-                            .wrap()
-                            .growX();
+                            .props(color(Color.lightGray), left(), solim.modifier.Values.wrap(true), growX());
                     button(Core.bundle.get("feature.translation.gemini.get-key", "Get Key"),
                             () -> Core.app.openURI("https://aistudio.google.com/app/apikey"))
-                            .style(WebStyles.outline())
-                            .props(height(unit(7)), prefHeight(unit(7)), paddingX(unit(2.5f)));
+                            .props(style(WebStyles.outline()), height(unit(7)), prefHeight(unit(7)), paddingX(unit(2.5f)));
                 });
                 textField(feature.geminiApiKeyConfig.signal())
-                        .placeholder(Core.bundle.get("feature.translation.gemini.api-key.hint", "AIzaSy..."))
-                        .props(growX());
+                        .props(growX(), placeholder(Core.bundle.get("feature.translation.gemini.api-key.hint", "AIzaSy...")));
             });
         } else if (DeepLTranslationProvider.ID.equals(providerId)) {
             return column().props(growX(), gap(unit(1))).children(() -> {
                 row().props(growX(), gap(unit(1)), center()).children(() -> {
                     text(Core.bundle.get("feature.translation.deepl.api-key", "DeepL API Key"))
-                            .left()
-                            .color(Color.lightGray)
-                            .wrap()
-                            .growX();
+                            .props(color(Color.lightGray), left(), solim.modifier.Values.wrap(true), growX());
                     button(Core.bundle.get("feature.translation.deepl.portal", "Portal"),
                             () -> Core.app.openURI("https://www.deepl.com/pro-api"))
-                            .style(WebStyles.outline())
-                            .props(height(unit(7)), prefHeight(unit(7)), paddingX(unit(2.5f)));
+                            .props(style(WebStyles.outline()), height(unit(7)), prefHeight(unit(7)), paddingX(unit(2.5f)));
                 });
                 textField(feature.deeplApiKeyConfig.signal())
-                        .placeholder(Core.bundle.get("feature.translation.deepl.api-key.hint", "...:fx"))
-                        .props(growX());
+                        .props(growX(), placeholder(Core.bundle.get("feature.translation.deepl.api-key.hint", "...:fx")));
             });
         } else if (DevXTranslationProvider.ID.equals(providerId)) {
             return column().props(growX(), gap(unit(1))).children(() -> {
                 row().props(growX(), gap(unit(1)), center()).children(() -> {
                     text(Core.bundle.get("feature.translation.devx.api-key", "Nvidia API Key"))
-                            .left()
-                            .color(Color.lightGray)
-                            .wrap()
-                            .growX();
+                            .props(color(Color.lightGray), left(), solim.modifier.Values.wrap(true), growX());
                     button(Core.bundle.get("feature.translation.devx.get-key", "Get Key"),
                             () -> Core.app.openURI("https://build.nvidia.com/"))
-                            .style(WebStyles.outline())
-                            .props(height(unit(7)), prefHeight(unit(7)), paddingX(unit(2.5f)));
+                            .props(style(WebStyles.outline()), height(unit(7)), prefHeight(unit(7)), paddingX(unit(2.5f)));
                 });
                 textField(feature.devxApiKeyConfig.signal())
-                        .placeholder(Core.bundle.get("feature.translation.devx.api-key.hint", "nvapi-..."))
-                        .props(growX());
+                        .props(growX(), placeholder(Core.bundle.get("feature.translation.devx.api-key.hint", "nvapi-...")));
             });
         } else if (GoogleWebTranslationProvider.ID.equals(providerId)) {
             return row().props(growX(), padding(unit(1.5f)), rounded(4, WebStyles.Colors.SECONDARY), gap(unit(1.5f)))
                     .children(() -> {
-                        icon(Icon.infoCircle).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4))).color(Pal.accent);
+                        icon(Icon.infoCircle).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)), color(Pal.accent));
                         text(Core.bundle.get("feature.translation.google.desc",
                                 "Unlimited free web translation. No API key or setup required."))
-                                .color(WebStyles.Colors.GHOST_FG)
-                                .left()
-                                .wrap()
-                                .growX();
+                                .props(color(WebStyles.Colors.GHOST_FG), left(), solim.modifier.Values.wrap(true), growX());
                     });
         }
         return column();

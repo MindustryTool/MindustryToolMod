@@ -5,7 +5,6 @@ import arc.graphics.Color;
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
-import arc.util.Align;
 import arc.util.Nullable;
 import java.util.Objects;
 import arc.func.Func2;
@@ -23,6 +22,7 @@ import solim.modifier.Configurable;
 import solim.modifier.ContainerCapability;
 import solim.modifier.TableCapability;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.Values;
 import solim.modifier.Props;
 import solim.runtime.AttachmentStack;
 import solim.runtime.OwnershipScope;
@@ -42,7 +42,7 @@ public final class QueryView<T> extends Component
         Table table = new Table();
         table.center();
         String text = Core.bundle != null ? Core.bundle.get("loading", "Loading...") : "Loading...";
-        Text label = new Text(text).color(Color.lightGray);
+        Text label = new Text(text).props(Values.color(Color.lightGray));
         table.add(label.element());
         return wrap(table);
     };
@@ -53,7 +53,7 @@ public final class QueryView<T> extends Component
         String msg = throwable != null
                 ? (throwable.getMessage() != null ? throwable.getMessage() : throwable.toString())
                 : (Core.bundle != null ? Core.bundle.get("query.error.default", "An error occurred") : "An error occurred");
-        Text errorText = new Text(msg).color(Color.scarlet);
+        Text errorText = new Text(msg).props(Values.color(Color.scarlet));
         table.add(errorText.element()).padBottom(8f).row();
 
         String btnText = Core.bundle != null ? Core.bundle.get("button.retry", "Retry") : "Retry";

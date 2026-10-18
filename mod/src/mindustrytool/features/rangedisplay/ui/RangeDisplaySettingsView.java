@@ -1,12 +1,16 @@
 package mindustrytool.features.rangedisplay.ui;
 
 import static solim.UI.*;
+import static solim.modifier.Values.checked;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
+import static solim.modifier.Values.margin;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
 
 import arc.Core;
@@ -86,7 +90,7 @@ public class RangeDisplaySettingsView extends Component {
                             feature.strokeWidthConfig.signal()
                                     .map(v -> String.format(Locale.US, "%.1fx", v != null ? v : 1f)));
 
-                    divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
                     SettingSlider.of(
                             Core.bundle.get("feature.range-display.settings.min-zoom"),
@@ -101,7 +105,7 @@ public class RangeDisplaySettingsView extends Component {
                                         : String.format(Locale.US, "%.1fx", zoom);
                             }));
 
-                    divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
                     checkbox(Core.bundle.get("feature.range-display.settings.hover-only"),
                             feature.hoverOnlyConfig.signal()).props(growX());
@@ -126,7 +130,7 @@ public class RangeDisplaySettingsView extends Component {
                             feature.proximityRadiusConfig.signal()
                                     .map(v -> Math.round(v != null ? v : 30f) + " tiles"));
 
-                    divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
                     checkbox(Core.bundle.get("feature.range-display.settings.filter-target-air"),
                             feature.filterTargetAirConfig.signal()).props(growX());
@@ -151,7 +155,7 @@ public class RangeDisplaySettingsView extends Component {
                     checkbox(Core.bundle.get("feature.range-display.settings.draw-enemy-turrets"),
                             feature.drawTurretRangeEnemyConfig.signal()).props(growX());
 
-                    divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
                     checkbox(Core.bundle.get("feature.range-display.settings.draw-ally-units"),
                             feature.drawUnitRangeAllyConfig.signal()).props(growX());
@@ -159,7 +163,7 @@ public class RangeDisplaySettingsView extends Component {
                     checkbox(Core.bundle.get("feature.range-display.settings.draw-enemy-units"),
                             feature.drawUnitRangeEnemyConfig.signal()).props(growX());
 
-                    divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
                     checkbox(Core.bundle.get("feature.range-display.settings.draw-ally-blocks"),
                             feature.drawBlockRangeAllyConfig.signal()).props(growX());
@@ -167,12 +171,12 @@ public class RangeDisplaySettingsView extends Component {
                     checkbox(Core.bundle.get("feature.range-display.settings.draw-enemy-blocks"),
                             feature.drawBlockRangeEnemyConfig.signal()).props(growX());
 
-                    divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
                     checkbox(Core.bundle.get("feature.range-display.settings.draw-spawners"),
                             feature.drawSpawnerRangeConfig.signal()).props(growX());
 
-                    divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
                     checkbox(Core.bundle.get("feature.range-display.settings.draw-overdrive-range"),
                             feature.drawOverdriveRangeConfig.signal()).props(growX());
@@ -183,7 +187,7 @@ public class RangeDisplaySettingsView extends Component {
                     checkbox(Core.bundle.get("feature.range-display.settings.draw-point-defense-range"),
                             feature.drawPointDefenseRangeConfig.signal()).props(growX());
 
-                    divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
                     checkbox(Core.bundle.get("feature.range-display.settings.use-team-color-for-special"),
                             feature.useTeamColorForSpecialConfig.signal()).props(growX());
@@ -193,22 +197,18 @@ public class RangeDisplaySettingsView extends Component {
     private Component turretsFilterCard() {
         return SettingCard.card().children(() -> {
             row().props(growX(), gap(unit(2)), center()).children(() -> {
-                icon(Icon.turret).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))).color(Pal.accent);
+                icon(Icon.turret).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)), color(Pal.accent));
                 text(Core.bundle.get("feature.range-display.settings.section.turrets", "Turrets"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
+                        .props(color(Pal.accent), growX(), left());
 
                 row().props(gap(unit(1))).children(() -> {
                     button(Core.bundle.get("feature.range-display.settings.all", "All"),
                             () -> feature.setCategoryEnabled(true, true))
-                            .style(WebStyles.outlineText())
-                            .props(height(unit(8)), prefHeight(unit(8)), padding(unit(1), unit(2.5f), unit(1), unit(2.5f)));
+                            .props(style(WebStyles.outlineText()), height(unit(8)), prefHeight(unit(8)), padding(unit(1), unit(2.5f), unit(1), unit(2.5f)));
 
                     button(Core.bundle.get("feature.range-display.settings.none", "None"),
                             () -> feature.setCategoryEnabled(true, false))
-                            .style(WebStyles.ghostText())
-                            .props(height(unit(8)), prefHeight(unit(8)), padding(unit(1), unit(2.5f), unit(1), unit(2.5f)));
+                            .props(style(WebStyles.ghostText()), height(unit(8)), prefHeight(unit(8)), padding(unit(1), unit(2.5f), unit(1), unit(2.5f)));
                 });
             });
 
@@ -216,13 +216,11 @@ public class RangeDisplaySettingsView extends Component {
                 row().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                     button(Core.bundle.get("feature.range-display.settings.filter.all", "All"),
                             () -> turretActiveOnMapOnly.set(false))
-                            .style(WebStyles.filterChipText())
-                            .checked(turretActiveOnMapOnly.map(active -> !Boolean.TRUE.equals(active)));
+                            .props(style(WebStyles.filterChipText()), checked(turretActiveOnMapOnly.map(active -> !Boolean.TRUE.equals(active))));
 
                     button(Core.bundle.get("feature.range-display.settings.filter.active-on-map", "Active on Map"),
                             () -> turretActiveOnMapOnly.set(true))
-                            .style(WebStyles.filterChipText())
-                            .checked(turretActiveOnMapOnly.map(active -> Boolean.TRUE.equals(active)));
+                            .props(style(WebStyles.filterChipText()), checked(turretActiveOnMapOnly.map(active -> Boolean.TRUE.equals(active))));
                 });
             }
 
@@ -230,8 +228,7 @@ public class RangeDisplaySettingsView extends Component {
                 Seq<Block> blocks = getFilteredBlocks(true, Boolean.TRUE.equals(activeOnly));
                 if (blocks.isEmpty()) {
                     text(Core.bundle.get("feature.range-display.settings.filter.empty-map", "No blocks on current map"))
-                            .color(WebStyles.Colors.GHOST_FG)
-                            .padding(unit(2));
+                            .props(color(WebStyles.Colors.GHOST_FG), margin(unit(2)));
                 } else {
                     wrap().props(growX(), left(), gap(unit(1.5f))).children(() -> {
                         for (Block block : blocks) {
@@ -246,22 +243,18 @@ public class RangeDisplaySettingsView extends Component {
     private Component supportBlocksFilterCard() {
         return SettingCard.card().children(() -> {
             row().props(growX(), gap(unit(2)), center()).children(() -> {
-                icon(Icon.defense).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))).color(Pal.accent);
+                icon(Icon.defense).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)), color(Pal.accent));
                 text(Core.bundle.get("feature.range-display.settings.section.support-blocks", "Support Blocks"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
+                        .props(color(Pal.accent), growX(), left());
 
                 row().props(gap(unit(1))).children(() -> {
                     button(Core.bundle.get("feature.range-display.settings.all", "All"),
                             () -> feature.setCategoryEnabled(false, true))
-                            .style(WebStyles.outlineText())
-                            .props(height(unit(8)), prefHeight(unit(8)), padding(unit(1), unit(2.5f), unit(1), unit(2.5f)));
+                            .props(style(WebStyles.outlineText()), height(unit(8)), prefHeight(unit(8)), padding(unit(1), unit(2.5f), unit(1), unit(2.5f)));
 
                     button(Core.bundle.get("feature.range-display.settings.none", "None"),
                             () -> feature.setCategoryEnabled(false, false))
-                            .style(WebStyles.ghostText())
-                            .props(height(unit(8)), prefHeight(unit(8)), padding(unit(1), unit(2.5f), unit(1), unit(2.5f)));
+                            .props(style(WebStyles.ghostText()), height(unit(8)), prefHeight(unit(8)), padding(unit(1), unit(2.5f), unit(1), unit(2.5f)));
                 });
             });
 
@@ -269,13 +262,11 @@ public class RangeDisplaySettingsView extends Component {
                 row().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                     button(Core.bundle.get("feature.range-display.settings.filter.all", "All"),
                             () -> supportActiveOnMapOnly.set(false))
-                            .style(WebStyles.filterChipText())
-                            .checked(supportActiveOnMapOnly.map(active -> !Boolean.TRUE.equals(active)));
+                            .props(style(WebStyles.filterChipText()), checked(supportActiveOnMapOnly.map(active -> !Boolean.TRUE.equals(active))));
 
                     button(Core.bundle.get("feature.range-display.settings.filter.active-on-map", "Active on Map"),
                             () -> supportActiveOnMapOnly.set(true))
-                            .style(WebStyles.filterChipText())
-                            .checked(supportActiveOnMapOnly.map(active -> Boolean.TRUE.equals(active)));
+                            .props(style(WebStyles.filterChipText()), checked(supportActiveOnMapOnly.map(active -> Boolean.TRUE.equals(active))));
                 });
             }
 
@@ -283,8 +274,7 @@ public class RangeDisplaySettingsView extends Component {
                 Seq<Block> blocks = getFilteredBlocks(false, Boolean.TRUE.equals(activeOnly));
                 if (blocks.isEmpty()) {
                     text(Core.bundle.get("feature.range-display.settings.filter.empty-map", "No blocks on current map"))
-                            .color(WebStyles.Colors.GHOST_FG)
-                            .padding(unit(2));
+                            .props(color(WebStyles.Colors.GHOST_FG), margin(unit(2)));
                 } else {
                     wrap().props(growX(), left(), gap(unit(1.5f))).children(() -> {
                         for (Block block : blocks) {
@@ -337,8 +327,7 @@ public class RangeDisplaySettingsView extends Component {
         return SettingCard.card().children(() -> {
             button(Core.bundle.get("feature.range-display.settings.reset", "Reset to Defaults"),
                     feature::resetToDefaults)
-                    .style(WebStyles.outlineText())
-                    .props(height(unit(11)), prefHeight(unit(11)), growX());
+                    .props(style(WebStyles.outlineText()), height(unit(11)), prefHeight(unit(11)), growX());
         });
     }
 
@@ -348,15 +337,12 @@ public class RangeDisplaySettingsView extends Component {
         Drawable drawable = region != null ? new TextureRegionDrawable(region) : Tex.clear;
 
         button()
-                .style(WebStyles.filterChip())
-                .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), padding(unit(1)), tooltip(block.localizedName))
-                .checked(signal)
+                .props(style(WebStyles.filterChip()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), padding(unit(1)), tooltip(block.localizedName), checked(signal))
                 .onClick(() -> feature.setBlockEnabled(block, !feature.isBlockEnabled(block)))
                 .children(() -> {
                     icon(drawable)
-                            .props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)))
-                            .color(signal.map(enabled -> Boolean.TRUE.equals(enabled) ? Color.white
-                                    : new Color(1f, 1f, 1f, 0.35f)));
+                            .props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(signal.map(enabled -> Boolean.TRUE.equals(enabled) ? Color.white
+                                    : new Color(1f, 1f, 1f, 0.35f))));
                 });
     }
 }

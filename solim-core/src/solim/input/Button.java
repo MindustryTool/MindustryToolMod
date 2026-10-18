@@ -1,10 +1,8 @@
 package solim.input;
 
 import arc.func.Boolp;
-import arc.graphics.Color;
 import arc.graphics.g2d.Font;
 import arc.input.KeyCode;
-import solim.graphics.RoundedDrawable;
 import arc.scene.Element;
 import arc.scene.event.ClickListener;
 import arc.scene.event.InputEvent;
@@ -13,7 +11,6 @@ import arc.scene.ui.Label;
 import arc.scene.ui.Label.LabelStyle;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
-import arc.util.Align;
 import arc.util.Log;
 import arc.util.Nullable;
 import arc.util.Scaling;
@@ -41,7 +38,6 @@ import solim.modifier.Configurable;
 import solim.modifier.ContainerCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
-import solim.modifier.RoundedHelper;
 import solim.modifier.TableCapability;
 import solim.modifier.Values;
 import arc.util.Time;
@@ -136,9 +132,8 @@ public final class Button
     public Button icon(@Nullable Drawable drawable) {
         children(() -> {
             if (drawable != null) {
-                SolimImage img = new SolimImage(Drawables.scalable(drawable));
-                img.scaling(Scaling.fit)
-                        .props(Values.size(Units.unit(6)), Values.prefWidth(Units.unit(6)),
+                SolimImage img = new SolimImage(Drawables.scalable(drawable), Scaling.fit);
+                img.props(Values.size(Units.unit(6)), Values.prefWidth(Units.unit(6)),
                                 Values.prefHeight(Units.unit(6)));
                 AttachmentStack.attachToParent(img.element());
             }
@@ -151,8 +146,7 @@ public final class Button
             if (drawable != null) {
                 SolimImage img = new SolimImage();
                 img.drawable(drawable.map(Drawables::scalable));
-                img.scaling(Scaling.fit)
-                        .props(Values.size(Units.unit(6)), Values.prefWidth(Units.unit(6)),
+                img.props(Values.scaling(Scaling.fit), Values.size(Units.unit(6)), Values.prefWidth(Units.unit(6)),
                                 Values.prefHeight(Units.unit(6)));
                 AttachmentStack.attachToParent(img.element());
             }
@@ -236,15 +230,17 @@ public final class Button
         return this;
     }
 
-    // TODO: use prop
-    public Button enabled(@Nullable Readable<Boolean> signal) {
+    public void setEnabled(@Nullable Readable<Boolean> signal) {
         if (signal != null) {
             withinOwnership(() -> Effect.of(() -> button.setDisabled(!Boolean.TRUE.equals(signal.get()))));
         }
-        return this;
     }
 
-    public Button checked(@Nullable Readable<Boolean> signal) {
+    public void setDisabled(Boolp prov) {
+        button.setDisabled(prov);
+    }
+
+    public void setChecked(@Nullable Readable<Boolean> signal) {
         if (signal != null) {
             withinOwnership(() -> Effect.of(() -> button.setChecked(Boolean.TRUE.equals(signal.get()))));
 
@@ -258,7 +254,6 @@ public final class Button
                 warnCheckedWithoutVisual();
             }
         }
-        return this;
     }
 
     private void ensureCheckedReassertListener() {
@@ -286,22 +281,13 @@ public final class Button
                 "[Solim] .checked(...) bound to a style with no checked visual — the selected state will not render. Use a style that declares a checked state; action-chip styles deliberately have none.");
     }
 
-    public Button visible(@Nullable Readable<Boolean> signal) {
-        if (signal != null) {
-            withinOwnership(() -> Effect.of(() -> button.visible = Boolean.TRUE.equals(signal.get())));
-        }
-        return this;
-    }
-
-    // TODO put it into .props()
-    public Button style(@Nullable ButtonStyle style) {
+    public void setStyle(@Nullable ButtonStyle style) {
         if (style != null) {
             button.setStyle(style);
         }
-        return this;
     }
 
-    public Button style(@Nullable Readable<? extends ButtonStyle> style) {
+    public void setStyle(@Nullable Readable<? extends ButtonStyle> style) {
         if (style != null) {
             withinOwnership(() -> Effect.of(() -> {
                 ButtonStyle s = style.get();
@@ -310,12 +296,11 @@ public final class Button
                 }
             }));
         }
-        return this;
-    };
+    }
 
-    public Button style(@Nullable Cons<SolimButtonStyleBuilder> config) {
+    public void setStyle(@Nullable Cons<SolimButtonStyleBuilder> config) {
         if (config == null) {
-            return this;
+            return;
         }
         SolimButtonStyleBuilder builder = new SolimButtonStyleBuilder();
         config.get(builder);
@@ -325,14 +310,12 @@ public final class Button
             applyResolvedStyle(builder.build());
             withinOwnership(() -> Effect.of(() -> applyResolvedStyle(builder.build())));
         }
-        return this;
     }
 
-    public Button style(@Nullable SolimButtonStyle resolved) {
+    public void setStyle(@Nullable SolimButtonStyle resolved) {
         if (resolved != null) {
             applyResolvedStyle(resolved);
         }
-        return this;
     }
 
     private void applyResolvedStyle(@Nullable SolimButtonStyle resolved) {
@@ -411,162 +394,6 @@ public final class Button
         return button;
     }
 
-    public Button color(Color color) {
-        button.setColor(color);
-        return this;
-    }
-
-    public Button color(Readable<Color> color) {
-        if (color != null) {
-            withinOwnership(() -> Effect.of(() -> {
-                Color c = color.get();
-                if (c != null) {
-                    button.setColor(c);
-                }
-            }));
-        }
-        return this;
-    };
-
-    public Button rounded(int radius) {
-        return rounded(radius, (Color) null);
-    }
-
-    public Button rounded(float radius) {
-        return rounded((int) radius, (Color) null);
-    }
-
-    public Button rounded(int radius, @Nullable Color color) {
-        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(table(), radius);
-        if (rd != null) {
-            rd.radius(radius);
-            if (color != null) {
-                rd.fillColor(color);
-            }
-            ButtonStyle s = button.getStyle();
-            if (s == null) {
-                s = new ButtonStyle();
-                button.setStyle(s);
-            }
-            s.up = rd;
-            if (color != null) {
-                Color overColor = color.cpy().mul(1.15f);
-                Color downColor = color.cpy().mul(0.85f);
-                s.over = RoundedDrawable.of(radius, overColor, rd.getStroke(), rd.getBorderColor());
-                s.down = RoundedDrawable.of(radius, downColor, rd.getStroke(), rd.getBorderColor());
-            }
-        }
-        return this;
-    }
-
-    public Button rounded(int radius, @Nullable Readable<Color> color) {
-        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(table(), radius);
-        if (rd != null) {
-            rd.radius(radius);
-            if (color != null) {
-                OwnershipContext.push(this);
-                try {
-                    Effect.of(() -> {
-                        Color c = color.get();
-                        if (c != null) {
-                            rd.fillColor(c);
-                        }
-                    });
-                } finally {
-                    OwnershipContext.pop();
-                }
-            }
-            ButtonStyle s = button.getStyle();
-            if (s == null) {
-                s = new ButtonStyle();
-                button.setStyle(s);
-            }
-            s.up = rd;
-        }
-        return this;
-    }
-
-    public Button background(@Nullable Drawable drawable) {
-        button.setBackground(drawable);
-        ButtonStyle s = button.getStyle();
-        if (s == null) {
-            s = new ButtonStyle();
-            button.setStyle(s);
-        }
-        s.up = drawable;
-        return this;
-    }
-
-    public Button background(@Nullable Color color) {
-        if (color == null || color.a == 0f) {
-            return background((Drawable) null);
-        }
-        return rounded(0, color);
-    }
-
-    public Button disabled(Boolp prov) {
-        button.setDisabled(prov);
-        return this;
-    }
-
-    public Button border(float stroke, @Nullable Color color) {
-        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(table(), 8);
-        if (rd != null) {
-            rd.border(stroke, color != null ? color : Color.white);
-            ButtonStyle s = button.getStyle();
-            if (s == null) {
-                s = new ButtonStyle();
-                button.setStyle(s);
-            }
-            s.up = rd;
-            if (s.over instanceof RoundedDrawable) {
-                ((RoundedDrawable) s.over).border(stroke, color != null ? color : Color.white);
-            }
-            if (s.down instanceof RoundedDrawable) {
-                ((RoundedDrawable) s.down).border(stroke, color != null ? color : Color.white);
-            }
-            if (s.checked instanceof RoundedDrawable) {
-                ((RoundedDrawable) s.checked).border(stroke, color != null ? color : Color.white);
-            }
-        }
-        return this;
-    }
-
-    public Button border(float stroke, @Nullable Readable<Color> color) {
-        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(table(), 8);
-        if (rd != null) {
-            if (color != null) {
-                OwnershipContext.push(this);
-                try {
-                    Effect.of(() -> {
-                        Color c = color.get();
-                        rd.border(stroke, c != null ? c : Color.white);
-                    });
-                } finally {
-                    OwnershipContext.pop();
-                }
-            } else {
-                rd.border(stroke, Color.white);
-            }
-            ButtonStyle s = button.getStyle();
-            if (s == null) {
-                s = new ButtonStyle();
-                button.setStyle(s);
-            }
-            s.up = rd;
-            if (s.over instanceof RoundedDrawable) {
-                ((RoundedDrawable) s.over).border(stroke, color);
-            }
-            if (s.down instanceof RoundedDrawable) {
-                ((RoundedDrawable) s.down).border(stroke, color);
-            }
-            if (s.checked instanceof RoundedDrawable) {
-                ((RoundedDrawable) s.checked).border(stroke, color);
-            }
-        }
-        return this;
-    }
-
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
@@ -577,85 +404,6 @@ public final class Button
         return button;
     }
 
-    public Button align(int align) {
-        table().align(align);
-        constraints.align = align;
-        constraints.applyAlignToParentCell(element());
-        button.defaults().align(align);
-        for (Cell<?> c : button.getCells()) {
-            if (c != null) {
-                c.align(align);
-            }
-        }
-        return this;
-    }
-
-    public Button center() {
-        table().center();
-        constraints.alignCenter();
-        constraints.applyAlignToParentCell(element());
-        button.defaults().center();
-        for (Cell<?> c : button.getCells()) {
-            if (c != null) {
-                c.center();
-            }
-        }
-        return this;
-    }
-
-    public Button top() {
-        table().top();
-        constraints.alignTop();
-        constraints.applyAlignToParentCell(element());
-        button.defaults().top();
-        for (Cell<?> c : button.getCells()) {
-            if (c != null) {
-                c.top();
-            }
-        }
-        return this;
-    }
-
-    public Button bottom() {
-        table().bottom();
-        constraints.alignBottom();
-        constraints.applyAlignToParentCell(element());
-        button.defaults().bottom();
-        for (Cell<?> c : button.getCells()) {
-            if (c != null) {
-                c.bottom();
-            }
-        }
-        return this;
-    }
-
-    public Button left() {
-        table().left();
-        constraints.alignLeft();
-        constraints.applyAlignToParentCell(element());
-        button.defaults().left();
-        for (Cell<?> c : button.getCells()) {
-            if (c != null) {
-                c.left();
-            }
-        }
-        return this;
-    }
-
-    public Button right() {
-        table().right();
-        constraints.alignRight();
-        constraints.applyAlignToParentCell(element());
-        button.defaults().right();
-        for (Cell<?> c : button.getCells()) {
-            if (c != null) {
-                c.right();
-            }
-        }
-        return this;
-    }
-
-    @Override
     public Button name(@Nullable String name) {
         setName(name);
         return this;

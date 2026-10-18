@@ -3,12 +3,18 @@ package mindustrytool.services.auth;
 import static solim.UI.*;
 import static solim.modifier.Values.background;
 import static solim.modifier.Values.center;
+import static solim.modifier.Values.fillParent;
 import static solim.modifier.Values.gap;
 import static solim.modifier.Values.margin;
+import static solim.modifier.Values.marginLeft;
 import static solim.modifier.Values.onClick;
 import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.right;
+import static solim.modifier.Values.size;
 import static solim.modifier.Values.top;
+import static solim.modifier.Values.touchable;
 
 import arc.Core;
 import arc.Events;
@@ -84,9 +90,7 @@ public class AuthOverlay {
 
     private Component buildOverlay() {
         return column()
-                .fillParent()
-                .props(top(), right())
-                .touchable(Touchable.childrenOnly)
+                .props(fillParent(true), top(), right(), touchable(Touchable.childrenOnly))
                 .children(() -> {
                     dynamic(state, s -> {
                         if (s.isLoading) {
@@ -129,10 +133,10 @@ public class AuthOverlay {
                                         row().props(padding(unit(2)), background(Styles.black6), gap(unit(2)), center())
                                                 .children(() -> {
                                                     if (user.getImageUrl() != null && !user.getImageUrl().isEmpty()) {
-                                                        networkImage(user.getImageUrl()).size(64f);
+                                                        networkImage(user.getImageUrl()).props(size(64f), prefWidth(64f), prefHeight(64f));
                                                     }
                                                     if (!Vars.mobile && user.getName() != null) {
-                                                        text(user.getName()).marginLeft(unit(2));
+                                                        text(user.getName()).props(marginLeft(unit(2)));
                                                     }
                                                 });
                                     });

@@ -6,6 +6,7 @@ import static solim.modifier.Values.position;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
 
 import arc.Core;
@@ -32,10 +33,8 @@ public class JoystickHudView extends Component {
             column().children(() -> {
                 when(feature.showHandleConfig.signal())
                         .thenDo(() -> button()
-                                .style(WebStyles.ghost())
-                                .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.joystick.settings.show-handle")))
-                                .children(() -> icon(Icon.move).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))))
-                                .props(draggable(feature.posXConfig.signal(), feature.posYConfig.signal())));
+                                .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.joystick.settings.show-handle")), draggable(feature.posXConfig.signal(), feature.posYConfig.signal()))
+                                .children(() -> icon(Icon.move).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)))));
 
                 arc(new JoystickWidget(feature));
             });

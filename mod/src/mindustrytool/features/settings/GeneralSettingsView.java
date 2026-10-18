@@ -1,12 +1,16 @@
 package mindustrytool.features.settings;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
+import static solim.modifier.Values.left;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
+import static solim.modifier.Values.wrap;
 
 import arc.Core;
 import arc.files.Fi;
@@ -62,36 +66,28 @@ public class GeneralSettingsView extends Component {
             row().props(growX(), gap(unit(2)), center()).children(() -> {
                 column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                     text(Core.bundle.get("setting.beta.participate"))
-                            .color(Color.white)
-                            .left();
+                            .props(color(Color.white), left());
                     text(Core.bundle.get("setting.beta.participate.tooltip"))
-                            .color(WebStyles.Colors.GHOST_FG)
-                            .left()
-                            .wrap()
-                            .growX();
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), wrap(true), growX());
                 });
                 spacer();
                 checkbox("", ModSettings.betaParticipate.signal());
             });
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
             row().props(growX(), gap(unit(2)), center()).children(() -> {
                 column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                     text(Core.bundle.get("setting.share-presence"))
-                            .color(Color.white)
-                            .left();
+                            .props(color(Color.white), left());
                     text(Core.bundle.get("setting.share-presence.description"))
-                            .color(WebStyles.Colors.GHOST_FG)
-                            .left()
-                            .wrap()
-                            .growX();
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), wrap(true), growX());
                 });
                 spacer();
                 checkbox("", ModSettings.sharePresence.signal());
             });
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
             SettingSlider.of(
                     Core.bundle.get("setting.universal-scale"),
@@ -104,16 +100,14 @@ public class GeneralSettingsView extends Component {
     private Component diagnosticsCard() {
         return SettingCard.section(Icon.infoCircle, Core.bundle.get("setting.section.diagnostics"), () -> {
             button(this::copyLastLog)
-                    .style(WebStyles.outline())
-                    .props(growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)), tooltip(Core.bundle.get("setting.button.copy-log.tooltip")))
+                    .props(style(WebStyles.outline()), growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)), tooltip(Core.bundle.get("setting.button.copy-log.tooltip")))
                     .children(() -> {
                         icon(Icon.copy).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                         text(Core.bundle.get("setting.button.copy-log"));
                     });
 
             button(this::copyLastCrash)
-                    .style(WebStyles.outline())
-                    .props(growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)), tooltip(Core.bundle.get("setting.button.copy-crash.tooltip")))
+                    .props(style(WebStyles.outline()), growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)), tooltip(Core.bundle.get("setting.button.copy-crash.tooltip")))
                     .children(() -> {
                         icon(Icon.warning).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                         text(Core.bundle.get("setting.button.copy-crash"));

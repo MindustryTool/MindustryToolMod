@@ -1,5 +1,7 @@
 package solim.input;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -70,10 +72,10 @@ class SolimTextFieldComponentTest extends SolimEnv {
         Signal<String> text = Signal.of("blocked");
         SolimTextField tf = new SolimTextField(text);
 
-        tf.disabled(true);
+        tf.props(disabled(true));
         assertTrue(tf.field().isDisabled());
 
-        tf.disabled(false);
+        tf.props(disabled(false));
         assertFalse(tf.field().isDisabled());
         tf.dispose();
     }
@@ -81,7 +83,7 @@ class SolimTextFieldComponentTest extends SolimEnv {
     @Test
     void reactiveDisabledUpdatesFieldDisabled() {
         Signal<Boolean> disabled = Signal.of(false);
-        SolimTextField tf = new SolimTextField(Signal.of("test")).disabled(disabled);
+        SolimTextField tf = new SolimTextField(Signal.of("test")).props(disabled(disabled));
 
         assertFalse(tf.field().isDisabled());
 

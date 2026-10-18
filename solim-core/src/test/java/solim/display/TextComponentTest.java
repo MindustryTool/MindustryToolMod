@@ -1,5 +1,7 @@
 package solim.display;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static solim.modifier.Values.position;
 import static solim.modifier.Values.visible;
@@ -72,7 +74,7 @@ class TextComponentTest extends SolimEnv {
 	@Test
 	void colorModifierUpdatesLabelColor() {
 		Text t = new Text("Hello");
-		t.color(Color.red);
+		t.props(color(Color.red));
 		assertEquals(Color.red, t.label().color);
 		t.dispose();
 	}
@@ -80,7 +82,7 @@ class TextComponentTest extends SolimEnv {
 	@Test
 	void reactiveColorUpdatesLabelColor() {
 		Signal<Color> colorSig = Signal.of(Color.green);
-		Text t = new Text("Hello").color(colorSig);
+		Text t = new Text("Hello").props(color(colorSig));
 		assertEquals(Color.green, t.label().color);
 
 		colorSig.set(Color.blue);

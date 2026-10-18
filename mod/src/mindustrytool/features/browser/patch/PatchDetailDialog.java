@@ -1,6 +1,8 @@
 package mindustrytool.features.browser.patch;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
+import static solim.modifier.Values.fillParent;
 import static solim.modifier.Values.grow;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.growY;
@@ -8,6 +10,7 @@ import static solim.modifier.Values.height;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.width;
 
 import arc.Core;
@@ -40,7 +43,7 @@ public class PatchDetailDialog extends SolimDialog {
 
         addCloseButton();
         closeOnBack();
-        fillParent(true);
+        props(fillParent(true));
         children(() -> new DetailContent(detail, itemId));
         actionButton(Core.bundle.get("browser.detail.open-online"), Icon.link,
                 () -> Core.app.openURI(Config.WEB_URL + "/content-patches/" + itemId));
@@ -99,17 +102,17 @@ public class PatchDetailDialog extends SolimDialog {
             column().props(growX(), gap(unit(2))).children(() -> {
                 card(WebStyles.previewCardBackground()).props(padding(unit(4)), growX(), gap(unit(2))).children(() -> {
                     row().props(growX(), gap(unit(1))).children(() -> {
-                        text(Core.bundle.get("browser.detail.author")).color(Color.lightGray).fontScale(1.1f);
+                        text(Core.bundle.get("browser.detail.author")).props(color(Color.lightGray), solim.modifier.Values.fontScale(1.1f));
                         if (authorQuery != null) {
                             query(authorQuery)
                                     .props(growX())
-                                    .loading(() -> text(authorId != null ? authorId : "").color(Color.white)
-                                            .fontScale(1.1f))
-                                    .error(err -> text(authorId != null ? authorId : "").color(Color.white)
-                                            .fontScale(1.1f))
-                                    .data(name -> text(name).color(Color.white).fontScale(1.1f));
+                                    .loading(() -> text(authorId != null ? authorId : "")
+                                            .props(color(Color.white), solim.modifier.Values.fontScale(1.1f)))
+                                    .error(err -> text(authorId != null ? authorId : "")
+                                            .props(color(Color.white), solim.modifier.Values.fontScale(1.1f)))
+                                    .data(name -> text(name).props(color(Color.white), solim.modifier.Values.fontScale(1.1f)));
                         } else {
-                            text(authorId != null ? authorId : "").color(Color.white).fontScale(1.1f);
+                            text(authorId != null ? authorId : "").props(color(Color.white), solim.modifier.Values.fontScale(1.1f));
                         }
                     });
 
@@ -120,8 +123,8 @@ public class PatchDetailDialog extends SolimDialog {
                     Color typeColor = isPack ? Color.royal : Color.coral;
 
                     row().props(growX(), gap(unit(1))).children(() -> {
-                        text(Core.bundle.get("browser.detail.type")).color(Color.lightGray);
-                        text(typeLabel).color(typeColor);
+                        text(Core.bundle.get("browser.detail.type")).props(color(Color.lightGray));
+                        text(typeLabel).props(color(typeColor));
                     });
                 });
 
@@ -138,7 +141,7 @@ public class PatchDetailDialog extends SolimDialog {
 
                 if (detail.getDescription() != null && !detail.getDescription().trim().isEmpty()) {
                     card(WebStyles.previewCardBackground()).props(padding(unit(4)), growX(), gap(unit(2))).children(() -> {
-                        text(detail.getDescription().trim()).color(Color.lightGray).wrap(true).left().growX();
+                        text(detail.getDescription().trim()).props(color(Color.lightGray), solim.modifier.Values.wrap(true), solim.modifier.Values.left(), growX());
                     });
                 }
             });
@@ -155,21 +158,16 @@ public class PatchDetailDialog extends SolimDialog {
             String lineNumbers = HjsonHighlighter.buildLineNumbers(formattedData);
 
             card(WebStyles.previewCardBackground()).props(grow(), padding(unit(3)), gap(unit(2))).children(() -> {
-                text(Core.bundle.get("browser.patch.data-section")).color(Color.white).growX().left();
-                scroll().props(grow()).scrollX(true).scrollY(true).children(() -> {
+                text(Core.bundle.get("browser.patch.data-section")).props(color(Color.white), growX(), solim.modifier.Values.left());
+                scroll().props(grow(), solim.modifier.Values.scrollX(true), solim.modifier.Values.scrollY(true)).children(() -> {
                     row().props(top(), left()).children(() -> {
                         text(lineNumbers)
-                                .style(Styles.monoLabel)
-                                .color(Color.gray)
-                                .wrap(false)
-                                .right();
+                                .props(style(Styles.monoLabel), color(Color.gray), solim.modifier.Values.wrap(false), solim.modifier.Values.right());
 
                         column().props(width(unit(4)), prefWidth(unit(4)));
 
                         text(highlightedCode)
-                                .style(Styles.monoLabel)
-                                .wrap(false)
-                                .left();
+                                .props(style(Styles.monoLabel), solim.modifier.Values.wrap(false), solim.modifier.Values.left());
                     });
                 });
             });
@@ -182,13 +180,11 @@ public class PatchDetailDialog extends SolimDialog {
             row().props(growX(), gap(unit(2))).children(() -> {
                 button(Core.bundle.get("browser.patch.copy"),
                         () -> PatchActions.copyTextToClipboard(patchData))
-                        .style(WebStyles.primary())
-                        .props(growX(), height(unit(11)), prefHeight(unit(11)));
+                        .props(style(WebStyles.primary()), growX(), height(unit(11)), prefHeight(unit(11)));
 
                 button(Core.bundle.get("browser.patch.save"),
                         () -> PatchActions.saveTextToFile(patchData, patchName))
-                        .style(WebStyles.primary())
-                        .props(growX(), height(unit(11)), prefHeight(unit(11)));
+                        .props(style(WebStyles.primary()), growX(), height(unit(11)), prefHeight(unit(11)));
             });
         }
     }

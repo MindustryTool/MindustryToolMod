@@ -3,6 +3,7 @@ package mindustrytool.features.armycontrol;
 import static solim.UI.*;
 import static solim.modifier.Values.border;
 import static solim.modifier.Values.padding;
+import static solim.modifier.Values.pinnedEdge;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.rounded;
 import static solim.modifier.Values.width;
@@ -47,7 +48,7 @@ public final class ArmyControlPopup {
         }
         feature.refreshActiveSelection();
         QuickAccessPopupHelper.show(menu, feature, quickAccessBar);
-        menu.pinnedEdge(pinnedEdgeFor(quickAccessBar));
+        menu.props(pinnedEdge(pinnedEdgeFor(quickAccessBar)));
     }
 
     public static void hide() {

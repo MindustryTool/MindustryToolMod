@@ -18,7 +18,6 @@ import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.modifier.Values;
-import solim.reactive.Readable;
 
 public final class Divider extends Component
         implements Configurable<Divider>, ElementCapability, CellCapability, AlignmentCapability {
@@ -49,9 +48,7 @@ public final class Divider extends Component
             OwnershipContext.pop();
         }
         this.image.element().name = "solim-divider";
-        this.image.color(Color.darkGray);
-
-        this.image.scaling(Scaling.stretch);
+        this.image.props(Values.color(Color.darkGray), Values.scaling(Scaling.stretch));
 
         OwnershipContext.push(this);
         try {
@@ -81,36 +78,6 @@ public final class Divider extends Component
 
     public Image image() {
         return image.image();
-    }
-
-    public Divider color(Color color) {
-        image.color(color);
-        return this;
-    }
-
-    public Divider color(Readable<Color> color) {
-        image.color(color);
-        return this;
-    }
-
-    public Divider width(float width) {
-        image.props(Values.width(width), Values.prefWidth(width));
-        return this;
-    }
-
-    public Divider width(@Nullable Readable<Float> width) {
-        image.props(Values.width(width), Values.prefWidth(width));
-        return this;
-    }
-
-    public Divider height(float height) {
-        image.props(Values.height(height), Values.prefHeight(height));
-        return this;
-    }
-
-    public Divider height(@Nullable Readable<Float> height) {
-        image.props(Values.height(height), Values.prefHeight(height));
-        return this;
     }
 
     @Override

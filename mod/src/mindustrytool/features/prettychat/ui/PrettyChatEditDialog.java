@@ -45,9 +45,7 @@ public class PrettyChatEditDialog extends SolimDialog {
             column().props(grow(), Values.maxWidth(Units.dvw.map(w -> Math.min(w * 0.9f, 750f))), padding(unit(3)), gap(unit(2)))
                     .children(() -> {
                         text(hint)
-                                .color(Color.lightGray)
-                                .wrap()
-                                .growX();
+                                .props(Values.color(Color.lightGray), Values.wrap(true), Values.growX());
 
                         new Component() {
                             @Override

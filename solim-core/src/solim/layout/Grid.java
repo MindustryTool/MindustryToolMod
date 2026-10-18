@@ -8,7 +8,6 @@ import solim.modifier.Props;
 import solim.modifier.TableCapability;
 
 import arc.scene.Element;
-import arc.scene.style.Drawable;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
@@ -60,13 +59,16 @@ public final class Grid extends Component
         return constraints;
     }
 
-    public Grid columns(int c) {
+    public void setColumns(int c) {
         this.columns = Math.max(1, c);
         reflow();
-        return this;
     }
 
-    public Grid columns(@Nullable Readable<Integer> c) {
+    public int getColumns() {
+        return columns;
+    }
+
+    public void setColumns(@Nullable Readable<Integer> c) {
         if (c != null) {
             withinOwnership(() -> Effect.of(() -> {
                 Integer cols = c.get();
@@ -76,8 +78,7 @@ public final class Grid extends Component
                 }
             }));
         }
-        return this;
-    };
+    }
 
     @Override
     public void setGap(float g) {
@@ -98,11 +99,6 @@ public final class Grid extends Component
     @Override
     public void respace() {
         GapContainer.applyGridSpacing(table, columns, gap);
-    }
-
-    public Grid background(@Nullable Drawable bg) {
-        table.background(bg);
-        return this;
     }
 
     public Grid children(@Nullable Runnable r) {

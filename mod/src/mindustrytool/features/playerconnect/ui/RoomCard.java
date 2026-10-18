@@ -3,13 +3,20 @@ package mindustrytool.features.playerconnect.ui;
 import static solim.UI.*;
 import static solim.modifier.Values.background;
 import static solim.modifier.Values.border;
+import static solim.modifier.Values.ellipsis;
+import static solim.modifier.Values.fontScale;
 import static solim.modifier.Values.grow;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
+import static solim.modifier.Values.left;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.right;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
+import static solim.modifier.Values.enabled;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -84,11 +91,7 @@ public class RoomCard extends Component {
 
                     row().props(growX(), height(unit(6)), prefHeight(unit(6)), gap(unit(2))).children(() -> {
                         text(title)
-                                .style(Styles.outlineLabel)
-                                .fontScale(displayPlayerList ? 1.1f : 0.95f)
-                                .ellipsis()
-                                .growX()
-                                .left();
+                                .props(style(Styles.outlineLabel), fontScale(displayPlayerList ? 1.1f : 0.95f), ellipsis(true), growX(), left());
                         spacer();
 
                         if (displayPlayerList) {
@@ -96,8 +99,7 @@ public class RoomCard extends Component {
                                 Core.app.setClipboardText(room.getLink());
                                 Vars.ui.showInfoFade("@copied");
                             })
-                                    .style(WebStyles.ghost())
-                                    .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)))
+                                    .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)))
                                     .children(() -> icon(Icon.copy).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
                         }
                     });
@@ -106,14 +108,14 @@ public class RoomCard extends Component {
 
                         row().props(growX(), height(unit(4.5f)), prefHeight(unit(4.5f))).children(() -> {
                             text(!mapMode.isEmpty() ? mapMode : Core.bundle.get("none", "None"))
-                                    .growX().ellipsis().left();
+                                    .props(growX(), ellipsis(true), left());
                         });
 
                         row().props(growX(), height(unit(4.5f)), prefHeight(unit(4.5f))).children(() -> {
                             String verStr = room.getData() != null && room.getData().getVersion() != null
                                     ? room.getData().getVersion()
                                     : Version.combined();
-                            text(verStr).color(Color.lightGray).fontScale(0.9f).growX().ellipsis().left();
+                            text(verStr).props(color(Color.lightGray), fontScale(0.9f), growX(), ellipsis(true), left());
                         });
 
                         String compatBadge = !protocolMatch
@@ -122,23 +124,23 @@ public class RoomCard extends Component {
                                         ? "[orange]" + Core.bundle.get("feature.chat.ui.mods-required", "Mods Required")
                                         : "");
                         row().props(growX(), height(unit(4.5f)), prefHeight(unit(4.5f))).children(() -> {
-                            text(playerInfo).color(Color.lightGray).ellipsis().growX().left();
+                            text(playerInfo).props(color(Color.lightGray), ellipsis(true), growX(), left());
                             if (!compatBadge.isEmpty()) {
-                                text(compatBadge).fontScale(0.85f).right();
+                                text(compatBadge).props(fontScale(0.85f), right());
                             }
                         });
                     } else {
 
                         if (!mapMode.isEmpty()) {
-                            text(mapMode).growX().ellipsis().left();
+                            text(mapMode).props(growX(), ellipsis(true), left());
                         }
 
                         if (room.getData() != null && room.getData().getVersion() != null
                                 && !Version.combined().equals(room.getData().getVersion())) {
-                            text(room.getData().getVersion()).growX().ellipsis();
+                            text(room.getData().getVersion()).props(growX(), ellipsis(true));
                         }
 
-                        text(playerInfo).color(Color.lightGray).left();
+                        text(playerInfo).props(color(Color.lightGray), left());
 
                         if (room.getData() != null && room.getData().getPlayers() != null) {
                             column(() -> {
@@ -149,14 +151,14 @@ public class RoomCard extends Component {
                         }
 
                         if (!missingMods.isEmpty()) {
-                            text("[scarlet]Missing mods: " + String.join(", ", missingMods)).wrap().growX().left();
+                            text("[scarlet]Missing mods: " + String.join(", ", missingMods)).props(solim.modifier.Values.wrap(true), growX(), left());
                         }
                         if (!unneededMods.isEmpty()) {
-                            text("[orange]Unneeded mods: " + String.join(", ", unneededMods)).wrap().growX().left();
+                            text("[orange]Unneeded mods: " + String.join(", ", unneededMods)).props(solim.modifier.Values.wrap(true), growX(), left());
                         }
 
                         if (!protocolMatch) {
-                            text("[scarlet]Protocol mismatch: expected v" + NetworkProxy.PROTOCOL_VERSION).left();
+                            text("[scarlet]Protocol mismatch: expected v" + NetworkProxy.PROTOCOL_VERSION).props(left());
                         }
 
                         spacer();
@@ -165,23 +167,19 @@ public class RoomCard extends Component {
                     if (!protocolMatch) {
                         button(Core.bundle.get("feature.player-connect.incompatible", "Incompatible"), () -> {
                         })
-                                .style(WebStyles.outline())
-                                .props(growX(), height(unit(11)), prefHeight(unit(11)))
-                                .enabled(Signal.of(false));
+                                .props(style(WebStyles.outline()), growX(), height(unit(11)), prefHeight(unit(11)), enabled(Signal.of(false)));
                     } else {
                         row().props(growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(1))).children(() -> {
                             button(Core.bundle.get("join", "Join"),
                                     () -> promptJoin(secured, missingMods, unneededMods))
-                                    .style(displayPlayerList ? WebStyles.secondary() : WebStyles.primary())
-                                    .props(growX(), height(unit(11)), prefHeight(unit(11)));
+                                    .props(style(displayPlayerList ? WebStyles.secondary() : WebStyles.primary()), growX(), height(unit(11)), prefHeight(unit(11)));
 
                             if (!displayPlayerList) {
                                 button(() -> {
                                     Core.app.setClipboardText(room.getLink());
                                     Vars.ui.showInfoFade("@copied");
                                 })
-                                        .style(WebStyles.outline())
-                                        .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)))
+                                        .props(style(WebStyles.outline()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)))
                                         .children(() -> icon(Icon.copy).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))));
                             }
                         });

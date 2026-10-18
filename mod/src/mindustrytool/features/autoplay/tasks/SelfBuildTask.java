@@ -4,6 +4,7 @@ import static solim.UI.*;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
 import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
 
 import arc.Core;
@@ -158,11 +159,9 @@ public class SelfBuildTask implements AutoplayTask {
     public void buildSettings(AutoplayFeature feature) {
         column().props(growX(), gap(unit(1))).children(() -> {
             button(Core.bundle.get("feature.autoplay.settings.self-build.reclaim-derelict"), this::reclaimDerelicts)
-                    .style(WebStyles.secondary())
-                    .props(tooltip(Core.bundle.get("feature.autoplay.settings.self-build.reclaim-derelict.tooltip")), height(unit(10)), prefHeight(unit(10)), growX());
+                    .props(style(WebStyles.secondary()), tooltip(Core.bundle.get("feature.autoplay.settings.self-build.reclaim-derelict.tooltip")), height(unit(10)), prefHeight(unit(10)), growX());
             button(Core.bundle.get("feature.autoplay.settings.self-build.annihilate-derelict"), this::deconstructDerelicts)
-                    .style(WebStyles.secondary())
-                    .props(tooltip(Core.bundle.get("feature.autoplay.settings.self-build.annihilate-derelict.tooltip")), height(unit(10)), prefHeight(unit(10)), growX());
+                    .props(style(WebStyles.secondary()), tooltip(Core.bundle.get("feature.autoplay.settings.self-build.annihilate-derelict.tooltip")), height(unit(10)), prefHeight(unit(10)), growX());
         });
     }
 

@@ -70,10 +70,11 @@ public final class Scroll extends Component
         this.outer.top().left();
         this.content = new Table();
         this.content.top().left();
+        this.content.defaults().top().left();
 
         this.content.name = "solim-scroll-pane-content";
         if (Core.scene != null) {
-            this.pane = outer.pane(content).grow().scrollX(false).scrollY(true).get();
+            this.pane = outer.pane(content).top().left().grow().scrollX(false).scrollY(true).get();
             this.pane.name = "solim-scroll-pane";
             this.pane.setScrollingDisabled(disableX, disableY);
             this.pane.update(() -> {
@@ -107,11 +108,10 @@ public final class Scroll extends Component
         return outer;
     }
 
-    public Scroll style(ScrollPaneStyle style) {
+    public void setStyle(ScrollPaneStyle style) {
         if (this.pane != null) {
             this.pane.setStyle(style);
         }
-        return this;
     }
 
     public Scroll outer(Cons<Table> Cons) {
@@ -137,21 +137,20 @@ public final class Scroll extends Component
         return this;
     }
 
-    public Scroll scrollingDisabled(boolean disableX, boolean disableY) {
+    public void setScrollingDisabled(boolean disableX, boolean disableY) {
         this.disableX = disableX;
         this.disableY = disableY;
         if (pane != null) {
             pane.setScrollingDisabled(disableX, disableY);
         }
-        return this;
     }
 
-    public Scroll scrollX(boolean scrollX) {
-        return scrollingDisabled(!scrollX, this.disableY);
+    public void setScrollX(boolean scrollX) {
+        setScrollingDisabled(!scrollX, this.disableY);
     }
 
-    public Scroll scrollY(boolean scrollY) {
-        return scrollingDisabled(this.disableX, !scrollY);
+    public void setScrollY(boolean scrollY) {
+        setScrollingDisabled(this.disableX, !scrollY);
     }
 
     public boolean isScrollingDisabledX() {
@@ -162,18 +161,16 @@ public final class Scroll extends Component
         return disableY;
     }
 
-    public Scroll scrollPercentY(float percent) {
+    public void setScrollPercentY(float percent) {
         if (pane != null) {
             pane.setScrollPercentY(percent);
         }
-        return this;
     }
 
-    public Scroll scrollPercentX(float percent) {
+    public void setScrollPercentX(float percent) {
         if (pane != null) {
             pane.setScrollPercentX(percent);
         }
-        return this;
     }
 
     public Scroll onReachTop(float thresholdPx, Runnable callback) {
@@ -251,80 +248,16 @@ public final class Scroll extends Component
         return this;
     }
 
-    public Scroll align(int align) {
-        table().align(align);
-        constraints.align = align;
-        constraints.applyAlignToParentCell(element());
-        outer.align(align);
-        content.align(align);
-        content.defaults().align(align);
-        for (Cell<?> cell : content.getCells()) {
-            cell.align(align);
+    public Scroll scrollPercentX(float percent) {
+        if (pane != null) {
+            pane.setScrollPercentX(percent);
         }
         return this;
     }
 
-    public Scroll top() {
-        table().top();
-        constraints.alignTop();
-        constraints.applyAlignToParentCell(element());
-        outer.top();
-        content.top();
-        content.defaults().top();
-        for (Cell<?> cell : content.getCells()) {
-            cell.top();
-        }
-        return this;
-    }
-
-    public Scroll bottom() {
-        table().bottom();
-        constraints.alignBottom();
-        constraints.applyAlignToParentCell(element());
-        outer.bottom();
-        content.bottom();
-        content.defaults().bottom();
-        for (Cell<?> cell : content.getCells()) {
-            cell.bottom();
-        }
-        return this;
-    }
-
-    public Scroll center() {
-        this.centered = true;
-        constraints.alignCenter();
-        constraints.applyAlignToParentCell(element());
-        outer.center();
-        content.center();
-        content.defaults().center();
-        for (Cell<?> cell : content.getCells()) {
-            cell.center();
-        }
-        return this;
-    }
-
-    public Scroll left() {
-        this.centered = false;
-        constraints.alignLeft();
-        constraints.applyAlignToParentCell(element());
-        outer.left();
-        content.left();
-        content.defaults().left();
-        for (Cell<?> cell : content.getCells()) {
-            cell.left();
-        }
-        return this;
-    }
-
-    public Scroll right() {
-        this.centered = false;
-        constraints.alignRight();
-        constraints.applyAlignToParentCell(element());
-        outer.right();
-        content.right();
-        content.defaults().right();
-        for (Cell<?> cell : content.getCells()) {
-            cell.right();
+    public Scroll scrollPercentY(float percent) {
+        if (pane != null) {
+            pane.setScrollPercentY(percent);
         }
         return this;
     }
@@ -337,38 +270,6 @@ public final class Scroll extends Component
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
-    }
-
-    public Scroll x(float x) {
-        Element el = element();
-        if (el != null)
-            el.x = x;
-        return this;
-    }
-
-    public Scroll y(float y) {
-        Element el = element();
-        if (el != null)
-            el.y = y;
-        return this;
-    }
-
-    public Scroll position(float x, float y) {
-        Element el = element();
-        if (el != null)
-            el.setPosition(x, y);
-        return this;
-    }
-
-    public Scroll visible(boolean visible) {
-        Element el = element();
-        if (el == null)
-            return this;
-        el.visible = visible;
-        if (el.parent instanceof Table) {
-            GapContainer.respace((Table) el.parent);
-        }
-        return this;
     }
 
     public Scroll children(@Nullable Runnable r) {

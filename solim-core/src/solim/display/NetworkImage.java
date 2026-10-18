@@ -2,7 +2,6 @@ package solim.display;
 
 import arc.Core;
 import arc.files.Fi;
-import arc.graphics.Color;
 import arc.graphics.Pixmap;
 import arc.graphics.Texture;
 import arc.graphics.Texture.TextureFilter;
@@ -11,7 +10,6 @@ import arc.scene.Element;
 import arc.scene.style.Drawable;
 import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.Image;
-import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Log;
 import arc.util.Nullable;
@@ -25,7 +23,6 @@ import java.util.concurrent.ExecutorService;
 import mindustry.Vars;
 import solim.core.Component;
 import solim.core.Disposable;
-import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.graphics.RoundedGenerator;
 import solim.modifier.AlignmentCapability;
@@ -241,20 +238,15 @@ public final class NetworkImage extends Component
 
     public NetworkImage(String url) {
         this();
-        url(url);
+        setUrl(url);
     }
 
     public NetworkImage(Readable<String> url) {
         this();
-        url(url);
+        setUrl(url);
     }
 
-    public NetworkImage origin(int align) {
-        this.element.setOrigin(align);
-        return this;
-    }
-
-    public NetworkImage rounded(int radius) {
+    public void setCornerRadius(int radius) {
         int r = Math.max(0, radius);
         if (this.cornerRadius != r) {
             this.cornerRadius = r;
@@ -262,107 +254,44 @@ public final class NetworkImage extends Component
                 loadUrl(currentUrl);
             }
         }
-        return this;
-    }
-
-    public NetworkImage rounded(int radius, @Nullable Color color) {
-        rounded(radius);
-        if (color != null)
-            color(color);
-        return this;
-    }
-
-    public NetworkImage rounded(int radius, @Nullable Readable<Color> color) {
-        rounded(radius);
-        if (color != null)
-            color(color);
-        return this;
     }
 
     public int getCornerRadius() {
         return cornerRadius;
     }
 
-    public NetworkImage placeholder(@Nullable Drawable placeholder) {
+    public void setPlaceholder(@Nullable Drawable placeholder) {
         this.placeholder = placeholder;
         if (element.getDrawable() == null && placeholder != null) {
             applyDrawable(placeholder);
         }
-        return this;
     }
 
-    public NetworkImage fallback(@Nullable Drawable fallback) {
+    public void setFallback(@Nullable Drawable fallback) {
         this.fallback = fallback;
         if (failed && fallback != null) {
             applyDrawable(fallback);
         }
-        return this;
     }
 
-    public NetworkImage scaling(Scaling scaling) {
+    public void setScaling(Scaling scaling) {
         this.scaling = scaling;
         element.setScaling(scaling);
-        return this;
     }
 
     public Scaling getScaling() {
         return scaling;
     }
 
-    public NetworkImage size(float width, float height) {
-        float w = Math.max(0f, width);
-        float h = Math.max(0f, height);
-        constraints.prefWidth = Readable.of(w);
-        constraints.prefHeight = Readable.of(h);
-        constraints.applyPrefWidth(element);
-        constraints.applyPrefHeight(element);
-        element.invalidateHierarchy();
-        if (cornerRadius > 0 && currentUrl != null) {
-            loadUrl(currentUrl);
-        }
-        return this;
-    }
-
-    public NetworkImage size(Readable<Float> width, Readable<Float> height) {
-        constraints.prefWidth = width;
-        constraints.prefHeight = height;
-        Effect.of(() -> {
-            Float w = width != null ? width.get() : null;
-            Float h = height != null ? height.get() : null;
-            if (w == null && h == null) {
-                return;
-            }
-            if (width != null) {
-                constraints.applyPrefWidth(element);
-            }
-            if (height != null) {
-                constraints.applyPrefHeight(element);
-            }
-            if (w != null && h != null && cornerRadius > 0 && currentUrl != null) {
-                loadUrl(currentUrl);
-            }
-        });
-        return this;
-    }
-
-    public NetworkImage size(float size) {
-        return size(size, size);
-    }
-
-    public NetworkImage size(Readable<Float> size) {
-        return size(size, size);
-    }
-
-    public NetworkImage url(@Nullable String url) {
+    public void setUrl(@Nullable String url) {
         if (binding != null) {
             binding.dispose();
             binding = null;
         }
         loadUrl(url);
-        return this;
     }
 
-    public NetworkImage url(@Nullable Readable<String> url) {
+    public void setUrl(@Nullable Readable<String> url) {
         if (binding != null) {
             binding.dispose();
             binding = null;
@@ -370,7 +299,6 @@ public final class NetworkImage extends Component
         if (url != null) {
             withinOwnership(() -> binding = Effect.of(() -> loadUrl(url.get())));
         }
-        return this;
     }
 
     private void loadUrl(@Nullable String url) {
@@ -585,73 +513,7 @@ public final class NetworkImage extends Component
         element.invalidateHierarchy();
     }
 
-    public NetworkImage color(Color color) {
-        element.setColor(color);
-        return this;
-    }
-
-    public NetworkImage color(Readable<Color> color) {
-        if (color != null) {
-            withinOwnership(() -> Effect.of(() -> {
-                Color c = color.get();
-                if (c != null)
-                    element.setColor(c);
-            }));
-        }
-        return this;
-    }
-
     public Image image() {
         return element;
-    }
-
-    public NetworkImage top() {
-        constraints.alignTop();
-        if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
-            if (cell != null)
-                cell.top();
-        }
-        return this;
-    }
-
-    public NetworkImage bottom() {
-        constraints.alignBottom();
-        if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
-            if (cell != null)
-                cell.bottom();
-        }
-        return this;
-    }
-
-    public NetworkImage left() {
-        constraints.alignLeft();
-        if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
-            if (cell != null)
-                cell.left();
-        }
-        return this;
-    }
-
-    public NetworkImage right() {
-        constraints.alignRight();
-        if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
-            if (cell != null)
-                cell.right();
-        }
-        return this;
-    }
-
-    public NetworkImage center() {
-        constraints.alignCenter();
-        if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
-            if (cell != null)
-                cell.center();
-        }
-        return this;
     }
 }

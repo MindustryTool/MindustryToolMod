@@ -27,6 +27,7 @@ import solim.input.Button;
 import solim.input.SolimSlider;
 import solim.modifier.AlignmentCapability;
 import solim.modifier.CellCapability;
+import solim.core.DisposableAction;
 import solim.modifier.Configurable;
 import solim.modifier.ElementCapability;
 import solim.modifier.IconCapability;
@@ -38,6 +39,7 @@ import solim.reactive.Computed;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
+import solim.reactive.TwoWayBinding;
 import solim.runtime.AttachmentStack;
 
 public final class SolimVideo extends Component
@@ -191,12 +193,12 @@ public final class SolimVideo extends Component
 
     public SolimVideo(String url) {
         this();
-        url(url);
+        setUrl(url);
     }
 
     public SolimVideo(Readable<String> url) {
         this();
-        url(url);
+        setUrl(url);
     }
 
     private void buildOverlay() {
@@ -258,101 +260,111 @@ public final class SolimVideo extends Component
         return muteIcon != null ? muteIcon : muteIconDefault();
     }
 
-    public SolimVideo playIcon(@Nullable Drawable icon) {
+    public void setPlayIcon(@Nullable Drawable icon) {
         this.playIcon = icon;
-        return this;
     }
 
-    public SolimVideo pauseIcon(@Nullable Drawable icon) {
+    public void setPauseIcon(@Nullable Drawable icon) {
         this.pauseIcon = icon;
-        return this;
     }
 
-    public SolimVideo replayIcon(@Nullable Drawable icon) {
+    public void setReplayIcon(@Nullable Drawable icon) {
         this.replayIcon = icon;
-        return this;
     }
 
-    public SolimVideo volumeIcon(@Nullable Drawable icon) {
+    public void setVolumeIcon(@Nullable Drawable icon) {
         this.volumeIcon = icon;
-        return this;
     }
 
-    public SolimVideo muteIcon(@Nullable Drawable icon) {
+    public void setMuteIcon(@Nullable Drawable icon) {
         this.muteIcon = icon;
-        return this;
     }
 
-    public SolimVideo autoplay(boolean autoplay) {
+    public void setAutoplay(boolean autoplay) {
         this.autoplay = autoplay;
-        return this;
     }
 
-    public SolimVideo loop(boolean loop) {
+    public boolean isAutoplay() {
+        return autoplay;
+    }
+
+    public void setLoop(boolean loop) {
         this.loop = loop;
         if (player != null)
             player.setLooping(loop);
-        return this;
     }
 
-    public SolimVideo volume(float volume) {
+    public void setVolume(float volume) {
         this.volume = volume < 0f ? 0f : volume > 1f ? 1f : volume;
         if (player != null)
             player.setVolume(this.volume);
-        return this;
     }
 
-    public SolimVideo muted(boolean muted) {
+    public void setMuted(boolean muted) {
         mutedState.set(muted);
         if (player != null)
             player.setMuted(muted);
-        return this;
     }
 
-    public SolimVideo rounded(int radius) {
+    public void bindMutedSignal(Signal<Boolean> signal) {
+        OwnershipContext.push(this);
+        try {
+            new TwoWayBinding<>(
+                    signal,
+                    mutedState::peek,
+                    this::setMuted,
+                    onChange -> {
+                        Effect.of(() -> {
+                            mutedState.get();
+                            onChange.run();
+                        });
+                        return DisposableAction.empty();
+                    }
+            );
+        } finally {
+            OwnershipContext.pop();
+        }
+    }
+
+    public void setRounded(int radius) {
         this.cornerRadius = Math.max(0, radius);
         if (player != null)
             player.setCornerRadius(this.cornerRadius);
-        return this;
     }
 
-    public SolimVideo placeholder(@Nullable Drawable placeholder) {
+    public void setPlaceholder(@Nullable Drawable placeholder) {
         this.placeholder = placeholder;
         if (videoImage.getDrawable() == null && placeholder != null) {
             videoImage.setDrawable(placeholder);
         }
-        return this;
     }
 
-    public SolimVideo fallback(@Nullable Drawable fallback) {
+    public void setFallback(@Nullable Drawable fallback) {
         this.fallback = fallback;
-        if (failed && fallback != null) {
+        if ((failed || currentUrl == null || currentUrl.trim().isEmpty()) && fallback != null) {
             videoImage.setDrawable(fallback);
             videoImage.invalidateHierarchy();
         }
-        return this;
     }
 
-    public SolimVideo scaling(Scaling scaling) {
+    public void setScaling(Scaling scaling) {
         this.scaling = scaling;
         videoImage.setScaling(scaling);
-        return this;
     }
 
     public Scaling getScaling() {
         return scaling;
     }
 
-    public SolimVideo controls(boolean controls) {
+    public void setControls(boolean controls) {
         if (controlsBinding != null) {
             controlsBinding.dispose();
             controlsBinding = null;
         }
         controlsEnabled.set(controls);
-        return this;
     }
 
-    public SolimVideo controls(@Nullable Readable<Boolean> controls) {
+    public void setControls(@Nullable Readable<Boolean> controls) {
         if (controlsBinding != null) {
             controlsBinding.dispose();
             controlsBinding = null;
@@ -360,19 +372,17 @@ public final class SolimVideo extends Component
         if (controls != null) {
             withinOwnership(() -> controlsBinding = Effect.of(() -> controlsEnabled.set(controls.get())));
         }
-        return this;
     }
 
-    public SolimVideo url(@Nullable String url) {
+    public void setUrl(@Nullable String url) {
         if (urlBinding != null) {
             urlBinding.dispose();
             urlBinding = null;
         }
         loadUrl(url);
-        return this;
     }
 
-    public SolimVideo url(@Nullable Readable<String> url) {
+    public void setUrl(@Nullable Readable<String> url) {
         if (urlBinding != null) {
             urlBinding.dispose();
             urlBinding = null;
@@ -380,7 +390,6 @@ public final class SolimVideo extends Component
         if (url != null) {
             withinOwnership(() -> urlBinding = Effect.of(() -> loadUrl(url.get())));
         }
-        return this;
     }
 
     private void loadUrl(@Nullable String url) {
@@ -569,7 +578,7 @@ public final class SolimVideo extends Component
         return element;
     }
 
-    Signal<Float> progressSignal() {
+    public Signal<Float> progressSignal() {
         return progress;
     }
 

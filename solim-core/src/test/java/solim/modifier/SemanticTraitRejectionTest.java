@@ -11,16 +11,11 @@ import arc.scene.ui.ScrollPane.ScrollPaneStyle;
 import arc.scene.ui.Slider.SliderStyle;
 import arc.scene.ui.TextField.TextFieldStyle;
 import org.junit.jupiter.api.Test;
-import solim.display.NetworkImage;
-import solim.display.SolimImage;
 import solim.display.Text;
-import solim.display.video.SolimVideo;
 import solim.input.Button;
 import solim.input.Checkbox;
-import solim.input.SolimSelect;
 import solim.input.SolimSlider;
 import solim.input.SolimTextField;
-import solim.input.Switch;
 import solim.layout.Divider;
 import solim.layout.Scroll;
 import solim.style.InputStyle;
@@ -119,7 +114,7 @@ public class SemanticTraitRejectionTest extends SolimEnv {
         assertEquals(WrappableCapability.class, Values.fontScale(1.5f).requires());
         assertEquals(TextCapability.class, Values.text("test").requires());
         assertEquals(IconCapability.class, Values.url("https://example.com/asset.png").requires());
-        assertEquals(IconCapability.class, Values.placeholder(null).requires());
+        assertEquals(IconCapability.class, Values.placeholder((Drawable) null).requires());
         assertEquals(IconCapability.class, Values.fallback(null).requires());
         assertEquals(VideoCapability.class, Values.autoplay(true).requires());
     }

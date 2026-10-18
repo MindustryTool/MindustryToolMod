@@ -8,10 +8,8 @@ import arc.graphics.g2d.TextureRegion;
 import arc.scene.ui.Label;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
-import arc.util.Align;
 import arc.util.Nullable;
 import solim.core.Component;
-import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.core.SpacingAware;
 import solim.modifier.AlignmentCapability;
@@ -42,6 +40,10 @@ public final class Text extends Component
     private float marginLeft;
     private float marginBottom;
     private float marginRight;
+
+    private boolean wrap = false;
+    private boolean growX = false;
+    private boolean growY = false;
 
     public Text() {
         this("");
@@ -86,265 +88,58 @@ public final class Text extends Component
         return Core.scene != null ? new Label(content) : new Label(content, getDefaultStyle());
     }
 
+    public Text(Readable<String> readable) {
+        this("");
+        setText(readable);
+    }
+
     public static Text of(String text) {
         return new Text(text);
     }
 
     public static Text of(Readable<String> readable) {
-        Text t = new Text();
-        t.text(readable);
-        return t;
+        return new Text(readable);
     }
 
-    public Text text(String text) {
+    public void setText(String text) {
         label.setText(text != null ? text : "");
-        return this;
     }
 
-    public Text text(Readable<String> text) {
+    public void setText(Readable<String> text) {
         if (text != null) {
             withinOwnership(() -> Effect.of(() -> label.setText(text.get() != null ? text.get() : "")));
         }
-        return this;
     }
 
-    public Text color(Color color) {
-        label.setColor(color);
-        return this;
+    public void setFontScale(float scale) {
+        label.setFontScale(scale);
     }
 
-    public Text color(Readable<Color> color) {
-        if (color != null) {
-            withinOwnership(() -> Effect.of(() -> {
-                Color c = color.get();
-                if (c != null) {
-                    label.setColor(c);
-                }
-            }));
-        }
-        return this;
-    }
-
-    public Text style(Label.LabelStyle style) {
-        if (style != null) {
-            label.setStyle(style);
-        }
-        return this;
-    }
-
-    private boolean growX;
-    private boolean growY;
-    private boolean wrap;
-
-    public Text growX() {
-        this.growX = true;
-        SolimToken.setExpanding(label, true);
-        if (label.parent instanceof Table) {
-            Cell<?> cell = ((Table) label.parent).getCell(label);
-            if (cell != null) {
-                cell.growX();
-                cell.minWidth(0f);
-                ((Table) label.parent).invalidateHierarchy();
-            }
-        }
-        return this;
-    }
-
-    public Text growY() {
-        this.growY = true;
-        SolimToken.setExpanding(label, true);
-        if (label.parent instanceof Table) {
-            Cell<?> cell = ((Table) label.parent).getCell(label);
-            if (cell != null) {
-                cell.growY();
-                ((Table) label.parent).invalidateHierarchy();
-            }
-        }
-        return this;
-    }
-
-    public Text grow() {
-        return growX().growY();
-    }
-
-    public Text wrap(boolean wrap) {
+    public void setWrap(boolean wrap) {
         this.wrap = wrap;
         label.setWrap(wrap);
         if (wrap) {
-            growX();
+            this.growX = true;
+            SolimToken.setExpanding(label, true);
             if (label.parent instanceof Table) {
                 Cell<?> cell = ((Table) label.parent).getCell(label);
                 if (cell != null) {
+                    cell.growX();
                     cell.minWidth(0f);
+                    ((Table) label.parent).invalidateHierarchy();
                 }
             }
         }
-        return this;
     }
 
-    public boolean isWrap() {
-        return wrap;
-    }
-
-    public Text wrap() {
-        return wrap(true);
-    }
-
-    public Text ellipsis(boolean ellipsis) {
+    public void setEllipsis(boolean ellipsis) {
         label.setEllipsis(ellipsis);
-        return this;
     }
 
-    public Text ellipsis() {
-        return ellipsis(true);
-    }
-
-    public Text align(int align) {
-        label.setAlignment(align);
-        constraints.align = align;
-        constraints.applyAlignToParentCell(element());
-        return this;
-    }
-
-    public Text left() {
-        constraints.alignLeft();
-        constraints.applyAlignToParentCell(element());
-        int cur = label.getLabelAlign();
-        label.setAlignment((cur | Align.left) & ~Align.right);
-        return this;
-    }
-
-    public Text center() {
-        constraints.alignCenter();
-        constraints.applyAlignToParentCell(element());
-        label.setAlignment(Align.center);
-        return this;
-    }
-
-    public Text right() {
-        constraints.alignRight();
-        constraints.applyAlignToParentCell(element());
-        int cur = label.getLabelAlign();
-        label.setAlignment((cur | Align.right) & ~Align.left);
-        return this;
-    }
-
-    public Text top() {
-        constraints.alignTop();
-        constraints.applyAlignToParentCell(element());
-        int cur = label.getLabelAlign();
-        label.setAlignment((cur | Align.top) & ~Align.bottom);
-        return this;
-    }
-
-    public Text bottom() {
-        constraints.alignBottom();
-        constraints.applyAlignToParentCell(element());
-        int cur = label.getLabelAlign();
-        label.setAlignment((cur | Align.bottom) & ~Align.top);
-        return this;
-    }
-
-    public Text padding(float pad) {
-        this.padTop = this.padLeft = this.padBottom = this.padRight = pad;
-        applySpacing();
-        return this;
-    }
-
-    public Text padding(float top, float left, float bottom, float right) {
-        this.padTop = top;
-        this.padLeft = left;
-        this.padBottom = bottom;
-        this.padRight = right;
-        applySpacing();
-        return this;
-    }
-
-    public Text paddingTop(float top) {
-        this.padTop = top;
-        applySpacing();
-        return this;
-    }
-
-    public Text paddingBottom(float bottom) {
-        this.padBottom = bottom;
-        applySpacing();
-        return this;
-    }
-
-    public Text paddingLeft(float left) {
-        this.padLeft = left;
-        applySpacing();
-        return this;
-    }
-
-    public Text paddingRight(float right) {
-        this.padRight = right;
-        applySpacing();
-        return this;
-    }
-
-    public Text paddingX(float x) {
-        this.padLeft = this.padRight = x;
-        applySpacing();
-        return this;
-    }
-
-    public Text paddingY(float y) {
-        this.padTop = this.padBottom = y;
-        applySpacing();
-        return this;
-    }
-
-    public Text margin(float margin) {
-        this.marginTop = this.marginLeft = this.marginBottom = this.marginRight = margin;
-        applySpacing();
-        return this;
-    }
-
-    public Text margin(float top, float left, float bottom, float right) {
-        this.marginTop = top;
-        this.marginLeft = left;
-        this.marginBottom = bottom;
-        this.marginRight = right;
-        applySpacing();
-        return this;
-    }
-
-    public Text marginTop(float top) {
-        this.marginTop = top;
-        applySpacing();
-        return this;
-    }
-
-    public Text marginBottom(float bottom) {
-        this.marginBottom = bottom;
-        applySpacing();
-        return this;
-    }
-
-    public Text marginLeft(float left) {
-        this.marginLeft = left;
-        applySpacing();
-        return this;
-    }
-
-    public Text marginRight(float right) {
-        this.marginRight = right;
-        applySpacing();
-        return this;
-    }
-
-    public Text marginX(float x) {
-        this.marginLeft = this.marginRight = x;
-        applySpacing();
-        return this;
-    }
-
-    public Text marginY(float y) {
-        this.marginTop = this.marginBottom = y;
-        applySpacing();
-        return this;
+    public void setStyle(Label.LabelStyle style) {
+        if (style != null) {
+            label.setStyle(style);
+        }
     }
 
     public void applySpacing() {
@@ -363,26 +158,13 @@ public final class Text extends Component
         }
     }
 
-    public Text fontScale(float scale) {
-        label.setFontScale(scale);
-        return this;
-    }
-
-    public Text fontScale(Readable<Float> scale) {
-        if (scale != null) {
-            withinOwnership(() -> Effect.of(() -> {
-                Float s = scale.get();
-                if (s != null) {
-                    label.setFontScale(s);
-                }
-            }));
-        }
-        return this;
-    };
-
     public Label label() {
         applySpacing();
         return label;
+    }
+
+    public boolean isWrap() {
+        return wrap;
     }
 
 
@@ -423,4 +205,4 @@ public final class Text extends Component
     public Text self() {
         return this;
     }
-}
+}

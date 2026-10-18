@@ -7,6 +7,9 @@ import static solim.modifier.Values.position;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
+import static solim.modifier.Values.checked;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.tooltip;
 
 import arc.Core;
@@ -210,10 +213,8 @@ public class QuickSchematicGridHudView extends Component {
             Readable<Float> buttonOpacity) {
         return when(feature.hideDragHandleConfig.signal())
                 .elseDo(() -> button()
-                        .style(WebStyles.ghost())
-                        .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), opacity(buttonOpacity))
-                        .children(() -> icon(Icon.move).props(size(dragIconSize), prefWidth(dragIconSize), prefHeight(dragIconSize)))
-                        .props(draggable(feature.xSignal, feature.ySignal)));
+                        .props(style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), opacity(buttonOpacity), draggable(feature.xSignal, feature.ySignal))
+                        .children(() -> icon(Icon.move).props(size(dragIconSize), prefWidth(dragIconSize), prefHeight(dragIconSize))));
     }
 
     public static void buildGrid(QuickSchematicGridFeature feature, @Nullable Runnable onBeforeActivate) {
@@ -261,9 +262,7 @@ public class QuickSchematicGridHudView extends Component {
         String tooltip = Core.bundle.format("feature.quick-schematic-grid.settings.page-tab", pageIndex + 1);
 
         return button(label, () -> feature.setActivePage(pageIndex))
-                .style(WebStyles.filterChipText())
-                .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), opacity(buttonOpacity), tooltip(tooltip))
-                .checked(feature.activePage.map(p -> p != null && p.intValue() == pageIndex));
+                .props(style(WebStyles.filterChipText()), checked(feature.activePage.map(p -> p != null && p.intValue() == pageIndex)), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), opacity(buttonOpacity), tooltip(tooltip));
     }
 
     static Component pageTabButton(
@@ -294,9 +293,14 @@ public class QuickSchematicGridHudView extends Component {
     static Component emptySlot(QuickSchematicGridFeature feature, Readable<Float> buttonOpacity) {
         Readable<Float> buttonSize = feature.buttonSizeConfig.signal();
         return button()
-                .rounded(unit(2), WebStyles.Colors.DARK_90)
-                .border(1f, WebStyles.Colors.BORDER)
-                .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), opacity(buttonOpacity));
+                .props(
+                        solim.modifier.Values.rounded(unit(2), WebStyles.Colors.DARK_90),
+                        solim.modifier.Values.border(1f, WebStyles.Colors.BORDER),
+                        size(buttonSize),
+                        prefWidth(buttonSize),
+                        prefHeight(buttonSize),
+                        opacity(buttonOpacity)
+                );
     }
 
     static Component emptySlot(QuickSchematicGridFeature feature) {
@@ -326,11 +330,9 @@ public class QuickSchematicGridHudView extends Component {
                 }
                 feature.useEntry(entry);
             })
-                    .style(WebStyles.ghost())
-                    .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), opacity(buttonOpacity), tooltip(Core.bundle.format("feature.quick-schematic-grid.tooltip.missing",
+                    .props(style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), opacity(buttonOpacity), tooltip(Core.bundle.format("feature.quick-schematic-grid.tooltip.missing",
                             missingLabel != null ? missingLabel : "")))
-                    .children(() -> icon(Icon.warning).props(size(buttonSize.map(s -> (s != null ? s : 48f) * 0.5f)), prefWidth(buttonSize.map(s -> (s != null ? s : 48f) * 0.5f)), prefHeight(buttonSize.map(s -> (s != null ? s : 48f) * 0.5f)))
-                            .color(Color.scarlet));
+                    .children(() -> icon(Icon.warning).props(size(buttonSize.map(s -> (s != null ? s : 48f) * 0.5f)), prefWidth(buttonSize.map(s -> (s != null ? s : 48f) * 0.5f)), prefHeight(buttonSize.map(s -> (s != null ? s : 48f) * 0.5f)), color(Color.scarlet)));
         }
 
         String tooltip = Core.bundle.format("feature.quick-schematic-grid.tooltip.use", entry.displayName());
@@ -345,17 +347,24 @@ public class QuickSchematicGridHudView extends Component {
             String glyph = entry.customIcon;
 
             return button(activate)
-                    .style(WebStyles.ghost())
-                    .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), opacity(buttonOpacity), tooltip(tooltip))
+                    .props(style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), opacity(buttonOpacity), tooltip(tooltip))
                     .children(() -> text(glyph != null ? glyph : "")
-                            .fontScale(buttonSize.map(s -> (s != null ? s : 48f) / 32f))
-                            .center());
+                            .props(
+                                    solim.modifier.Values.fontScale(buttonSize.map(s -> (s != null ? s : 48f) / 32f)),
+                                    solim.modifier.Values.center()
+                            ));
         }
 
         return button(activate)
-                .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
-                .border(1f, WebStyles.Colors.BORDER)
-                .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), opacity(buttonOpacity), tooltip(tooltip))
+                .props(
+                        solim.modifier.Values.rounded(unit(2), WebStyles.Colors.SECONDARY_BG),
+                        solim.modifier.Values.border(1f, WebStyles.Colors.BORDER),
+                        size(buttonSize),
+                        prefWidth(buttonSize),
+                        prefHeight(buttonSize),
+                        opacity(buttonOpacity),
+                        tooltip(tooltip)
+                )
                 .children(() -> new BoundedSchematicImage(schematic, buttonSize, 48f));
     }
 

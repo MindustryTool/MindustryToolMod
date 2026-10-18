@@ -1,6 +1,8 @@
 package mindustrytool.features.browser.patch;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
+import static solim.modifier.Values.enabled;
 import static solim.modifier.Values.grow;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
@@ -9,6 +11,7 @@ import static solim.modifier.Values.padding;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
 import static solim.modifier.Values.width;
 
@@ -128,24 +131,21 @@ public class PatchCard extends Component {
                                     card(WebStyles.previewCardBackground())
                                             .props(padding(unit(0.5f), unit(1.5f), unit(0.5f), unit(1.5f)))
                                             .children(() -> text(typeLabel)
-                                                    .style(Styles.defaultLabel)
-                                                    .fontScale(0.75f)
-                                                    .color(typeColor));
+                                                    .props(style(Styles.defaultLabel), color(typeColor), solim.modifier.Values.fontScale(0.75f)));
 
                                     text(title)
-                                            .style(Styles.defaultLabel)
-                                            .color(Color.white)
-                                            .ellipsis(true)
-                                            .growX();
+                                            .props(style(Styles.defaultLabel), color(Color.white), solim.modifier.Values.ellipsis(true), growX());
                                 });
 
                                 row().props(grow(), top(), left()).children(() -> text(description)
-                                        .style(Styles.defaultLabel)
-                                        .fontScale(0.85f)
-                                        .color(Color.lightGray)
-                                        .left()
-                                        .wrap()
-                                        .growX());
+                                        .props(
+                                                style(Styles.defaultLabel),
+                                                color(Color.lightGray),
+                                                solim.modifier.Values.fontScale(0.85f),
+                                                solim.modifier.Values.left(),
+                                                solim.modifier.Values.wrap(true),
+                                                growX()
+                                        ));
                             }));
 
                     row().props(width(size), prefWidth(size), gap(unit(1.5f))).children(() -> {
@@ -167,24 +167,21 @@ public class PatchCard extends Component {
                                 patch.getDownloads() != null && patch.getDownloads() > 0 ? Color.sky : Color.white,
                                 onSave,
                                 Core.bundle.get("browser.patch.save"))
-                                .enabled(busy.map(b -> !b));
+                                .props(enabled(busy.map(b -> !b)));
 
                         button(onCopy)
-                                .style(WebStyles.actionCardText())
-                                .props(growX(), height(unit(9)), prefHeight(unit(9)), tooltip(Core.bundle.get("browser.patch.copy")))
-                                .enabled(busy.map(b -> !b))
-                                .children(() -> icon(Icon.copy).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f))).color(Color.white));
+                                .props(style(WebStyles.actionCardText()), enabled(busy.map(b -> !b)), growX(), height(unit(9)), prefHeight(unit(9)), tooltip(Core.bundle.get("browser.patch.copy")))
+                                .children(() -> icon(Icon.copy).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f)), color(Color.white)));
                     });
                 }).element();
     }
 
     private Button statButton(String count, Drawable iconDrawable, Color textColor, Runnable action, String tooltip) {
         return button(action)
-                .style(WebStyles.actionCardText())
-                .props(growX(), height(unit(9)), prefHeight(unit(9)), gap(unit(1)), tooltip(tooltip))
+                .props(style(WebStyles.actionCardText()), growX(), height(unit(9)), prefHeight(unit(9)), gap(unit(1)), tooltip(tooltip))
                 .children(() -> {
-                    icon(iconDrawable).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f))).color(Color.white).marginRight(unit(1));
-                    text(count).style(Styles.defaultLabel).fontScale(0.85f).color(textColor);
+                    icon(iconDrawable).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f)), solim.modifier.Values.marginRight(unit(1)), color(Color.white));
+                    text(count).props(style(Styles.defaultLabel), color(textColor), solim.modifier.Values.fontScale(0.85f));
                 });
     }
 }

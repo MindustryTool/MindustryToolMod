@@ -3,7 +3,10 @@ package mindustrytool.features.wavepreview;
 import static solim.UI.*;
 import static solim.modifier.Values.backgroundColor;
 import static solim.modifier.Values.border;
+import static solim.modifier.Values.color;
+import static solim.modifier.Values.fontScale;
 import static solim.modifier.Values.growX;
+import static solim.modifier.Values.left;
 import static solim.modifier.Values.maxWidth;
 import static solim.modifier.Values.opacity;
 import static solim.modifier.Values.padding;
@@ -11,6 +14,7 @@ import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.rounded;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.visible;
 
 import arc.Core;
@@ -65,23 +69,15 @@ public class WavePreviewPanelView extends Component {
         column().props(growX(), left()).children(() -> {
             if (multiWave) {
                 text(Core.bundle.format("feature.wave-preview.section.wave", section.waveNumber))
-                        .left()
-                        .style(Styles.outlineLabel)
-                        .fontScale(scale)
-                        .color(Pal.accent);
+                        .props(style(Styles.outlineLabel), color(Pal.accent), left(), fontScale(scale));
             } else {
                 text(String.valueOf(section.waveNumber))
-                        .left()
-                        .style(Styles.outlineLabel)
-                        .fontScale(scale);
+                        .props(style(Styles.outlineLabel), left(), fontScale(scale));
             }
 
             if (section.isEmpty()) {
                 text(Core.bundle.get("feature.wave-preview.empty"))
-                        .left()
-                        .style(Styles.outlineLabel)
-                        .color(Color.lightGray)
-                        .fontScale(scale.map(s -> 0.9f * (s != null ? s : 1f)));
+                        .props(style(Styles.outlineLabel), color(Color.lightGray), left(), fontScale(scale.map(s -> 0.9f * (s != null ? s : 1f))));
             } else {
                 renderDomainRow(Core.bundle.get("feature.wave-preview.domain.ground"), section.ground, scale);
                 renderDomainRow(Core.bundle.get("feature.wave-preview.domain.air"), section.air, scale);
@@ -99,10 +95,7 @@ public class WavePreviewPanelView extends Component {
 
         row().props(growX(), center(), left(), gap(unit(1))).children(() -> {
             text(domainLabel)
-                    .left()
-                    .style(Styles.outlineLabel)
-                    .color(Color.lightGray)
-                    .fontScale(scale.map(s -> 0.85f * (s != null ? s : 1f)));
+                    .props(style(Styles.outlineLabel), color(Color.lightGray), left(), fontScale(scale.map(s -> 0.85f * (s != null ? s : 1f))));
 
             wrap().props(growX(), maxWidth(230), gap(unit(1))).children(() -> {
                 for (int i = 0; i < entries.size; i++) {
@@ -114,8 +107,7 @@ public class WavePreviewPanelView extends Component {
                                 .props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize));
 
                         text(String.valueOf(entry.amount))
-                                .style(Styles.outlineLabel)
-                                .fontScale(scale);
+                                .props(style(Styles.outlineLabel), fontScale(scale));
                     });
                 }
             });

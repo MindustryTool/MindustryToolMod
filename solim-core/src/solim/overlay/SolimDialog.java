@@ -1,6 +1,4 @@
 package solim.overlay;
-
-import arc.graphics.Color;
 import arc.Core;
 import solim.reactive.Readable;
 import arc.func.Cons;
@@ -18,7 +16,6 @@ import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.OwnershipContext;
 import solim.core.SolimToken;
-import solim.graphics.RoundedDrawable;
 import solim.modifier.AlignmentCapability;
 import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
@@ -26,7 +23,6 @@ import solim.modifier.ContainerCapability;
 import solim.modifier.TableCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
-import solim.modifier.RoundedHelper;
 import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
@@ -81,11 +77,6 @@ public class SolimDialog extends Component
 
     @Override
     public SolimDialog self() {
-        return this;
-    }
-
-    public SolimDialog fillParent(boolean fillParent) {
-        wrapped.setFillParent(fillParent);
         return this;
     }
 
@@ -293,50 +284,6 @@ public class SolimDialog extends Component
             return wrapped.isShown();
         }
         return isShown;
-    }
-
-    public SolimDialog rounded(int radius) {
-        RoundedHelper.getOrCreateRounded(wrapped.cont, radius);
-        return this;
-    }
-
-    public SolimDialog rounded(int radius, @Nullable Color color) {
-        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(wrapped.cont, radius);
-        if (color != null) {
-            rd.fillColor(color);
-        }
-        return this;
-    }
-
-    public SolimDialog rounded(int radius, @Nullable Readable<Color> color) {
-        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(wrapped.cont, radius);
-        if (color != null) {
-            Effect.of(() -> {
-                Color c = color.get();
-                if (c != null)
-                    rd.fillColor(c);
-            });
-        }
-        return this;
-    }
-
-    public SolimDialog border(float stroke, @Nullable Color color) {
-        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(wrapped.cont, 8);
-        rd.border(stroke, color != null ? color : Color.white);
-        return this;
-    }
-
-    public SolimDialog border(float stroke, @Nullable Readable<Color> color) {
-        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(wrapped.cont, 8);
-        if (color != null) {
-            Effect.of(() -> {
-                Color c = color.get();
-                rd.border(stroke, c != null ? c : Color.white);
-            });
-        } else {
-            rd.border(stroke, Color.white);
-        }
-        return this;
     }
 
     @Override

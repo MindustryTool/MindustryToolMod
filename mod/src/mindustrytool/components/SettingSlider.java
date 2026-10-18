@@ -1,7 +1,11 @@
 package mindustrytool.components;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.growX;
+import static solim.modifier.Values.left;
+import static solim.modifier.Values.right;
+import static solim.modifier.Values.wrap;
 
 import arc.graphics.Color;
 import arc.util.Nullable;
@@ -24,21 +28,13 @@ public final class SettingSlider {
             Readable<String> formattedValue) {
         return column().props(growX(), gap(unit(1)), left()).children(() -> {
             row().props(growX(), center()).children(() -> {
-                text(title)
-                        .color(Color.white)
-                        .left();
+                text(title).props(color(Color.white), left());
                 spacer();
-                text(formattedValue)
-                        .color(WebStyles.Colors.GHOST_FG)
-                        .right();
+                text(formattedValue).props(color(WebStyles.Colors.GHOST_FG), right());
             });
 
             if (description != null && !description.trim().isEmpty()) {
-                text(description)
-                        .color(WebStyles.Colors.GHOST_FG)
-                        .left()
-                        .wrap()
-                        .growX();
+                text(description).props(color(WebStyles.Colors.GHOST_FG), left(), wrap(), growX());
             }
 
             slider(signal, min, max, step).props(growX());
@@ -65,21 +61,13 @@ public final class SettingSlider {
             Readable<String> formattedValue) {
         return column().props(growX(), gap(unit(1)), left()).children(() -> {
             row().props(growX(), center()).children(() -> {
-                text(title)
-                        .color(Color.white)
-                        .left();
+                text(title).props(color(Color.white), left());
                 spacer();
-                text(formattedValue)
-                        .color(WebStyles.Colors.GHOST_FG)
-                        .right();
+                text(formattedValue).props(color(WebStyles.Colors.GHOST_FG), right());
             });
 
             if (description != null && !description.trim().isEmpty()) {
-                text(description)
-                        .color(WebStyles.Colors.GHOST_FG)
-                        .left()
-                        .wrap()
-                        .growX();
+                text(description).props(color(WebStyles.Colors.GHOST_FG), left(), wrap(), growX());
             }
 
             slider(signal, min, max, step).props(growX());

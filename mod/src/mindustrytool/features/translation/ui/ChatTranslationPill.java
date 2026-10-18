@@ -7,6 +7,8 @@ import static solim.modifier.Values.position;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.tooltip;
 import static solim.modifier.Values.visible;
 
@@ -68,13 +70,11 @@ public class ChatTranslationPill extends Component {
 
                 button(() -> feature.outgoingEnabledConfig
                         .set(!Boolean.TRUE.equals(feature.outgoingEnabledConfig.get())))
-                        .style(WebStyles.ghost())
-                        .props(size(unit(9), unit(8)), prefWidth(unit(9)), prefHeight(unit(8)), tooltip(Core.bundle.get("feature.translation.outgoing.enable")))
-                        .children(() -> icon(FileIcon.of("translate.png")).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))).color(statusColor));
+                        .props(style(WebStyles.ghost()), size(unit(9), unit(8)), prefWidth(unit(9)), prefHeight(unit(8)), tooltip(Core.bundle.get("feature.translation.outgoing.enable")))
+                        .children(() -> icon(FileIcon.of("translate.png")).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)), color(statusColor)));
 
                 button(targetLangCode, feature::showLanguageDialog)
-                        .style(WebStyles.secondaryText())
-                        .props(height(unit(8)), prefHeight(unit(8)), tooltip(Core.bundle.get("feature.translation.outgoing.select-lang")));
+                        .props(style(WebStyles.secondaryText()), height(unit(8)), prefHeight(unit(8)), tooltip(Core.bundle.get("feature.translation.outgoing.select-lang")));
             }));
         }));
 

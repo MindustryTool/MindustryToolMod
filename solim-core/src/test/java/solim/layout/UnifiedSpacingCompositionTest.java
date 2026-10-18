@@ -6,16 +6,11 @@ import static solim.modifier.Values.gap;
 import static solim.modifier.Values.marginLeft;
 import static solim.modifier.Values.marginTop;
 
-import java.util.List;
-
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
 
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
-import solim.core.Component;
 import solim.core.DisposableOwner;
 import solim.display.Text;
 import solim.input.Button;

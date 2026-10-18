@@ -4,6 +4,8 @@ import static solim.UI.*;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
+import static solim.modifier.Values.checked;
 
 import arc.Core;
 import java.util.Locale;
@@ -37,9 +39,7 @@ public class OutgoingLanguageDialog extends SolimDialog {
                             feature.setOutgoingTargetLocale(loc);
                             hide();
                         })
-                                .style(Styles.flatTogglet)
-                                .checked(isSelected)
-                                .props(size(400f, 50f), prefWidth(400f), prefHeight(50f));
+                                .props(style(Styles.flatTogglet), checked(isSelected), size(400f, 50f), prefWidth(400f), prefHeight(50f));
                     }
                 });
             });

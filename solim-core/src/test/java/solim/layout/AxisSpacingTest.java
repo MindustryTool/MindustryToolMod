@@ -1,5 +1,7 @@
 package solim.layout;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static solim.modifier.Values.marginX;
 import static solim.modifier.Values.marginY;
@@ -64,7 +66,7 @@ public class AxisSpacingTest extends SolimEnv {
         SolimImage img = new SolimImage();
         parent.add(img.element());
 
-        img.paddingX(10f).paddingY(5f).marginX(8f).marginY(4f);
+        img.props(marginX(18f), marginY(9f));
 
         Cell<?> cell = parent.getCell(img.element());
 

@@ -1,12 +1,14 @@
 package mindustrytool.features.griefalert;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.graphics.g2d.TextureRegion;
@@ -77,22 +79,20 @@ public class GriefAlertSettingsView extends Component {
         return SettingCard.section(Icon.warning, Core.bundle.get("feature.grief-alert.settings.monitored-blocks"),
                 () -> {
                     row().props(growX(), gap(unit(2)), center()).children(() -> {
-                        text(Core.bundle.get("feature.grief-alert.settings.monitored-blocks")).left();
+                        text(Core.bundle.get("feature.grief-alert.settings.monitored-blocks")).props(left());
                         spacer();
                         row().props(gap(unit(1))).children(() -> {
                             button(Core.bundle.get("feature.grief-alert.settings.all"),
                                     () -> feature.setAllBlocksEnabled(true))
-                                    .style(WebStyles.outlineText())
-                                    .props(height(unit(8)), prefHeight(unit(8)), padding(unit(1), unit(2.5f), unit(1), unit(2.5f)));
+                                    .props(style(WebStyles.outlineText()), height(unit(8)), prefHeight(unit(8)), padding(unit(1), unit(2.5f), unit(1), unit(2.5f)));
 
                             button(Core.bundle.get("feature.grief-alert.settings.none"),
                                     () -> feature.setAllBlocksEnabled(false))
-                                    .style(WebStyles.ghostText())
-                                    .props(height(unit(8)), prefHeight(unit(8)), padding(unit(1), unit(2.5f), unit(1), unit(2.5f)));
+                                    .props(style(WebStyles.ghostText()), height(unit(8)), prefHeight(unit(8)), padding(unit(1), unit(2.5f), unit(1), unit(2.5f)));
                         });
                     });
 
-                    divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
                     for (Block block : feature.explosiveBlocks()) {
                         blockRow(block);

@@ -1,5 +1,7 @@
 package solim.input;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static solim.modifier.Values.height;
 import static solim.modifier.Values.position;
@@ -70,7 +72,7 @@ class ButtonComponentTest extends SolimEnv {
     @Test
     void reactiveEnabledTogglesDisabledState() {
         Signal<Boolean> enabled = Signal.of(true);
-        Button btn = new Button().enabled(enabled);
+        Button btn = new Button().props(enabled(enabled));
 
         assertFalse(btn.button().isDisabled());
 
@@ -85,7 +87,7 @@ class ButtonComponentTest extends SolimEnv {
     @Test
     void reactiveVisibleUpdatesVisibility() {
         Signal<Boolean> visible = Signal.of(true);
-        Button btn = new Button().visible(visible);
+        Button btn = new Button().props(visible(visible));
 
         assertTrue(btn.button().visible);
 
@@ -100,7 +102,7 @@ class ButtonComponentTest extends SolimEnv {
     @Test
     void reactiveCheckedUpdatesCheckedState() {
         Signal<Boolean> checked = Signal.of(false);
-        Button btn = new Button().checked(checked);
+        Button btn = new Button().props(checked(checked));
 
         assertFalse(btn.button().isChecked());
 
@@ -125,7 +127,7 @@ class ButtonComponentTest extends SolimEnv {
     void checkedBindingWinsOverArcClickAutoToggle() {
 
         Signal<Boolean> checked = Signal.of(true);
-        Button btn = new Button().checked(checked);
+        Button btn = new Button().props(checked(checked));
 
         assertTrue(btn.button().isChecked());
 
@@ -143,7 +145,7 @@ class ButtonComponentTest extends SolimEnv {
     @Test
     void constantCheckedReadableIsNotReassertedOnClick() {
 
-        Button btn = new Button().checked(Readable.of(false));
+        Button btn = new Button().props(checked(Readable.of(false)));
 
         assertFalse(btn.button().isChecked());
 
@@ -156,7 +158,7 @@ class ButtonComponentTest extends SolimEnv {
     void checkedBindingTracksSignalAcrossClicks() {
 
         Signal<Boolean> checked = Signal.of(false);
-        Button btn = new Button(() -> checked.set(!checked.peek())).checked(checked);
+        Button btn = new Button(() -> checked.set(!checked.peek())).props(checked(checked));
 
         fireClick(btn);
         assertTrue(btn.button().isChecked(), "binding must reflect the signal after the click");

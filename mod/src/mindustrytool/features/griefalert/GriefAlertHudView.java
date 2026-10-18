@@ -2,6 +2,8 @@ package mindustrytool.features.griefalert;
 
 import static solim.UI.*;
 import static solim.modifier.Values.border;
+import static solim.modifier.Values.color;
+import static solim.modifier.Values.growX;
 import static solim.modifier.Values.maxWidth;
 import static solim.modifier.Values.onClick;
 import static solim.modifier.Values.padding;
@@ -9,6 +11,7 @@ import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.rounded;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
 
 import arc.Core;
@@ -48,17 +51,13 @@ public class GriefAlertHudView extends Component {
         Row banner = row()
                 .props(padding(unit(1.5f)), rounded(unit(2), WebStyles.Colors.DARK_90), border(1.5f, WebStyles.Colors.DANGER), tooltip(Core.bundle.get("feature.grief-alert.hud.jump")), onClick(this::jump), gap(unit(2)), center())
                 .children(() -> {
-                    icon(Icon.warning).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))).color(WebStyles.Colors.DANGER);
+                    icon(Icon.warning).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(WebStyles.Colors.DANGER));
 
                     text(message)
-                            .wrap()
-                            .growX()
-                            .left()
-                            .color(Color.white);
+                            .props(color(Color.white), solim.modifier.Values.wrap(true), growX(), left());
 
                     button()
-                            .style(WebStyles.ghost())
-                            .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.grief-alert.hud.dismiss")))
+                            .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.grief-alert.hud.dismiss")))
                             .onClick(feature::dismissAlert)
                             .stopClickPropagation(true)
                             .children(() -> icon(Icon.cancel).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));

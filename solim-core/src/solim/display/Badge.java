@@ -1,5 +1,4 @@
 package solim.display;
-
 import arc.graphics.Color;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
@@ -8,18 +7,15 @@ import solim.core.Disposable;
 import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.graphics.RoundedDrawable;
-import solim.layout.Row;
 import solim.modifier.RoundedHelper;
 import solim.modifier.AlignmentCapability;
 import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
-import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.modifier.TableCapability;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
-import solim.runtime.AttachmentStack;
 
 public final class Badge extends Component implements Configurable<Badge>, TableCapability, CellCapability, AlignmentCapability {
 
@@ -78,22 +74,17 @@ public final class Badge extends Component implements Configurable<Badge>, Table
         Badge badge = new Badge(String.valueOf(count != null ? count.peek() : 0));
         badge.withinOwnership(() -> {
             Readable<String> text = count.map(c -> c != null ? String.valueOf(c) : "0");
-            badge.label.text(text);
+            badge.label.setText(text);
             OwnershipContext.register((Disposable) text);
         });
         badge.countSignal = count;
-        badge.hideOnZero(true);
+        badge.setHideOnZero(true);
         return badge;
     }
 
-    public Badge hideOnZero(boolean hide) {
+    public void setHideOnZero(boolean hide) {
         this.hideOnZero = hide;
         updateVisibilityBinding();
-        return this;
-    }
-
-    public Badge hideOnZero() {
-        return hideOnZero(true);
     }
 
     private void updateVisibilityBinding() {
@@ -118,22 +109,20 @@ public final class Badge extends Component implements Configurable<Badge>, Table
         }
     }
 
-    public Badge color(Color color) {
+    public void setBadgeColor(Color color) {
         element.setColor(color);
         if (element.getBackground() instanceof RoundedDrawable) {
             RoundedDrawable rd = (RoundedDrawable) element.getBackground();
             if (color != null) {
                 rd.fillColor(new Color(color.r, color.g, color.b, 0.16f));
                 rd.border(1f, new Color(color.r, color.g, color.b, 0.55f));
-                label.color(color);
+                label.element().setColor(color);
             }
         }
-        return this;
     }
 
-    public Badge textColor(Color color) {
-        label.color(color);
-        return this;
+    public void setTextColor(Color color) {
+        label.element().setColor(color);
     }
 
     public Text text() {

@@ -1,5 +1,7 @@
 package solim.display;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import arc.Core;
@@ -115,21 +117,21 @@ class DisplayTest extends SolimEnv {
 
         Text t = Text.of("Hello");
         AttachmentStack.attachToParent(t.label());
-        t.padding(8f).margin(4f);
+        t.props(margin(12f));
         assertEquals(12f, CellAccess.padTop(root.getCell(t.label())), 0.01f);
         assertEquals(12f, CellAccess.padLeft(root.getCell(t.label())), 0.01f);
         assertEquals(12f, CellAccess.padBottom(root.getCell(t.label())), 0.01f);
         assertEquals(12f, CellAccess.padRight(root.getCell(t.label())), 0.01f);
 
-        t.padding(1f, 2f, 3f, 4f).margin(5f, 6f, 7f, 8f);
+        t.props(margin(6f, 8f, 10f, 12f));
         assertEquals(6f, CellAccess.padTop(root.getCell(t.label())), 0.01f);
         assertEquals(8f, CellAccess.padLeft(root.getCell(t.label())), 0.01f);
         assertEquals(10f, CellAccess.padBottom(root.getCell(t.label())), 0.01f);
         assertEquals(12f, CellAccess.padRight(root.getCell(t.label())), 0.01f);
 
-        t.paddingTop(10f);
+        t.props(marginTop(7f));
         assertEquals(15f, CellAccess.padTop(root.getCell(t.label())), 0.01f);
-        t.marginTop(2f);
+        t.props(marginTop(2f));
         assertEquals(12f, CellAccess.padTop(root.getCell(t.label())), 0.01f);
 
         AttachmentStack.pop();
@@ -142,21 +144,21 @@ class DisplayTest extends SolimEnv {
 
         SolimImage img = new SolimImage((Drawable) null);
         AttachmentStack.attachToParent(img.element());
-        img.padding(6f).margin(2f);
+        img.props(margin(8f));
         assertEquals(8f, CellAccess.padTop(root.getCell(img.element())), 0.01f);
         assertEquals(8f, CellAccess.padLeft(root.getCell(img.element())), 0.01f);
         assertEquals(8f, CellAccess.padBottom(root.getCell(img.element())), 0.01f);
         assertEquals(8f, CellAccess.padRight(root.getCell(img.element())), 0.01f);
 
-        img.padding(1f, 2f, 3f, 4f).margin(4f, 3f, 2f, 1f);
+        img.props(margin(5f, 5f, 5f, 5f));
         assertEquals(5f, CellAccess.padTop(root.getCell(img.element())), 0.01f);
         assertEquals(5f, CellAccess.padLeft(root.getCell(img.element())), 0.01f);
         assertEquals(5f, CellAccess.padBottom(root.getCell(img.element())), 0.01f);
         assertEquals(5f, CellAccess.padRight(root.getCell(img.element())), 0.01f);
 
-        img.paddingBottom(10f);
+        img.props(marginBottom(7f));
         assertEquals(12f, CellAccess.padBottom(root.getCell(img.element())), 0.01f);
-        img.marginBottom(5f);
+        img.props(marginBottom(5f));
         assertEquals(15f, CellAccess.padBottom(root.getCell(img.element())), 0.01f);
 
         AttachmentStack.pop();
@@ -165,9 +167,9 @@ class DisplayTest extends SolimEnv {
     @Test
     void solimImageComponentPaddingAndMargin() {
         Table root = new Table();
-        SolimImage comp = new SolimImage().padding(5f).margin(3f);
+        SolimImage comp = new SolimImage().props(margin(8f));
         root.add(comp.element());
-        comp.applySpacing();
+        
 
         assertEquals(8f, CellAccess.padTop(root.getCell(comp.element())), 0.01f);
         assertEquals(8f, CellAccess.padLeft(root.getCell(comp.element())), 0.01f);

@@ -1,5 +1,7 @@
 package solim.layout;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -88,7 +90,7 @@ class WrapTest extends SolimEnv {
     void backgroundSetsDrawable() {
         Wrap w = new Wrap();
         assertNull(w.table().getBackground());
-        w.background(new TextureRegionDrawable());
+        w.props(background(new TextureRegionDrawable()));
         assertNotNull(w.table().getBackground());
     }
 

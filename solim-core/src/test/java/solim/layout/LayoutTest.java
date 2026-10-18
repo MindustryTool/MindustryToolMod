@@ -1,5 +1,7 @@
 package solim.layout;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -261,7 +263,7 @@ class LayoutTest extends SolimEnv {
 
         Card c = new Card()
                 .props(height(180f), prefHeight(180f), width(widthSignal), prefWidth(widthSignal))
-                .color(colorSignal)
+                .props(color(colorSignal))
                 .props(margin(12f))
                 .children(() -> {
                     AttachmentStack.add(new Element());
@@ -847,7 +849,7 @@ class LayoutTest extends SolimEnv {
 
         Text text = new Text("A very long message string that wraps across multiple lines", style);
         table.add(text.element());
-        text.wrap();
+        text.props(wrap(true));
 
         Cell<?> cell = table.getCell(text.element());
         assertNotNull(cell, "Cell must exist in parent table");

@@ -1,5 +1,7 @@
 package solim.layout;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -47,7 +49,7 @@ class TabsTest extends SolimEnv {
         Element b = new Element();
         tabs.headerBar().add(a);
         tabs.headerBar().add(b);
-        tabs.headerGap(4f);
+        tabs.props(headerGap(4f));
         assertEquals(0f, CellAccess.padLeft(tabs.headerBar().getCell(a)), 0.01f);
         assertEquals(4f, CellAccess.padLeft(tabs.headerBar().getCell(b)), 0.01f);
         assertEquals(0f, CellAccess.padTop(tabs.headerBar().getCell(b)), 0.01f);
@@ -61,7 +63,7 @@ class TabsTest extends SolimEnv {
         Element b = new Element();
         tabs.headerBar().add(a);
         tabs.headerBar().add(b);
-        tabs.headerGap(12f);
+        tabs.props(headerGap(12f));
 
         assertEquals(0f, CellAccess.padLeft(tabs.headerBar().getCell(a)), 0.01f);
         assertEquals(12f, CellAccess.padLeft(tabs.headerBar().getCell(b)), 0.01f);
@@ -103,7 +105,7 @@ class TabsTest extends SolimEnv {
         Assumptions.assumeTrue(Core.scene != null, "Arc Core.scene is null; skipping skin-dependent tests");
         ButtonStyle customStyle = new ButtonStyle();
         Tabs tabs = new Tabs(Signal.of(0))
-                .tabStyle(customStyle)
+                .props(tabStyle(customStyle))
                 .tab("Tab A", () -> {
                 });
 

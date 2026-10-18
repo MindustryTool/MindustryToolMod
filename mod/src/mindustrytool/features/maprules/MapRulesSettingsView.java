@@ -1,6 +1,7 @@
 package mindustrytool.features.maprules;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.growX;
 
 import arc.Core;
@@ -42,7 +43,7 @@ public class MapRulesSettingsView extends Component {
             checkbox(Core.bundle.get("feature.map-rules.settings.show-permission"),
                     feature.showPermissionConfig.signal()).props(growX());
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
             checkbox(Core.bundle.get("feature.map-rules.settings.show-descriptions"),
                     feature.showDescriptionsConfig.signal()).props(growX());

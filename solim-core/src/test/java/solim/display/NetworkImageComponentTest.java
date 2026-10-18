@@ -1,5 +1,7 @@
 package solim.display;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -67,8 +69,8 @@ class NetworkImageComponentTest extends SolimEnv {
     @Test
     void staticSizingSetsElementDimensionsAndCellPrefSize() {
         NetworkImage img = new NetworkImage()
-                .size(64f, 48f)
-                .scaling(Scaling.fill);
+                .props(size(64f, 48f))
+                .props(scaling(Scaling.fill));
 
         assertEquals(64f, img.image().getWidth(), 0.01f);
         assertEquals(48f, img.image().getHeight(), 0.01f);
@@ -76,7 +78,7 @@ class NetworkImageComponentTest extends SolimEnv {
         assertEquals(48f, img.cellConfig().prefHeight.get(), 0.01f);
         assertEquals(Scaling.fill, img.getScaling());
 
-        img.size(32f);
+        img.props(size(32f));
         assertEquals(32f, img.image().getWidth(), 0.01f);
         assertEquals(32f, img.image().getHeight(), 0.01f);
 
@@ -120,9 +122,8 @@ class NetworkImageComponentTest extends SolimEnv {
     @Test
     void scalingAndOriginModifiers() {
         NetworkImage img = new NetworkImage()
-                .size(50f, 50f)
-                .scaling(Scaling.fit)
-                .origin(Align.center);
+                .props(size(50f, 50f))
+                .props(scaling(Scaling.fit), origin(Align.center));
 
         assertEquals(Scaling.fit, img.getScaling());
         assertEquals(25f, img.image().originX, 0.01f);
@@ -175,7 +176,7 @@ class NetworkImageComponentTest extends SolimEnv {
         assertEquals(15f, CellAccess.minHeight(cell), 0.01f);
         assertEquals(80f, CellAccess.maxHeight(cell), 0.01f);
 
-        img.size(45f, 35f);
+        img.props(minWidth(45f), maxWidth(45f), minHeight(35f), maxHeight(35f));
         assertEquals(45f, CellAccess.minWidth(cell), 0.01f);
         assertEquals(35f, CellAccess.minHeight(cell), 0.01f);
         assertEquals(45f, CellAccess.maxWidth(cell), 0.01f,
@@ -277,13 +278,13 @@ class NetworkImageComponentTest extends SolimEnv {
     void declarativeAndImperativeAlignment() {
         Table table = new Table();
 
-        NetworkImage declarativeImg = new NetworkImage().top().left();
+        NetworkImage declarativeImg = new NetworkImage().props(top(), left());
         Cell<?> cell1 = table.add(declarativeImg.element());
         declarativeImg.cellConfig().applyToCell(cell1);
 
         assertEquals(Align.top | Align.left, CellAccess.align(cell1));
 
-        NetworkImage centerImg = new NetworkImage().center();
+        NetworkImage centerImg = new NetworkImage().props(center());
         Cell<?> cell2 = table.add(centerImg.element());
         centerImg.cellConfig().applyToCell(cell2);
 
@@ -291,7 +292,7 @@ class NetworkImageComponentTest extends SolimEnv {
 
         NetworkImage imperativeImg = new NetworkImage();
         Cell<?> cell3 = table.add(imperativeImg.element());
-        imperativeImg.bottom().right();
+        imperativeImg.props(bottom(), right());
 
         assertEquals(Align.bottom | Align.right, CellAccess.align(cell3));
 
@@ -306,7 +307,7 @@ class NetworkImageComponentTest extends SolimEnv {
         AttachmentStack.push(root);
 
         NetworkImage img = new NetworkImage()
-                .size(42f, 38f)
+                .props(size(42f, 38f))
                 .props(margin(8f), growX());
 
         AttachmentStack.add(img);
@@ -331,7 +332,7 @@ class NetworkImageComponentTest extends SolimEnv {
 
     @Test
     void networkImageRoundedRadiusTracking() {
-        NetworkImage img = new NetworkImage().rounded(12);
+        NetworkImage img = new NetworkImage().props(imageRounded(12));
         assertEquals(12, img.getCornerRadius());
         img.dispose();
     }
@@ -351,7 +352,7 @@ class NetworkImageComponentTest extends SolimEnv {
 
         String url = "https://example.com/user.png";
         NetworkImage img1 = new NetworkImage(url);
-        NetworkImage img2 = new NetworkImage(url).rounded(8);
+        NetworkImage img2 = new NetworkImage(url).props(imageRounded(8));
 
         assertTrue(NetworkImage.isCached(url, 0));
         assertTrue(NetworkImage.isCached(url, 8));

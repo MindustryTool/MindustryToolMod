@@ -144,21 +144,7 @@ public final class SolimStack extends Component
         this.pending = props;
     }
 
-    public SolimStack growX() {
-        constraints.growX = true;
-        constraints.applyGrowToParentCell(element());
-        return this;
-    }
 
-    public SolimStack growY() {
-        constraints.growY = true;
-        constraints.applyGrowToParentCell(element());
-        return this;
-    }
-
-    public SolimStack grow() {
-        return growX().growY();
-    }
 
     @Override
     public SolimStack name(@Nullable String name) {

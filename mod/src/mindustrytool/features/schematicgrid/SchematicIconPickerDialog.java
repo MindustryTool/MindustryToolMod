@@ -8,6 +8,8 @@ import static solim.modifier.Values.padding;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.tooltip;
 
 import arc.Core;
@@ -69,25 +71,22 @@ public class SchematicIconPickerDialog extends SolimDialog {
             column().props(grow(), padding(unit(3)), center(), gap(unit(2.5f))).children(() -> {
                 row().props(growX(), padding(unit(1.5f)), Values.rounded(unit(2), WebStyles.Colors.SECONDARY_BG), Values.border(1.5f, WebStyles.Colors.BORDER_INPUT), gap(unit(1.5f)), center())
                         .children(() -> {
-                            icon(Icon.zoom).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f))).color(WebStyles.Colors.GHOST_FG);
+                            icon(Icon.zoom).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f)), color(WebStyles.Colors.GHOST_FG));
                             textField(searchQuery)
-                                    .props(growX(), height(unit(8)), prefHeight(unit(8)))
-                                    .style(WebStyles.clearInput())
-                                    .placeholder(Core.bundle.get("feature.quick-schematic-grid.icon.search"));
+                                    .props(style(WebStyles.clearInput()), growX(), height(unit(8)), prefHeight(unit(8)),
+                                            Values.placeholder(Core.bundle.get("feature.quick-schematic-grid.icon.search")));
                         });
 
                 scroll().props(grow()).children(() -> {
                     column().props(growX(), gap(unit(2))).children(() -> {
                         text(Core.bundle.get("feature.quick-schematic-grid.icon.glyphs"))
-                                .growX()
-                                .left()
-                                .color(Color.white);
+                                .props(color(Color.white), growX(), solim.modifier.Values.left());
 
                         dynamic(filteredGlyphs, items -> {
                             if (items == null || items.isEmpty()) {
                                 row().props(growX(), padding(unit(2)), center()).children(() -> {
                                     text(Core.bundle.get("feature.quick-schematic-grid.icon.empty"))
-                                            .color(Color.gray);
+                                            .props(color(Color.gray));
                                 });
                             } else {
                                 wrap().props(left(), gap(unit(1.5f))).children(() -> {
@@ -99,15 +98,13 @@ public class SchematicIconPickerDialog extends SolimDialog {
                         });
 
                         text(Core.bundle.get("feature.quick-schematic-grid.icon.content"))
-                                .growX()
-                                .left()
-                                .color(Color.white);
+                                .props(color(Color.white), growX(), solim.modifier.Values.left());
 
                         dynamic(filteredContents, items -> {
                             if (items == null || items.isEmpty()) {
                                 row().props(growX(), padding(unit(2)), center()).children(() -> {
                                     text(Core.bundle.get("feature.quick-schematic-grid.icon.empty"))
-                                            .color(Color.gray);
+                                            .props(color(Color.gray));
                                 });
                             } else {
                                 wrap().props(left(), gap(unit(1.5f))).children(() -> {
@@ -125,18 +122,16 @@ public class SchematicIconPickerDialog extends SolimDialog {
 
     private void glyphChip(Entry entry) {
         button()
-                .style(WebStyles.actionChip())
+                .props(style(WebStyles.actionChip()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), padding(unit(1)), tooltip(entry.name))
                 .onClick(() -> select(String.valueOf(entry.glyph)))
-                .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), padding(unit(1)), tooltip(entry.name))
-                .children(() -> text(String.valueOf(entry.glyph)).fontScale(1.2f));
+                .children(() -> text(String.valueOf(entry.glyph)).props(solim.modifier.Values.fontScale(1.2f)));
     }
 
     private void contentChip(UnlockableContent content) {
         String emoji = content.emoji() + "";
         button()
-                .style(WebStyles.actionChip())
+                .props(style(WebStyles.actionChip()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), padding(unit(1)), tooltip(content.localizedName))
                 .onClick(() -> select(emoji))
-                .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), padding(unit(1)), tooltip(content.localizedName))
                 .children(() -> image(new TextureRegionDrawable(content.uiIcon)).props(size(unit(6.5f)), prefWidth(unit(6.5f)), prefHeight(unit(6.5f))));
     }
 

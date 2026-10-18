@@ -1,5 +1,7 @@
 package solim.style;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -112,7 +114,7 @@ class InputStyleTest extends SolimEnv {
                     .invalidBackground(blank)
                     .build();
 
-            first.style(preset);
+            first.props(style(preset));
 
             assertNotSame(base, first.field().getStyle());
             assertSame(blank, first.field().getStyle().background);
@@ -140,8 +142,8 @@ class InputStyleTest extends SolimEnv {
                     .invalidBackground(blank)
                     .build();
 
-            first.style(preset);
-            second.style(preset);
+            first.props(style(preset));
+            second.props(style(preset));
 
             assertSame(blank, first.field().getStyle().background);
             assertSame(blank, second.field().getStyle().background);

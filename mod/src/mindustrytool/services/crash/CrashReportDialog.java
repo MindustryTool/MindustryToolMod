@@ -4,6 +4,7 @@ import static solim.UI.*;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.wrap;
 
 import arc.Core;
 import arc.files.Fi;
@@ -33,13 +34,13 @@ public class CrashReportDialog extends SolimDialog {
 
             column().props(growX(), padding(unit(2)), prefWidth(500f), gap(unit(2))).children(() -> {
                 text(Core.bundle.get("crash-report.content"))
-                        .wrap();
+                        .props(wrap());
 
                 checkbox(Core.bundle.get("crash-report.send"), sendSignal);
 
                 if (!path.isEmpty()) {
                     text(path)
-                            .wrap();
+                            .props(wrap());
                 }
             });
         });

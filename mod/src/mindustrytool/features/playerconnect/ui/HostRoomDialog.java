@@ -2,6 +2,7 @@ package mindustrytool.features.playerconnect.ui;
 
 import static solim.UI.*;
 import static solim.modifier.Values.background;
+import static solim.modifier.Values.ellipsis;
 import static solim.modifier.Values.grow;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
@@ -11,9 +12,13 @@ import static solim.modifier.Values.minWidth;
 import static solim.modifier.Values.onClick;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.paddingX;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.paddingY;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.scrollX;
+import static solim.modifier.Values.style;
+import static solim.modifier.Values.enabled;
 import static solim.modifier.Values.width;
 
 import arc.Core;
@@ -90,25 +95,23 @@ public class HostRoomDialog extends SolimDialog {
                     .props(growX(), gap(unit(3.5f)), center())
                     .children(() -> {
                         text(Core.bundle.get("feature.player-connect.step1-title", "Room Settings"))
-                                .color(Pal.accent);
+                                .props(color(Pal.accent));
 
                         column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
-                            text(Core.bundle.get("feature.player-connect.room-name", "Room Name:")).left();
+                            text(Core.bundle.get("feature.player-connect.room-name", "Room Name:")).props(left());
                             row().props(growX(), height(unit(11)), prefHeight(unit(11)), Values.border(1.5f, Color.darkGray), paddingX(unit(2)), Values.rounded(unit(2)))
                                     .children(() -> {
                                         textField(feature.roomNameConfig.signal())
-                                                .props(grow())
-                                                .style(WebStyles.clearInput());
+                                                .props(style(WebStyles.clearInput()), grow());
                                     });
                         });
 
                         column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
-                            text(Core.bundle.get("feature.player-connect.password", "Password:")).left();
+                            text(Core.bundle.get("feature.player-connect.password", "Password:")).props(left());
                             row().props(growX(), height(unit(11)), prefHeight(unit(11)), Values.border(1.5f, Color.darkGray), paddingX(unit(2)), Values.rounded(unit(2)))
                                     .children(() -> {
                                         textField(feature.passwordConfig.signal())
-                                                .props(grow())
-                                                .style(WebStyles.clearInput());
+                                                .props(style(WebStyles.clearInput()), grow());
                                     });
                         });
 
@@ -122,40 +125,34 @@ public class HostRoomDialog extends SolimDialog {
                             }
                         });
                         column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
-                            text(Core.bundle.get("feature.player-connect.max-players", "Max Players (0=unlimited):"))
-                                    .left();
+                            text(Core.bundle.get("feature.player-connect.max-players", "Max Players (0=unlimited):")).props(left());
                             row().props(growX(), height(unit(11)), prefHeight(unit(11)), Values.border(1.5f, Color.darkGray), paddingX(unit(2)), Values.rounded(unit(2)))
                                     .children(() -> {
                                         textField(maxPlayersSig)
-                                                .props(grow())
-                                                .style(WebStyles.clearInput());
+                                                .props(style(WebStyles.clearInput()), grow());
                                     });
                         });
 
                         column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
-                            text(Core.bundle.get("feature.player-connect.auto-accept", "Auto-accept players:"))
-                                    .left();
+                            text(Core.bundle.get("feature.player-connect.auto-accept", "Auto-accept players:")).props(left());
                             button(feature.autoAcceptConfig.signal().map(v -> Boolean.TRUE.equals(v)
                                     ? Core.bundle.get("yes", "Yes")
                                     : Core.bundle.get("no", "No")), () -> {
                                         feature.autoAcceptConfig
                                                 .set(!Boolean.TRUE.equals(feature.autoAcceptConfig.get()));
                                     })
-                                    .style(WebStyles.outline())
-                                    .props(height(unit(10)), prefHeight(unit(10)), paddingX(unit(4)), paddingY(unit(2)), minWidth(unit(24)));
+                                    .props(style(WebStyles.outline()), height(unit(10)), prefHeight(unit(10)), paddingX(unit(4)), paddingY(unit(2)), minWidth(unit(24)));
                         });
 
                         row().props(gap(unit(2))).children(() -> {
                             button(Core.bundle.get("cancel", "Cancel"), dialog::hide)
-                                    .style(WebStyles.outline())
-                                    .props(height(unit(11)), prefHeight(unit(11)), paddingX(unit(6)), paddingY(unit(2.5f)), minWidth(unit(28)));
+                                    .props(style(WebStyles.outline()), height(unit(11)), prefHeight(unit(11)), paddingX(unit(6)), paddingY(unit(2.5f)), minWidth(unit(28)));
 
                             button(Core.bundle.get("next", "Next"), () -> {
                                 step.set(Step.PROVIDER);
                                 pingAllProviders();
                             })
-                                    .style(WebStyles.primary())
-                                    .props(height(unit(11)), prefHeight(unit(11)), paddingX(unit(8)), paddingY(unit(2.5f)), minWidth(unit(36)));
+                                    .props(style(WebStyles.primary()), height(unit(11)), prefHeight(unit(11)), paddingX(unit(8)), paddingY(unit(2.5f)), minWidth(unit(36)));
                         });
                     });
         }
@@ -166,25 +163,21 @@ public class HostRoomDialog extends SolimDialog {
                     .children(() -> {
                         row().props(growX(), gap(unit(2)), center()).children(() -> {
                             text(Core.bundle.get("feature.player-connect.select-provider", "Select Relay Provider"))
-                                    .ellipsis()
-                                    .growX()
-                                    .color(Pal.accent);
+                                    .props(color(Pal.accent), ellipsis(true), growX());
                             spacer();
                             button(Core.bundle.get("refresh", "Refresh"), () -> {
                                 feature.refreshProviders();
                                 pingAllProviders();
                             })
-                                    .style(WebStyles.outline())
-                                    .props(height(unit(9)), prefHeight(unit(9)), paddingX(unit(4)), paddingY(unit(2)));
+                                    .props(style(WebStyles.outline()), height(unit(9)), prefHeight(unit(9)), paddingX(unit(4)), paddingY(unit(2)));
 
                             button("+ " + Core.bundle.get("custom", "Custom"), this::showAddCustomDialog)
-                                    .style(WebStyles.outline())
-                                    .props(height(unit(9)), prefHeight(unit(9)), paddingX(unit(4)), paddingY(unit(2)));
+                                    .props(style(WebStyles.outline()), height(unit(9)), prefHeight(unit(9)), paddingX(unit(4)), paddingY(unit(2)));
                         });
 
                         divider();
 
-                        scroll().props(height(unit(80)), prefHeight(unit(80)), growX()).scrollX(false).children(() -> {
+                        scroll().props(height(unit(80)), prefHeight(unit(80)), growX(), scrollX(false)).children(() -> {
                             column().props(growX(), gap(unit(2))).children(() -> {
                                 for (PlayerConnectProvider p : feature.providersSignal().get()) {
                                     providerCard(p);
@@ -196,14 +189,11 @@ public class HostRoomDialog extends SolimDialog {
 
                         row().props(gap(unit(4)), center()).children(() -> {
                             button(Core.bundle.get("back", "Back"), () -> step.set(Step.CONFIG))
-                                    .style(WebStyles.outline())
-                                    .props(height(unit(11)), prefHeight(unit(11)), paddingX(unit(6)), paddingY(unit(2.5f)), minWidth(unit(28)));
+                                    .props(style(WebStyles.outline()), height(unit(11)), prefHeight(unit(11)), paddingX(unit(6)), paddingY(unit(2.5f)), minWidth(unit(28)));
 
                             button(Core.bundle.get("feature.player-connect.start-hosting", "Start Hosting"),
                                     this::startHosting)
-                                    .style(WebStyles.primary())
-                                    .props(height(unit(11)), prefHeight(unit(11)), paddingX(unit(8)), paddingY(unit(2.5f)), minWidth(unit(36)))
-                                    .enabled(selectedProvider.map(p -> p != null));
+                                    .props(style(WebStyles.primary()), enabled(selectedProvider.map(p -> p != null)), height(unit(11)), prefHeight(unit(11)), paddingX(unit(8)), paddingY(unit(2.5f)), minWidth(unit(36)));
                         });
                     });
         }
@@ -218,14 +208,12 @@ public class HostRoomDialog extends SolimDialog {
                     .props(background(WebStyles.Colors.SECONDARY), Values.border(1.5f, isSelected.map(s -> s ? Pal.accent : WebStyles.Colors.BORDER_INPUT)), growX(), minHeight(unit(12)), padding(unit(2), unit(3), unit(2), unit(3)), onClick(() -> selectedProvider.set(provider)))
                     .children(() -> {
                         row().props(growX(), gap(unit(2)), center()).children(() -> {
-                            text(provider.getName()).color(isSelected.map(s -> s ? Pal.accent : Color.white)).left();
+                            text(provider.getName()).props(color(isSelected.map(s -> s ? Pal.accent : Color.white)), left());
                             spacer();
                             when(showAddress)
-                                    .thenDo(() -> text(provider.getAddress()).color(Color.lightGray));
+                                    .thenDo(() -> text(provider.getAddress()).props(color(Color.lightGray)));
                             text(pingSignal)
-                                    .color(pingSignal.map(this::getPingColor))
-                                    .props(width(unit(22)), prefWidth(unit(22)))
-                                    .right();
+                                    .props(color(pingSignal.map(this::getPingColor)), width(unit(22)), prefWidth(unit(22)), solim.modifier.Values.right());
                         });
                     });
         }

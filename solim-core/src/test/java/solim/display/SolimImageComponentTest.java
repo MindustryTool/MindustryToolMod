@@ -1,5 +1,7 @@
 package solim.display;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static solim.modifier.Values.position;
 import static solim.modifier.Values.prefHeight;
@@ -29,14 +31,14 @@ class SolimImageComponentTest extends SolimEnv {
 	@Test
 	void colorModifierUpdatesImageColor() {
 		SolimImage img = new SolimImage();
-		img.color(Color.red);
+		img.props(color(Color.red));
 		assertEquals(Color.red, img.image().color);
 	}
 
 	@Test
 	void reactiveColorUpdatesImageColor() {
 		Signal<Color> colorSig = Signal.of(Color.green);
-		SolimImage img = new SolimImage().color(colorSig);
+		SolimImage img = new SolimImage().props(color(colorSig));
 		assertEquals(Color.green, img.image().color);
 
 		colorSig.set(Color.blue);

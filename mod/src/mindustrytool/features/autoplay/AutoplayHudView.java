@@ -2,13 +2,17 @@ package mindustrytool.features.autoplay;
 
 import static solim.UI.*;
 import static solim.modifier.Values.border;
+import static solim.modifier.Values.checked;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.draggable;
+import static solim.modifier.Values.enabled;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.position;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.rounded;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
 
 import arc.Core;
@@ -48,10 +52,8 @@ public class AutoplayHudView extends Component {
                     .children(() -> {
                         when(feature.hideDragHandleConfig.signal())
                                 .elseDo(() -> button()
-                                        .style(WebStyles.ghost())
-                                        .props(size(buttonSize()), prefWidth(buttonSize()), prefHeight(buttonSize()))
-                                        .children(() -> icon(Icon.move).props(size(iconSize()), prefWidth(iconSize()), prefHeight(iconSize())))
-                                        .props(draggable(feature.xSignal, feature.ySignal)));
+                                        .props(style(WebStyles.ghost()), size(buttonSize()), prefWidth(buttonSize()), prefHeight(buttonSize()), draggable(feature.xSignal, feature.ySignal))
+                                        .children(() -> icon(Icon.move).props(size(iconSize()), prefWidth(iconSize()), prefHeight(iconSize()))));
 
                         buildControls(feature, null);
                     });
@@ -123,14 +125,12 @@ public class AutoplayHudView extends Component {
                 .map(en -> Boolean.TRUE.equals(en) ? Color.white : Color.darkGray);
 
         Button btn = button()
-                .style(WebStyles.ghost())
-                .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(Core.bundle.get("feature.autoplay.hud.master.tooltip")))
-                .checked(feature.enabled())
+                .props(checked(feature.enabled()), style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(Core.bundle.get("feature.autoplay.hud.master.tooltip")))
                 .onClick(() -> feature.setEnabled(!feature.isEnabled()))
                 .onLongClick(300L, () -> openSettings(feature))
-                .children(() -> icon(Icon.play).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)).color(color));
+                .children(() -> icon(Icon.play).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize), color(color)));
                 
-        return canEdit != null ? btn.enabled(canEdit) : btn;
+        return canEdit != null ? btn.props(enabled(canEdit)) : btn;
     }
 
     private static Component taskButton(AutoplayFeature feature, @Nullable AutoplayTask task,
@@ -153,13 +153,12 @@ public class AutoplayHudView extends Component {
         });
 
         Button btn = button()
-                .style(WebStyles.ghost())
-                .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(task.getName()))
+                .props(style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(task.getName()))
                 .onClick(() -> feature.setTaskEnabled(task.getId(), !feature.isTaskEnabled(task.getId())))
                 .onLongClick(300L, () -> openSettings(feature))
-                .children(() -> icon(task.getIcon()).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)).color(color));
+                .children(() -> icon(task.getIcon()).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize), color(color)));
 
-        return canEdit != null ? btn.enabled(canEdit) : btn;
+        return canEdit != null ? btn.props(enabled(canEdit)) : btn;
     }
 
     public @Nullable Hud getHud() {

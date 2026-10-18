@@ -90,7 +90,7 @@ public final class Switch extends Component
         return this;
     }
 
-    public Switch checked(@Nullable Readable<Boolean> source) {
+    public void setChecked(@Nullable Readable<Boolean> source) {
         if (source != null) {
             OwnershipContext.push(this);
             try {
@@ -103,7 +103,6 @@ public final class Switch extends Component
                 OwnershipContext.pop();
             }
         }
-        return this;
     }
 
     public boolean isChecked() {

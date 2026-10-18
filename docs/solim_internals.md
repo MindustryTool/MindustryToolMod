@@ -627,15 +627,15 @@ public class CounterWidget extends Component {
         Computed<String> labelText = count.map(c -> "Current Count: " + c);
         Computed<Color> labelColor = count.map(c -> c > 5 ? Color.scarlet : Color.white);
 
-        return row().gap(unit(2)).children(() -> {
+        return row().props(gap(unit(2))).children(() -> {
             text(labelText)
-                .color(labelColor);
+                .props(color(labelColor));
 
             button("+", () -> count.update(c -> c + 1))
-                .size(unit(10));
+                .props(size(unit(10)), prefWidth(unit(10)), prefHeight(unit(10)));
 
             button("Reset", () -> count.set(0))
-                .enabled(count.map(c -> c > 0));
+                .props(enabled(count.map(c -> c > 0)));
         }).element();
     }
 }
@@ -649,10 +649,10 @@ public class ItemPickerView extends Component {
 
     @Override
     protected Element build() {
-        return column().grow().children(() -> {
+        return column().props(grow()).children(() -> {
             // Header
-            row().growX().children(() -> {
-                text("Select Item").growX();
+            row().props(growX()).children(() -> {
+                text("Select Item").props(growX());
                 button("Refresh", this::loadItems);
             });
 
@@ -679,21 +679,20 @@ public class MiniMapHud extends Hud {
     private final Signal<Float> posY = Signal.of(100f);
 
     public MiniMapHud() {
-        x(posX);
-        y(posY);
+        props(position(posX, posY));
         toFrontOnTouch();
 
         children(() -> {
-            card().padding(unit(2)).gap(unit(1)).children(() -> {
+            card().props(padding(unit(2)), gap(unit(1))).children(() -> {
                 // Header serves as the drag handle
-                row().growX().children(() -> {
-                    text("MiniMap").growX();
+                row().props(growX()).children(() -> {
+                    text("MiniMap").props(growX());
                     icon(Icon.move).draggable(this, posX, posY);
                 });
 
                 // Content
                 image(Core.atlas.find("minimap-placeholder"))
-                    .size(unit(40));
+                    .props(size(unit(40)), prefWidth(unit(40)), prefHeight(unit(40)));
             });
         });
     }

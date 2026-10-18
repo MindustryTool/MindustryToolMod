@@ -1,10 +1,13 @@
 package mindustrytool.features.timecontrol;
 
 import static solim.UI.*;
+import static solim.modifier.Values.checked;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
 import static solim.modifier.Values.paddingX;
 import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -47,49 +50,43 @@ public class TimeControlSettingsView extends Component {
     private Component modeCard() {
         return SettingCard.section(Icon.settings, Core.bundle.get("feature.time-control.settings.mode"), () -> {
             row().props(growX(), gap(unit(2)), center()).children(() -> {
-                text(Core.bundle.get("feature.time-control.settings.mode")).wrap().left().color(Color.white);
+                text(Core.bundle.get("feature.time-control.settings.mode"))
+                        .props(color(Color.white), solim.modifier.Values.wrap(true), solim.modifier.Values.left());
 
                 spacer();
                 row().props(gap(unit(1.5f))).children(() -> {
                     button(Core.bundle.get("feature.time-control.settings.mode.presets"),
                             () -> feature.modeConfig.set(TimeControlFeature.MODE_PRESETS))
-                            .style(WebStyles.filterChipText())
-                            .checked(feature.modeConfig.signal()
-                                    .map(TimeControlFeature.MODE_PRESETS::equals))
-                            .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
+                            .props(style(WebStyles.filterChipText()), checked(feature.modeConfig.signal()
+                                    .map(TimeControlFeature.MODE_PRESETS::equals)), height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
 
                     button(Core.bundle.get("feature.time-control.settings.mode.slider"),
                             () -> feature.modeConfig.set(TimeControlFeature.MODE_SLIDER))
-                            .style(WebStyles.filterChipText())
-                            .checked(feature.modeConfig.signal()
-                                    .map(TimeControlFeature.MODE_SLIDER::equals))
-                            .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
+                            .props(style(WebStyles.filterChipText()), checked(feature.modeConfig.signal()
+                                    .map(TimeControlFeature.MODE_SLIDER::equals)), height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
                 });
             });
 
-            text(Core.bundle.get("feature.time-control.settings.mode.hint")).left().wrap()
-                    .color(WebStyles.Colors.GHOST_FG);
+            text(Core.bundle.get("feature.time-control.settings.mode.hint"))
+                    .props(color(WebStyles.Colors.GHOST_FG), solim.modifier.Values.left(), solim.modifier.Values.wrap(true));
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
             row().props(growX(), gap(unit(2)), center()).children(() -> {
-                text(Core.bundle.get("feature.time-control.settings.display-mode")).left().color(Color.white);
+                text(Core.bundle.get("feature.time-control.settings.display-mode"))
+                        .props(color(Color.white), solim.modifier.Values.left());
 
                 spacer();
                 row().props(gap(unit(1.5f))).children(() -> {
                     button(Core.bundle.get("feature.time-control.settings.display-mode.hud"),
                             () -> feature.displayModeConfig.set(TimeControlFeature.DISPLAY_HUD))
-                            .style(WebStyles.filterChipText())
-                            .checked(feature.displayModeConfig.signal()
-                                    .map(TimeControlFeature.DISPLAY_HUD::equals))
-                            .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
+                            .props(style(WebStyles.filterChipText()), checked(feature.displayModeConfig.signal()
+                                    .map(TimeControlFeature.DISPLAY_HUD::equals)), height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
 
                     button(Core.bundle.get("feature.time-control.settings.display-mode.popup"),
                             () -> feature.displayModeConfig.set(TimeControlFeature.DISPLAY_POPUP))
-                            .style(WebStyles.filterChipText())
-                            .checked(feature.displayModeConfig.signal()
-                                    .map(TimeControlFeature.DISPLAY_POPUP::equals))
-                            .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
+                            .props(style(WebStyles.filterChipText()), checked(feature.displayModeConfig.signal()
+                                    .map(TimeControlFeature.DISPLAY_POPUP::equals)), height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
                 });
             });
         });
@@ -107,15 +104,15 @@ public class TimeControlSettingsView extends Component {
                             0.1f,
                             feature.scaleConfig.signal().map(v -> (int) ((v != null ? v : 1f) * 100) + "%"));
 
-                    divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
                     checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle"),
                             feature.hideDragHandleConfig.signal()).props(growX());
 
-                    divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
-                    text(Core.bundle.get("feature.time-control.settings.safety")).left().wrap().growX()
-                            .color(WebStyles.Colors.GHOST_FG);
+                    text(Core.bundle.get("feature.time-control.settings.safety"))
+                            .props(color(WebStyles.Colors.GHOST_FG), solim.modifier.Values.left(), solim.modifier.Values.wrap(true), growX());
                 });
     }
 
@@ -123,12 +120,10 @@ public class TimeControlSettingsView extends Component {
         return SettingCard.card().children(() -> {
             row().props(growX(), gap(unit(2)), center()).children(() -> {
                 button(Core.bundle.get("feature.time-control.settings.reset-speed"), feature::resetSpeed)
-                        .style(WebStyles.outlineText())
-                        .props(height(unit(11)), prefHeight(unit(11)), growX());
+                        .props(style(WebStyles.outlineText()), height(unit(11)), prefHeight(unit(11)), growX());
 
                 button(Core.bundle.get("feature.time-control.settings.reset-position"), feature::resetPosition)
-                        .style(WebStyles.outlineText())
-                        .props(height(unit(11)), prefHeight(unit(11)), growX());
+                        .props(style(WebStyles.outlineText()), height(unit(11)), prefHeight(unit(11)), growX());
             });
         });
     }

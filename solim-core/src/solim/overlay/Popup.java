@@ -3,7 +3,6 @@ package solim.overlay;
 import arc.Core;
 import arc.Events;
 import arc.func.Cons;
-import arc.graphics.Color;
 import arc.input.KeyCode;
 import arc.math.geom.Vec2;
 import arc.scene.Element;
@@ -18,7 +17,6 @@ import arc.func.Func;
 import mindustry.game.EventType.ResizeEvent;
 import solim.core.Component;
 import solim.core.SolimToken;
-import solim.graphics.RoundedDrawable;
 import solim.layout.Spacer;
 import solim.modifier.AlignmentCapability;
 import solim.modifier.CellCapability;
@@ -27,12 +25,9 @@ import solim.modifier.ContainerCapability;
 import solim.modifier.TableCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
-import solim.modifier.RoundedHelper;
 import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.runtime.OwnershipScope;
-import solim.reactive.Effect;
-import solim.reactive.Readable;
 
 public final class Popup<T> extends Component
         implements Configurable<Popup<T>>, TableCapability, CellCapability, ContainerCapability<Popup<T>>, AlignmentCapability {
@@ -48,9 +43,7 @@ public final class Popup<T> extends Component
         return cell;
     };
 
-    private static final float PIN_EPSILON = 1.0f;
-
-    private final Table table = new PopupTable();
+    private final Table table;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private @Nullable Props<Popup<T>> pending;
     private @Nullable Edge pinnedEdge;
@@ -62,7 +55,8 @@ public final class Popup<T> extends Component
     private long lastHideTime = 0L;
 
     private final Cons<ResizeEvent> resizeListener = e -> {
-        if (table.parent != null) {
+        Element el = element();
+        if (el != null && el.parent != null) {
             hide();
         }
     };
@@ -98,7 +92,16 @@ public final class Popup<T> extends Component
         }
     };
 
+    private static final float PIN_EPSILON = 1.0f;
+
     public Popup() {
+        this(new PopupTable());
+    }
+
+    private Popup(PopupTable table) {
+        super(table);
+        this.table = table;
+        table.owner = this;
         SolimToken.bind(table, this, constraints);
         this.table.name = "solim-popup-menu";
         Events.on(ResizeEvent.class, resizeListener);
@@ -143,13 +146,17 @@ public final class Popup<T> extends Component
         return this;
     }
 
-    public Popup<T> pinnedEdge(@Nullable Edge edge) {
+    public void setPinnedEdge(@Nullable Edge edge) {
         this.pinnedEdge = edge;
-        return this;
     }
 
     public @Nullable Edge pinnedEdge() {
         return pinnedEdge;
+    }
+
+    public Popup<T> layerBehind(@Nullable Element anchor) {
+        this.layerAnchor = anchor;
+        return this;
     }
 
     public static Vec2 pinnedPosition(@Nullable Edge edge, float x, float y, float w, float h,
@@ -164,57 +171,6 @@ public final class Popup<T> extends Component
             ny = Math.max(0f, Math.min(ny, Math.max(0f, stageH - newH)));
         }
         return new Vec2(nx, ny);
-    }
-
-    public Popup<T> rounded(int radius) {
-        RoundedHelper.getOrCreateRounded(table, radius);
-        return this;
-    }
-
-    public Popup<T> rounded(int radius, @Nullable Color color) {
-        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(table, radius);
-        if (color != null) {
-            rd.fillColor(color);
-        }
-        return this;
-    }
-
-    public Popup<T> rounded(int radius, @Nullable Readable<Color> color) {
-        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(table, radius);
-        if (color != null) {
-            Effect e = Effect.of(() -> {
-                Color c = color.get();
-                if (c != null)
-                    rd.fillColor(c);
-            });
-            OwnershipContext.register(e);
-        }
-        return this;
-    }
-
-    public Popup<T> border(float stroke, @Nullable Color color) {
-        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(table, 8);
-        rd.border(stroke, color != null ? color : Color.white);
-        return this;
-    }
-
-    public Popup<T> border(float stroke, @Nullable Readable<Color> color) {
-        RoundedDrawable rd = RoundedHelper.getOrCreateRounded(table, 8);
-        if (color != null) {
-            Effect e = Effect.of(() -> {
-                Color c = color.get();
-                rd.border(stroke, c != null ? c : Color.white);
-            });
-            OwnershipContext.register(e);
-        } else {
-            rd.border(stroke, Color.white);
-        }
-        return this;
-    }
-
-    public Popup<T> layerBehind(@Nullable Element anchor) {
-        this.layerAnchor = anchor;
-        return this;
     }
 
     public Popup<T> items(@Nullable Func<T, Component> provider) {
@@ -361,10 +317,14 @@ public final class Popup<T> extends Component
         return this;
     }
 
-    private final class PopupTable extends Table {
+    private static final class PopupTable extends Table {
+        @Nullable Popup<?> owner;
+
         @Override
         public void validate() {
-            reconcilePinnedEdge();
+            if (owner != null) {
+                owner.reconcilePinnedEdge();
+            }
             super.validate();
         }
     }

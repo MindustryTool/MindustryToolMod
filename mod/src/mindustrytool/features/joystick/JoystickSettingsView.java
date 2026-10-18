@@ -1,11 +1,13 @@
 package mindustrytool.features.joystick;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.scene.Element;
@@ -65,7 +67,7 @@ public class JoystickSettingsView extends Component {
                             feature.opacityConfig.signal()
                                     .map(v -> String.format("%.0f%%", (v != null ? v : 0.8f) * 100)));
 
-                    divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
                     checkbox(Core.bundle.get("feature.joystick.settings.show-handle", "Show Reposition Handle"),
                             feature.showHandleConfig.signal()).props(growX());
@@ -83,8 +85,7 @@ public class JoystickSettingsView extends Component {
     private Component actionsCard() {
         return SettingCard.card().children(() -> {
             button(feature::resetPosition)
-                    .style(WebStyles.outline())
-                    .props(growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
+                    .props(style(WebStyles.outline()), growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
                     .children(() -> {
                         icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                         text(Core.bundle.get("feature.joystick.settings.reset-position", "Reset Joystick Position"));

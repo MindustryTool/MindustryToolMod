@@ -11,6 +11,7 @@ import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.rounded;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
 
 import arc.Core;
@@ -21,6 +22,7 @@ import arc.util.Timer;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import solim.core.Component;
+import solim.modifier.Values;
 import solim.reactive.Signal;
 
 import mindustrytool.components.WebStyles;
@@ -77,16 +79,15 @@ public class BrowserSearchHeader extends Component {
                         .children(() -> {
                             icon(Icon.zoom).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                             textField(inputBuffer)
-                                    .props(growX(), height(unit(11)), prefHeight(unit(11)))
-                                    .style(WebStyles.clearInput())
-                                    .placeholder(Core.bundle.get("browser.search.placeholder"))
+                                    .props(style(WebStyles.clearInput()), growX(), height(unit(11)), prefHeight(unit(11)),
+                                            Values.placeholder(Core.bundle.get("browser.search.placeholder")))
                                     .onEnter(this::submitNow);
                         });
 
-                button(this::refresh).style(WebStyles.outlineText()).props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("browser.search.refresh")))
+                button(this::refresh).props(style(WebStyles.outlineText()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("browser.search.refresh")))
                         .children(() -> icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
 
-                button(onFilterClick).style(WebStyles.outlineText()).props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("browser.search.filter")))
+                button(onFilterClick).props(style(WebStyles.outlineText()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("browser.search.filter")))
                         .children(() -> icon(Icon.filter).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
             });
 
@@ -108,10 +109,7 @@ public class BrowserSearchHeader extends Component {
 
     private void renderChip(String tag) {
         button(tag, () -> state.toggleTag(tag))
-                .style(Styles.cleart)
-                .border(1.5f, Color.lightGray)
-                .rounded(6)
-                .props(paddingX(unit(3)), height(unit(9)), prefHeight(unit(9)), gap(unit(1)))
+                .props(style(Styles.cleart), border(1.5f, Color.lightGray), rounded(6), paddingX(unit(3)), height(unit(9)), prefHeight(unit(9)), gap(unit(1)))
                 .children(() -> icon(Icon.cancel));
     }
 

@@ -1,6 +1,7 @@
 package mindustrytool.features.playerconnect.ui;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.grow;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
@@ -10,6 +11,8 @@ import static solim.modifier.Values.minWidth;
 import static solim.modifier.Values.paddingX;
 import static solim.modifier.Values.paddingY;
 import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.style;
+import static solim.modifier.Values.enabled;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -92,12 +95,11 @@ public class JoinRoomDialog extends SolimDialog {
                     .children(() -> {
 
                         column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
-                            text(Core.bundle.get("feature.player-connect.join-link", "Link:")).left();
+                            text(Core.bundle.get("feature.player-connect.join-link", "Link:")).props(left());
                             row().props(growX(), height(unit(11)), prefHeight(unit(11)), Values.border(1.5f, Color.darkGray), paddingX(unit(2)), Values.rounded(unit(2)))
                                     .children(() -> {
                                         textField(linkSignal)
-                                                .props(grow())
-                                                .style(WebStyles.clearInput());
+                                                .props(style(WebStyles.clearInput()), grow());
                                     });
                         });
 
@@ -105,23 +107,20 @@ public class JoinRoomDialog extends SolimDialog {
                                 .props(growX())
                                 .thenDo(() -> {
                                     column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
-                                        text(Core.bundle.get("feature.player-connect.password", "Password:")).left();
+                                        text(Core.bundle.get("feature.player-connect.password", "Password:")).props(left());
                                         row().props(growX(), height(unit(11)), prefHeight(unit(11)), Values.border(1.5f, Color.darkGray), paddingX(unit(2)), Values.rounded(unit(2)))
                                                 .children(() -> {
                                                     textField(passwordSignal)
-                                                            .props(grow())
-                                                            .style(WebStyles.clearInput());
+                                                            .props(style(WebStyles.clearInput()), grow());
                                                 });
                                     });
                                 });
 
                         text(statusMessage)
-                                .color(isValid.map(v -> v ? Color.green : Color.scarlet));
+                                .props(color(isValid.map(v -> v ? Color.green : Color.scarlet)));
 
                         button(Core.bundle.get("join", "Join"), () -> join(linkSignal.peek(), passwordSignal.peek()))
-                                .style(WebStyles.primary())
-                                .props(height(unit(11)), prefHeight(unit(11)), paddingX(unit(8)), paddingY(unit(2.5f)), minWidth(unit(36)))
-                                .enabled(isValid);
+                                .props(style(WebStyles.primary()), enabled(isValid), height(unit(11)), prefHeight(unit(11)), paddingX(unit(8)), paddingY(unit(2.5f)), minWidth(unit(36)));
                     }).element();
         }
 

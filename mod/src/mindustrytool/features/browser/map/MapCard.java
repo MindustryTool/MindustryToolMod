@@ -2,12 +2,14 @@ package mindustrytool.features.browser.map;
 
 import static solim.UI.*;
 import static solim.modifier.Values.background;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.grow;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.onClick;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
 
 import arc.Core;
@@ -76,24 +78,22 @@ public class MapCard extends Component {
                             .name("MapCard-preview-" + map.getItemId())
                             .props(background(Color.black), prefWidth(size), prefHeight(size), onClick(onClick))
                             .children(() -> {
-                                stack().grow()
+                                stack().props(grow())
                                         .layer(() -> networkImage()
-                                                .rounded(8)
-                                                .scaling(Scaling.fit)
-                                                .props(grow())
-                                                .url(imageUrl)
-                                                .placeholder(Icon.terrain)
-                                                .fallback(Icon.terrain))
+                                                .props(
+                                                        grow(),
+                                                        solim.modifier.Values.imageRounded(8),
+                                                        solim.modifier.Values.scaling(Scaling.fit),
+                                                        solim.modifier.Values.url(imageUrl),
+                                                        solim.modifier.Values.placeholder(Icon.terrain),
+                                                        solim.modifier.Values.fallback(Icon.terrain)
+                                                ))
                                         .layer(() -> column().props(grow()).children(() -> {
                                             spacer();
                                             row().props(growX(), background(Styles.black8), padding(unit(1.5f), unit(2f), unit(1.5f), unit(2f)), center())
                                                     .children(() -> {
                                                         text(title)
-                                                                .style(Styles.defaultLabel)
-                                                                .color(Color.white)
-                                                                .ellipsis(true)
-                                                                .center()
-                                                                .growX();
+                                                                .props(style(Styles.defaultLabel), color(Color.white), solim.modifier.Values.ellipsis(true), solim.modifier.Values.center(), growX());
                                                     });
                                         }));
                             });
@@ -119,20 +119,18 @@ public class MapCard extends Component {
                                 Core.bundle.get("browser.map.download"));
 
                         button(onPlay)
-                                .style(WebStyles.actionCardText())
-                                .props(growX(), prefHeight(unit(9)), tooltip(Core.bundle.get("browser.map.play")))
-                                .children(() -> icon(Icon.play).props(prefWidth(unit(4.5f)), prefHeight(unit(4.5f))).color(Color.white));
+                                .props(style(WebStyles.actionCardText()), growX(), prefHeight(unit(9)), tooltip(Core.bundle.get("browser.map.play")))
+                                .children(() -> icon(Icon.play).props(prefWidth(unit(4.5f)), prefHeight(unit(4.5f)), color(Color.white)));
                     });
                 }).element();
     }
 
     private void statButton(String count, Drawable iconDrawable, Color textColor, Runnable action, String tooltip) {
         button(action)
-                .style(WebStyles.actionCardText())
-                .props(growX(), prefHeight(unit(9)), gap(unit(1)), tooltip(tooltip))
+                .props(style(WebStyles.actionCardText()), growX(), prefHeight(unit(9)), gap(unit(1)), tooltip(tooltip))
                 .children(() -> {
-                    icon(iconDrawable).props(prefWidth(unit(4.5f)), prefHeight(unit(4.5f))).color(Color.white).marginRight(unit(1));
-                    text(count).style(Styles.defaultLabel).fontScale(0.85f).color(textColor);
+                    icon(iconDrawable).props(prefWidth(unit(4.5f)), prefHeight(unit(4.5f)), solim.modifier.Values.marginRight(unit(1)), color(Color.white));
+                    text(count).props(style(Styles.defaultLabel), color(textColor), solim.modifier.Values.fontScale(0.85f));
                 });
     }
 }

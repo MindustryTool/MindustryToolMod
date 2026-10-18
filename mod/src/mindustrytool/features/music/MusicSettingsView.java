@@ -1,13 +1,16 @@
 package mindustrytool.features.music;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.grow;
 import static solim.modifier.Values.growX;
+import static solim.modifier.Values.height;
 import static solim.modifier.Values.maxWidth;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
 import static solim.modifier.Values.update;
 
@@ -38,11 +41,11 @@ public class MusicSettingsView extends Component {
                 : Core.bundle.format("feature.music.now-playing", music.file.nameWithoutExtension()));
 
         return column().props(grow(), maxWidth(750f), top(), center()).children(() -> {
-            scroll().props(grow()).scrollX(false).children(() -> {
+            scroll().props(grow(), solim.modifier.Values.scrollX(false)).children(() -> {
                 column().props(growX(), padding(unit(2)), top(), center(), gap(unit(3))).children(() -> {
                     headerCard();
 
-                    text(nowPlaying).growX().left().color(WebStyles.Colors.GHOST_FG);
+                    text(nowPlaying).props(color(WebStyles.Colors.GHOST_FG), growX(), solim.modifier.Values.left());
 
                     for (MusicType type : MusicType.values()) {
                         section(type);
@@ -62,15 +65,13 @@ public class MusicSettingsView extends Component {
                 spacer();
 
                 button()
-                        .style(WebStyles.ghost())
-                        .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.add")))
+                        .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.add")))
                         .onClick(() -> openPicker(type))
                         .children(() -> icon(Icon.add).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
 
                 if (!type.isSlot()) {
                     button()
-                            .style(WebStyles.ghost())
-                            .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.disable-originals")))
+                            .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.disable-originals")))
                             .onClick(() -> feature.disableAllOriginals(type))
                             .children(() -> icon(Icon.trash).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
                 }
@@ -126,12 +127,13 @@ public class MusicSettingsView extends Component {
             return row().props(growX(), gap(unit(1)), center())
                     .children(() -> {
                         column().props(growX(), gap(unit(2))).children(() -> {
-                            text(state.name).growX().left().ellipsis(true).color(labelColor);
+                            text(state.name)
+                                    .props(color(labelColor), growX(), solim.modifier.Values.left(), solim.modifier.Values.ellipsis(true));
 
                             when(state.isPlaying())
-                                    .thenDo(() -> stack().growX()
-                                            .layer(() -> divider().color(Color.white).props(growX()).height(4))
-                                            .layer(parent -> divider().color(Color.green).height(4).props(update(div -> {
+                                    .thenDo(() -> stack().props(growX())
+                                            .layer(() -> divider().props(color(Color.white), growX(), height(4f)))
+                                            .layer(parent -> divider().props(color(Color.green), height(4f), update(div -> {
                                                 div.setWidth(state.music.getPosition() / state.music.getLength()
                                                         * parent.getWidth());
                                             }))))
@@ -140,29 +142,25 @@ public class MusicSettingsView extends Component {
 
                         if (state.isCustom) {
                             button()
-                                    .style(WebStyles.ghost())
-                                    .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.rename-custom")))
+                                    .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.rename-custom")))
                                     .onClick(() -> feature.showRenameDialog(state))
-                                    .children(() -> icon(Icon.edit).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))).color(labelColor));
+                                    .children(() -> icon(Icon.edit).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(labelColor)));
 
                             button()
-                                    .style(WebStyles.ghost())
-                                    .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.remove-custom")))
+                                    .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.remove-custom")))
                                     .onClick(() -> feature.removeTrack(state.type, state))
-                                    .children(() -> icon(Icon.trash).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))).color(labelColor));
+                                    .children(() -> icon(Icon.trash).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(labelColor)));
                         }
 
                         button()
-                                .style(WebStyles.ghost())
-                                .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.play-stop")))
+                                .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.play-stop")))
                                 .onClick(() -> feature.togglePlay(state))
-                                .children(() -> icon(playIcon).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))).color(labelColor));
+                                .children(() -> icon(playIcon).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(labelColor)));
 
                         button()
-                                .style(WebStyles.ghost())
-                                .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.toggle-disabled")))
+                                .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.toggle-disabled")))
                                 .onClick(() -> feature.toggleDisabled(state))
-                                .children(() -> icon(disableIcon).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))).color(labelColor));
+                                .children(() -> icon(disableIcon).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(labelColor)));
                     }).element();
         }
     }

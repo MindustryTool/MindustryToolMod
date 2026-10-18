@@ -1,6 +1,7 @@
 package mindustrytool.features.emoji;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.grow;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
@@ -8,6 +9,7 @@ import static solim.modifier.Values.padding;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
 
 import arc.Core;
@@ -47,26 +49,23 @@ public class EmojiDialog extends SolimDialog {
             column().props(grow(), padding(unit(3)), center(), gap(unit(2.5f))).children(() -> {
                 row().props(growX(), padding(unit(1.5f)), Values.rounded(unit(2), WebStyles.Colors.SECONDARY_BG), Values.border(1.5f, WebStyles.Colors.BORDER_INPUT), gap(unit(1.5f)), center())
                         .children(() -> {
-                            icon(Icon.zoom).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f))).color(WebStyles.Colors.GHOST_FG);
+                            icon(Icon.zoom).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f)), color(WebStyles.Colors.GHOST_FG));
                             textField(searchQuery)
-                                    .props(growX(), height(unit(8)), prefHeight(unit(8)))
-                                    .style(WebStyles.clearInput())
-                                    .placeholder(Core.bundle.get("feature.emoji.search"));
+                                    .props(style(WebStyles.clearInput()), growX(), height(unit(8)), prefHeight(unit(8)), Values.placeholder(Core.bundle.get("feature.emoji.search")));
                         });
 
                 scroll().props(grow()).children(() -> {
                     dynamic(filteredEntries, entries -> {
                         if (entries == null || entries.isEmpty()) {
                             row().props(growX(), padding(unit(4)), center()).children(() -> {
-                                text(Core.bundle.get("feature.emoji.empty")).color(Color.gray);
+                                text(Core.bundle.get("feature.emoji.empty")).props(color(Color.gray));
                             });
                         } else {
                             wrap().props(left(), gap(unit(1.5f))).children(() -> {
                                 for (Entry entry : entries) {
                                     button()
-                                            .style(WebStyles.actionChip())
+                                            .props(style(WebStyles.actionChip()), padding(unit(1.5f)), tooltip(entry.name))
                                             .onClick(() -> copyGlyph(entry))
-                                            .props(padding(unit(1.5f)), tooltip(entry.name))
                                             .children(() -> {
                                                 row().props(gap(unit(1.5f)), center()).children(() -> {
                                                     text(String.valueOf(entry.glyph));

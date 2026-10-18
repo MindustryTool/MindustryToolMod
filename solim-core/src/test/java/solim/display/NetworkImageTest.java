@@ -1,5 +1,7 @@
 package solim.display;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import arc.graphics.g2d.TextureRegion;
@@ -27,7 +29,7 @@ class NetworkImageTest extends SolimEnv {
         });
 
         NetworkImage img = new NetworkImage("https://example.com/test.png")
-                .placeholder(placeholder);
+                .props(placeholder(placeholder));
 
         assertSame(placeholder, img.image().getDrawable());
         img.dispose();
@@ -67,7 +69,7 @@ class NetworkImageTest extends SolimEnv {
         });
 
         NetworkImage img = new NetworkImage("https://example.com/missing.png")
-                .fallback(fallback);
+                .props(fallback(fallback));
 
         assertSame(fallback, img.image().getDrawable());
         img.dispose();
@@ -101,8 +103,8 @@ class NetworkImageTest extends SolimEnv {
     @Test
     void sizingAndScalingModifiers() {
         NetworkImage img = new NetworkImage()
-                .size(64f, 48f)
-                .scaling(Scaling.fill);
+                .props(size(64f, 48f))
+                .props(scaling(Scaling.fill));
 
         assertEquals(64f, img.cellConfig().prefWidth.get());
         assertEquals(48f, img.cellConfig().prefHeight.get());
@@ -119,7 +121,7 @@ class NetworkImageTest extends SolimEnv {
         NetworkImage.setImageLoader((url, radius, targetW, targetH, success, error) -> success.get(largeRegion));
 
         NetworkImage img = new NetworkImage("https://example.com/large-avatar.png")
-                .size(32f, 32f);
+                .props(size(32f, 32f));
 
         assertEquals(32f, img.cellConfig().prefWidth.get(), "Pref width must remain locked to explicit 32f");
         assertEquals(32f, img.cellConfig().prefHeight.get(), "Pref height must remain locked to explicit 32f");

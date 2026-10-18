@@ -48,32 +48,29 @@ public class UpdateDialog extends SolimDialog {
                 "[#" + Color.green.toString() + "]" + latestVer);
 
         children(() -> {
-            column().props(growX(), Values.maxWidth(800f), gap(unit(2)), left()).children(() -> {
+            column().props(growX(), Values.maxWidth(800f), gap(unit(2)), Values.left()).children(() -> {
                 text(newVersionText)
-                        .wrap();
+                        .props(Values.wrap());
 
                 button("Discord: " + Config.DISCORD_INVITE_URL, () -> Core.app.openURI(Config.DISCORD_INVITE_URL))
-                        .color(Color.royal)
-                        .left();
+                        .props(Values.color(Color.royal), Values.left());
 
                 divider();
 
-                scroll().props(maxHeight(800f), Values.maxWidth(800f), growX()).scrollX(false).children(() -> {
-                    column().props(growX(), gap(unit(2)), left()).children(() -> {
+                scroll().props(maxHeight(800f), Values.maxWidth(800f), growX(), solim.modifier.Values.scrollX(false)).children(() -> {
+                    column().props(growX(), gap(unit(2)), Values.left()).children(() -> {
                         if (partitioned != null && partitioned.targetRelease != null) {
                             card().props(growX(), padding(unit(2))).children(() -> {
                                 text(ChangelogFormatter.formatTargetRelease(partitioned.targetRelease))
-                                        .wrap()
-                                        .left();
+                                        .props(Values.wrap(), Values.left());
                             });
 
                             if (!partitioned.otherReleases.isEmpty()) {
                                 divider();
                                 text("[accent]" + Core.bundle.get("update.changelog.other-releases") + "[white]")
-                                        .left();
+                                        .props(Values.left());
                                 text(ChangelogFormatter.formatReleases(partitioned.otherReleases))
-                                        .wrap()
-                                        .left();
+                                        .props(Values.wrap(), Values.left());
                             }
                         } else {
                             String textToShow = fallbackChangelog != null
@@ -82,8 +79,7 @@ public class UpdateDialog extends SolimDialog {
                                             ? ChangelogFormatter.formatReleases(partitioned.otherReleases)
                                             : "");
                             text(textToShow != null ? textToShow : "")
-                                    .wrap()
-                                    .left();
+                                    .props(Values.wrap(), Values.left());
                         }
                     });
                 });

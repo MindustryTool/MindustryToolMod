@@ -1,5 +1,7 @@
 package solim.input;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static solim.modifier.Values.margin;
 import static solim.modifier.Values.opacity;
@@ -129,7 +131,7 @@ class ButtonGestureTest extends SolimEnv {
         ButtonStyle s2 = new ButtonStyle();
         Signal<ButtonStyle> styleSignal = Signal.of(s1);
 
-        Button btn = new Button().style(styleSignal);
+        Button btn = new Button().props(style(styleSignal));
         assertSame(s1, btn.button().getStyle());
 
         styleSignal.set(s2);

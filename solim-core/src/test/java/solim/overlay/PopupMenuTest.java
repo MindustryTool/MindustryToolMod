@@ -1,5 +1,7 @@
 package solim.overlay;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static solim.modifier.Values.margin;
 
@@ -79,8 +81,7 @@ class PopupMenuTest extends SolimEnv {
                         builds.incrementAndGet();
                         return emptyContent();
                     })
-                    .rounded(2)
-                    .border(1f, Color.gray)
+                    .props(rounded(2), border(1f, Color.gray))
                     .show("data", 10f, 20f)
                     .hide();
             assertSame(menu, chained);

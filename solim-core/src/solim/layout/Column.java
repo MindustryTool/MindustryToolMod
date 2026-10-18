@@ -2,7 +2,6 @@ package solim.layout;
 
 
 import arc.scene.Element;
-import arc.scene.event.Touchable;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
@@ -62,19 +61,7 @@ public final class Column extends Component
         return constraints;
     }
 
-    public Column fillParent(boolean fillParent) {
-        table.setFillParent(fillParent);
-        return this;
-    }
 
-    public Column fillParent() {
-        return fillParent(true);
-    }
-
-    public Column touchable(Touchable touchable) {
-        table.touchable = touchable;
-        return this;
-    }
 
     @Override
     public Direction direction() {

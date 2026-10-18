@@ -2,12 +2,15 @@ package mindustrytool.components;
 
 import static solim.UI.*;
 import static solim.modifier.Values.border;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.growX;
+import static solim.modifier.Values.left;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.rounded;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.wrap;
 
 import arc.scene.style.Drawable;
 import arc.util.Nullable;
@@ -31,12 +34,10 @@ public final class SettingCard {
         return card().children(() -> {
             row().props(growX(), gap(unit(2)), center()).children(() -> {
                 if (icon != null) {
-                    icon(icon).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))).color(Pal.accent);
+                    icon(icon).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)), color(Pal.accent));
                 }
                 text(title)
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
+                        .props(color(Pal.accent), growX(), left());
             });
             content.run();
         });
@@ -59,21 +60,16 @@ public final class SettingCard {
         return card().children(() -> {
             row().props(growX(), gap(unit(2)), center()).children(() -> {
                 if (icon != null) {
-                    icon(icon).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))).color(Pal.accent);
+                    icon(icon).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)), color(Pal.accent));
                 }
                 text(name)
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-                badge(badgeText).color(WebStyles.Colors.PRIMARY);
+                        .props(color(Pal.accent), growX(), left());
+                badge(badgeText).props(color(WebStyles.Colors.PRIMARY));
             });
 
             if (description != null && !description.trim().isEmpty()) {
                 text(description)
-                        .color(WebStyles.Colors.GHOST_FG)
-                        .left()
-                        .wrap()
-                        .growX();
+                        .props(color(WebStyles.Colors.GHOST_FG), left(), wrap(), growX());
             }
         });
     }
@@ -83,21 +79,16 @@ public final class SettingCard {
         return card().children(() -> {
             row().props(growX(), gap(unit(2)), center()).children(() -> {
                 if (icon != null) {
-                    icon(icon).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))).color(Pal.accent);
+                    icon(icon).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)), color(Pal.accent));
                 }
                 text(name)
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
-                badge(badgeText).color(WebStyles.Colors.PRIMARY);
+                        .props(color(Pal.accent), growX(), left());
+                badge(badgeText).props(color(WebStyles.Colors.PRIMARY));
             });
 
             if (description != null && !description.trim().isEmpty()) {
                 text(description)
-                        .color(WebStyles.Colors.GHOST_FG)
-                        .left()
-                        .wrap()
-                        .growX();
+                        .props(color(WebStyles.Colors.GHOST_FG), left(), wrap(), growX());
             }
         });
     }

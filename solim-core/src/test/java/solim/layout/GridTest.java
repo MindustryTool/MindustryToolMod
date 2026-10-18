@@ -1,5 +1,7 @@
 package solim.layout;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static solim.modifier.Values.gap;
 
@@ -74,7 +76,7 @@ class GridTest extends SolimEnv {
         g.add(c);
         assertEquals(3, g.table().getChildren().size);
 
-        g.columns(4);
+        g.props(columns(4));
         assertEquals(3, g.table().getChildren().size);
         assertSame(a, g.table().getChildren().get(0));
         assertSame(b, g.table().getChildren().get(1));
@@ -149,8 +151,27 @@ class GridTest extends SolimEnv {
     @Test
     void fluentApiReturnsSameGrid() {
         Grid g = new Grid();
-        assertSame(g, g.columns(3));
+        assertSame(g, g.props(columns(3)));
         assertSame(g, g.props(gap(8f)));
         assertSame(g, g.name("test"));
+    }
+
+    @Test
+    void columnsPropReflowsIdentically() {
+        Grid g = new Grid(4);
+        Element a = new Element();
+        Element b = new Element();
+        Element c = new Element();
+        Element d = new Element();
+        g.add(a);
+        g.add(b);
+        g.add(c);
+        g.add(d);
+
+        assertEquals(4, g.getColumns());
+
+        g.props(columns(2));
+        assertEquals(2, g.getColumns());
+        assertEquals(4, g.table().getChildren().size);
     }
 }

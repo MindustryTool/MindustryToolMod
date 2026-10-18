@@ -8,7 +8,6 @@ import solim.modifier.Props;
 import solim.modifier.TableCapability;
 
 import arc.scene.Element;
-import arc.scene.event.Touchable;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
@@ -61,19 +60,7 @@ public final class Row extends Component
         return constraints;
     }
 
-    public Row fillParent(boolean fillParent) {
-        table.setFillParent(fillParent);
-        return this;
-    }
 
-    public Row fillParent() {
-        return fillParent(true);
-    }
-
-    public Row touchable(Touchable touchable) {
-        table.touchable = touchable;
-        return this;
-    }
 
     @Override
     public Direction direction() {

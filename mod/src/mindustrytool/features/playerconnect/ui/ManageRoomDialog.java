@@ -1,6 +1,7 @@
 package mindustrytool.features.playerconnect.ui;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
 import static solim.modifier.Values.margin;
@@ -9,6 +10,7 @@ import static solim.modifier.Values.minWidth;
 import static solim.modifier.Values.paddingX;
 import static solim.modifier.Values.paddingY;
 import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -62,27 +64,25 @@ public class ManageRoomDialog extends SolimDialog {
                     .children(() -> {
                         text(Core.bundle.get("feature.player-connect.room-active",
                                 "Your room is live on the relay network!"))
-                                        .color(Color.green);
+                                        .props(color(Color.green));
 
                         row().props(gap(unit(3)), center()).children(() -> {
                             text(Core.bundle.get("feature.player-connect.relay-ping", "Relay Ping: "))
-                                    .color(Color.lightGray);
-                            text(pingText).color(Pal.accent);
+                                    .props(color(Color.lightGray));
+                            text(pingText).props(color(Pal.accent));
                         });
 
                         row().props(gap(unit(3)), center()).children(() -> {
-                            text(Core.bundle.get("feature.player-connect.join-link", "Link: ")).color(Color.lightGray);
-                            text(linkText).color(Color.white);
+                            text(Core.bundle.get("feature.player-connect.join-link", "Link: ")).props(color(Color.lightGray));
+                            text(linkText).props(color(Color.white));
                         });
 
                         row().props(gap(unit(3)), center()).children(() -> {
                             button(Core.bundle.get("feature.player-connect.copy-link", "Copy Join Link"), this::copyLink)
-                                    .style(WebStyles.outline())
-                                    .props(height(unit(11)), prefHeight(unit(11)), paddingX(unit(6)), paddingY(unit(2.5f)), minWidth(unit(36)));
+                                    .props(style(WebStyles.outline()), height(unit(11)), prefHeight(unit(11)), paddingX(unit(6)), paddingY(unit(2.5f)), minWidth(unit(36)));
 
                             button(Core.bundle.get("feature.player-connect.close-room", "Close Room"), this::closeRoom)
-                                    .style(WebStyles.danger())
-                                    .props(height(unit(11)), prefHeight(unit(11)), paddingX(unit(6)), paddingY(unit(2.5f)), minWidth(unit(36)));
+                                    .props(style(WebStyles.danger()), height(unit(11)), prefHeight(unit(11)), paddingX(unit(6)), paddingY(unit(2.5f)), minWidth(unit(36)));
                         });
                     }).element();
         }

@@ -2,8 +2,11 @@ package mindustrytool.features.autoplay;
 
 import static solim.UI.*;
 import static solim.modifier.Values.border;
+import static solim.modifier.Values.checked;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
+import static solim.modifier.Values.left;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.paddingTop;
 import static solim.modifier.Values.paddingX;
@@ -11,7 +14,9 @@ import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.rounded;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
+import static solim.modifier.Values.wrap;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -61,34 +66,30 @@ public class AutoplaySettingsView extends Component {
         return SettingCard.section(Icon.settings, Core.bundle.get("team-resources.settings.section.layout", "Behavior & Display"), () -> {
             checkbox(Core.bundle.get("feature.autoplay.settings.follow-unit"), feature.followUnit.signal()).props(growX());
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
             row().props(growX(), gap(unit(2)), center()).children(() -> {
-                text(Core.bundle.get("feature.autoplay.settings.display-mode")).left()
-                        .color(Color.white);
+                text(Core.bundle.get("feature.autoplay.settings.display-mode")).props(color(Color.white), left());
 
                 spacer();
                 row().props(gap(unit(1.5f))).children(() -> {
                     button(Core.bundle.get("feature.autoplay.settings.display-mode.hud"),
                             () -> feature.displayModeConfig.set(AutoplayFeature.DISPLAY_HUD))
-                            .style(WebStyles.filterChipText())
-                            .checked(feature.displayModeConfig.signal()
-                                    .map(AutoplayFeature.DISPLAY_HUD::equals))
-                            .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
+                            .props(checked(feature.displayModeConfig.signal()
+                                     .map(AutoplayFeature.DISPLAY_HUD::equals)),
+                                    style(WebStyles.filterChipText()), height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
 
                     button(Core.bundle.get("feature.autoplay.settings.display-mode.popup"),
                             () -> feature.displayModeConfig.set(AutoplayFeature.DISPLAY_POPUP))
-                            .style(WebStyles.filterChipText())
-                            .checked(feature.displayModeConfig.signal()
-                                    .map(AutoplayFeature.DISPLAY_POPUP::equals))
-                            .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
+                            .props(checked(feature.displayModeConfig.signal()
+                                     .map(AutoplayFeature.DISPLAY_POPUP::equals)),
+                                    style(WebStyles.filterChipText()), height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
                 });
             });
 
-            text(Core.bundle.get("feature.autoplay.hud.reorder-hint")).growX().left().wrap(true)
-                    .color(WebStyles.Colors.GHOST_FG);
+            text(Core.bundle.get("feature.autoplay.hud.reorder-hint")).props(color(WebStyles.Colors.GHOST_FG), growX(), left(), wrap());
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
             SettingSlider.of(
                     Core.bundle.get("feature.autoplay.settings.scale"),
@@ -99,16 +100,15 @@ public class AutoplaySettingsView extends Component {
                     feature.scaleConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100))
             );
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
             checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle"),
                     feature.hideDragHandleConfig.signal()).props(growX());
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
             button(feature::resetPosition)
-                    .style(WebStyles.outline())
-                    .props(growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
+                    .props(style(WebStyles.outline()), growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
                     .children(() -> {
                         icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                         text(Core.bundle.get("feature.autoplay.settings.reset-position"));
@@ -119,7 +119,7 @@ public class AutoplaySettingsView extends Component {
     private Component tasksCard() {
         return SettingCard.section(Icon.list, Core.bundle.get("feature.autoplay.settings.tasks"), () -> {
             text(Core.bundle.get("feature.autoplay.settings.tasks.description"))
-                    .growX().left().color(WebStyles.Colors.GHOST_FG).wrap();
+                    .props(growX(), left(), color(WebStyles.Colors.GHOST_FG), wrap());
 
             reactiveGrid(feature.tasks()).key(AutoplayTask::getId).props(growX(), gap(unit(2)))
                     .items(task -> new TaskRow(feature, task));
@@ -176,75 +176,68 @@ public class AutoplaySettingsView extends Component {
                             row().props(growX(), gap(unit(2))).children(() -> {
                                 column().props(gap(unit(1)), center()).children(() -> {
                                     button()
-                                            .style(WebStyles.ghost())
-                                            .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.autoplay.tooltip.reorder-up")))
-                                            .onClick(() -> feature.moveTaskUp(task.getId()))
-                                            .children(() -> icon(FileIcon.of("chevron-up.png", Icon.up)).props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7))));
+                                             .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.autoplay.tooltip.reorder-up")))
+                                             .onClick(() -> feature.moveTaskUp(task.getId()))
+                                             .children(() -> icon(FileIcon.of("chevron-up.png", Icon.up)).props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7))));
 
-                                    button()
-                                            .style(WebStyles.ghost())
-                                            .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.autoplay.tooltip.reorder-down")))
-                                            .onClick(() -> feature.moveTaskDown(task.getId()))
-                                            .children(() -> icon(FileIcon.of("chevron-down.png", Icon.down))
-                                                    .props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7))));
-                                });
+                                     button()
+                                             .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.autoplay.tooltip.reorder-down")))
+                                             .onClick(() -> feature.moveTaskDown(task.getId()))
+                                             .children(() -> icon(FileIcon.of("chevron-down.png", Icon.down))
+                                                     .props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7))));
+                                 });
 
-                                divider(Direction.Y);
+                                 divider(Direction.Y);
 
-                                column().props(growX(), paddingTop(unit(2)), gap(unit(2))).children(() -> {
-                                    row().props(growX(), gap(unit(2)), left()).children(() -> {
-                                        icon(task.getIcon()).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)))
-                                                .color(color);
-                                        text(task.getName())
-                                                .color(color)
-                                                .wrap(true);
-                                    });
+                                 column().props(growX(), paddingTop(unit(2)), gap(unit(2))).children(() -> {
+                                     row().props(growX(), gap(unit(2)), left()).children(() -> {
+                                         icon(task.getIcon()).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)), color(color));
+                                         text(task.getName()).props(color(color), wrap());
+                                     });
 
-                                    text(task.status()).growX().left().wrap(true).color(color);
-                                });
+                                     text(task.status()).props(color(color), growX(), left(), wrap());
+                                 });
 
-                                row().props(gap(unit(1)), center()).children(() -> {
-                                    Readable<Boolean> isVisible = feature.hiddenTasks.signal()
-                                            .map(hidden -> hidden == null || !hidden.contains(task.getId()));
+                                 row().props(gap(unit(1)), center()).children(() -> {
+                                     Readable<Boolean> isVisible = feature.hiddenTasks.signal()
+                                             .map(hidden -> hidden == null || !hidden.contains(task.getId()));
 
-                                    Readable<Drawable> eyeIcon = isVisible.map(vis -> Boolean.TRUE.equals(vis)
-                                            ? FileIcon.of("eye.png", Icon.eye)
-                                            : FileIcon.of("eye-off.png", Icon.eyeOff));
+                                     Readable<Drawable> eyeIcon = isVisible.map(vis -> Boolean.TRUE.equals(vis)
+                                             ? FileIcon.of("eye.png", Icon.eye)
+                                             : FileIcon.of("eye-off.png", Icon.eyeOff));
 
-                                    Readable<Color> eyeColor = isVisible.map(vis -> Boolean.TRUE.equals(vis)
-                                            ? Color.white
-                                            : Color.darkGray);
+                                     Readable<Color> eyeColor = isVisible.map(vis -> Boolean.TRUE.equals(vis)
+                                             ? Color.white
+                                             : Color.darkGray);
 
-                                    Readable<String> eyeTooltip = isVisible.map(vis -> Boolean.TRUE.equals(vis)
-                                            ? Core.bundle.get("feature.autoplay.tooltip.hide-task")
-                                            : Core.bundle.get("feature.autoplay.tooltip.show-task"));
+                                     Readable<String> eyeTooltip = isVisible.map(vis -> Boolean.TRUE.equals(vis)
+                                             ? Core.bundle.get("feature.autoplay.tooltip.hide-task")
+                                             : Core.bundle.get("feature.autoplay.tooltip.show-task"));
                           
-                                    if (task.hasSettings()) {
-                                        button()
-                                                .style(WebStyles.ghost())
-                                                .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.autoplay.tooltip.configure")))
-                                                .onClick(() -> expanded.set(!Boolean.TRUE.equals(expanded.peek())))
-                                                .children(() -> icon(expandIcon).props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7))));
-                                    }
+                                     if (task.hasSettings()) {
+                                         button()
+                                                 .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.autoplay.tooltip.configure")))
+                                                 .onClick(() -> expanded.set(!Boolean.TRUE.equals(expanded.peek())))
+                                                 .children(() -> icon(expandIcon).props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7))));
+                                     }
 
-                                    button()
-                                            .style(WebStyles.ghost())
-                                            .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(eyeTooltip))
-                                            .onClick(() -> feature.setTaskVisible(task.getId(), !feature.isTaskVisible(task.getId())))
-                                            .children(() -> icon(eyeIcon).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))).color(eyeColor));
+                                     button()
+                                             .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(eyeTooltip))
+                                             .onClick(() -> feature.setTaskVisible(task.getId(), !feature.isTaskVisible(task.getId())))
+                                             .children(() -> icon(eyeIcon).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(eyeColor)));
 
 
-                                    checkbox("", taskEnabled)
-                                            .props(size(unit(8)), prefWidth(unit(8)), prefHeight(unit(8)), tooltip(Core.bundle.get("feature.autoplay.tooltip.toggle-task")));
-                                });
-                            });
+                                     checkbox("", taskEnabled)
+                                             .props(size(unit(8)), prefWidth(unit(8)), prefHeight(unit(8)), tooltip(Core.bundle.get("feature.autoplay.tooltip.toggle-task")));
+                                 });
+                             });
 
-                            if (task.hasSettings()) {
-                                collapser(expanded, () -> {
-                                    divider().color(WebStyles.Colors.SECTION_BORDER);
-                                    task.buildSettings(feature);
-                                }).props(growX(), gap(unit(2)));
-                            }
+                             if (task.hasSettings()) {
+                                 collapser(expanded, () -> {
+                                     divider().props(color(WebStyles.Colors.SECTION_BORDER));
+                                     task.buildSettings(feature);
+                                 }).props(growX(), gap(unit(2)));
+                             }
                         });
                     }).element();
         }

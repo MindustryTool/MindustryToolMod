@@ -1,5 +1,7 @@
 package solim.display;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import arc.Core;
@@ -77,7 +79,7 @@ class BadgeComponentTest extends SolimEnv {
     void badgeHideOnZeroDisabled() {
         Signal<Integer> unread = Signal.of(0);
         Badge b = Badge.ofCount(unread);
-        b.hideOnZero(false);
+        b.props(hideOnZero(false));
         unread.set(0);
         assertTrue(b.element().visible);
         b.dispose();
@@ -86,7 +88,7 @@ class BadgeComponentTest extends SolimEnv {
     @Test
     void badgeColorModifier() {
         Badge b = new Badge("TAG");
-        b.color(Color.royal);
+        b.props(color(Color.royal));
         assertEquals(Color.royal, b.table().color);
         b.dispose();
     }
@@ -94,7 +96,7 @@ class BadgeComponentTest extends SolimEnv {
     @Test
     void badgeTextColorModifier() {
         Badge b = new Badge("TAG");
-        b.textColor(Color.white);
+        b.props(textColor(Color.white));
         assertEquals(Color.white, b.text().label().color);
         b.dispose();
     }
@@ -122,7 +124,7 @@ class BadgeComponentTest extends SolimEnv {
     @Test
     void badgeFluentApiReturnsSameInstance() {
         Badge b = new Badge("TAG");
-        assertSame(b, b.hideOnZero(false));
+        assertSame(b, b.props(hideOnZero(false)));
         assertSame(b, b.name("x"));
         b.dispose();
     }

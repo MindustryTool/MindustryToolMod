@@ -3,13 +3,19 @@ package mindustrytool.features.prettychat.ui;
 import static solim.UI.*;
 import static solim.modifier.Values.background;
 import static solim.modifier.Values.border;
+import static solim.modifier.Values.checked;
+import static solim.modifier.Values.color;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.grow;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
+import static solim.modifier.Values.left;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.paddingX;
+import static solim.modifier.Values.placeholder;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.right;
 import static solim.modifier.Values.rounded;
 import static solim.modifier.Values.size;
 import static solim.modifier.Values.tooltip;
@@ -96,40 +102,29 @@ public class PrettyChatSettingsView extends Component {
 
         return SettingCard.section(Icon.chat, previewLabel, () -> {
             text(previewDesc)
-                    .color(WebStyles.Colors.GHOST_FG)
-                    .left()
-                    .wrap()
-                    .growX();
+                    .props(color(WebStyles.Colors.GHOST_FG), left(), solim.modifier.Values.wrap(true), growX());
 
             row().props(growX(), height(unit(10)), prefHeight(unit(10)), border(1.5f, WebStyles.Colors.BORDER), paddingX(unit(2)), rounded(unit(2))).children(() -> {
                         textField(previewSignal)
-                                .placeholder(previewPlaceholder)
-                                .props(grow())
-                                .style(WebStyles.clearInput());
+                                .props(style(WebStyles.clearInput()), grow(), placeholder(previewPlaceholder));
                     });
 
             column().props(growX(), padding(unit(2)), rounded(6, WebStyles.Colors.SECONDARY), gap(unit(1)), left())
                     .children(() -> {
                         row().props(growX(), center()).children(() -> {
-                            text(simSender).left().wrap();
+                            text(simSender).props(left(), solim.modifier.Values.wrap(true));
                             spacer();
                             text(resultComputed.map(r -> r.length() + "/150"))
-                                    .color(resultComputed.map(r -> r.length() > 150 ? Color.scarlet
-                                            : (r.length() > 130 ? Color.gold : Color.lightGray)))
-                                    .right();
+                                    .props(color(resultComputed.map(r -> r.length() > 150 ? Color.scarlet
+                                            : (r.length() > 130 ? Color.gold : Color.lightGray))), right());
                         });
 
                         text(resultComputed)
-                                .wrap()
-                                .growX()
-                                .left();
+                                .props(solim.modifier.Values.wrap(true), growX(), left());
                     });
 
             text(escapeHint)
-                    .color(WebStyles.Colors.GHOST_FG)
-                    .left()
-                    .wrap()
-                    .growX();
+                    .props(color(WebStyles.Colors.GHOST_FG), left(), solim.modifier.Values.wrap(true), growX());
         });
     }
 
@@ -141,25 +136,20 @@ public class PrettyChatSettingsView extends Component {
 
         return SettingCard.section(Icon.tree, pipelineTitle, () -> {
             text(pipelineDesc)
-                    .color(WebStyles.Colors.GHOST_FG)
-                    .left()
-                    .wrap()
-                    .growX();
+                    .props(color(WebStyles.Colors.GHOST_FG), left(), solim.modifier.Values.wrap(true), growX());
 
             dynamic(feature.config().enabledIdsSignal, this::buildActivePipelineList).props(growX());
 
             row().props(growX(), gap(unit(2))).children(() -> {
                 button(clearText, () -> feature.config().setEnabledIds(new ArrayList<>()))
-                        .style(WebStyles.outlineText())
-                        .props(height(unit(11)), prefHeight(unit(11)), growX());
+                        .props(style(WebStyles.outlineText()), height(unit(11)), prefHeight(unit(11)), growX());
 
                 button(resetText, () -> {
                     List<String> def = new ArrayList<>();
                     def.add("rainbow");
                     feature.config().setEnabledIds(def);
                 })
-                        .style(WebStyles.outlineText())
-                        .props(height(unit(11)), prefHeight(unit(11)), growX());
+                        .props(style(WebStyles.outlineText()), height(unit(11)), prefHeight(unit(11)), growX());
             });
         });
     }
@@ -170,10 +160,7 @@ public class PrettyChatSettingsView extends Component {
 
             column().props(growX(), padding(unit(2)), rounded(6, WebStyles.Colors.SECONDARY)).children(() -> {
                 text(emptyMessage)
-                        .color(WebStyles.Colors.GHOST_FG)
-                        .center()
-                        .wrap()
-                        .growX();
+                        .props(color(WebStyles.Colors.GHOST_FG), solim.modifier.Values.center(), solim.modifier.Values.wrap(true), growX());
             });
             return;
         }
@@ -190,18 +177,14 @@ public class PrettyChatSettingsView extends Component {
                 row().props(growX(), padding(unit(2)), rounded(6, WebStyles.Colors.SECONDARY), gap(unit(1.5f)), center())
                         .children(() -> {
                             text("#" + (index + 1))
-                                    .color(Pal.accent);
+                                    .props(color(Pal.accent));
 
                             text(p.name())
-                                    .color(Color.white)
-                                    .wrap()
-                                    .growX()
-                                    .left();
+                                    .props(color(Color.white), solim.modifier.Values.wrap(true), growX(), left());
 
                             if (index > 0) {
                                 button(() -> feature.config().move(id, -1))
-                                        .style(WebStyles.ghost())
-                                        .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.pretty-chat.settings.move-up")))
+                                        .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.pretty-chat.settings.move-up")))
                                         .children(() -> icon(Icon.up).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
                             } else {
                                 row().props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)));
@@ -209,17 +192,15 @@ public class PrettyChatSettingsView extends Component {
 
                             if (index < enabledIds.size() - 1) {
                                 button(() -> feature.config().move(id, 1))
-                                        .style(WebStyles.ghost())
-                                        .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.pretty-chat.settings.move-down")))
+                                        .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.pretty-chat.settings.move-down")))
                                         .children(() -> icon(Icon.down).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
                             } else {
                                 row().props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)));
                             }
 
                             button(() -> feature.config().toggle(id))
-                                    .style(WebStyles.ghost())
-                                    .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.pretty-chat.settings.remove")))
-                                    .children(() -> icon(Icon.cancel).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))).color(WebStyles.Colors.DANGER));
+                                    .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.pretty-chat.settings.remove")))
+                                    .children(() -> icon(Icon.cancel).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(WebStyles.Colors.DANGER)));
                         });
             }
         });
@@ -234,12 +215,11 @@ public class PrettyChatSettingsView extends Component {
                 for (String cat : CATEGORIES) {
                     String label = getCategoryName(cat);
                     button(label, () -> selectedCategory.set(cat))
-                            .style(WebStyles.filterChipText())
-                            .checked(selectedCategory.map(curr -> curr.equals(cat)));
+                            .props(style(WebStyles.filterChipText()), checked(selectedCategory.map(curr -> curr.equals(cat))));
                 }
             });
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
             reactiveGrid(filteredPrettiers)
                     .props(gap(unit(2)))
@@ -261,36 +241,24 @@ public class PrettyChatSettingsView extends Component {
                     column().props(growX(), gap(unit(1)), left()).children(() -> {
                         wrap().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                             text(enabledIndex.map(idx -> idx != null && idx >= 0 ? "#" + (idx + 1) : ""))
-                                    .props(visible(isEnabled))
-                                    .color(Pal.accent)
-                                    .left();
+                                    .props(color(Pal.accent), visible(isEnabled), left());
 
                             text(p.name())
-                                    .color(isEnabled.map(e -> Boolean.TRUE.equals(e) ? Pal.accent : Color.white))
-                                    .wrap()
-                                    .left();
+                                    .props(color(isEnabled.map(e -> Boolean.TRUE.equals(e) ? Pal.accent : Color.white)), solim.modifier.Values.wrap(true), left());
 
                             text("[" + getCategoryName(p.category()) + "]")
-                                    .color(WebStyles.Colors.GHOST_FG)
-                                    .wrap()
-                                    .left();
+                                    .props(color(WebStyles.Colors.GHOST_FG), solim.modifier.Values.wrap(true), left());
                         });
 
                         text(p.description())
-                                .color(Color.lightGray)
-                                .wrap()
-                                .growX()
-                                .left();
+                                .props(color(Color.lightGray), solim.modifier.Values.wrap(true), growX(), left());
 
                         Readable<String> previewTransformed = previewSignal.map(input -> {
                             String str = input != null ? input : "";
                             return p.transform(str);
                         });
                         text(previewTransformed)
-                                .color(Color.white)
-                                .left()
-                                .wrap()
-                                .growX();
+                                .props(color(Color.white), left(), solim.modifier.Values.wrap(true), growX());
                     });
 
                     row().props(gap(unit(1)), right(), center()).children(() -> {
@@ -300,15 +268,12 @@ public class PrettyChatSettingsView extends Component {
                                     feature.config().setEnabledIds(feature.config().getEnabledIds());
                                 }).show();
                             })
-                                    .style(WebStyles.ghost())
-                                    .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.pretty-chat.settings.edit-script")))
+                                    .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.pretty-chat.settings.edit-script")))
                                     .children(() -> icon(Icon.edit).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
                         }
 
                         button(() -> feature.config().toggle(p.id()))
-                                .style(WebStyles.filterChip())
-                                .checked(isEnabled)
-                                .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(isEnabled.map(e -> Boolean.TRUE.equals(e)
+                                .props(style(WebStyles.filterChip()), checked(isEnabled), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(isEnabled.map(e -> Boolean.TRUE.equals(e)
                                         ? (Core.bundle.get("feature.pretty-chat.settings.remove"))
                                         : (Core.bundle.get("feature.pretty-chat.settings.enable")))))
                                 .children(() -> icon(isEnabled

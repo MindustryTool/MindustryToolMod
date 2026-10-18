@@ -6,6 +6,7 @@ import static solim.modifier.Values.height;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.scene.Element;
@@ -64,8 +65,7 @@ public class CameraZoomSettingsView extends Component {
     private Component actionsCard() {
         return SettingCard.card().children(() -> {
             button(feature::resetToDefaults)
-                    .style(WebStyles.outline())
-                    .props(growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
+                    .props(style(WebStyles.outline()), growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
                     .children(() -> {
                         icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                         text(Core.bundle.get("feature.camera-zoom.settings.reset"));

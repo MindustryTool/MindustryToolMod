@@ -3,9 +3,7 @@ package solim.input;
 import solim.reactive.TwoWayBinding;
 
 import arc.Core;
-import arc.graphics.Color;
 import arc.input.KeyCode;
-import solim.graphics.RoundedDrawable;
 import arc.scene.ui.TextField;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
@@ -14,6 +12,7 @@ import arc.func.Boolf;
 import solim.core.Component;
 import solim.core.DisposableAction;
 import solim.core.OwnershipContext;
+import solim.core.SolimToken;
 import solim.modifier.AlignmentCapability;
 import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
@@ -57,6 +56,7 @@ public final class SolimTextField extends Component
     private SolimTextField(TextField field, Signal<String> signal) {
         super(field);
         this.field = field;
+        SolimToken.bind(this.field, this, constraints);
         this.field.name = "solim-textfield-textField";
         field.setText(signal.peek() != null ? signal.peek() : "");
 
@@ -118,37 +118,32 @@ public final class SolimTextField extends Component
         return onEnter(text -> onSubmit.run());
     }
 
-    public SolimTextField disabled(boolean disabled) {
+    public void setDisabled(boolean disabled) {
         field.setDisabled(disabled);
-        return this;
     }
 
-    public SolimTextField disabled(Readable<Boolean> disabled) {
+    public void setDisabled(Readable<Boolean> disabled) {
         if (disabledEffect != null) {
             disabledEffect.dispose();
         }
         withinOwnership(() -> disabledEffect = Effect.of(disabled, d -> field.setDisabled(Boolean.TRUE.equals(d))));
-        return this;
     }
 
-    public SolimTextField placeholder(String placeholder) {
+    public void setPlaceholder(String placeholder) {
         field.setMessageText(placeholder);
-        return this;
     }
 
-    public SolimTextField style(@Nullable InputStyle style) {
+    public void setStyle(@Nullable InputStyle style) {
         if (style == null) {
-            return this;
+            return;
         }
         field.setStyle(style.appliedTo(field.getStyle()));
-        return this;
     }
 
-    public SolimTextField style(@Nullable TextField.TextFieldStyle style) {
+    public void setStyle(@Nullable TextField.TextFieldStyle style) {
         if (style != null) {
             field.setStyle(style);
         }
-        return this;
     }
 
     @Override
@@ -175,68 +170,7 @@ public final class SolimTextField extends Component
         return field;
     }
 
-    public SolimTextField rounded(int radius) {
-        return rounded(radius, (Color) null);
-    }
 
-    public SolimTextField rounded(int radius, @Nullable Color color) {
-        TextField.TextFieldStyle s = field.getStyle();
-        if (s != null) {
-            if (s.background instanceof RoundedDrawable) {
-                RoundedDrawable rd = (RoundedDrawable) s.background;
-                rd.radius(radius);
-                if (color != null)
-                    rd.fillColor(color);
-            } else {
-                s.background = RoundedDrawable.of(radius, color != null ? color : Color.darkGray);
-            }
-        }
-        return this;
-    }
-
-    public SolimTextField rounded(int radius, @Nullable Readable<Color> color) {
-        TextField.TextFieldStyle s = field.getStyle();
-        if (s != null) {
-            if (s.background instanceof RoundedDrawable) {
-                RoundedDrawable rd = (RoundedDrawable) s.background;
-                rd.radius(radius);
-                if (color != null)
-                    rd.fillColor(color);
-            } else {
-                RoundedDrawable rd = new RoundedDrawable(radius);
-                if (color != null)
-                    rd.fillColor(color);
-                s.background = rd;
-            }
-        }
-        return this;
-    }
-
-    public SolimTextField border(float stroke, @Nullable Color color) {
-        TextField.TextFieldStyle s = field.getStyle();
-        if (s != null) {
-            if (s.background instanceof RoundedDrawable) {
-                ((RoundedDrawable) s.background).border(stroke, color != null ? color : Color.white);
-            } else {
-                s.background = RoundedDrawable.of(6, Color.clear, stroke, color != null ? color : Color.white);
-            }
-        }
-        return this;
-    }
-
-    public SolimTextField border(float stroke, @Nullable Readable<Color> color) {
-        TextField.TextFieldStyle s = field.getStyle();
-        if (s != null) {
-            if (s.background instanceof RoundedDrawable) {
-                ((RoundedDrawable) s.background).border(stroke, color);
-            } else {
-                RoundedDrawable rd = new RoundedDrawable(6, Color.clear);
-                rd.border(stroke, color);
-                s.background = rd;
-            }
-        }
-        return this;
-    }
 
     public SolimTextField focus() {
         Core.app.post(() -> {

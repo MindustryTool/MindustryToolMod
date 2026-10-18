@@ -6,11 +6,13 @@ import static solim.modifier.Values.grow;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
 import static solim.modifier.Values.margin;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.paddingX;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.rounded;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.update;
 import static solim.modifier.Values.width;
 
@@ -132,8 +134,7 @@ public class RoomBrowserView extends Component {
 
                     row().props(growX(), gap(unit(2)), center()).children(() -> {
                         button(() -> collapsed.set(!Boolean.TRUE.equals(collapsed.get())))
-                                .style(WebStyles.outline())
-                                .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)))
+                                .props(style(WebStyles.outline()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)))
                                 .children(() -> icon(
                                         collapsed.map(c -> Boolean.TRUE.equals(c)
                                                 ? FileIcon.of("chevron-right.png", Icon.rightOpen)
@@ -143,14 +144,12 @@ public class RoomBrowserView extends Component {
                         row().props(growX(), height(unit(11)), prefHeight(unit(11)), border(1.5f, Color.darkGray), paddingX(unit(2)), rounded(unit(2)))
                                 .children(() -> {
                                     textField(searchQuery)
-                                            .props(grow())
-                                            .style(WebStyles.clearInput());
+                                            .props(style(WebStyles.clearInput()), grow());
 
                                 });
 
                         button(feature.getRoomsQuery()::refetch)
-                                .style(WebStyles.outline())
-                                .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)))
+                                .props(style(WebStyles.outline()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)))
                                 .children(() -> icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), update((element) -> {
                                             element.setOrigin(Align.center);
 
@@ -173,8 +172,7 @@ public class RoomBrowserView extends Component {
                         button(Core.bundle.get("feature.player-connect.join-link-title", "Join via Link"), () -> {
                             feature.getJoinRoomDialog().show();
                         })
-                                .style(WebStyles.outline())
-                                .props(height(unit(11)), prefHeight(unit(11)), paddingX(unit(3)));
+                                .props(style(WebStyles.outline()), height(unit(11)), prefHeight(unit(11)), paddingX(unit(3)));
                     });
 
                     divider();
@@ -187,10 +185,9 @@ public class RoomBrowserView extends Component {
                                         .loading(this::roomsLoading)
                                         .error(err -> column().props(growX(), margin(unit(3)), center()).children(() -> {
                                             text(err != null ? err.getMessage() : Core.bundle.get("error", "Error"))
-                                                    .color(Color.scarlet);
+                                                    .props(color(Color.scarlet));
                                             button(Core.bundle.get("retry", "Retry"), feature.getRoomsQuery()::refetch)
-                                                    .style(WebStyles.outline())
-                                                    .props(height(unit(10)), prefHeight(unit(10)));
+                                                    .props(style(WebStyles.outline()), height(unit(10)), prefHeight(unit(10)));
                                         }))
                                         .data((allRooms, fetching) -> Boolean.TRUE.equals(fetching)
                                                 ? roomsLoading()
@@ -202,7 +199,7 @@ public class RoomBrowserView extends Component {
                                                                         text(Core.bundle.get(
                                                                                 "feature.player-connect.no-rooms",
                                                                                 "No active PlayerConnect rooms found."))
-                                                                                .color(Color.lightGray);
+                                                                                .props(color(Color.lightGray));
                                                                     });
 
                                                         } else {
@@ -213,8 +210,7 @@ public class RoomBrowserView extends Component {
 
                                                                                 row().props(growX(), gap(unit(2)))
                                                                                         .children(() -> {
-                                                                                            text(group.providerName)
-                                                                                                    .left();
+                                                                                            text(group.providerName).props(left());
                                                                                             text("(" + group.rooms
                                                                                                     .size() + ")");
                                                                                         });

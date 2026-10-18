@@ -139,7 +139,7 @@ public final class UI {
     }
 
     public static Grid grid(Readable<Integer> columns) {
-        return new Grid().columns(columns);
+        return new Grid().props(Values.columns(columns));
     }
 
     public static Grid grid(Readable<Integer> columns, @Nullable Runnable r) {
@@ -171,7 +171,7 @@ public final class UI {
     }
 
     public static SolimCollapser collapser(Readable<Boolean> expanded) {
-        return new SolimCollapser().expanded(expanded);
+        return new SolimCollapser().props(Values.expanded(expanded));
     }
 
     public static SolimCollapser collapser(Readable<Boolean> expanded, @Nullable Runnable r) {
@@ -206,14 +206,14 @@ public final class UI {
 
     public static SolimImage icon(Drawable drawable) {
         float iconSize = unit(6);
-        return image(Drawables.scalable(drawable)).scaling(Scaling.fit)
-                .props(Values.size(iconSize), Values.prefWidth(iconSize), Values.prefHeight(iconSize));
+        return image(Drawables.scalable(drawable))
+                .props(Values.scaling(Scaling.fit), Values.size(iconSize), Values.prefWidth(iconSize), Values.prefHeight(iconSize));
     }
 
     public static SolimImage icon(Readable<Drawable> drawable) {
         float iconSize = unit(6);
-        return image(drawable != null ? drawable.map(Drawables::scalable) : null).scaling(Scaling.fit)
-                .props(Values.size(iconSize), Values.prefWidth(iconSize), Values.prefHeight(iconSize));
+        return image(drawable != null ? drawable.map(Drawables::scalable) : null)
+                .props(Values.scaling(Scaling.fit), Values.size(iconSize), Values.prefWidth(iconSize), Values.prefHeight(iconSize));
     }
 
     public static NetworkImage networkImage() {

@@ -3,6 +3,7 @@ package mindustrytool.features.web;
 import static solim.UI.*;
 import static solim.modifier.Values.backgroundColor;
 import static solim.modifier.Values.border;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.grow;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
@@ -12,6 +13,7 @@ import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.rounded;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
 
 import arc.Core;
@@ -38,17 +40,23 @@ public class WebFeatureCard extends Component {
                         row().props(growX()).children(() -> {
                             row().props(center(), gap(unit(2))).children(() -> {
                                 icon(webFeature.getIcon()).props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7)));
-                                text(webFeature.getName()).style(Styles.defaultLabel).color(Color.white).ellipsis(true)
-                                        .left();
+                                text(webFeature.getName())
+                                        .props(style(Styles.defaultLabel), color(Color.white), solim.modifier.Values.ellipsis(true), solim.modifier.Values.left());
                             });
 
                             spacer();
 
-                            button(this::openWebFeature).style(Styles.clearNonei).props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("web-feature.button.open", "Open in browser")))
+                            button(this::openWebFeature).props(style(Styles.clearNonei), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("web-feature.button.open", "Open in browser")))
                                     .children(() -> icon(FileIcon.of("external-link.png")).props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7))));
                         });
 
-                        text(webFeature.getDescription()).color(Color.lightGray).fontScale(0.9f).wrap(true).left();
+                        text(webFeature.getDescription())
+                                .props(
+                                        color(Color.lightGray),
+                                        solim.modifier.Values.fontScale(0.9f),
+                                        solim.modifier.Values.wrap(true),
+                                        solim.modifier.Values.left()
+                                );
                     });
                 }).element();
     }

@@ -1,6 +1,7 @@
 package mindustrytool.features.playerconnect.ui;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
 import static solim.modifier.Values.margin;
@@ -9,6 +10,7 @@ import static solim.modifier.Values.minWidth;
 import static solim.modifier.Values.paddingX;
 import static solim.modifier.Values.paddingY;
 import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -69,32 +71,29 @@ public class JoinWarningDialog extends SolimDialog {
                     .children(() -> {
                         if (!missingMods.isEmpty()) {
                             text(Core.bundle.get("feature.player-connect.missing-mods", "Missing mods (may cause crashes):"))
-                                    .color(Color.scarlet);
+                                    .props(color(Color.scarlet));
                             text(String.join(", ", missingMods))
-                                    .color(Color.lightGray);
+                                    .props(color(Color.lightGray));
                         }
 
                         if (!unneededMods.isEmpty()) {
                             text(Core.bundle.get("feature.player-connect.unneeded-mods", "Unneeded mods:"))
-                                    .color(Color.orange);
+                                    .props(color(Color.orange));
                             text(String.join(", ", unneededMods))
-                                    .color(Color.lightGray);
+                                    .props(color(Color.lightGray));
                         }
 
                         row().props(gap(unit(3)), center()).children(() -> {
                             button(Core.bundle.get("cancel", "Cancel"), dialog::hide)
-                                    .style(WebStyles.outline())
-                                    .props(height(unit(10)), prefHeight(unit(10)), paddingX(unit(5)), paddingY(unit(2)), minWidth(unit(26)));
+                                    .props(style(WebStyles.outline()), height(unit(10)), prefHeight(unit(10)), paddingX(unit(5)), paddingY(unit(2)), minWidth(unit(26)));
 
                             if (!unneededMods.isEmpty()) {
                                 button(Core.bundle.get("feature.player-connect.disable-and-join", "Disable & Join"), this::disableAndJoin)
-                                        .style(WebStyles.secondary())
-                                        .props(height(unit(10)), prefHeight(unit(10)), paddingX(unit(5)), paddingY(unit(2)), minWidth(unit(36)));
+                                        .props(style(WebStyles.secondary()), height(unit(10)), prefHeight(unit(10)), paddingX(unit(5)), paddingY(unit(2)), minWidth(unit(36)));
                             }
 
                             button(Core.bundle.get("feature.player-connect.join-anyway"), this::joinDirect)
-                                    .style(WebStyles.danger())
-                                    .props(height(unit(10)), prefHeight(unit(10)), paddingX(unit(5)), paddingY(unit(2)), minWidth(unit(30)));
+                                    .props(style(WebStyles.danger()), height(unit(10)), prefHeight(unit(10)), paddingX(unit(5)), paddingY(unit(2)), minWidth(unit(30)));
                         });
                     }).element();
         }

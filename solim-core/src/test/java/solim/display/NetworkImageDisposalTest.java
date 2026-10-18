@@ -1,5 +1,7 @@
 package solim.display;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -90,7 +92,7 @@ class NetworkImageDisposalTest extends OwnershipEnv {
 		SignalDispatcher.flush();
 		assertEquals(1, loader.loadsOf("deep://b"));
 
-		image.url("deep://c");
+		image.props(url("deep://c"));
 		assertEquals(1, loader.loadsOf("deep://c"));
 
 		url.set("deep://d");

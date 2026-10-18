@@ -2,6 +2,7 @@ package mindustrytool.features.chat;
 
 import static solim.UI.*;
 import static solim.modifier.Values.border;
+import static solim.modifier.Values.enabled;
 import static solim.modifier.Values.grow;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
@@ -10,10 +11,12 @@ import static solim.modifier.Values.paddingBottom;
 import static solim.modifier.Values.paddingLeft;
 import static solim.modifier.Values.paddingRight;
 import static solim.modifier.Values.paddingTop;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.rounded;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -70,8 +73,7 @@ public class ChatInputView extends Component {
             when(isNotLoggedIn)
                     .thenDo(() -> row().props(growX(), padding(unit(1))).children(() -> {
                         button(Core.bundle.get("auth.login", "Login"), () -> AuthOverlay.getInstance().startLoginUI())
-                                .style(Styles.defaultt)
-                                .props(growX(), height(unit(8)), prefHeight(unit(8)));
+                                .props(style(Styles.defaultt), growX(), height(unit(8)), prefHeight(unit(8)));
                     }))
                     .elseDo(() -> {
 
@@ -86,12 +88,10 @@ public class ChatInputView extends Component {
 
                                     row().props(growX(), padding(unit(1)), height(unit(12)), prefHeight(unit(12)), gap(unit(1))).children(() -> {
                                         text(Core.bundle.format("feature.chat.ui.replying", targetName))
-                                                .color(Color.lightGray)
-                                                .fontScale(0.85f).left();
+                                                .props(color(Color.lightGray), solim.modifier.Values.fontScale(0.85f), solim.modifier.Values.left());
                                         spacer();
                                         button(() -> store.ui().setReplyTarget(null))
-                                                .style(Styles.clearNonei)
-                                                .props(size(unit(6), unit(6)), prefWidth(unit(6)), prefHeight(unit(6)))
+                                                .props(style(Styles.clearNonei), size(unit(6), unit(6)), prefWidth(unit(6)), prefHeight(unit(6)))
                                                 .children(() -> icon(Icon.cancel).props(size(unit(4), unit(4)), prefWidth(unit(4)), prefHeight(unit(4))));
                                     });
                                 }
@@ -104,28 +104,26 @@ public class ChatInputView extends Component {
                                             center())
                                             .children(() -> {
                                                 chatInput = textField(messageText)
-                                                        .style(WebStyles.clearInput())
-                                                        .placeholder(
-                                                                Core.bundle.get("feature.chat.ui.placeholder",
-                                                                        "Message..."))
                                                         .validator(this::isValidInput)
                                                         .onEnter(this::onSend)
-                                                        .disabled(isSending)
-                                                        .props(growX());
+                                                        .props(
+                                                                style(WebStyles.clearInput()),
+                                                                growX(),
+                                                                solim.modifier.Values.placeholder(
+                                                                        Core.bundle.get("feature.chat.ui.placeholder",
+                                                                                "Message...")),
+                                                                solim.modifier.Values.disabled(isSending)
+                                                        );
 
                                                 button(() -> new AttachContentDialog(this::handleAttachContent).show())
-                                                        .style(WebStyles.ghost())
-                                                        .props(size(unit(10)), prefWidth(unit(10)), prefHeight(unit(10)))
+                                                        .props(style(WebStyles.ghost()), size(unit(10)), prefWidth(unit(10)), prefHeight(unit(10)))
                                                         .children(
                                                                 () -> image(FileIcon.of("upload.png")).props(size(unit(6), unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
 
                                                 button(this::onSend)
-                                                        .style(WebStyles.ghost())
-                                                        .enabled(canSend)
-                                                        .props(size(unit(10)), prefWidth(unit(10)), prefHeight(unit(10)))
+                                                        .props(style(WebStyles.ghost()), enabled(canSend), size(unit(10)), prefWidth(unit(10)), prefHeight(unit(10)))
                                                         .children(() -> image(FileIcon.of("send.png"))
-                                                                .props(size(unit(6), unit(6)), prefWidth(unit(6)), prefHeight(unit(6)))
-                                                                .color(Pal.accent));
+                                                                .props(size(unit(6), unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(Pal.accent)));
                                             });
                                 });
                             });

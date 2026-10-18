@@ -1,10 +1,12 @@
 package mindustrytool.features.playerconnect.ui;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.height;
 import static solim.modifier.Values.margin;
 import static solim.modifier.Values.position;
 import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.visible;
 
 import arc.Core;
@@ -54,17 +56,13 @@ public class JoinApprovalHudView extends Component {
         return row()
                 .props(margin(unit(2), unit(4), unit(2), unit(4)), gap(unit(3)), center())
                 .children(() -> {
-                    text(msg).color(Color.white);
+                    text(msg).props(color(Color.white));
 
                     button(Core.bundle.get("feature.player-connect.accept", "Accept"), () -> feature.accept(request))
-                            .style(Styles.defaultb)
-                            .color(Pal.accent)
-                            .props(height(unit(8)), prefHeight(unit(8)));
+                            .props(style(Styles.defaultb), color(Pal.accent), height(unit(8)), prefHeight(unit(8)));
 
                     button(Core.bundle.get("feature.player-connect.reject", "Reject"), () -> feature.reject(request))
-                            .style(Styles.defaultb)
-                            .color(Color.scarlet)
-                            .props(height(unit(8)), prefHeight(unit(8)));
+                            .props(style(Styles.defaultb), color(Color.scarlet), height(unit(8)), prefHeight(unit(8)));
                 });
     }
 }

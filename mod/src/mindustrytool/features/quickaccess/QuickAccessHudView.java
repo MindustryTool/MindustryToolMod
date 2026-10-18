@@ -11,6 +11,8 @@ import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.rounded;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.tooltip;
 
 import arc.Core;
@@ -84,7 +86,7 @@ public class QuickAccessHudView extends Component {
                     .elseDo(() -> buildExpandedBar(buttonSize, iconSize, items));
         });
 
-        hud.opacity(feature.opacityConfig.signal());
+        hud.props(solim.modifier.Values.opacity(feature.opacityConfig.signal()));
         hud.props(position(feature.xSignal, feature.ySignal));
 
         effect(() -> {
@@ -99,8 +101,7 @@ public class QuickAccessHudView extends Component {
         row()
                 .props(padding(unit(1)), gap(unit(1)), rounded(unit(2), WebStyles.Colors.SECTION_BG), border(1.5f, WebStyles.Colors.BORDER), center())
                 .children(() -> button()
-                        .style(WebStyles.ghost())
-                        .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(Core.bundle.get("feature.quick-access.ui.expand")))
+                        .props(style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(Core.bundle.get("feature.quick-access.ui.expand")))
                         .onClick(() -> feature.collapsedConfig.set(false))
                         .props(draggable(feature.xSignal, feature.ySignal))
                         .children(() -> icon(FileIcon.of("grid-2x2.png")).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize))));
@@ -112,20 +113,15 @@ public class QuickAccessHudView extends Component {
                 .props(padding(unit(1)), gap(unit(1)), rounded(unit(2), WebStyles.Colors.SECTION_BG), border(1.5f, WebStyles.Colors.BORDER), center())
                 .children(() -> {
                     when(feature.hideDragHandleConfig.signal())
-                            .props(growY())
-                            .center()
-                            .props(gap(unit(1)))
+                            .props(growY(), center(), gap(unit(1)))
                             .thenDo(() -> button()
-                                    .style(WebStyles.ghost())
-                                    .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(Core.bundle.get("feature.quick-access.ui.collapse")))
+                                    .props(style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(Core.bundle.get("feature.quick-access.ui.collapse")))
                                     .onClick(() -> feature.collapsedConfig.set(true))
                                     .children(() -> icon(FileIcon.of("chevron-left.png")).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize))))
                             .elseDo(() -> {
                                 button()
-                                        .style(WebStyles.ghost())
-                                        .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize))
-                                        .children(() -> icon(Icon.move).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)))
-                                        .props(draggable(feature.xSignal, feature.ySignal));
+                                        .props(style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), draggable(feature.xSignal, feature.ySignal))
+                                        .children(() -> icon(Icon.move).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)));
 
                                 divider(Direction.Y);
                             });
@@ -177,16 +173,13 @@ public class QuickAccessHudView extends Component {
             FeatureMetadata meta = f.getMetadata();
 
             return button()
-                    .style(WebStyles.ghost())
-                    .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(f.getName()))
+                    .props(style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(f.getName()))
                     .onClick(() -> f.onQuickAccessClick(getBar()))
                     .onLongClick(300L, () -> f.onQuickAccessLongClick(getBar()))
-                    .children(() -> icon(meta.getIcon()).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize))
-                            .color(f.quickAccessHighlight().map(en -> en ? Color.white : Color.darkGray)));
+                    .children(() -> icon(meta.getIcon()).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize), color(f.quickAccessHighlight().map(en -> en ? Color.white : Color.darkGray))));
         } else {
             return button()
-                    .style(WebStyles.ghost())
-                    .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize))
+                    .props(style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize))
                     .onClick(() -> new FeatureSettingDialog().show())
                     .onLongClick(300L, () -> {
                         Prov<SolimDialog> dlg = feature.getSettingDialog();

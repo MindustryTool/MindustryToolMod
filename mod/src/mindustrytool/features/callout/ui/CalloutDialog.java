@@ -1,6 +1,8 @@
 package mindustrytool.features.callout.ui;
 
 import static solim.UI.*;
+import static solim.modifier.Values.checked;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.grow;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
@@ -9,7 +11,9 @@ import static solim.modifier.Values.paddingX;
 import static solim.modifier.Values.paddingY;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.scrollX;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
 
 import arc.Core;
@@ -67,7 +71,7 @@ public class CalloutDialog extends SolimDialog {
                 @Override
                 protected Element build() {
                     return column().props(grow(), padding(unit(2f)), center(), gap(unit(2f))).children(() -> {
-                        scroll().props(grow()).scrollX(false).children(() -> {
+                        scroll().props(grow(), scrollX(false)).children(() -> {
                             column().props(growX(), gap(unit(2f)), center()).children(() -> {
                                 destinationCard(isAllChat);
                                 resourcesCard();
@@ -89,24 +93,19 @@ public class CalloutDialog extends SolimDialog {
     private Component destinationCard(Readable<Boolean> isAllChat) {
         return sectionCard().children(() -> {
             row().props(growX(), gap(unit(2)), center()).children(() -> {
-                icon(Icon.chat).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))).color(Pal.accent);
+                icon(Icon.chat).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)), color(Pal.accent));
                 text(Core.bundle.get("feature.callout.settings.general"))
-                        .color(Color.white)
-                        .left();
+                        .props(color(Color.white), left());
 
                 spacer();
 
                 row().props(gap(unit(1.5f))).children(() -> {
                     button(() -> teamChatSignal.set(true))
-                            .style(WebStyles.filterChip())
-                            .checked(teamChatSignal)
-                            .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)))
+                            .props(style(WebStyles.filterChip()), checked(teamChatSignal), height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)))
                             .children(() -> text(Core.bundle.get("feature.callout.destination.team")));
 
                     button(() -> teamChatSignal.set(false))
-                            .style(WebStyles.filterChip())
-                            .checked(isAllChat)
-                            .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)))
+                            .props(style(WebStyles.filterChip()), checked(isAllChat), height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)))
                             .children(() -> text(Core.bundle.get("feature.callout.destination.all")));
                 });
             });
@@ -116,11 +115,9 @@ public class CalloutDialog extends SolimDialog {
     private Component resourcesCard() {
         return sectionCard().children(() -> {
             row().props(growX(), gap(unit(2)), center()).children(() -> {
-                icon(Icon.distribution).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))).color(Pal.accent);
+                icon(Icon.distribution).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)), color(Pal.accent));
                 text(Core.bundle.get("feature.callout.section.resources"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
+                        .props(color(Pal.accent), growX(), left());
             });
 
             wrap().props(growX(), gap(unit(1.5f))).children(() -> {
@@ -128,14 +125,12 @@ public class CalloutDialog extends SolimDialog {
                 for (int i = 0; i < items.size; i++) {
                     Item it = items.get(i);
                     button()
-                            .style(WebStyles.actionChip())
-                            .props(paddingX(unit(2f)), paddingY(unit(1.2f)))
+                            .props(style(WebStyles.actionChip()), paddingX(unit(2f)), paddingY(unit(1.2f)), tooltip(it.localizedName))
                             .onClick(() -> {
                                 String name = it.localizedName;
                                 String text = Core.bundle.format("feature.callout.need-resource", name) + name;
                                 feature.sendCallout(text, Boolean.TRUE.equals(teamChatSignal.peek()));
                             })
-                            .props(tooltip(it.localizedName))
                             .children(() -> {
                                 row().props(gap(unit(1.5f)), center()).children(() -> {
                                     if (it.uiIcon != null) {
@@ -160,19 +155,16 @@ public class CalloutDialog extends SolimDialog {
 
         return sectionCard().children(() -> {
             row().props(growX(), gap(unit(2)), center()).children(() -> {
-                icon(Icon.warning).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))).color(Pal.accent);
+                icon(Icon.warning).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)), color(Pal.accent));
                 text(Core.bundle.get("feature.callout.section.tactical"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
+                        .props(color(Pal.accent), growX(), left());
             });
 
             wrap().props(growX(), gap(unit(1.5f))).children(() -> {
                 for (ActionDef act : actions) {
                     String label = Core.bundle.get(act.bundleKey, act.fallbackText);
                     button()
-                            .style(WebStyles.actionChip())
-                            .props(paddingX(unit(2f)), paddingY(unit(1.2f)))
+                            .props(style(WebStyles.actionChip()), paddingX(unit(2f)), paddingY(unit(1.2f)))
                             .onClick(() -> feature.sendCallout(label, Boolean.TRUE.equals(teamChatSignal.peek())))
                             .children(() -> {
                                 row().props(gap(unit(1.5f)), center()).children(() -> {
@@ -198,19 +190,16 @@ public class CalloutDialog extends SolimDialog {
 
         return sectionCard().children(() -> {
             row().props(growX(), gap(unit(2)), center()).children(() -> {
-                icon(Icon.chat).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))).color(Pal.accent);
+                icon(Icon.chat).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)), color(Pal.accent));
                 text(Core.bundle.get("feature.callout.section.communication"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
+                        .props(color(Pal.accent), growX(), left());
             });
 
             wrap().props(growX(), gap(unit(1.5f))).children(() -> {
                 for (ActionDef comm : comms) {
                     String label = Core.bundle.get(comm.bundleKey, comm.fallbackText);
                     button()
-                            .style(WebStyles.actionChip())
-                            .props(paddingX(unit(2f)), paddingY(unit(1.2f)))
+                            .props(style(WebStyles.actionChip()), paddingX(unit(2f)), paddingY(unit(1.2f)))
                             .onClick(() -> feature.sendCallout(label, Boolean.TRUE.equals(teamChatSignal.peek())))
                             .children(() -> {
                                 row().props(gap(unit(1.5f)), center()).children(() -> {

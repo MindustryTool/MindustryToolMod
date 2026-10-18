@@ -1,6 +1,8 @@
 package mindustrytool.features.blockstats;
 
 import static solim.UI.*;
+import static solim.modifier.Values.checked;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
 import static solim.modifier.Values.padding;
@@ -8,6 +10,7 @@ import static solim.modifier.Values.paddingX;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
 
 import arc.Core;
@@ -147,9 +150,8 @@ public class BlockStatsDisplaySettingsView extends Component {
             wrap().props(growX(), gap(unit(1.5f))).children(() -> {
                 for (BlockGroup group : groups) {
                     button(Core.bundle.get(group.bundleKey()), () -> filter.set(group))
-                            .style(WebStyles.filterChipText())
-                            .checked(filter.map(current -> current == group))
-                            .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
+                            .props(checked(filter.map(current -> current == group)),
+                                    style(WebStyles.filterChipText()), height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
                 }
             });
 
@@ -170,8 +172,7 @@ public class BlockStatsDisplaySettingsView extends Component {
 
     private Component bulkButton(Drawable iconDrawable, String label, Runnable action) {
         return button(action)
-                .style(WebStyles.outlineText())
-                .props(height(unit(11)), prefHeight(unit(11)), growX(), gap(unit(2)))
+                .props(style(WebStyles.outlineText()), height(unit(11)), prefHeight(unit(11)), growX(), gap(unit(2)))
                 .children(() -> {
                     icon(iconDrawable).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                     text(label);
@@ -181,8 +182,7 @@ public class BlockStatsDisplaySettingsView extends Component {
     private Component actionsCard() {
         return SettingCard.card().children(() -> {
             button(feature::resetToDefaults)
-                    .style(WebStyles.outline())
-                    .props(growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
+                    .props(style(WebStyles.outline()), growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
                     .children(() -> {
                         icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                         text(Core.bundle.get("feature.blockstats-display.settings.reset"));
@@ -290,15 +290,12 @@ public class BlockStatsDisplaySettingsView extends Component {
             Readable<Boolean> enabled = blockValue(block, progress).signal();
 
             return button()
-                    .style(WebStyles.filterChip())
-                    .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), padding(unit(1)), tooltip(block.localizedName))
-                    .checked(enabled)
+                    .props(checked(enabled), style(WebStyles.filterChip()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), padding(unit(1)), tooltip(block.localizedName))
                     .onClick(() -> setBlockEnabled(block, progress, !isBlockEnabled(block, progress)))
                     .children(() -> {
                         icon(drawable)
-                                .props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)))
-                                .color(enabled.map(on ->
-                                        Boolean.TRUE.equals(on) ? Color.white : new Color(1f, 1f, 1f, 0.35f)));
+                                .props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(enabled.map(on ->
+                                        Boolean.TRUE.equals(on) ? Color.white : new Color(1f, 1f, 1f, 0.35f))));
                     }).element();
         }
     }

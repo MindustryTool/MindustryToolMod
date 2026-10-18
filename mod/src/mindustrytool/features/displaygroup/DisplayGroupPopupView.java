@@ -1,9 +1,11 @@
 package mindustrytool.features.displaygroup;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
 
 import arc.graphics.Color;
@@ -61,11 +63,9 @@ public class DisplayGroupPopupView extends Component {
         FeatureMetadata meta = f.getMetadata();
 
         return button()
-                .style(WebStyles.ghost())
-                .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(f.getName()))
+                .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(f.getName()))
                 .onClick(() -> f.setEnabled(!f.isEnabled()))
                 .onLongClick(300L, () -> f.onQuickAccessLongClick(null))
-                .children(() -> icon(meta.getIcon()).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)))
-                        .color(f.enabled().map(en -> Boolean.TRUE.equals(en) ? Color.white : Color.darkGray)));
+                .children(() -> icon(meta.getIcon()).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(f.enabled().map(en -> Boolean.TRUE.equals(en) ? Color.white : Color.darkGray))));
     }
 }

@@ -1,6 +1,8 @@
 package mindustrytool.features.browser.schematic;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
+import static solim.modifier.Values.fillParent;
 import static solim.modifier.Values.grow;
 import static solim.modifier.Values.growY;
 import static solim.modifier.Values.height;
@@ -9,6 +11,7 @@ import static solim.modifier.Values.paddingX;
 import static solim.modifier.Values.paddingY;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.width;
 
 import arc.Core;
@@ -49,7 +52,7 @@ public class SchematicBrowserDialog extends SolimDialog {
         filterDialog = new BrowserFilterDialog(state, "schematics", true, false);
 
         closeOnBack();
-        fillParent(true);
+        props(fillParent(true));
         children(() -> new BrowserContent(this, state, filterDialog, this::hide));
         cont().background(Styles.black);
         shown(() -> state.start());
@@ -180,10 +183,9 @@ public class SchematicBrowserDialog extends SolimDialog {
                         String msg = cause != null && cause.getMessage() != null ? cause.getMessage()
                                 : (cause != null ? cause.toString() : "");
 
-                        text(msg).color(Color.scarlet).wrap(true).growX();
+                        text(msg).props(color(Color.scarlet), solim.modifier.Values.wrap(true), solim.modifier.Values.growX());
                         button(Core.bundle.get("browser.retry"), () -> state.refresh())
-                                .style(WebStyles.outlineText())
-                                .props(height(unit(10)), prefHeight(unit(10)));
+                                .props(style(WebStyles.outlineText()), height(unit(10)), prefHeight(unit(10)));
                     }))
                     .data((list, fetching) -> fetching ? Loader.centered()
                             : items(columnCount, cardSize, visibleItems))
@@ -192,14 +194,14 @@ public class SchematicBrowserDialog extends SolimDialog {
 
         private Component items(Computed<Integer> columnCount, Computed<Float> cardSize,
                 Computed<Seq<SchematicData>> visibleItems) {
-            return scroll().style(Styles.noBarPane).props(grow(), paddingLeft(BrowserLayout.SCROLLBAR_GUTTER))
+            return scroll().props(style(Styles.noBarPane), grow(), paddingLeft(BrowserLayout.SCROLLBAR_GUTTER))
                     .children(() -> {
                         reactiveGrid(visibleItems)
                                 .columns(columnCount)
                                 .key(SchematicData::getItemId)
                                 .props(gap(BrowserLayout.CARD_GAP))
-                                .empty(() -> text(Core.bundle.get("browser.empty")).color(Color.gray)
-                                        .padding(unit(4)))
+                                .empty(() -> text(Core.bundle.get("browser.empty"))
+                                        .props(color(Color.gray), solim.modifier.Values.margin(unit(4))))
                                 .items(item -> new SchematicCard(item, cardSize,
                                         () -> onCardClick(item),
                                         () -> SchematicActions.copyToClipboard(item.getItemId()),

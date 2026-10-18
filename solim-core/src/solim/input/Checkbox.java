@@ -122,21 +122,16 @@ public final class Checkbox extends Component
         return this;
     }
 
-    public Checkbox wrap() {
-        return wrap(true);
-    }
-
-    public Checkbox wrap(boolean wrap) {
+    public void setWrap(boolean wrap) {
         if (checkBox.getLabel() != null) {
             checkBox.getLabel().setWrap(wrap);
         }
         if (checkBox.getLabelCell() != null && wrap) {
             checkBox.getLabelCell().growX().minWidth(0f);
         }
-        return this;
     }
 
-    public Checkbox checked(@Nullable Readable<Boolean> source) {
+    public void setChecked(@Nullable Readable<Boolean> source) {
         if (source != null) {
             OwnershipContext.push(this);
             try {
@@ -145,7 +140,6 @@ public final class Checkbox extends Component
                 OwnershipContext.pop();
             }
         }
-        return this;
     }
 
     public boolean isChecked() {

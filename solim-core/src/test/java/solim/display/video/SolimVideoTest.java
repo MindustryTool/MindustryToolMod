@@ -1,5 +1,7 @@
 package solim.display.video;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import arc.Core;
@@ -61,8 +63,8 @@ class SolimVideoTest extends SolimEnv {
 		TextureRegionDrawable fallback = new TextureRegionDrawable(new TextureRegion());
 		SolimVideo.setVideoLoader((url, success, error) -> fail("Loader must not run for null URLs"));
 
-		SolimVideo video = track(new SolimVideo().fallback(fallback));
-		video.url((String) null);
+		SolimVideo video = track(new SolimVideo().props(fallback(fallback)));
+		video.props(url((String) null));
 		flushEffects();
 
 		assertSame(fallback, ((Image) video.stack().getChildren().first()).getDrawable());
@@ -73,7 +75,7 @@ class SolimVideoTest extends SolimEnv {
 		TextureRegionDrawable fallback = new TextureRegionDrawable(new TextureRegion());
 		SolimVideo.setVideoLoader((url, success, error) -> error.get(new RuntimeException("404")));
 
-		SolimVideo video = track(new SolimVideo("https://example.com/missing.mp4").fallback(fallback));
+		SolimVideo video = track(new SolimVideo("https://example.com/missing.mp4").props(fallback(fallback)));
 		flushEffects();
 
 		assertSame(fallback, ((Image) video.stack().getChildren().first()).getDrawable());
@@ -89,11 +91,11 @@ class SolimVideoTest extends SolimEnv {
 		flushEffects();
 		assertTrue(video.overlay().visible);
 
-		video.controls(false);
+		video.props(controls(false));
 		flushEffects();
 		assertFalse(video.overlay().visible);
 
-		video.controls(true);
+		video.props(controls(true));
 		flushEffects();
 		assertTrue(video.overlay().visible);
 	}
@@ -104,7 +106,7 @@ class SolimVideoTest extends SolimEnv {
 		});
 
 		Signal<Boolean> controls = Signal.of(true);
-		SolimVideo video = track(new SolimVideo().controls(controls));
+		SolimVideo video = track(new SolimVideo().props(controls(controls)));
 		flushEffects();
 		assertTrue(video.overlay().visible);
 
@@ -141,7 +143,26 @@ class SolimVideoTest extends SolimEnv {
 		flushEffects();
 		video.dispose();
 		assertTrue(video.isDisposed());
-		assertNull(video.player());
 		assertDoesNotThrow(video::dispose);
+	}
+
+	@Test
+	void twoWayMutedSignalWritesBack() {
+		Signal<Boolean> muted = Signal.of(false);
+		SolimVideo video = track(new SolimVideo().props(muted(muted)));
+		assertFalse(muted.get());
+
+		video.setMuted(true);
+		flushEffects();
+		assertTrue(muted.get(), "Internal muted state change must write back to caller's signal");
+
+		video.dispose();
+	}
+
+	@Test
+	void appliedOnceAutoplayTakesEffect() {
+		SolimVideo video = track(new SolimVideo().props(autoplay(true)));
+		assertTrue(video.isAutoplay());
+		video.dispose();
 	}
 }

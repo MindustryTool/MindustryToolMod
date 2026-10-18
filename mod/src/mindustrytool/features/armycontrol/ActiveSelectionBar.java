@@ -1,12 +1,14 @@
 package mindustrytool.features.armycontrol;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
 
 import arc.Core;
@@ -53,13 +55,11 @@ public class ActiveSelectionBar extends Component {
                                         String hint = Core.bundle.get("feature.army-control.hint.deselect-chip",
                                                 "Tap to exclude from selection");
                                         button()
-                                                .style(WebStyles.actionChip())
-                                                .props(padding(unit(1)), height(unit(9)), prefHeight(unit(9)), tooltip(type.localizedName + ": " + hint))
+                                                .props(style(WebStyles.actionChip()), padding(unit(1)), height(unit(9)), prefHeight(unit(9)), tooltip(type.localizedName + ": " + hint))
                                                 .onClick(() -> feature.deselectUnitType(type))
                                                 .children(() -> row().props(gap(unit(1)), center()).children(() -> {
                                                     image(new TextureRegionDrawable(type.uiIcon)).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)));
-                                                    text(String.valueOf(count))
-                                                            .color(WebStyles.Colors.PRIMARY_FG);
+                                                    text(String.valueOf(count)).props(color(WebStyles.Colors.PRIMARY_FG));
                                                 }));
                                     }
                                 });

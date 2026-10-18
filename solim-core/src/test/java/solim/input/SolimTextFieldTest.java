@@ -1,5 +1,7 @@
 package solim.input;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -58,13 +60,13 @@ class SolimTextFieldTest extends SolimEnv {
         boolean[] submitted = { false };
         tf.onEnter(() -> submitted[0] = true);
 
-        tf.disabled(true);
+        tf.props(disabled(true));
         assertTrue(tf.field().isDisabled());
 
         simulateKey(tf, KeyCode.enter);
         assertFalse(submitted[0], "Disabled text field must not submit on enter");
 
-        tf.disabled(false);
+        tf.props(disabled(false));
         assertFalse(tf.field().isDisabled());
 
         simulateKey(tf, KeyCode.enter);
@@ -98,7 +100,7 @@ class SolimTextFieldTest extends SolimEnv {
     @Test
     void reactiveDisabledBinding() {
         Signal<Boolean> disabled = Signal.of(false);
-        SolimTextField tf = new SolimTextField(Signal.of("test")).disabled(disabled);
+        SolimTextField tf = new SolimTextField(Signal.of("test")).props(disabled(disabled));
 
         assertFalse(tf.field().isDisabled());
 

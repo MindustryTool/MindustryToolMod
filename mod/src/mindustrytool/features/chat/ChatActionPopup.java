@@ -5,6 +5,7 @@ import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.util.Nullable;
@@ -26,8 +27,9 @@ public final class ChatActionPopup {
     }
 
     public static void install(ChatStore store) {
-        menu = popup();
-        menu.items(request -> menuRows(store, request)).rounded(2);
+        Popup<ParsedChatMessage> p = popup();
+        menu = p.props(solim.modifier.Values.rounded(2));
+        menu.items(request -> menuRows(store, request));
     }
 
     public static void showFor(@Nullable ParsedChatMessage message, float stageX, float stageY) {
@@ -45,8 +47,7 @@ public final class ChatActionPopup {
     private static Component menuRows(ChatStore store, ParsedChatMessage message) {
         return column().props(growX(), padding(unit(1)), gap(unit(1))).children(() -> {
             button(Core.bundle.get("feature.chat.ui.copy", "Copy"), () -> copyMessage(store, message))
-                    .style(WebStyles.secondaryText())
-                    .props(growX(), height(unit(10)), prefHeight(unit(10)));
+                    .props(style(WebStyles.secondaryText()), growX(), height(unit(10)), prefHeight(unit(10)));
 
             if (message != null && store.translations().getDirect(message.getId()) != null) {
                 button(Core.bundle.get("feature.chat.ui.copy-translation", "Copy Translation"), () -> {
@@ -56,17 +57,16 @@ public final class ChatActionPopup {
                         Vars.ui.showInfoFade(Core.bundle.get("feature.chat.ui.copied", "Copied to clipboard!"));
                     }
                     dismiss();
-                }).style(WebStyles.secondaryText()).props(growX(), height(unit(10)), prefHeight(unit(10)));
+                }).props(style(WebStyles.secondaryText()), growX(), height(unit(10)), prefHeight(unit(10)));
             }
 
             button(Core.bundle.get("feature.chat.ui.reply", "Reply"), () -> {
                 store.ui().setReplyTarget(message.getRaw());
                 dismiss();
-            }).style(WebStyles.secondaryText()).props(growX(), height(unit(10)), prefHeight(unit(10)));
+            }).props(style(WebStyles.secondaryText()), growX(), height(unit(10)), prefHeight(unit(10)));
 
             button(Core.bundle.get("feature.chat.ui.translate", "Translate"), () -> translateMessage(store, message))
-                    .style(WebStyles.secondaryText())
-                    .props(growX(), height(unit(10)), prefHeight(unit(10)));
+                    .props(style(WebStyles.secondaryText()), growX(), height(unit(10)), prefHeight(unit(10)));
         });
     }
 

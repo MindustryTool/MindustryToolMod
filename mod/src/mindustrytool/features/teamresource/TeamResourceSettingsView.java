@@ -2,6 +2,7 @@ package mindustrytool.features.teamresource;
 
 import static solim.UI.*;
 import static solim.modifier.Values.growX;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.height;
 import static solim.modifier.Values.prefHeight;
 
@@ -113,13 +114,11 @@ public class TeamResourceSettingsView extends Component {
             row().props(growX(), gap(unit(2)), center()).children(() -> {
                 button(Core.bundle.get("feature.quick-access.settings.reset-position", "Reset Position"),
                         feature::resetPosition)
-                        .style(WebStyles.outlineText())
-                        .props(height(unit(11)), prefHeight(unit(11)), growX());
+                        .props(style(WebStyles.outlineText()), height(unit(11)), prefHeight(unit(11)), growX());
 
                 button(Core.bundle.get("team-resources.reset-to-defaults", "Reset to Defaults"),
                         feature::resetToDefaults)
-                        .style(WebStyles.outlineText())
-                        .props(height(unit(11)), prefHeight(unit(11)), growX());
+                        .props(style(WebStyles.outlineText()), height(unit(11)), prefHeight(unit(11)), growX());
             });
         });
     }

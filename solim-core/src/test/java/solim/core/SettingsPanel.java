@@ -1,5 +1,7 @@
 package solim.core;
 
+import static solim.modifier.Values.*;
+
 import static solim.modifier.Values.gap;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.right;
@@ -85,7 +87,7 @@ public final class SettingsPanel extends Component {
                             darkMode.set(!darkMode.get());
                             dirty.set(true);
                         })
-                                .style(darkMode.get() ? PRIMARY_STYLE : GHOST_STYLE)
+                                .props(style(darkMode.get() ? PRIMARY_STYLE : GHOST_STYLE))
                                 .children(() -> text(darkMode.map(value -> value
                                         ? t("solim.settings.dark-mode.on", "On")
                                         : t("solim.settings.dark-mode.off", "Off"))));
@@ -102,8 +104,7 @@ public final class SettingsPanel extends Component {
                         button(() -> {
                             dirty.set(false);
                         })
-                                .enabled(dirty)
-                                .style(PRIMARY_STYLE)
+                                .props(enabled(dirty), style(PRIMARY_STYLE))
                                 .children(() -> text(saveText));
                     });
                 })

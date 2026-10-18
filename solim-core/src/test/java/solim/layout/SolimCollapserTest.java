@@ -1,5 +1,7 @@
 package solim.layout;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -50,7 +52,7 @@ class SolimCollapserTest extends SolimEnv {
     @Test
     void reactiveExpandedSignalTogglesCollapsedState() {
         Signal<Boolean> expanded = Signal.of(false);
-        SolimCollapser collapser = new SolimCollapser().expanded(expanded);
+        SolimCollapser collapser = new SolimCollapser().props(expanded(expanded));
 
         assertTrue(collapser.isCollapsed());
 
@@ -68,7 +70,7 @@ class SolimCollapserTest extends SolimEnv {
     @Test
     void reactiveCollapsedSignalTogglesState() {
         Signal<Boolean> collapsed = Signal.of(true);
-        SolimCollapser c = new SolimCollapser().collapsed(collapsed);
+        SolimCollapser c = new SolimCollapser().props(collapsed(collapsed));
 
         assertTrue(c.isCollapsed());
 
@@ -82,7 +84,7 @@ class SolimCollapserTest extends SolimEnv {
     @Test
     void disposalStopsReactiveUpdates() {
         Signal<Boolean> expanded = Signal.of(false);
-        SolimCollapser collapser = new SolimCollapser().expanded(expanded);
+        SolimCollapser collapser = new SolimCollapser().props(expanded(expanded));
 
         assertTrue(collapser.isCollapsed());
         collapser.dispose();
@@ -92,5 +94,28 @@ class SolimCollapserTest extends SolimEnv {
         SignalDispatcher.flush();
 
         assertTrue(collapser.isCollapsed());
+    }
+
+    @Test
+    void twoWayCollapsedSignalWritesBack() {
+        Signal<Boolean> collapsed = Signal.of(true);
+        SolimCollapser collapser = new SolimCollapser().props(collapsed(collapsed));
+
+        assertTrue(collapsed.get());
+        assertTrue(collapser.isCollapsed());
+
+        collapser.setCollapsed(false);
+        SignalDispatcher.flush();
+        assertFalse(collapser.isCollapsed());
+        assertFalse(collapsed.get(), "Internal collapser state change must write back to caller's signal");
+
+        collapser.dispose();
+    }
+
+    @Test
+    void appliedOnceDurationTakesEffect() {
+        SolimCollapser collapser = new SolimCollapser().props(duration(0.75f));
+        assertEquals(0.75f, collapser.getDuration(), 0.001f);
+        collapser.dispose();
     }
 }

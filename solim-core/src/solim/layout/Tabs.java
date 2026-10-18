@@ -84,17 +84,15 @@ public final class Tabs extends Component
 
     @Override
     public void setGap(float gap) {
-        headerGap(gap);
+        setHeaderBarGap(gap);
     }
 
-    public Tabs headerGap(float gap) {
+    public void setHeaderBarGap(float gap) {
         this.headerBar.setGap(gap);
-        return this;
     }
 
-    public Tabs tabStyle(@Nullable ButtonStyle style) {
+    public void setTabButtonStyle(@Nullable ButtonStyle style) {
         this.tabButtonStyle = style;
-        return this;
     }
 
     public Tabs tab(String title, Runnable contentBuilder) {
@@ -117,7 +115,7 @@ public final class Tabs extends Component
         try {
             btn = new Button(tabButtonStyle);
             if (tabButtonStyle == null) {
-                btn.rounded(10, Color.clear).border(2f, Color.gray);
+                btn.props(Values.rounded(10, Color.clear), Values.border(2f, Color.gray));
                 ButtonStyle s = btn.button().getStyle();
                 if (s != null) {
                     s.checked = RoundedDrawable.of(10, new Color(1f, 1f, 1f, 0.12f), 2f, Color.white);
@@ -126,7 +124,7 @@ public final class Tabs extends Component
                 }
             }
             btn.onClick(() -> activeTab.set(index));
-            btn.checked(activeTab.map(idx -> idx != null && idx == index));
+            btn.props(Values.checked(activeTab.map(idx -> idx != null && idx == index)));
         } finally {
             OwnershipContext.pop();
         }

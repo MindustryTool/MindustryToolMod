@@ -72,14 +72,15 @@ public class ChatAvatar extends Component {
                     return fallback
                             .children(() -> {
                                 text(initial)
-                                        .color(Color.white)
-                                        .fontScale(size >= 32f ? 1.2f : 0.9f);
+                                        .props(Values.color(Color.white), Values.fontScale(size >= 32f ? 1.2f : 0.9f));
                             });
                 })
                 .layer(() -> {
-                    NetworkImage img = networkImage(avatarUrl).size(size, size).top().left();
+                    NetworkImage img = networkImage(avatarUrl);
                     if (radius > 0) {
-                        img.rounded(radius);
+                        img.props(Values.size(size, size), Values.top(), Values.left(), Values.imageRounded(radius));
+                    } else {
+                        img.props(Values.size(size, size), Values.top(), Values.left());
                     }
                     return img;
                 });

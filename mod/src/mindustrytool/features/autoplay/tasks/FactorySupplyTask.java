@@ -1,12 +1,16 @@
 package mindustrytool.features.autoplay.tasks;
 
 import static solim.UI.*;
+import static solim.modifier.Values.checked;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
+import static solim.modifier.Values.left;
 import static solim.modifier.Values.paddingX;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -845,20 +849,17 @@ public class FactorySupplyTask implements AutoplayTask {
         column().props(growX(), gap(unit(1))).children(() -> {
             checkbox(Core.bundle.get("feature.autoplay.settings.factory-supply.conservative"), conservative.signal())
                     .props(growX());
-            text(Core.bundle.get("feature.autoplay.settings.factory-supply.conservative.description")).growX().left()
-                    .wrap(true)
-                    .color(WebStyles.Colors.GHOST_FG);
+            text(Core.bundle.get("feature.autoplay.settings.factory-supply.conservative.description"))
+                    .props(color(WebStyles.Colors.GHOST_FG), growX(), left(), solim.modifier.Values.wrap());
 
-            text(Core.bundle.get("feature.autoplay.settings.factory-supply.filter")).growX().left()
-                    .color(WebStyles.Colors.GHOST_FG);
+            text(Core.bundle.get("feature.autoplay.settings.factory-supply.filter"))
+                    .props(color(WebStyles.Colors.GHOST_FG), growX(), left());
 
             row().props(growX(), gap(unit(1))).children(() -> {
                 button(Core.bundle.get("feature.autoplay.settings.factory-supply.select-all"), this::selectAll)
-                        .style(WebStyles.secondary())
-                        .props(height(unit(9)), prefHeight(unit(9)), growX());
+                        .props(style(WebStyles.secondary()), height(unit(9)), prefHeight(unit(9)), growX());
                 button(Core.bundle.get("feature.autoplay.settings.factory-supply.clear-all"), this::clearAll)
-                        .style(WebStyles.secondary())
-                        .props(height(unit(9)), prefHeight(unit(9)), growX());
+                        .props(style(WebStyles.secondary()), height(unit(9)), prefHeight(unit(9)), growX());
             });
 
             wrap().props(growX(), gap(unit(1))).children(() -> {
@@ -867,13 +868,11 @@ public class FactorySupplyTask implements AutoplayTask {
                             .map(seq -> seq == null || !seq.contains(block.name));
 
                     button(() -> setBlockEnabled(block, !Boolean.TRUE.equals(checked.peek())))
-                            .style(WebStyles.filterChipText())
-                            .checked(checked)
-                            .props(paddingX(unit(2)), height(unit(8)), prefHeight(unit(8)))
+                            .props(checked(checked), style(WebStyles.filterChipText()), paddingX(unit(2)), height(unit(8)), prefHeight(unit(8)))
                             .children(() -> {
                                 icon(new TextureRegionDrawable(block.uiIcon)).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)));
                                 text(block.localizedName)
-                                        .color(checked.map(c -> Boolean.TRUE.equals(c) ? Color.white : Color.gray));
+                                        .props(color(checked.map(c -> Boolean.TRUE.equals(c) ? Color.white : Color.gray)));
                             });
                 }
             });

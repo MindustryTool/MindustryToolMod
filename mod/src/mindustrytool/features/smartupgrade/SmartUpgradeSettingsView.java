@@ -1,10 +1,15 @@
 package mindustrytool.features.smartupgrade;
 
 import static solim.UI.*;
+import static solim.modifier.Values.checked;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
+import static solim.modifier.Values.left;
 import static solim.modifier.Values.paddingX;
 import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.style;
+import static solim.modifier.Values.wrap;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -50,30 +55,22 @@ public class SmartUpgradeSettingsView extends Component {
             row().props(growX(), gap(unit(2)), center()).children(() -> {
                 column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                     text(Core.bundle.get("feature.smart-upgrade.settings.only-same-type"))
-                            .color(Color.white)
-                            .left();
+                            .props(color(Color.white), left());
                     text(Core.bundle.get("feature.smart-upgrade.settings.only-same-type.desc"))
-                            .color(WebStyles.Colors.GHOST_FG)
-                            .left()
-                            .wrap()
-                            .growX();
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), wrap(), growX());
                 });
                 spacer();
                 checkbox("", feature.onlySameTypeConfig.signal());
             });
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
             row().props(growX(), gap(unit(2)), center()).children(() -> {
                 column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                     text(Core.bundle.get("feature.smart-upgrade.settings.traverse-bridges"))
-                            .color(Color.white)
-                            .left();
+                            .props(color(Color.white), left());
                     text(Core.bundle.get("feature.smart-upgrade.settings.traverse-bridges.desc"))
-                            .color(WebStyles.Colors.GHOST_FG)
-                            .left()
-                            .wrap()
-                            .growX();
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), wrap(), growX());
                 });
                 spacer();
                 checkbox("", feature.traverseBridgesConfig.signal());
@@ -87,33 +84,25 @@ public class SmartUpgradeSettingsView extends Component {
             column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                 column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                     text(Core.bundle.get("feature.smart-upgrade.settings.trigger-mode"))
-                            .color(Color.white)
-                            .left();
+                            .props(color(Color.white), left());
                     text(Core.bundle.get("feature.smart-upgrade.settings.trigger-mode.desc"))
-                            .color(WebStyles.Colors.GHOST_FG)
-                            .left()
-                            .wrap()
-                            .growX();
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), wrap(), growX());
                 });
 
                 row().props(gap(unit(1.5f))).children(() -> {
                     button(Core.bundle.get("feature.smart-upgrade.settings.trigger-mode.one-shot"),
                             () -> feature.triggerModeConfig.set(SmartUpgradeFeature.MODE_ONE_SHOT))
-                            .style(WebStyles.filterChipText())
-                            .checked(feature.triggerModeConfig.signal()
-                                    .map(SmartUpgradeFeature.MODE_ONE_SHOT::equals))
-                            .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
+                            .props(style(WebStyles.filterChipText()), checked(feature.triggerModeConfig.signal()
+                                    .map(SmartUpgradeFeature.MODE_ONE_SHOT::equals)), height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
 
                     button(Core.bundle.get("feature.smart-upgrade.settings.trigger-mode.persistent"),
                             () -> feature.triggerModeConfig.set(SmartUpgradeFeature.MODE_PERSISTENT))
-                            .style(WebStyles.filterChipText())
-                            .checked(feature.triggerModeConfig.signal()
-                                    .map(SmartUpgradeFeature.MODE_PERSISTENT::equals))
-                            .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
+                            .props(style(WebStyles.filterChipText()), checked(feature.triggerModeConfig.signal()
+                                    .map(SmartUpgradeFeature.MODE_PERSISTENT::equals)), height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
                 });
             });
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
             SettingSlider.of(
                     Core.bundle.get("feature.smart-upgrade.settings.max-upgrades"),
@@ -130,8 +119,7 @@ public class SmartUpgradeSettingsView extends Component {
         return SettingCard.card().children(() -> {
             button(Core.bundle.get("feature.smart-upgrade.settings.reset"),
                     feature::resetToDefaults)
-                    .style(WebStyles.outlineText())
-                    .props(height(unit(11)), prefHeight(unit(11)), growX());
+                    .props(style(WebStyles.outlineText()), height(unit(11)), prefHeight(unit(11)), growX());
         });
     }
 }

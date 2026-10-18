@@ -2,10 +2,12 @@ package mindustrytool.features.translation.ui;
 
 import static solim.UI.*;
 import static solim.modifier.Values.height;
+import static solim.modifier.Values.left;
 import static solim.modifier.Values.margin;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.width;
 
 import arc.Core;
@@ -59,11 +61,10 @@ public class LanguageDropdown extends Component {
                 .map(open -> Boolean.TRUE.equals(open) ? Icon.upOpenSmall : Icon.downOpenSmall);
 
         triggerButton = button(this::toggle)
-                .style(Styles.defaultb)
-                .props(height(unit(10)), prefHeight(unit(10)), width(unit(50)), prefWidth(unit(50)), margin(unit(1), unit(3), unit(1), unit(3)));
+                .props(style(Styles.defaultb), height(unit(10)), prefHeight(unit(10)), width(unit(50)), prefWidth(unit(50)), margin(unit(1), unit(3), unit(1), unit(3)));
 
         triggerButton.children(() -> {
-            text(targetLangName).left();
+            text(targetLangName).props(left());
             spacer();
             icon(arrowIcon).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)));
         });

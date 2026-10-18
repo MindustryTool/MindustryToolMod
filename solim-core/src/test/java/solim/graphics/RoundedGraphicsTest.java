@@ -1,5 +1,7 @@
 package solim.graphics;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static solim.modifier.Values.background;
 import static solim.modifier.Values.backgroundColor;
@@ -187,7 +189,7 @@ class RoundedGraphicsTest extends SolimEnv {
     @Test
     void interactiveComponentsSupportRoundedStyling() {
         Button btn = new Button();
-        btn.rounded(8, Color.darkGray).border(1f, Color.gold);
+        btn.props(rounded(8, Color.darkGray), border(1f, Color.gold));
         assertTrue(btn.button().getBackground() instanceof RoundedDrawable);
 
         Card card = new Card();
@@ -195,7 +197,7 @@ class RoundedGraphicsTest extends SolimEnv {
         assertTrue(card.table().getBackground() instanceof RoundedDrawable);
 
         Popup<Object> popup = new Popup<>();
-        popup.rounded(8, Color.gray).border(1f, Color.white);
+        popup.props(rounded(8, Color.gray), border(1f, Color.white));
         assertTrue(popup.table().getBackground() instanceof RoundedDrawable);
 
         if (Core.scene != null) {

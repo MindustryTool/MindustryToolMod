@@ -3,7 +3,6 @@ package solim.layout;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.core.Component;
-import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.modifier.AlignmentCapability;
 import solim.modifier.CellCapability;

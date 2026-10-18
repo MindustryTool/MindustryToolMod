@@ -6,8 +6,6 @@ import solim.modifier.Configurable;
 import solim.modifier.ContainerCapability;
 import solim.modifier.Props;
 import solim.modifier.TableCapability;
-
-import arc.graphics.Color;
 import arc.scene.style.Drawable;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
@@ -16,8 +14,6 @@ import solim.core.Component;
 import solim.core.SolimToken;
 import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
-import solim.reactive.Effect;
-import solim.reactive.Readable;
 import solim.modifier.PendingCellConfig;
 
 public final class Card extends Component
@@ -77,24 +73,7 @@ public final class Card extends Component
         return constraints;
     }
 
-    public Card color(@Nullable Color color) {
-        if (color != null) {
-            table.setColor(color);
-        }
-        return this;
-    }
 
-    public Card color(@Nullable Readable<Color> color) {
-        if (color != null) {
-            withinOwnership(() -> Effect.of(() -> {
-                Color c = color.get();
-                if (c != null) {
-                    table.setColor(c);
-                }
-            }));
-        }
-        return this;
-    };
 
     public Card children(@Nullable Runnable r) {
         applyPendingProps();

@@ -1,5 +1,7 @@
 package solim.style;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -34,7 +36,7 @@ class ReactiveStyleTest extends SolimEnv {
     void colorSignalUpdatesDrawableWithoutRebuild() {
         Signal<Color> colorSignal = Signal.of(Color.red);
         Button button = new Button();
-        button.style(s -> s.rounded(8).up(u -> u.background(colorSignal)));
+        button.props(style(s -> s.rounded(8).up(u -> u.background(colorSignal))));
 
         ButtonStyle initial = button.button().getStyle();
         assertNotNull(initial.up);
@@ -56,7 +58,7 @@ class ReactiveStyleTest extends SolimEnv {
     void reactiveBindingsDisposedWithButton() {
         Signal<Color> colorSignal = Signal.of(Color.red);
         Button button = new Button();
-        button.style(s -> s.rounded(8).up(u -> u.background(colorSignal)));
+        button.props(style(s -> s.rounded(8).up(u -> u.background(colorSignal))));
 
         colorSignal.set(Color.green);
         SignalDispatcher.flush();
@@ -76,7 +78,7 @@ class ReactiveStyleTest extends SolimEnv {
     void reactiveLayoutUpdates() {
         Signal<Float> paddingSignal = Signal.of(4f);
         Button button = new Button();
-        button.style(s -> s.rounded(8).padding(paddingSignal).up(u -> u.background(Color.blue)));
+        button.props(style(new SolimButtonStyleBuilder().rounded(8).padding(paddingSignal).up(u -> u.background(Color.blue)).build()));
 
         SolimButtonStyleBuilder probe = new SolimButtonStyleBuilder()
                 .rounded(8)
@@ -93,7 +95,7 @@ class ReactiveStyleTest extends SolimEnv {
     @Test
     void staticPaddingAndGapApplied() {
         Button button = new Button();
-        button.style(s -> s.rounded(4).padding(8f).gap(4f).up(u -> u.background(Color.red)));
+        button.props(style(new SolimButtonStyleBuilder().rounded(4).padding(8f).gap(4f).up(u -> u.background(Color.red)).build()));
 
         ButtonStyle style = button.button().getStyle();
         assertNotNull(style.up);
@@ -105,7 +107,7 @@ class ReactiveStyleTest extends SolimEnv {
     @Test
     void scopedLambdaPreservesChain() {
         Button button = new Button();
-        Button same = button.style(s -> s.rounded(4).up(u -> u.background(Color.red))).props(width(100f), prefWidth(100f));
+        Button same = button.props(style(new SolimButtonStyleBuilder().rounded(4).up(u -> u.background(Color.red)).build()), width(100f), prefWidth(100f));
         assertTrue(same == button);
         assertEquals(100f, button.button().getWidth(), 0.001f);
         button.dispose();

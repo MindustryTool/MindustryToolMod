@@ -1,11 +1,13 @@
 package mindustrytool.features.callout.ui;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -50,30 +52,22 @@ public class CalloutSettingsView extends Component {
             row().props(growX(), gap(unit(2)), center()).children(() -> {
                 column().props(growX(), gap(unit(0.5f)), left()).children(() -> {
                     text(Core.bundle.get("feature.callout.settings.team-chat"))
-                            .color(Color.white)
-                            .left();
+                            .props(color(Color.white), left());
                     text(Core.bundle.get("feature.callout.settings.team-chat.description"))
-                            .color(WebStyles.Colors.GHOST_FG)
-                            .left()
-                            .wrap()
-                            .growX();
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), solim.modifier.Values.wrap(true), growX());
                 });
                 spacer();
                 checkbox("", feature.teamChatConfig.signal());
             });
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
             row().props(growX(), gap(unit(2)), center()).children(() -> {
                 column().props(growX(), gap(unit(0.5f)), left()).children(() -> {
                     text(Core.bundle.get("feature.callout.settings.close-on-send"))
-                            .color(Color.white)
-                            .left();
+                            .props(color(Color.white), left());
                     text(Core.bundle.get("feature.callout.settings.close-on-send.description"))
-                            .color(WebStyles.Colors.GHOST_FG)
-                            .left()
-                            .wrap()
-                            .growX();
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), solim.modifier.Values.wrap(true), growX());
                 });
                 spacer();
                 checkbox("", feature.closeOnSendConfig.signal());
@@ -84,8 +78,7 @@ public class CalloutSettingsView extends Component {
     private Component resetButton() {
         return row().props(growX()).children(() -> {
             button(feature::resetToDefaults)
-                    .style(WebStyles.outline())
-                    .props(height(unit(8.5f)), prefHeight(unit(8.5f)), growX())
+                    .props(style(WebStyles.outline()), height(unit(8.5f)), prefHeight(unit(8.5f)), growX())
                     .children(() -> {
                         row().props(gap(unit(1.5f)), center()).children(() -> {
                             icon(Icon.refresh).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)));

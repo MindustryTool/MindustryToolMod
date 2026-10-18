@@ -1,5 +1,7 @@
 package solim.layout;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -26,7 +28,7 @@ public class ModifiersAndGapRegressionTest extends SolimCoreEnv {
     @Test
     void elementModifiersAppliedCorrectly() {
         Column col = new Column();
-        col.props(width(120f), prefWidth(120f), height(60f), prefHeight(60f), visible(false), opacity(0.75f)).touchable(Touchable.disabled);
+        col.props(width(120f), prefWidth(120f), height(60f), prefHeight(60f), visible(false), opacity(0.75f), touchable(Touchable.disabled));
 
         Element el = col.element();
         assertEquals(120f, el.getWidth(), 0.01f);

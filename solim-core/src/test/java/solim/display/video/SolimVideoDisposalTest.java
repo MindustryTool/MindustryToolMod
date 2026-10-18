@@ -1,5 +1,7 @@
 package solim.display.video;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -81,7 +83,7 @@ class SolimVideoDisposalTest extends OwnershipEnv {
         });
 
         Signal<Boolean> controls = Signal.of(true);
-        SolimVideo video = track(new SolimVideo().controls(controls));
+        SolimVideo video = track(new SolimVideo().props(controls(controls)));
         flushEffects();
         assertTrue(video.overlay().visible);
 

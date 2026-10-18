@@ -1,5 +1,7 @@
 package solim.overlay;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import arc.math.geom.Vec2;
@@ -61,7 +63,7 @@ class PopupEdgePinTest extends SolimEnv {
             setTableContent(menu, 100f, 80f);
             menu.table().pack();
             menu.table().setPosition(50f, 200f);
-            menu.pinnedEdge(Popup.Edge.TOP);
+            menu.props(pinnedEdge(Popup.Edge.TOP));
             assertSame(Popup.Edge.TOP, menu.pinnedEdge());
 
             swapTableContent(menu, 100f, 160f);
@@ -84,7 +86,7 @@ class PopupEdgePinTest extends SolimEnv {
             setTableContent(menu, 100f, 80f);
             menu.table().pack();
             menu.table().setPosition(50f, 200f);
-            menu.pinnedEdge(Popup.Edge.BOTTOM);
+            menu.props(pinnedEdge(Popup.Edge.BOTTOM));
 
             swapTableContent(menu, 100f, 160f);
             menu.table().validate();

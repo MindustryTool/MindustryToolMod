@@ -22,7 +22,6 @@ import static solim.modifier.Values.margin;
 import static solim.modifier.Values.marginLeft;
 import static solim.modifier.Values.marginTop;
 import static solim.modifier.Values.opacity;
-import static solim.modifier.Values.padding;
 import static solim.modifier.Values.style;
 import static solim.modifier.Values.text;
 import static solim.modifier.Values.tooltip;

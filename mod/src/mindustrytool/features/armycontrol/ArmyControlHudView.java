@@ -10,6 +10,7 @@ import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.rounded;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.width;
 
 import arc.scene.Element;
@@ -41,10 +42,8 @@ public class ArmyControlHudView extends Component {
 
             when(feature.hideDragHandleConfig.signal())
                     .elseDo(() -> button()
-                            .style(WebStyles.ghost())
-                            .props(size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize))
-                            .children(() -> icon(Icon.move).props(size(dragIconSize), prefWidth(dragIconSize), prefHeight(dragIconSize)))
-                            .props(draggable(feature.xSignal, feature.ySignal)));
+                            .props(style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), draggable(feature.xSignal, feature.ySignal))
+                            .children(() -> icon(Icon.move).props(size(dragIconSize), prefWidth(dragIconSize), prefHeight(dragIconSize))));
 
             column().props(width(scale.map(s -> unit(65) * (s != null ? s : 1f))), prefWidth(scale.map(s -> unit(65) * (s != null ? s : 1f))), gap(unit(2))).children(() -> {
                 new ArmyControlCompactContent(feature, scale);

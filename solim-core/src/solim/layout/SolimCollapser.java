@@ -15,6 +15,9 @@ import solim.modifier.Props;
 import solim.modifier.TableCapability;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
+import solim.reactive.Signal;
+import solim.reactive.TwoWayBinding;
+import solim.core.DisposableAction;
 import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 
@@ -41,6 +44,7 @@ public final class SolimCollapser extends Component
     private @Nullable Props<SolimCollapser> pending;
     private boolean animated = true;
     private boolean initialized = false;
+    private float duration = 0.2f;
     private float gap = 0f;
 
     public SolimCollapser() {
@@ -61,7 +65,8 @@ public final class SolimCollapser extends Component
 
         this.collapser = new Collapser(content, collapsed);
         this.collapser.name = "solim-collapser";
-        this.collapser.setDuration(0.2f);
+        this.collapser.setDuration(duration);
+        this.collapsedState = Signal.of(collapsed);
     }
 
     public Collapser collapser() {
@@ -82,27 +87,52 @@ public final class SolimCollapser extends Component
         return constraints;
     }
 
-    public SolimCollapser duration(float seconds) {
+    public void setDuration(float seconds) {
+        this.duration = seconds;
         collapser.setDuration(seconds);
-        return this;
     }
 
-    public SolimCollapser animated(boolean animated) {
-        this.animated = animated;
-        return this;
+    public float getDuration() {
+        return duration;
     }
+
+    public void setAnimated(boolean animated) {
+        this.animated = animated;
+    }
+
+    private final Signal<Boolean> collapsedState;
 
     public boolean isCollapsed() {
         return collapser.isCollapsed();
     }
 
-    public SolimCollapser collapsed(boolean collapsed) {
+    public void setCollapsed(boolean collapsed) {
         collapser.setCollapsed(collapsed, initialized && animated);
         initialized = true;
-        return this;
+        collapsedState.set(collapser.isCollapsed());
     }
 
-    public SolimCollapser collapsed(@Nullable Readable<Boolean> collapsed) {
+    public void bindCollapsedSignal(Signal<Boolean> signal) {
+        OwnershipContext.push(this);
+        try {
+            new TwoWayBinding<>(
+                    signal,
+                    this::isCollapsed,
+                    this::setCollapsed,
+                    onChange -> {
+                        Effect.of(() -> {
+                            collapsedState.get();
+                            onChange.run();
+                        });
+                        return DisposableAction.empty();
+                    }
+            );
+        } finally {
+            OwnershipContext.pop();
+        }
+    }
+
+    public void setCollapsed(@Nullable Readable<Boolean> collapsed) {
         if (collapsed != null) {
             withinOwnership(() -> Effect.of(() -> {
                 Boolean col = collapsed.get();
@@ -113,14 +143,13 @@ public final class SolimCollapser extends Component
                 }
             }));
         }
-        return this;
-    };
-
-    public SolimCollapser expanded(boolean expanded) {
-        return collapsed(!expanded);
     }
 
-    public SolimCollapser expanded(@Nullable Readable<Boolean> expanded) {
+    public void setExpanded(boolean expanded) {
+        setCollapsed(!expanded);
+    }
+
+    public void setExpanded(@Nullable Readable<Boolean> expanded) {
         if (expanded != null) {
             withinOwnership(() -> Effect.of(() -> {
                 Boolean exp = expanded.get();
@@ -131,8 +160,7 @@ public final class SolimCollapser extends Component
                 }
             }));
         }
-        return this;
-    };
+    }
 
     public SolimCollapser children(@Nullable Runnable r) {
         applyPendingProps();

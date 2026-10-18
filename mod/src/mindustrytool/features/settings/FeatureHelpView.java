@@ -1,13 +1,19 @@
 package mindustrytool.features.settings;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
+import static solim.modifier.Values.fontScale;
 import static solim.modifier.Values.grow;
 import static solim.modifier.Values.growX;
+import static solim.modifier.Values.left;
 import static solim.modifier.Values.maxWidth;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.scaling;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
+import static solim.modifier.Values.wrap;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -43,28 +49,20 @@ public class FeatureHelpView extends Component {
                                         .props(gap(10f))
                                         .children(() -> {
                                             image(feature.getMetadata().getIcon())
-                                                    .scaling(Scaling.fit)
-                                                    .props(size(32f), prefWidth(32f), prefHeight(32f));
+                                                    .props(scaling(Scaling.fit), size(32f), prefWidth(32f), prefHeight(32f));
 
                                             text(feature.getName())
-                                                    .style(Styles.defaultLabel)
-                                                    .color(Color.white)
-                                                    .left();
+                                                    .props(style(Styles.defaultLabel), color(Color.white), left());
                                         });
 
                                 if (hasDescription) {
                                     text(description)
-                                            .color(Color.lightGray)
-                                            .fontScale(0.95f)
-                                            .wrap(true)
-                                            .left();
+                                            .props(color(Color.lightGray), fontScale(0.95f), wrap(true), left());
                                     divider();
                                 }
 
                                 text(text)
-                                        .color(hasHelp ? Color.white : Color.lightGray)
-                                        .wrap(true)
-                                        .left();
+                                        .props(color(hasHelp ? Color.white : Color.lightGray), wrap(true), left());
                             });
                 })
                 .element();

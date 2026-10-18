@@ -1,5 +1,7 @@
 package solim.input;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -35,7 +37,7 @@ class ButtonDisposalTest extends OwnershipEnv {
     @Test
     void enabledBindingStopsOnDispose() {
         Signal<Boolean> enabled = Signal.of(true);
-        Button button = new Button().enabled(enabled);
+        Button button = new Button().props(enabled(enabled));
         assertFalse(button.button().isDisabled());
 
         enabled.set(false);
@@ -53,7 +55,7 @@ class ButtonDisposalTest extends OwnershipEnv {
     @Test
     void checkedBindingStopsOnDispose() {
         Signal<Boolean> checked = Signal.of(false);
-        Button button = new Button().checked(checked);
+        Button button = new Button().props(checked(checked));
         assertFalse(button.button().isChecked());
 
         checked.set(true);
@@ -71,7 +73,7 @@ class ButtonDisposalTest extends OwnershipEnv {
     @Test
     void visibleBindingStopsOnDispose() {
         Signal<Boolean> visible = Signal.of(true);
-        Button button = new Button().visible(visible);
+        Button button = new Button().props(visible(visible));
         assertTrue(button.button().visible);
 
         visible.set(false);
@@ -91,7 +93,7 @@ class ButtonDisposalTest extends OwnershipEnv {
         ButtonStyle first = new ButtonStyle();
         ButtonStyle second = new ButtonStyle();
         Signal<ButtonStyle> style = Signal.of(first);
-        Button button = new Button().style(style);
+        Button button = new Button().props(style(style));
         assertSame(first, button.button().getStyle());
 
         style.set(second);
@@ -131,7 +133,7 @@ class ButtonDisposalTest extends OwnershipEnv {
     @Test
     void colorBindingStopsOnDispose() {
         Signal<Color> color = Signal.of(Color.red);
-        Button button = new Button().color(color);
+        Button button = new Button().props(color(color));
         assertEquals(1f, button.button().color.r, 0.0001f);
 
         color.set(Color.blue);
@@ -178,7 +180,7 @@ class ButtonDisposalTest extends OwnershipEnv {
         Signal<Boolean> checked = Signal.of(false);
         Button[] target = new Button[1];
         BuildScopeHost host = new BuildScopeHost(
-                () -> target[0] = new Button().enabled(enabled).checked(checked));
+                () -> target[0] = new Button().props(enabled(enabled), checked(checked)));
         host.element();
         Button button = target[0];
 

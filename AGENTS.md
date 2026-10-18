@@ -702,14 +702,12 @@ install is owned by the component being configured and is disposed with it. This
 whether the component is already realized or still pending — a not-yet-realized host
 records the props and applies them when `element()` runs.
 
-Component-specific methods are unaffected and stay chained: `style(...)`, `color(...)`,
-`text(...)`, `icon(...)`, `onClick(...)`, `checked(...)`, `enabled(...)`, `name(...)`,
-`gap(...)` on a gap container, and every `children(...)` / `items(...)` terminal.
+Component-specific configuration methods (`style(...)`, `color(...)`, `gap(...)`, `checked(...)`, `enabled(...)`, `wrap(...)`, `fontScale(...)`, `collapsed(...)`, `controls(...)`, etc.) are removed and declared exclusively inside `.props(...)`.
+Only content-appending methods (`button().text(...)`, `button().icon(...)`), imperative/event behavior (`onClick(...)`, `onEnter(...)`, `scrollTo(...)`, `show()`, `hide()`), and structural hierarchy (`children(...)` / `items(...)` / `tab(...)`) remain fluent.
 
 ```java
 column()
-        .props(grow(), padding(unit(2)))
-        .gap(unit(2))
+        .props(grow(), padding(unit(2)), gap(unit(2)))
         .children(() -> {
             text("Title");
         });
@@ -734,8 +732,8 @@ Keep modifiers visually associated with their component.
 Use this general order:
 
 1. Create component
-2. One `props(...)` call for size, growth, spacing, alignment, visual styling and behavior
-3. Component-specific methods (`style`, `color`, `text`, `icon`, `onClick`, …)
+2. One `props(...)` call for size, growth, spacing, alignment, visual styling, state, and properties
+3. Content and event methods (`text(...)`, `icon(...)`, `onClick(...)`, …)
 4. `children()` last
 
 Example:

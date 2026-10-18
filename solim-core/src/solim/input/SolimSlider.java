@@ -115,11 +115,10 @@ public final class SolimSlider extends Component
         return this;
     }
 
-    public SolimSlider style(@Nullable Slider.SliderStyle style) {
+    public void setStyle(@Nullable Slider.SliderStyle style) {
         if (style != null) {
             slider.setStyle(style);
         }
-        return this;
     }
 
     @Override

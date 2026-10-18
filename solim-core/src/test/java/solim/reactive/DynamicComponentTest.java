@@ -1,5 +1,7 @@
 package solim.reactive;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -278,7 +280,7 @@ class DynamicComponentTest extends SolimCoreEnv {
 
         assertFalse(dyn.cellConfig().growX, "Dynamic must not growX by default");
 
-        Column col = new Column().fillParent().props(top(), right()).children(() -> {
+        Column col = new Column().props(fillParent(), top(), right()).children(() -> {
             AttachmentStack.add(dyn);
         });
 

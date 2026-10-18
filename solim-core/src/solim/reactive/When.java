@@ -3,7 +3,6 @@ package solim.reactive;
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
-import arc.util.Align;
 import arc.util.Nullable;
 import java.util.Objects;
 import solim.core.Component;

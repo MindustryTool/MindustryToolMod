@@ -1,5 +1,7 @@
 package solim.display;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import arc.Core;
@@ -48,7 +50,7 @@ class BadgeTest extends SolimEnv {
         assertTrue(badge.element().visible);
         assertEquals("10", badge.text().label().getText().toString());
 
-        badge.hideOnZero(false);
+        badge.props(hideOnZero(false));
         unread.set(0);
         assertTrue(badge.element().visible);
 
@@ -58,8 +60,7 @@ class BadgeTest extends SolimEnv {
     @Test
     void customColorModifiers() {
         Badge badge = new Badge("TAG")
-                .color(Color.royal)
-                .textColor(Color.white);
+                .props(color(Color.royal), textColor(Color.white));
 
         assertEquals(Color.royal, badge.table().color);
         badge.dispose();

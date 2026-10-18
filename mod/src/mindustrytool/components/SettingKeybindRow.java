@@ -1,12 +1,16 @@
 package mindustrytool.components;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
+import static solim.modifier.Values.enabled;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
+import static solim.modifier.Values.left;
 import static solim.modifier.Values.paddingX;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
 import static solim.modifier.Values.visible;
 
@@ -68,40 +72,46 @@ public class SettingKeybindRow extends Component {
                             .props(growX(), gap(unit(0.5f)), left())
                             .children(() -> {
                                 text(resolveBindName())
-                                        .color(Color.white)
-                                        .left();
+                                        .props(color(Color.white), left());
 
                                 text(Core.bundle.get("keybind.listening.help",
                                         "Press Esc to cancel, Backspace to clear"))
-                                        .color(WebStyles.Colors.GHOST_FG)
-                                        .left()
-                                        .props(visible(listening));
+                                        .props(color(WebStyles.Colors.GHOST_FG), left(), visible(listening));
                             });
 
                     spacer();
 
                     button()
-                            .style(listening.map(l -> Boolean.TRUE.equals(l)
-                                    ? WebStyles.keybindListening().style()
-                                    : WebStyles.keybindChip().style()))
-                            .props(height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)))
+                            .props(
+                                    style(listening.map(l -> Boolean.TRUE.equals(l)
+                                            ? WebStyles.keybindListening().style()
+                                            : WebStyles.keybindChip().style())),
+                                    height(unit(8)),
+                                    prefHeight(unit(8)),
+                                    paddingX(unit(2.5f)))
                             .onClick(this::toggleListening)
-                            .children(() -> text(keyText).color(keyTextColor));
+                            .children(() -> text(keyText).props(color(keyTextColor)));
 
                     button()
-                            .style(WebStyles.ghost())
-                            .props(size(unit(8)), prefWidth(unit(8)), prefHeight(unit(8)))
-                            .enabled(keybind.keySignal().map(k -> !keybind.isDefault()))
-                            .props(tooltip(Core.bundle.get("keybind.button.reset", "Reset to default")))
+                            .props(
+                                    style(WebStyles.ghost()),
+                                    size(unit(8)),
+                                    prefWidth(unit(8)),
+                                    prefHeight(unit(8)),
+                                    enabled(keybind.keySignal().map(k -> !keybind.isDefault())),
+                                    tooltip(Core.bundle.get("keybind.button.reset", "Reset to default")))
                             .onClick(() -> {
                                 cancelListening();
                                 Core.app.post(keybind::resetToDefault);
                             })
                             .children(() -> icon(Icon.refresh)
-                                    .props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)))
-                                    .color(keybind.keySignal().map(k -> keybind.isDefault()
-                                            ? WebStyles.Colors.DISABLED_FG
-                                            : WebStyles.Colors.GHOST_FG)));
+                                    .props(
+                                            size(unit(5)),
+                                            prefWidth(unit(5)),
+                                            prefHeight(unit(5)),
+                                            color(keybind.keySignal().map(k -> keybind.isDefault()
+                                                    ? WebStyles.Colors.DISABLED_FG
+                                                    : WebStyles.Colors.GHOST_FG))));
                 })
                 .element();
     }

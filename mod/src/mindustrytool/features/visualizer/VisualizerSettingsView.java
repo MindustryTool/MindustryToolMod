@@ -1,12 +1,17 @@
 package mindustrytool.features.visualizer;
 
 import static solim.UI.*;
+import static solim.modifier.Values.checked;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
+import static solim.modifier.Values.left;
+import static solim.modifier.Values.margin;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
 
 import arc.Core;
@@ -80,7 +85,7 @@ public class VisualizerSettingsView extends Component {
                     checkbox(Core.bundle.get("feature.visualizer.settings.hide-idle-bridge-flow", "Hide When Idle"),
                             feature.hideIdleBridgeFlowConfig.signal()).props(growX());
 
-                    divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
                     SettingSlider.of(
                             Core.bundle.get("feature.visualizer.settings.bridge-opacity", "Bridge Opacity"),
@@ -132,7 +137,7 @@ public class VisualizerSettingsView extends Component {
                     checkbox(Core.bundle.get("feature.visualizer.settings.only-when-shooting", "Only When Shooting"),
                             feature.onlyWhenShootingConfig.signal()).props(growX());
 
-                    divider().color(WebStyles.Colors.SECTION_BORDER);
+                    divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
                     SettingSlider.of(
                             Core.bundle.get("feature.visualizer.settings.target-line-opacity", "Target Line Opacity"),
@@ -157,22 +162,18 @@ public class VisualizerSettingsView extends Component {
     private Component turretFilterCard() {
         return SettingCard.card().children(() -> {
             row().props(growX(), gap(unit(2)), center()).children(() -> {
-                icon(Icon.filter).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))).color(Pal.accent);
+                icon(Icon.filter).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)), color(Pal.accent));
                 text(Core.bundle.get("feature.visualizer.settings.turret-filter", "Turret Filter"))
-                        .color(Pal.accent)
-                        .growX()
-                        .left();
+                        .props(color(Pal.accent), growX(), left());
 
                 row().props(gap(unit(1))).children(() -> {
                     button(Core.bundle.get("feature.visualizer.settings.all", "All"),
                             () -> feature.setAllTurretsEnabled(true))
-                            .style(WebStyles.outlineText())
-                            .props(height(unit(8)), prefHeight(unit(8)), padding(unit(1), unit(2.5f), unit(1), unit(2.5f)));
+                            .props(style(WebStyles.outlineText()), height(unit(8)), prefHeight(unit(8)), padding(unit(1), unit(2.5f), unit(1), unit(2.5f)));
 
                     button(Core.bundle.get("feature.visualizer.settings.none", "None"),
                             () -> feature.setAllTurretsEnabled(false))
-                            .style(WebStyles.ghostText())
-                            .props(height(unit(8)), prefHeight(unit(8)), padding(unit(1), unit(2.5f), unit(1), unit(2.5f)));
+                            .props(style(WebStyles.ghostText()), height(unit(8)), prefHeight(unit(8)), padding(unit(1), unit(2.5f), unit(1), unit(2.5f)));
                 });
             });
 
@@ -180,13 +181,11 @@ public class VisualizerSettingsView extends Component {
                 row().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                     button(Core.bundle.get("feature.visualizer.settings.filter.all", "All"),
                             () -> turretActiveOnMapOnly.set(false))
-                            .style(WebStyles.filterChipText())
-                            .checked(turretActiveOnMapOnly.map(active -> !Boolean.TRUE.equals(active)));
+                            .props(style(WebStyles.filterChipText()), checked(turretActiveOnMapOnly.map(active -> !Boolean.TRUE.equals(active))));
 
                     button(Core.bundle.get("feature.visualizer.settings.filter.active-on-map", "Active on Map"),
                             () -> turretActiveOnMapOnly.set(true))
-                            .style(WebStyles.filterChipText())
-                            .checked(turretActiveOnMapOnly.map(active -> Boolean.TRUE.equals(active)));
+                            .props(style(WebStyles.filterChipText()), checked(turretActiveOnMapOnly.map(active -> Boolean.TRUE.equals(active))));
                 });
             }
 
@@ -194,8 +193,7 @@ public class VisualizerSettingsView extends Component {
                 Seq<Block> blocks = getFilteredTurretBlocks(Boolean.TRUE.equals(activeOnly));
                 if (blocks.isEmpty()) {
                     text(Core.bundle.get("feature.range-display.settings.filter.empty-map", "No blocks on current map"))
-                            .color(WebStyles.Colors.GHOST_FG)
-                            .padding(unit(2));
+                            .props(color(WebStyles.Colors.GHOST_FG), margin(unit(2)));
                 } else {
                     wrap().props(growX(), left(), gap(unit(1.5f))).children(() -> {
                         for (Block block : blocks) {
@@ -242,8 +240,7 @@ public class VisualizerSettingsView extends Component {
         return SettingCard.card().children(() -> {
             button(Core.bundle.get("feature.visualizer.settings.reset", "Reset to Defaults"),
                     feature::resetToDefaults)
-                    .style(WebStyles.outlineText())
-                    .props(height(unit(11)), prefHeight(unit(11)), growX());
+                    .props(style(WebStyles.outlineText()), height(unit(11)), prefHeight(unit(11)), growX());
         });
     }
 
@@ -253,15 +250,12 @@ public class VisualizerSettingsView extends Component {
         Drawable drawable = region != null ? new TextureRegionDrawable(region) : Tex.clear;
 
         button()
-                .style(WebStyles.filterChip())
-                .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), padding(unit(1)), tooltip(block.localizedName))
-                .checked(signal)
+                .props(style(WebStyles.filterChip()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), padding(unit(1)), tooltip(block.localizedName), checked(signal))
                 .onClick(() -> feature.setTurretEnabled(block, !feature.isTurretEnabled(block)))
                 .children(() -> {
                     icon(drawable)
-                            .props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)))
-                            .color(signal.map(enabled -> Boolean.TRUE.equals(enabled) ? Color.white
-                                    : new Color(1f, 1f, 1f, 0.35f)));
+                            .props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(signal.map(enabled -> Boolean.TRUE.equals(enabled) ? Color.white
+                                    : new Color(1f, 1f, 1f, 0.35f))));
                 });
     }
 }

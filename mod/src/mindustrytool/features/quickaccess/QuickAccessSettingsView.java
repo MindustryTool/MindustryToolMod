@@ -9,6 +9,8 @@ import static solim.modifier.Values.padding;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
+import static solim.modifier.Values.scrollX;
 import static solim.modifier.Values.tooltip;
 
 import arc.Core;
@@ -35,7 +37,7 @@ public class QuickAccessSettingsView extends Component {
     protected Element build() {
 
         return column().props(grow(), maxWidth(750f), top(), center()).children(() -> {
-            scroll().props(grow()).scrollX(false).children(() -> {
+            scroll().props(grow(), scrollX(false)).children(() -> {
                 column().props(growX(), padding(unit(2)), top(), center(), gap(unit(3))).children(() -> {
                     headerCard();
                     appearanceCard();
@@ -95,8 +97,7 @@ public class QuickAccessSettingsView extends Component {
         return SettingCard.card().children(() -> {
             button(Core.bundle.get("feature.quick-access.settings.reset-position"),
                     feature::resetPosition)
-                    .style(WebStyles.outlineText())
-                    .props(height(unit(11)), prefHeight(unit(11)), growX());
+                    .props(style(WebStyles.outlineText()), height(unit(11)), prefHeight(unit(11)), growX());
         });
     }
 
@@ -121,15 +122,25 @@ public class QuickAccessSettingsView extends Component {
                         .props(growX());
 
                 button(() -> feature.moveUp(id))
-                        .style(WebStyles.ghost())
-                        .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.quick-access.settings.move-up")))
-                        .disabled(() -> !canMoveUp.peek())
+                        .props(
+                                style(WebStyles.ghost()),
+                                size(unit(11)),
+                                prefWidth(unit(11)),
+                                prefHeight(unit(11)),
+                                tooltip(Core.bundle.get("feature.quick-access.settings.move-up")),
+                                solim.modifier.Values.disabled(canMoveUp.map(can -> !can))
+                        )
                         .children(() -> icon(FileIcon.of("chevron-up.png")).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
 
                 button(() -> feature.moveDown(id))
-                        .style(WebStyles.ghost())
-                        .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.quick-access.settings.move-down")))
-                        .disabled(() -> !canMoveDown.peek())
+                        .props(
+                                style(WebStyles.ghost()),
+                                size(unit(11)),
+                                prefWidth(unit(11)),
+                                prefHeight(unit(11)),
+                                tooltip(Core.bundle.get("feature.quick-access.settings.move-down")),
+                                solim.modifier.Values.disabled(canMoveDown.map(can -> !can))
+                        )
                         .children(() -> icon(FileIcon.of("chevron-down.png")).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
             }).element();
         }

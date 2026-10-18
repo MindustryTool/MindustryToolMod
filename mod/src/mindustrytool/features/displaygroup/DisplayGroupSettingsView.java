@@ -6,6 +6,7 @@ import static solim.modifier.Values.height;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
 import static solim.modifier.Values.tooltip;
 
 import arc.Core;
@@ -70,8 +71,7 @@ public class DisplayGroupSettingsView extends Component {
         return SettingCard.card().children(() -> {
             button(Core.bundle.get("feature.display-group.settings.reset-defaults"),
                     feature::resetToDefaults)
-                            .style(WebStyles.outlineText())
-                            .props(height(unit(11)), prefHeight(unit(11)), growX());
+                            .props(style(WebStyles.outlineText()), height(unit(11)), prefHeight(unit(11)), growX());
         });
     }
 
@@ -96,15 +96,25 @@ public class DisplayGroupSettingsView extends Component {
                                 .props(growX());
 
                 button(() -> feature.moveUp(id))
-                        .style(WebStyles.ghost())
-                        .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.quick-access.settings.move-up")))
-                        .disabled(() -> !canMoveUp.peek())
+                        .props(
+                                style(WebStyles.ghost()),
+                                size(unit(11)),
+                                prefWidth(unit(11)),
+                                prefHeight(unit(11)),
+                                tooltip(Core.bundle.get("feature.quick-access.settings.move-up")),
+                                solim.modifier.Values.disabled(canMoveUp.map(can -> !can))
+                        )
                         .children(() -> icon(FileIcon.of("chevron-up.png")).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
 
                 button(() -> feature.moveDown(id))
-                        .style(WebStyles.ghost())
-                        .props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.quick-access.settings.move-down")))
-                        .disabled(() -> !canMoveDown.peek())
+                        .props(
+                                style(WebStyles.ghost()),
+                                size(unit(11)),
+                                prefWidth(unit(11)),
+                                prefHeight(unit(11)),
+                                tooltip(Core.bundle.get("feature.quick-access.settings.move-down")),
+                                solim.modifier.Values.disabled(canMoveDown.map(can -> !can))
+                        )
                         .children(() -> icon(FileIcon.of("chevron-down.png")).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
             }).element();
         }

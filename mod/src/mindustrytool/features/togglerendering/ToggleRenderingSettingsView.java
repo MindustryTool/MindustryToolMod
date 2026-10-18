@@ -1,9 +1,13 @@
 package mindustrytool.features.togglerendering;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
+import static solim.modifier.Values.left;
 import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.style;
+import static solim.modifier.Values.wrap;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -47,47 +51,35 @@ public class ToggleRenderingSettingsView extends Component {
             row().props(growX(), gap(unit(2)), center()).children(() -> {
                 column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                     text(Core.bundle.get("feature.toggle-rendering.settings.draw-units-allies"))
-                            .color(Color.white)
-                            .left();
+                            .props(color(Color.white), left());
                     text(Core.bundle.get("feature.toggle-rendering.settings.draw-units-allies.desc"))
-                            .color(WebStyles.Colors.GHOST_FG)
-                            .left()
-                            .wrap()
-                            .growX();
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), wrap(), growX());
                 });
                 spacer();
                 checkbox("", feature.drawUnitsAlliesConfig.signal());
             });
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
             row().props(growX(), gap(unit(2)), center()).children(() -> {
                 column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                     text(Core.bundle.get("feature.toggle-rendering.settings.draw-units-enemies"))
-                            .color(Color.white)
-                            .left();
+                            .props(color(Color.white), left());
                     text(Core.bundle.get("feature.toggle-rendering.settings.draw-units-enemies.desc"))
-                            .color(WebStyles.Colors.GHOST_FG)
-                            .left()
-                            .wrap()
-                            .growX();
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), wrap(), growX());
                 });
                 spacer();
                 checkbox("", feature.drawUnitsEnemiesConfig.signal());
             });
 
-            divider().color(WebStyles.Colors.SECTION_BORDER);
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
             row().props(growX(), gap(unit(2)), center()).children(() -> {
                 column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                     text(Core.bundle.get("feature.toggle-rendering.settings.draw-blocks"))
-                            .color(Color.white)
-                            .left();
+                            .props(color(Color.white), left());
                     text(Core.bundle.get("feature.toggle-rendering.settings.draw-blocks.desc"))
-                            .color(WebStyles.Colors.GHOST_FG)
-                            .left()
-                            .wrap()
-                            .growX();
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), wrap(), growX());
                 });
                 spacer();
                 checkbox("", feature.drawBlocksConfig.signal());
@@ -99,8 +91,7 @@ public class ToggleRenderingSettingsView extends Component {
         return SettingCard.card().children(() -> {
             button(Core.bundle.get("feature.toggle-rendering.settings.reset"),
                     feature::resetToDefaults)
-                    .style(WebStyles.outlineText())
-                    .props(height(unit(11)), prefHeight(unit(11)), growX());
+                    .props(style(WebStyles.outlineText()), height(unit(11)), prefHeight(unit(11)), growX());
         });
     }
 }

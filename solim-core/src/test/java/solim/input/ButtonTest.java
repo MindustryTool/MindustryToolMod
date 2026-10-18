@@ -1,5 +1,7 @@
 package solim.input;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static solim.modifier.Values.height;
 import static solim.modifier.Values.prefHeight;
@@ -61,7 +63,7 @@ class ButtonTest extends SolimEnv {
 		Signal<Boolean> enabled = Signal.of(true);
 		Signal<Boolean> visible = Signal.of(true);
 
-		Button btn = new Button().enabled(enabled).visible(visible);
+		Button btn = new Button().props(enabled(enabled), visible(visible));
 
 		assertFalse(btn.button().isDisabled());
 		assertTrue(btn.button().visible);

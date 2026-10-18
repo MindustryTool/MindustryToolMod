@@ -7,6 +7,9 @@ import static solim.modifier.Values.padding;
 import static solim.modifier.Values.prefHeight;
 import static solim.modifier.Values.prefWidth;
 import static solim.modifier.Values.size;
+import static solim.modifier.Values.style;
+import static solim.modifier.Values.checked;
+import static solim.modifier.Values.color;
 
 import arc.Core;
 import mindustry.gen.Tex;
@@ -31,17 +34,15 @@ public class TeamResourceAllTeamsDialog extends SolimDialog {
                             .key(t -> String.valueOf(t.id))
                             .props(gap(unit(1.5f)))
                             .items(team -> button()
-                                    .style(WebStyles.filterChip())
-                                    .checked(state.selectedTeamSignal.map(sel -> sel == team))
+                                    .props(style(WebStyles.filterChip()), checked(state.selectedTeamSignal.map(sel -> sel == team)), growX())
                                     .onClick(() -> {
                                         state.setSelectedTeam(team);
                                         hide();
                                     })
-                                    .props(growX())
                                     .children(() -> {
                                         row().props(left(), gap(unit(1.5f)), padding(unit(1))).children(() -> {
-                                            image(Tex.whiteui).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4))).color(team.color);
-                                            text(team.localized()).color(team.color);
+                                            image(Tex.whiteui).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)), color(team.color));
+                                            text(team.localized()).props(color(team.color));
                                         });
                                     }));
                 });

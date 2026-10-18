@@ -1,11 +1,15 @@
 package mindustrytool.features.browser.map;
 
 import static solim.UI.*;
+import static solim.modifier.Values.color;
+import static solim.modifier.Values.fillParent;
 import static solim.modifier.Values.grow;
 import static solim.modifier.Values.growX;
 import static solim.modifier.Values.height;
+import static solim.modifier.Values.origin;
 import static solim.modifier.Values.padding;
 import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -35,7 +39,7 @@ public class MapDetailDialog extends SolimDialog {
 
         addCloseButton();
         closeOnBack();
-        fillParent(true);
+        props(fillParent(true));
         children(() -> new DetailContent(detail, itemId));
         actionButton(Core.bundle.get("browser.detail.open-online"), Icon.link,
                 () -> Core.app.openURI(Config.WEB_URL + "/maps/" + itemId));
@@ -91,23 +95,27 @@ public class MapDetailDialog extends SolimDialog {
         private void previewImagePortrait() {
             row().props(grow()).children(() -> {
                 networkImage(BrowserImages.mapImageUrl(itemId))
-                        .placeholder(Icon.terrain)
-                        .origin(Align.top | Align.left)
-                        .fallback(Icon.terrain)
-                        .props(growX())
-                        .rounded(8)
-                        .scaling(Scaling.fit);
+                        .props(
+                                origin(Align.top | Align.left),
+                                growX(),
+                                solim.modifier.Values.placeholder(Icon.terrain),
+                                solim.modifier.Values.fallback(Icon.terrain),
+                                solim.modifier.Values.imageRounded(8),
+                                solim.modifier.Values.scaling(Scaling.fit)
+                        );
             });
         }
 
         private void previewImageLandscape() {
             row().props(grow()).children(() -> {
                 networkImage(BrowserImages.mapImageUrl(itemId))
-                        .placeholder(Icon.terrain)
-                        .origin(Align.top)
-                        .fallback(Icon.terrain)
-                        .props(growX())
-                        .scaling(Scaling.fit);
+                        .props(
+                                origin(Align.top),
+                                growX(),
+                                solim.modifier.Values.placeholder(Icon.terrain),
+                                solim.modifier.Values.fallback(Icon.terrain),
+                                solim.modifier.Values.scaling(Scaling.fit)
+                        );
             });
         }
 
@@ -115,23 +123,23 @@ public class MapDetailDialog extends SolimDialog {
             column().props(growX(), gap(unit(2))).children(() -> {
                 card(WebStyles.previewCardBackground()).props(padding(unit(4)), growX(), gap(unit(2))).children(() -> {
                     row().props(growX(), gap(unit(2))).children(() -> {
-                        text(Core.bundle.get("browser.detail.author")).color(Color.lightGray).fontScale(1.2f);
+                        text(Core.bundle.get("browser.detail.author")).props(color(Color.lightGray), solim.modifier.Values.fontScale(1.2f));
                         if (authorQuery != null) {
                             query(authorQuery)
                                     .props(growX())
-                                    .loading(() -> text(authorId != null ? authorId : "").color(Color.white)
-                                            .fontScale(1.2f))
-                                    .error(err -> text(authorId != null ? authorId : "").color(Color.white)
-                                            .fontScale(1.2f))
-                                    .data(name -> text(name).color(Color.white).fontScale(1.2f));
+                                    .loading(() -> text(authorId != null ? authorId : "")
+                                            .props(color(Color.white), solim.modifier.Values.fontScale(1.2f)))
+                                    .error(err -> text(authorId != null ? authorId : "")
+                                            .props(color(Color.white), solim.modifier.Values.fontScale(1.2f)))
+                                    .data(name -> text(name).props(color(Color.white), solim.modifier.Values.fontScale(1.2f)));
                         } else {
-                            text(authorId != null ? authorId : "").color(Color.white).fontScale(1.2f);
+                            text(authorId != null ? authorId : "").props(color(Color.white), solim.modifier.Values.fontScale(1.2f));
                         }
                     });
 
                     row().props(growX(), gap(unit(2))).children(() -> {
-                        text(Core.bundle.get("browser.detail.dimensions")).color(Color.lightGray);
-                        text(detail.getWidth() + "x" + detail.getHeight()).color(Color.white);
+                        text(Core.bundle.get("browser.detail.dimensions")).props(color(Color.lightGray));
+                        text(detail.getWidth() + "x" + detail.getHeight()).props(color(Color.white));
                     });
                 });
 
@@ -146,7 +154,7 @@ public class MapDetailDialog extends SolimDialog {
 
                 if (detail.getDescription() != null && !detail.getDescription().isEmpty()) {
                     card(WebStyles.previewCardBackground()).props(padding(unit(4)), growX(), gap(unit(2))).children(() -> {
-                        text(detail.getDescription()).color(Color.lightGray).wrap(true).left().growX();
+                        text(detail.getDescription()).props(color(Color.lightGray), solim.modifier.Values.wrap(true), solim.modifier.Values.left(), growX());
                     });
                 }
 
@@ -155,13 +163,11 @@ public class MapDetailDialog extends SolimDialog {
                 row().props(growX(), gap(unit(2))).children(() -> {
                     button(Core.bundle.get("browser.map.download"),
                             () -> MapActions.downloadAndImport(itemId))
-                            .style(WebStyles.primary())
-                            .props(growX(), height(unit(11)), prefHeight(unit(11)));
+                            .props(style(WebStyles.primary()), growX(), height(unit(11)), prefHeight(unit(11)));
 
                     button(Core.bundle.get("browser.map.play"),
                             () -> MapActions.playMap(itemId))
-                            .style(WebStyles.primary())
-                            .props(growX(), height(unit(11)), prefHeight(unit(11)));
+                            .props(style(WebStyles.primary()), growX(), height(unit(11)), prefHeight(unit(11)));
                 });
             });
         }
