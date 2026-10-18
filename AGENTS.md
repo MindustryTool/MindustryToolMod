@@ -228,6 +228,71 @@ Always verify Java 8 runtime compatibility before finishing.
 
 ---
 
+# Performance & Memory Discipline — Mandatory
+
+This mod runs inside Mindustry, frequently on Android under a software GL backend. Per-frame dispatch and per-frame allocation are the dominant costs, and both accumulate silently across ~20 features. These rules apply to every feature in `mod/`.
+
+## Disabled features perform no work
+
+A disabled feature SHALL NOT consume frame-loop time for its own purposes. Any handler registered on a per-frame trigger (`Trigger.update`, `Trigger.draw`, `Trigger.uiDrawBegin`, `Trigger.postDraw`) SHALL return immediately when `isEnabled()` is false, and that guard SHALL be the first statement in the handler body, before any field read.
+
+The same applies to listeners on events that fire while a feature is disabled: gate on `isEnabled()` at the top of the listener body.
+
+## Listener and timer ownership
+
+Every registration of a global event listener (`Events.on`, `Events.run`, `Events.add`) or timer (`Timer.schedule`) SHALL have exactly one declared owner and SHALL be released by that owner's teardown. Choose the owner by the object's lifetime:
+
+| Object lifetime | Owner | Registration | Release |
+| --- | --- | --- | --- |
+| Created once per process (e.g. from `Main.init()`) | The object itself | Constructor | Not required; the handler must still gate on `isEnabled()` |
+| Created per feature enable/disable | The feature | `onEnable()` | `onDisable()` |
+| Solim `Component` | The component | `Component.listen(...)` | Automatic on dispose |
+
+Constructor-time registration is permitted **only** when the object is created exactly once per process lifetime and never re-registered. Re-registering on every construction (for example, inside a dialog that is recreated per show) is a leak.
+
+`Events.run(Trigger.update, ...)` wraps the runnable in a lambda, so its registration can never be removed through `Events.remove`. Treat `Trigger` listeners as process-lifetime only, and prefer `Events.on(Class, Cons)` when the listener must be removed later.
+
+## Bounded collections
+
+Long-lived in-memory collections SHALL be bounded. This includes caches, message stores, and image caches. Prefer Java 8 `LinkedHashMap` with `removeEldestEntry` in access order, or an equivalent bounded structure. Do not remove a cache that exists to avoid per-frame allocation; bound it instead.
+
+Caches holding GL textures or other native resources SHALL drop the Java-side reference on eviction and SHALL NOT dispose the underlying resource, to avoid disposing something Arc may still be drawing.
+
+## Zero-allocation frame loops
+
+Code that executes on a per-frame trigger SHALL NOT allocate heap memory during steady-state execution. Specifically, it SHALL NOT:
+
+* Box primitives (`Integer`, `Float`, `Long`, …) — use primitive locals and return types.
+* Create lambdas, anonymous classes, or closures.
+* Concatenate strings.
+* Call `Core.bundle.get(...)` or other dictionary lookups whose result does not change between frames.
+* Perform reflection or `removeAll` scans per frame.
+* Allocate scratch objects; reuse pre-allocated fields instead.
+
+The existing `RenderLoopAllocationTest` asserts zero heap allocation for `VisualizerFeature`, `RangeDisplayFeature`, and `HealthBarFeature` via `ThreadMXBean.getThreadAllocatedBytes`. It is the standard for any feature that draws every frame.
+
+## HUD mount/unmount lifecycle
+
+HUD elements mounted in `onEnable()` SHALL be added to `Vars.ui.hudGroup` (or the appropriate group) and removed and disposed in `onDisable()`. A HUD view created with `Core.app.post(...)` SHALL guard against a null owning feature and null groups, and SHALL be disposed when the feature is disabled.
+
+## Known Debt
+
+The `perf-guideline-for-ai-agents` change records current outstanding violations with file:line references in its `Known Debt` table. New code SHALL NOT introduce new violations; the recorded count should only decrease.
+
+| ID | Site | Class | In this change? |
+| --- | --- | --- | --- |
+| D7 | ~68 constructor-registered listeners across `mod/` | Dispatch continues while disabled | Deferred |
+| D8 | `features/camerazoom/CameraZoomFeature.java:116-117` | Boxing ×2 + settings read per frame | Fixed |
+| D9 | `features/blockstats/BlockStatsDisplayFeature.java:276-278` | Boxing ×3 per frame | Deferred |
+| D10 | `features/togglerendering/ToggleRenderingFeature.java:127` | Lambda capture + reflection per frame | Deferred |
+| D11 | `features/autoplay/AutoplayFeature.java:483` | String concat per frame | Deferred |
+| D12 | `features/freecamera/FreeCameraFeature.java:120` | `Core.bundle.get` per frame | Deferred |
+| D13 | `features/music/MusicFeature.java:87-101` | Frame work with no `isEnabled()` guard | Deferred |
+| D14 | `features/logicvisualizer/LogicVisualizerFeature.java:104` | Iterates all units, no frustum culling | Deferred |
+| D15 | `features/chat/state/ChatMessages.messages`, `ChatUsers.users` | Grow without trim | Deferred |
+
+---
+
 # Nullability — Mandatory
 
 By default, values are non-nullable.
@@ -1184,5 +1249,13 @@ Verify:
 * [ ] Bindings and resources are automatically owned and disposed.
 * [ ] Structural changes use targeted reconciliation instead of unnecessary full rebuilds.
 * [ ] If Mindustry was started to test UI, it has been stopped using the MCP `stop` tool.
+
+### Performance & Memory
+
+* [ ] Disabled features perform no frame-loop work (guard on `isEnabled()` is the first statement).
+* [ ] Every new listener or timer has a single owner and is released on teardown (or gates on `isEnabled()` for process-lifetime objects).
+* [ ] Long-lived collections are bounded.
+* [ ] Frame-loop code allocates no heap (primitives, reused scratch, no string concat, no bundle lookups).
+* [ ] HUD elements mounted in `onEnable()` are removed and disposed in `onDisable()`.
 
 **A UI or player-facing feature is not complete until its user-visible text is properly translated and its UI follows the Solim architecture.**

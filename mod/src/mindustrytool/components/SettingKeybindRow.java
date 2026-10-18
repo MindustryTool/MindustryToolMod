@@ -3,26 +3,24 @@ package mindustrytool.components;
 import static solim.UI.*;
 
 import arc.Core;
-import arc.Events;
 import arc.graphics.Color;
 import arc.input.KeyCode;
 import arc.scene.Element;
-import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
 import mindustrytool.features.FeatureKeybind;
+import mindustrytool.features.FeatureKeybindManager;
 import solim.core.Component;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
 public class SettingKeybindRow extends Component {
-    private static volatile boolean anyListening = false;
 
     private final FeatureKeybind keybind;
     private final Signal<Boolean> listening = Signal.of(false);
     private boolean listeningActive = false;
 
     public static boolean isAnyListening() {
-        return anyListening;
+        return FeatureKeybindManager.isCapturing();
     }
 
     public SettingKeybindRow(FeatureKeybind keybind) {
@@ -117,9 +115,8 @@ public class SettingKeybindRow extends Component {
             return;
         }
         listeningActive = true;
-        anyListening = true;
+        FeatureKeybindManager.beginCapture(this);
         listening.set(true);
-        Events.run(Trigger.update, this::onUpdate);
     }
 
     public void cancelListening() {
@@ -127,7 +124,7 @@ public class SettingKeybindRow extends Component {
             return;
         }
         listeningActive = false;
-        anyListening = false;
+        FeatureKeybindManager.endCapture(this);
         listening.set(false);
     }
 
@@ -147,18 +144,6 @@ public class SettingKeybindRow extends Component {
         }
         cancelListening();
         keybind.rebind(code);
-    }
-
-    private void onUpdate() {
-        if (!listeningActive) {
-            return;
-        }
-        for (KeyCode key : KeyCode.all) {
-            if (Core.input.keyTap(key)) {
-                handleInput(key);
-                break;
-            }
-        }
     }
 
     @Override

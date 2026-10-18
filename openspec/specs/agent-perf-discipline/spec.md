@@ -4,9 +4,7 @@
 
 Defines the behavioral constraints an AI agent must satisfy when authoring or modifying a feature in the `mod` module: lifecycle gating for disabled features, ownership of global event listeners and timers, zero-allocation frame loops, and bounded long-lived collections. These constraints exist because the mod targets Android under Mindustry's software renderer, where per-frame dispatch and per-frame allocation are both expensive, and because unbounded caches in this codebase retain GL textures for the process lifetime.
 
-TBD - created by archiving change perf-guideline-for-ai-agents. Update Purpose after archive.
-
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Disabled features perform no work
 

@@ -7,8 +7,9 @@ import arc.scene.ui.layout.Scl;
 import arc.util.Align;
 import arc.util.Nullable;
 import arc.util.pooling.Pools;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import mindustry.ui.Fonts;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.chat.models.MessageGroup;
@@ -40,7 +41,15 @@ public final class ChatMessageHeightCalculator {
     public static final float HEADER_GAP = 2f;
     public static final float FONT_SCALE = 1.0f;
 
-    private static final Map<String, Float> HEIGHT_CACHE = new ConcurrentHashMap<>();
+    static final int MAX_CACHE_ENTRIES = 4096;
+
+    private static final Map<String, Float> HEIGHT_CACHE = Collections.synchronizedMap(
+            new LinkedHashMap<String, Float>(16, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, Float> eldest) {
+                    return size() > MAX_CACHE_ENTRIES;
+                }
+            });
 
     private ChatMessageHeightCalculator() {
     }
@@ -174,5 +183,9 @@ public final class ChatMessageHeightCalculator {
 
     public static void clearCache() {
         HEIGHT_CACHE.clear();
+    }
+
+    static int cacheSize() {
+        return HEIGHT_CACHE.size();
     }
 }

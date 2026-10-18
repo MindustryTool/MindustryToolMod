@@ -9,14 +9,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import arc.Events;
 import arc.func.Boolf;
+import arc.func.Cons;
 import arc.input.KeyBind;
 import arc.input.KeyCode;
 import arc.scene.Element;
 import arc.scene.Group;
 import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.Label;
+import arc.struct.ObjectMap;
 import arc.struct.Seq;
+import arc.util.Reflect;
+import mindustry.game.EventType.Trigger;
 import mindustry.gen.Icon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureKeybind;
@@ -173,5 +178,35 @@ class SettingKeybindComponentTest extends MindustryTestEnv {
         assertFalse(SettingKeybindRow.isAnyListening());
 
         row.dispose();
+    }
+
+    @Test
+    void startStopCycles_leaveNoAdditionalFrameHandlers() {
+        KeyBind bind = KeyBind.add("test.leak.bind", KeyCode.l, "MindustryTool");
+        FeatureKeybind featureKeybind = new FeatureKeybind(bind, () -> {
+        }, false);
+        SettingKeybindRow row = new SettingKeybindRow(featureKeybind);
+
+        int before = liveUpdateHandlerCount();
+        for (int i = 0; i < 32; i++) {
+            row.startListening();
+            row.cancelListening();
+        }
+
+        assertEquals(before, liveUpdateHandlerCount(), "Start/stop cycles must not accumulate frame handlers");
+
+        SettingKeybindRow released = new SettingKeybindRow(featureKeybind);
+        released.startListening();
+        released.dispose();
+
+        assertEquals(before, liveUpdateHandlerCount(), "A released row must not keep a frame handler alive");
+        row.dispose();
+    }
+
+    // arc.Events keeps its listener table private and exposes no size, so counting requires reading it directly.
+    private static int liveUpdateHandlerCount() {
+        ObjectMap<Object, Seq<Cons<?>>> handlers = Reflect.get(Events.class, "events");
+        Seq<Cons<?>> updateHandlers = handlers.get(Trigger.update);
+        return updateHandlers != null ? updateHandlers.size : 0;
     }
 }

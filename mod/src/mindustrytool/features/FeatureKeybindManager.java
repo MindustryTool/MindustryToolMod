@@ -2,11 +2,14 @@ package mindustrytool.features;
 
 import arc.Core;
 import arc.Events;
+import arc.input.KeyCode;
+import arc.util.Nullable;
 import mindustry.game.EventType.Trigger;
 import mindustrytool.components.SettingKeybindRow;
 
 public final class FeatureKeybindManager {
     private static boolean initialized = false;
+    private static volatile @Nullable SettingKeybindRow captureTarget;
 
     private FeatureKeybindManager() {
     }
@@ -19,8 +22,27 @@ public final class FeatureKeybindManager {
         Events.run(Trigger.update, FeatureKeybindManager::update);
     }
 
+    public static void beginCapture(SettingKeybindRow row) {
+        captureTarget = row;
+    }
+
+    public static void endCapture(SettingKeybindRow row) {
+        if (captureTarget == row) {
+            captureTarget = null;
+        }
+    }
+
+    public static boolean isCapturing() {
+        return captureTarget != null;
+    }
+
     static void update() {
-        if (Core.scene.hasField() || SettingKeybindRow.isAnyListening()) {
+        SettingKeybindRow target = captureTarget;
+        if (target != null) {
+            captureKey(target);
+            return;
+        }
+        if (Core.scene.hasField()) {
             return;
         }
         for (Feature feature : FeatureManager.getFeatures()) {
@@ -28,6 +50,15 @@ public final class FeatureKeybindManager {
                 if (shouldTrigger(feature, keybind, false, Core.input.keyRelease(keybind.getBind()))) {
                     Core.app.post(keybind.getAction());
                 }
+            }
+        }
+    }
+
+    private static void captureKey(SettingKeybindRow row) {
+        for (KeyCode key : KeyCode.all) {
+            if (Core.input.keyTap(key)) {
+                row.handleInput(key);
+                break;
             }
         }
     }

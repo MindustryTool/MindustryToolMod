@@ -253,6 +253,11 @@ public class PlayerConnectFeature extends Feature {
             }
         }
 
+        if (joinInjector != null) {
+            joinInjector.dispose();
+            joinInjector = null;
+        }
+
         PlayerConnectClient.disposePinger();
         roomsQuery.dispose();
     }

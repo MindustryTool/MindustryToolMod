@@ -113,8 +113,8 @@ public class CameraZoomFeature extends Feature {
         float hi = Math.max(minBoxed != null ? minBoxed : DEFAULT_MIN_ZOOM,
                 maxBoxed != null ? maxBoxed : DEFAULT_MAX_ZOOM);
 
-        float minMult = validMultiplier(Core.settings.getFloat(MIN_MULT_KEY, 1f));
-        float maxMult = validMultiplier(Core.settings.getFloat(MAX_MULT_KEY, 1f));
+        float minMult = validMultiplier(multiplierSetting(MIN_MULT_KEY));
+        float maxMult = validMultiplier(multiplierSetting(MAX_MULT_KEY));
 
         Vars.renderer.minZoom = lo * minMult;
         Vars.renderer.maxZoom = hi / maxMult;
@@ -140,5 +140,11 @@ public class CameraZoomFeature extends Feature {
 
     private float validMultiplier(float mult) {
         return mult > 0f && !Float.isNaN(mult) && !Float.isInfinite(mult) ? mult : 1f;
+    }
+
+    // arc.Settings.getFloat(String, float) boxes its default argument on every call.
+    private static float multiplierSetting(String key) {
+        Object stored = Core.settings.get(key, null);
+        return stored instanceof Float ? (Float) stored : 1f;
     }
 }

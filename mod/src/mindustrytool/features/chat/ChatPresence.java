@@ -34,6 +34,7 @@ public class ChatPresence {
     private String lastSent = ChatSession.MENU_STATE;
     private boolean dirty;
     private @Nullable Timer.Task pendingSync;
+    private @Nullable Timer.Task heartbeatTask;
 
     public ChatPresence(ChatSession session, ConfigValue<Boolean> sharePresence, Signal<Boolean> featureEnabled) {
         this(session, sharePresence, featureEnabled, MindustryTool::updateChatState);
@@ -63,18 +64,23 @@ public class ChatPresence {
         });
         Effect.of(sharePresence.signal(), optIn -> {
             if (Boolean.TRUE.equals(optIn)) {
+                scheduleHeartbeat();
                 forceSync();
             } else {
+                cancelHeartbeat();
                 cancelPendingSync();
             }
         });
         Effect.of(featureEnabled, enabled -> {
             if (Boolean.TRUE.equals(enabled)) {
+                scheduleHeartbeat();
                 forceSync();
+            } else {
+                cancelHeartbeat();
+                cancelPendingSync();
             }
         });
 
-        Timer.schedule(this::heartbeat, HEARTBEAT_SECONDS, HEARTBEAT_SECONDS);
         attemptSend(false);
     }
 
@@ -187,6 +193,18 @@ public class ChatPresence {
 
     private void heartbeat() {
         attemptSend(true);
+    }
+
+    private void scheduleHeartbeat() {
+        cancelHeartbeat();
+        heartbeatTask = Timer.schedule(this::heartbeat, HEARTBEAT_SECONDS, HEARTBEAT_SECONDS);
+    }
+
+    private void cancelHeartbeat() {
+        if (heartbeatTask != null) {
+            heartbeatTask.cancel();
+            heartbeatTask = null;
+        }
     }
 
     private void attemptSend(boolean force) {

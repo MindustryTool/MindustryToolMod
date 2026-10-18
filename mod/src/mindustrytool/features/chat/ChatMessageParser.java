@@ -1,8 +1,9 @@
 package mindustrytool.features.chat;
 
 import arc.util.Nullable;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import mindustry.Vars;
@@ -28,7 +29,15 @@ public final class ChatMessageParser {
     private static final Pattern IMAGE_URL_PATTERN = Pattern
             .compile("^https?://.*\\.(?:png|jpg|jpeg|gif|webp)(?:\\?.*)?$", Pattern.CASE_INSENSITIVE);
 
-    private static final Map<String, ParsedChatMessage> CACHE = new ConcurrentHashMap<>();
+    static final int MAX_CACHE_ENTRIES = 2048;
+
+    private static final Map<String, ParsedChatMessage> CACHE = Collections.synchronizedMap(
+            new LinkedHashMap<String, ParsedChatMessage>(16, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, ParsedChatMessage> eldest) {
+                    return size() > MAX_CACHE_ENTRIES;
+                }
+            });
 
     private ChatMessageParser() {
     }
@@ -125,5 +134,9 @@ public final class ChatMessageParser {
 
     public static void clearCache() {
         CACHE.clear();
+    }
+
+    static int cacheSize() {
+        return CACHE.size();
     }
 }

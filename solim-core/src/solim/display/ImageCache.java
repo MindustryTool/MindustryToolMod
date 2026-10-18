@@ -13,15 +13,24 @@ import arc.util.Nullable;
 import arc.util.Threads;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import mindustry.Vars;
 import solim.graphics.RoundedGenerator;
 
 public final class ImageCache {
 
-    private static final Map<String, TextureRegionDrawable> cache = new ConcurrentHashMap<>();
+    static final int MAX_CACHE_ENTRIES = 3000;
+
+    private static final Map<String, TextureRegionDrawable> cache = Collections.synchronizedMap(
+            new LinkedHashMap<String, TextureRegionDrawable>(16, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, TextureRegionDrawable> eldest) {
+                    return size() > MAX_CACHE_ENTRIES;
+                }
+            });
 
     private static final long CACHE_MAX_AGE = 30L * 24 * 60 * 60 * 1000;
 
@@ -44,6 +53,10 @@ public final class ImageCache {
 
     public static void clearCache() {
         cache.clear();
+    }
+
+    static int cacheSize() {
+        return cache.size();
     }
 
     public static String cacheKey(@Nullable String url, int radius) {
