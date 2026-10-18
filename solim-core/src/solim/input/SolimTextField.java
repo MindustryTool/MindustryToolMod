@@ -16,7 +16,6 @@ import solim.core.SolimToken;
 import solim.modifier.AlignmentCapability;
 import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
-import solim.modifier.ElementCapability;
 import solim.modifier.FieldCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
@@ -28,7 +27,8 @@ import solim.reactive.Signal;
 import solim.style.InputStyle;
 
 public final class SolimTextField extends Component
-        implements Configurable<SolimTextField>, ElementCapability, CellCapability, AlignmentCapability, FieldCapability, TextCapability, WrappableCapability {
+        implements Configurable<SolimTextField>, CellCapability, AlignmentCapability, FieldCapability, TextCapability,
+        WrappableCapability {
 
     private final TextField field;
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -169,8 +169,6 @@ public final class SolimTextField extends Component
     public TextField field() {
         return field;
     }
-
-
 
     public SolimTextField focus() {
         Core.app.post(() -> {

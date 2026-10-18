@@ -16,6 +16,7 @@ import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import arc.util.Scaling;
 import arc.util.Time;
+import java.util.Objects;
 import mindustry.gen.Icon;
 import solim.core.Component;
 import solim.core.Disposable;
@@ -29,8 +30,7 @@ import solim.modifier.AlignmentCapability;
 import solim.modifier.CellCapability;
 import solim.core.DisposableAction;
 import solim.modifier.Configurable;
-import solim.modifier.ElementCapability;
-import solim.modifier.IconCapability;
+import solim.modifier.ImageCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.modifier.Values;
@@ -43,7 +43,7 @@ import solim.reactive.TwoWayBinding;
 import solim.runtime.AttachmentStack;
 
 public final class SolimVideo extends Component
-        implements Configurable<SolimVideo>, ElementCapability, CellCapability, AlignmentCapability, VideoCapability, IconCapability {
+        implements Configurable<SolimVideo>, CellCapability, AlignmentCapability, VideoCapability, ImageCapability {
 
     private static final long OVERLAY_HIDE_DELAY = 2500;
 
@@ -121,10 +121,10 @@ public final class SolimVideo extends Component
     private Scaling scaling = Scaling.fit;
 
     private @Nullable VideoPlayer player;
-    private @Nullable String currentUrl;
+    private @Nullable VideoSource source;
     private long loadGeneration = 0;
     private boolean failed = false;
-    private @Nullable Disposable urlBinding;
+    private @Nullable Disposable sourceBinding;
     private @Nullable Disposable controlsBinding;
 
     private boolean autoplay = false;
@@ -193,18 +193,24 @@ public final class SolimVideo extends Component
 
     public SolimVideo(String url) {
         this();
-        setUrl(url);
+        src(url);
     }
 
-    public SolimVideo(Readable<String> url) {
+    public SolimVideo(@Nullable VideoSource source) {
         this();
-        setUrl(url);
+        src(source);
+    }
+
+    public SolimVideo(@Nullable Readable<VideoSource> source) {
+        this();
+        src(source);
     }
 
     private void buildOverlay() {
         Button playButton = new Button(this::togglePlay);
         playButton.icon(playing.map(active -> active ? pauseIconOrDefault() : playIconOrDefault()));
-        playButton.props(Values.size(Units.unit(11)), Values.prefWidth(Units.unit(11)), Values.prefHeight(Units.unit(11)));
+        playButton.props(Values.size(Units.unit(11)), Values.prefWidth(Units.unit(11)),
+                Values.prefHeight(Units.unit(11)));
 
         SolimSlider scrub = SolimSlider.of(progress, 0f, 1f, 0.001f);
         scrub.element().addListener(new InputListener() {
@@ -227,11 +233,13 @@ public final class SolimVideo extends Component
 
         Button replayButton = new Button(this::replay);
         replayButton.icon(replayIconOrDefault());
-        replayButton.props(Values.size(Units.unit(11)), Values.prefWidth(Units.unit(11)), Values.prefHeight(Units.unit(11)));
+        replayButton.props(Values.size(Units.unit(11)), Values.prefWidth(Units.unit(11)),
+                Values.prefHeight(Units.unit(11)));
 
         Button muteButton = new Button(this::toggleMute);
         muteButton.icon(mutedState.map(muted -> muted ? muteIconOrDefault() : volumeIconOrDefault()));
-        muteButton.props(Values.size(Units.unit(11)), Values.prefWidth(Units.unit(11)), Values.prefHeight(Units.unit(11)));
+        muteButton.props(Values.size(Units.unit(11)), Values.prefWidth(Units.unit(11)),
+                Values.prefHeight(Units.unit(11)));
 
         overlay.add(playButton.element()).size(Units.unit(11)).pad(Units.unit(1));
         overlay.add(scrub.element()).growX().pad(Units.unit(1));
@@ -319,8 +327,7 @@ public final class SolimVideo extends Component
                             onChange.run();
                         });
                         return DisposableAction.empty();
-                    }
-            );
+                    });
         } finally {
             OwnershipContext.pop();
         }
@@ -341,7 +348,7 @@ public final class SolimVideo extends Component
 
     public void setFallback(@Nullable Drawable fallback) {
         this.fallback = fallback;
-        if ((failed || currentUrl == null || currentUrl.trim().isEmpty()) && fallback != null) {
+        if ((failed || isBlankSource()) && fallback != null) {
             videoImage.setDrawable(fallback);
             videoImage.invalidateHierarchy();
         }
@@ -374,26 +381,36 @@ public final class SolimVideo extends Component
         }
     }
 
-    public void setUrl(@Nullable String url) {
-        if (urlBinding != null) {
-            urlBinding.dispose();
-            urlBinding = null;
-        }
-        loadUrl(url);
+    public void src(@Nullable VideoSource source) {
+        disposeSourceBinding();
+        loadSource(source);
     }
 
-    public void setUrl(@Nullable Readable<String> url) {
-        if (urlBinding != null) {
-            urlBinding.dispose();
-            urlBinding = null;
-        }
-        if (url != null) {
-            withinOwnership(() -> urlBinding = Effect.of(() -> loadUrl(url.get())));
+    public void src(@Nullable Readable<VideoSource> source) {
+        disposeSourceBinding();
+        if (source != null) {
+            withinOwnership(() -> sourceBinding = Effect.of(() -> {
+                VideoSource next = source.get();
+                if (!Objects.equals(next, this.source)) {
+                    loadSource(next);
+                }
+            }));
         }
     }
 
-    private void loadUrl(@Nullable String url) {
-        currentUrl = url;
+    public void src(@Nullable String url) {
+        src(VideoSource.of(url));
+    }
+
+    private void disposeSourceBinding() {
+        if (sourceBinding != null) {
+            sourceBinding.dispose();
+            sourceBinding = null;
+        }
+    }
+
+    private void loadSource(@Nullable VideoSource source) {
+        this.source = source;
         final long gen = ++loadGeneration;
         failed = false;
         stopPlayer();
@@ -402,24 +419,49 @@ public final class SolimVideo extends Component
         positionSig.set(0f);
         durationSig.set(0.0);
         overlayShown.set(false);
-        if (url == null || url.trim().isEmpty()) {
+        if (isBlankSource()) {
             if (fallback != null)
                 videoImage.setDrawable(fallback);
             return;
         }
         if (placeholder != null)
             videoImage.setDrawable(placeholder);
+        VideoSource current = source;
+        Fi file = current.file();
+        if (file != null) {
+            openPlayer(file, file.path(), gen);
+            return;
+        }
+        String url = current.url();
         VideoCache.scheduleCleanup();
         loader.load(url,
-                file -> postMain(() -> openPlayer(file, url, gen)),
+                loaded -> postMain(() -> openPlayer(loaded, url, gen)),
                 error -> postMain(() -> onLoadFailed(gen, url)));
     }
 
-    private void openPlayer(@Nullable Fi file, String url, long gen) {
-        if (isDisposed() || gen != loadGeneration || !url.equals(currentUrl))
+    private boolean isBlankSource() {
+        VideoSource current = source;
+        if (current == null)
+            return true;
+        if (current.file() != null)
+            return false;
+        String url = current.url();
+        return url == null || url.trim().isEmpty();
+    }
+
+    private @Nullable String currentKey() {
+        VideoSource current = source;
+        if (current == null)
+            return null;
+        Fi file = current.file();
+        return file != null ? file.path() : current.url();
+    }
+
+    private void openPlayer(@Nullable Fi file, String key, long gen) {
+        if (isDisposed() || gen != loadGeneration || !key.equals(currentKey()))
             return;
         if (file == null || !file.exists()) {
-            onLoadFailed(gen, url);
+            onLoadFailed(gen, key);
             return;
         }
         stopPlayer();
@@ -429,16 +471,16 @@ public final class SolimVideo extends Component
         next.setLooping(loop);
         next.setCornerRadius(cornerRadius);
         player = next;
-        next.open(file, url, autoplay, new VideoPlayer.Listener() {
+        next.open(file, key, autoplay, new VideoPlayer.Listener() {
             @Override
             public void onReady(int width, int height, double durationSec) {
-                postMain(() -> onPlayerReady(url, gen, width, height, durationSec));
+                postMain(() -> onPlayerReady(key, gen, width, height, durationSec));
             }
 
             @Override
             public void onEnded() {
                 postMain(() -> {
-                    if (gen == loadGeneration && url.equals(currentUrl)) {
+                    if (gen == loadGeneration && key.equals(currentKey())) {
                         playing.set(false);
                         progress.set(1f);
                         poke();
@@ -448,17 +490,17 @@ public final class SolimVideo extends Component
 
             @Override
             public void onFailed(Throwable error) {
-                postMain(() -> onLoadFailed(gen, url));
+                postMain(() -> onLoadFailed(gen, key));
             }
         });
     }
 
-    private void onPlayerReady(String url, long gen, int width, int height, double durationSec) {
-        if (isDisposed() || gen != loadGeneration || !url.equals(currentUrl) || player == null)
+    private void onPlayerReady(String key, long gen, int width, int height, double durationSec) {
+        if (isDisposed() || gen != loadGeneration || !key.equals(currentKey()) || player == null)
             return;
         Texture texture = player.texture();
         if (texture == null) {
-            onLoadFailed(gen, url);
+            onLoadFailed(gen, key);
             return;
         }
         videoImage.setDrawable(new TextureRegionDrawable(new TextureRegion(texture)));
@@ -467,8 +509,8 @@ public final class SolimVideo extends Component
         poke();
     }
 
-    private void onLoadFailed(long gen, String url) {
-        if (gen != loadGeneration || !url.equals(currentUrl))
+    private void onLoadFailed(long gen, String key) {
+        if (gen != loadGeneration || !key.equals(currentKey()))
             return;
         stopPlayer();
         playing.set(false);
@@ -586,10 +628,7 @@ public final class SolimVideo extends Component
     protected void onDispose() {
         loadGeneration++;
         stopPlayer();
-        if (urlBinding != null) {
-            urlBinding.dispose();
-            urlBinding = null;
-        }
+        disposeSourceBinding();
         if (controlsBinding != null) {
             controlsBinding.dispose();
             controlsBinding = null;
@@ -601,7 +640,8 @@ public final class SolimVideo extends Component
         return constraints;
     }
 
-    // TODO: Those component arent table, they should not impl these method and having children function causing user missuse 
+    // TODO: Those component arent table, they should not impl these method and
+    // having children function causing user missuse
     @Override
     public @Nullable Table table() {
         return null;

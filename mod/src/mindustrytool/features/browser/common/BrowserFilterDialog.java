@@ -337,7 +337,7 @@ public class BrowserFilterDialog extends SolimDialog {
                     .props(checked(checked), style(WebStyles.filterChipText()), paddingX(unit(3)), height(unit(9)), prefHeight(unit(9)), gap(unit(1)))
                     .children(() -> {
                         if (tag.getIcon() != null) {
-                            networkImage(tag.getIcon()).props(fallback(Icon.imageSmall), size(unit(6)));
+                            image(tag.getIcon()).props(fallback(Icon.imageSmall), size(unit(6)));
                         }
                         text(chipLabel).props(color(checked.map(c -> c ? Color.white : Color.gray)));
                     });

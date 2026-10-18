@@ -85,7 +85,7 @@ public class MapDetailDialog extends SolimDialog {
 
         private void previewImagePortrait() {
             row().props(grow()).children(() -> {
-                networkImage(BrowserImages.mapImageUrl(itemId))
+                image(BrowserImages.mapImageUrl(itemId))
                         .props(
                                 origin(Align.top | Align.left),
                                 growX(),
@@ -99,7 +99,7 @@ public class MapDetailDialog extends SolimDialog {
 
         private void previewImageLandscape() {
             row().props(grow()).children(() -> {
-                networkImage(BrowserImages.mapImageUrl(itemId))
+                image(BrowserImages.mapImageUrl(itemId))
                         .props(
                                 origin(Align.top),
                                 growX(),

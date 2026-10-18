@@ -6,16 +6,18 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.util.Scaling;
-import lombok.AllArgsConstructor;
 import mindustry.Vars;
 import mindustry.ui.Styles;
 import mindustrytool.features.Feature;
 import solim.core.Component;
 
-@AllArgsConstructor
 public class FeatureHelpView extends Component {
 
     private final Feature feature;
+
+    public FeatureHelpView(Feature feature) {
+        this.feature = feature;
+    }
 
     @Override
     protected Element build() {
@@ -36,7 +38,8 @@ public class FeatureHelpView extends Component {
                                         .props(gap(10f))
                                         .children(() -> {
                                             image(feature.getMetadata().getIcon())
-                                                    .props(scaling(Scaling.fit), size(32f), prefWidth(32f), prefHeight(32f));
+                                                    .props(scaling(Scaling.fit), size(32f), prefWidth(32f),
+                                                            prefHeight(32f));
 
                                             text(feature.getName())
                                                     .props(style(Styles.defaultLabel), color(Color.white), left());

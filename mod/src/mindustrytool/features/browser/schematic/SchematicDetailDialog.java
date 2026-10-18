@@ -97,7 +97,7 @@ public class SchematicDetailDialog extends SolimDialog {
 
         private void previewImagePortrait() {
             row().props(grow()).children(() -> {
-                networkImage(BrowserImages.schematicImageUrl(itemId))
+                image(BrowserImages.schematicImageUrl(itemId))
                         .props(
                                 origin(Align.top | Align.left),
                                 grow(),
@@ -111,7 +111,7 @@ public class SchematicDetailDialog extends SolimDialog {
 
         private void previewImageLandscape() {
             row().props(grow()).children(() -> {
-                networkImage(BrowserImages.schematicImageUrl(itemId))
+                image(BrowserImages.schematicImageUrl(itemId))
                         .props(
                                 origin(Align.top),
                                 grow(),

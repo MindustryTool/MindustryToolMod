@@ -119,7 +119,7 @@ public class AuthOverlay {
                                         row().props(padding(unit(2)), background(Styles.black6), gap(unit(2)), center())
                                                 .children(() -> {
                                                     if (user.getImageUrl() != null && !user.getImageUrl().isEmpty()) {
-                                                        networkImage(user.getImageUrl()).props(size(64f), prefWidth(64f), prefHeight(64f));
+                                                        image(user.getImageUrl()).props(size(64f), prefWidth(64f), prefHeight(64f));
                                                     }
                                                     if (!Vars.mobile && user.getName() != null) {
                                                         text(user.getName()).props(marginLeft(unit(2)));

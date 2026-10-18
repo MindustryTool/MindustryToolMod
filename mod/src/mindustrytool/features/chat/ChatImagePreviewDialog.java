@@ -14,7 +14,7 @@ public class ChatImagePreviewDialog extends SolimDialog {
         closeOnBack();
         hidden(this::dispose);
         children(() -> {
-            networkImage(imageUrl)
+            image(imageUrl)
                     .props(
                             placeholder(Icon.image),
                             fallback(Icon.cancel),

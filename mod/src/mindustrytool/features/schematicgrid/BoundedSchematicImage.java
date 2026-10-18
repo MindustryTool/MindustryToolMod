@@ -17,7 +17,6 @@ final class BoundedSchematicImage extends SolimElement {
     private final Schematic schematic;
     private final @Nullable Readable<Float> size;
     private final float fallback;
-    private final int cellAlign;
 
     private FixedPreview image;
 
@@ -29,7 +28,6 @@ final class BoundedSchematicImage extends SolimElement {
         this.schematic = schematic;
         this.size = size;
         this.fallback = fallback;
-        this.cellAlign = cellAlign;
         props(align(cellAlign));
     }
 

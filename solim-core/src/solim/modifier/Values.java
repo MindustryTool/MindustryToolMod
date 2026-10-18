@@ -2,7 +2,9 @@ package solim.modifier;
 
 import arc.func.Cons;
 import arc.func.Cons2;
+import arc.files.Fi;
 import arc.graphics.Color;
+import arc.graphics.g2d.TextureRegion;
 import arc.scene.Element;
 import arc.scene.event.ClickListener;
 import arc.scene.event.InputEvent;
@@ -27,10 +29,11 @@ import solim.core.HostCapability;
 import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 import solim.display.Badge;
-import solim.display.NetworkImage;
+import solim.display.ImageSource;
 import solim.display.SolimImage;
 import solim.display.Text;
 import solim.display.video.SolimVideo;
+import solim.display.video.VideoSource;
 import solim.graphics.RoundedDrawable;
 import solim.input.Button;
 import solim.input.Checkbox;
@@ -1072,12 +1075,6 @@ public final class Values {
             }
             if (host instanceof Button) {
                 ((Button) host).icon(v);
-            } else if (host instanceof SolimImage) {
-                ((SolimImage) host).icon(v);
-            } else if (host instanceof NetworkImage) {
-                ((NetworkImage) host).setPlaceholder(v);
-            } else if (host instanceof SolimVideo) {
-                ((SolimVideo) host).setFallback(v);
             } else {
                 throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept icon prop");
             }
@@ -1092,8 +1089,6 @@ public final class Values {
             Component host = hostOf(target);
             if (host instanceof Button) {
                 ((Button) host).icon(source);
-            } else if (host instanceof SolimImage) {
-                ((SolimImage) host).icon(source);
             } else if (host != null) {
                 throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept icon prop");
             }
@@ -1235,6 +1230,7 @@ public final class Values {
         });
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> Prop<SelectCapability, T> selected(@Nullable Signal<T> signal) {
         return hostOwnedProp(SelectCapability.class, "selected", target -> {
             if (signal == null) {
@@ -1260,6 +1256,7 @@ public final class Values {
         });
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> Prop<SelectCapability, T> selected(@Nullable Readable<T> source) {
         return hostOwnedProp(SelectCapability.class, "selected", target -> {
             if (source == null) {
@@ -1765,14 +1762,12 @@ public final class Values {
         });
     }
 
-    public static Prop<IconCapability, Scaling> scaling(@Nullable Scaling scaling) {
-        return hostProp(IconCapability.class, "scaling", scaling, (element, v, host) -> {
+    public static Prop<ImageCapability, Scaling> scaling(@Nullable Scaling scaling) {
+        return hostProp(ImageCapability.class, "scaling", scaling, (element, v, host) -> {
             if (v == null) {
                 return;
             }
-            if (host instanceof NetworkImage) {
-                ((NetworkImage) host).setScaling(v);
-            } else if (host instanceof SolimImage) {
+            if (host instanceof SolimImage) {
                 ((SolimImage) host).setScaling(v);
             } else if (host instanceof SolimVideo) {
                 ((SolimVideo) host).setScaling(v);
@@ -1884,54 +1879,110 @@ public final class Values {
         });
     }
 
-    public static Prop<IconCapability, String> url(@Nullable String value) {
-        return hostProp(IconCapability.class, "url", value, (element, v, host) -> {
-            if (host instanceof NetworkImage) {
-                ((NetworkImage) host).setUrl(v);
+    public static Prop<ImageCapability, String> src(@Nullable String value) {
+        return hostProp(ImageCapability.class, "src", value, (element, v, host) -> {
+            if (host instanceof SolimImage) {
+                ((SolimImage) host).src(v);
             } else if (host instanceof SolimVideo) {
-                ((SolimVideo) host).setUrl(v);
+                ((SolimVideo) host).src(v);
             } else {
-                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept url prop");
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept src prop");
             }
         });
     }
 
-    public static Prop<IconCapability, String> url(@Nullable Readable<String> source) {
-        return hostOwnedProp(IconCapability.class, "url", target -> {
+    public static Prop<ImageCapability, ImageSource> src(@Nullable ImageSource value) {
+        return hostProp(ImageCapability.class, "src", value, (element, v, host) -> {
+            if (host instanceof SolimImage) {
+                ((SolimImage) host).src(v);
+            } else {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept src prop");
+            }
+        });
+    }
+
+    public static Prop<VideoCapability, VideoSource> src(@Nullable VideoSource value) {
+        return hostProp(VideoCapability.class, "src", value, (element, v, host) -> {
+            if (host instanceof SolimVideo) {
+                ((SolimVideo) host).src(v);
+            } else {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept src prop");
+            }
+        });
+    }
+
+    public static Prop<ImageCapability, Object> src(@Nullable Readable<?> source) {
+        return hostOwnedProp(ImageCapability.class, "src", target -> {
             if (source == null) {
                 return;
             }
             Component host = hostOf(target);
-            if (host instanceof NetworkImage) {
-                ((NetworkImage) host).setUrl(source);
-            } else if (host instanceof SolimVideo) {
-                ((SolimVideo) host).setUrl(source);
-            } else {
-                throw new IllegalArgumentException("Host " + (host != null ? host.getClass().getName() : "null") + " cannot accept url prop");
+            if (host instanceof SolimVideo) {
+                ((SolimVideo) host).src(toVideoReadable(source));
+            } else if (host instanceof SolimImage) {
+                ((SolimImage) host).src(toImageReadable(source));
+            } else if (host != null) {
+                throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept src prop");
             }
         });
     }
 
-    public static Prop<IconCapability, Drawable> placeholder(@Nullable Drawable value) {
-        return hostProp(IconCapability.class, "placeholder", value, (element, v, host) -> {
+    private static <T> Readable<VideoSource> toVideoReadable(Readable<T> source) {
+        return source.map(Values::toVideoSource);
+    }
+
+    private static <T> Readable<ImageSource> toImageReadable(Readable<T> source) {
+        return source.map(Values::toImageSource);
+    }
+
+    private static VideoSource toVideoSource(@Nullable Object value) {
+        if (value instanceof VideoSource) {
+            return (VideoSource) value;
+        }
+        if (value instanceof Fi) {
+            return VideoSource.of((Fi) value);
+        }
+        return VideoSource.of(value != null ? value.toString() : null);
+    }
+
+    private static ImageSource toImageSource(@Nullable Object value) {
+        if (value instanceof ImageSource) {
+            return (ImageSource) value;
+        }
+        if (value instanceof Drawable) {
+            return ImageSource.of((Drawable) value);
+        }
+        if (value instanceof TextureRegion) {
+            return ImageSource.of((TextureRegion) value);
+        }
+        if (value instanceof Fi) {
+            return ImageSource.of((Fi) value);
+        }
+        return ImageSource.of(value != null ? value.toString() : null);
+    }
+
+    public static Prop<ImageCapability, Drawable> placeholder(@Nullable Drawable value) {
+        return hostProp(ImageCapability.class, "placeholder", value, (element, v, host) -> {
             if (v == null) {
                 return;
             }
-            if (host instanceof NetworkImage) {
-                ((NetworkImage) host).setPlaceholder(v);
+            if (host instanceof SolimImage) {
+                ((SolimImage) host).placeholder(v);
+            } else if (host instanceof SolimVideo) {
+                ((SolimVideo) host).setPlaceholder(v);
             } else {
                 throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept placeholder prop");
             }
         });
     }
 
-    public static Prop<IconCapability, Drawable> fallback(@Nullable Drawable value) {
-        return hostProp(IconCapability.class, "fallback", value, (element, v, host) -> {
+    public static Prop<ImageCapability, Drawable> fallback(@Nullable Drawable value) {
+        return hostProp(ImageCapability.class, "fallback", value, (element, v, host) -> {
             if (v == null) {
                 return;
             }
-            if (host instanceof NetworkImage) {
-                ((NetworkImage) host).setFallback(v);
+            if (host instanceof SolimImage) {
+                ((SolimImage) host).fallback(v);
             } else if (host instanceof SolimVideo) {
                 ((SolimVideo) host).setFallback(v);
             } else {
@@ -1953,13 +2004,15 @@ public final class Values {
         });
     }
 
-    public static Prop<IconCapability, Integer> imageRounded(int radius) {
-        return hostProp(IconCapability.class, "rounded", radius, (element, v, host) -> {
+    public static Prop<ImageCapability, Integer> imageRounded(int radius) {
+        return hostProp(ImageCapability.class, "rounded", radius, (element, v, host) -> {
             if (v == null) {
                 return;
             }
-            if (host instanceof NetworkImage) {
-                ((NetworkImage) host).setCornerRadius(v);
+            if (host instanceof SolimImage) {
+                ((SolimImage) host).setRounded(v);
+            } else if (host instanceof SolimVideo) {
+                ((SolimVideo) host).setRounded(v);
             } else {
                 throw new IllegalArgumentException("Host " + host.getClass().getName() + " cannot accept imageRounded prop");
             }

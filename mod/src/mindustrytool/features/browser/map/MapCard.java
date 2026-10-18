@@ -69,12 +69,12 @@ public class MapCard extends Component {
                             .props(background(Color.black), prefWidth(size), prefHeight(size), onClick(onClick))
                             .children(() -> {
                                 stack().props(grow())
-                                        .layer(() -> networkImage()
+                                        .layer(() -> image()
                                                 .props(
                                                         grow(),
                                                         imageRounded(8),
                                                         scaling(Scaling.fit),
-                                                        url(imageUrl),
+                                                        src(imageUrl),
                                                         placeholder(Icon.terrain),
                                                         fallback(Icon.terrain)
                                                 ))

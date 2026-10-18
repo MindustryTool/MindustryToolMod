@@ -5,7 +5,6 @@ import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.ContainerCapability;
 import solim.modifier.Props;
-import solim.modifier.TableCapability;
 import arc.scene.style.Drawable;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
@@ -17,7 +16,7 @@ import solim.runtime.AttachmentStack;
 import solim.modifier.PendingCellConfig;
 
 public final class Card extends Component
-        implements GapContainer, Configurable<Card>, TableCapability, CellCapability, ContainerCapability<Card>, AlignmentCapability {
+        implements GapContainer, Configurable<Card>, CellCapability, ContainerCapability<Card>, AlignmentCapability {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -72,8 +71,6 @@ public final class Card extends Component
     public PendingCellConfig cellConfig() {
         return constraints;
     }
-
-
 
     public Card children(@Nullable Runnable r) {
         applyPendingProps();

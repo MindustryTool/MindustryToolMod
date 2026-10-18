@@ -23,7 +23,6 @@ import org.junit.jupiter.api.Test;
 import solim.core.Component;
 import solim.core.HostCapability;
 import solim.display.Badge;
-import solim.display.NetworkImage;
 import solim.display.SolimImage;
 import solim.display.Text;
 import solim.display.video.SolimVideo;
@@ -126,7 +125,6 @@ public class HostCapabilityTest extends SolimEnv {
                 Switch.class,
                 Checkbox.class,
                 SolimSelect.class,
-                NetworkImage.class,
                 SolimVideo.class
         );
 
@@ -152,7 +150,6 @@ public class HostCapabilityTest extends SolimEnv {
                 Switch.class,
                 Checkbox.class,
                 SolimSelect.class,
-                NetworkImage.class,
                 SolimVideo.class
         );
 

@@ -6,7 +6,7 @@ import arc.graphics.Color;
 import arc.scene.Element;
 import arc.util.Nullable;
 import solim.core.Component;
-import solim.display.NetworkImage;
+import solim.display.SolimImage;
 import solim.layout.Column;
 import solim.layout.SolimStack;
 import solim.reactive.Readable;
@@ -72,7 +72,7 @@ public class ChatAvatar extends Component {
                             });
                 })
                 .layer(() -> {
-                    NetworkImage img = networkImage(avatarUrl);
+                    SolimImage img = image().props(src(avatarUrl));
                     if (radius > 0) {
                         img.props(size(size, size), top(), left(), imageRounded(radius));
                     } else {

@@ -107,20 +107,20 @@ class SolimVideoDisposalTest extends OwnershipEnv {
             error.get(new RuntimeException("offline"));
         });
 
-        Signal<String> url = Signal.of("clip://a");
+        Signal<VideoSource> url = Signal.of(VideoSource.of("clip://a"));
         SolimVideo video = track(new SolimVideo(url));
         assertEquals(1, requested.size());
 
-        url.set("clip://b");
+        url.set(VideoSource.of("clip://b"));
         flushEffects();
-        assertEquals(2, requested.size(), "Live url binding must reload the player");
+        assertEquals(2, requested.size(), "Live source binding must reload the player");
 
         video.dispose();
-        assertEquals(0, url.observerCount(), "Disposal must drain the url observers");
+        assertEquals(0, url.observerCount(), "Disposal must drain the source observers");
 
-        url.set("clip://c");
+        url.set(VideoSource.of("clip://c"));
         flushEffects();
-        assertEquals(2, requested.size(), "Disposed url binding must stop loading");
+        assertEquals(2, requested.size(), "Disposed source binding must stop loading");
     }
 
     @Test

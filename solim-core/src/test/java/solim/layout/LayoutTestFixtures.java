@@ -13,7 +13,6 @@ import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.core.Component;
-import solim.display.NetworkImage;
 import solim.display.SolimImage;
 import solim.display.Text;
 import solim.input.Button;
@@ -100,8 +99,7 @@ public final class LayoutTestFixtures {
         return Arrays.asList(
                 new ComponentAdapter("Button", Button::new),
                 new ComponentAdapter("Text", () -> new Text("hello")),
-                new ComponentAdapter("SolimImage", SolimImage::new),
-                new ComponentAdapter("NetworkImage", () -> new NetworkImage("http://localhost/test.png")));
+                new ComponentAdapter("SolimImage", SolimImage::new));
     }
 
     public static List<ComponentAdapter> allAlignableComponents() {

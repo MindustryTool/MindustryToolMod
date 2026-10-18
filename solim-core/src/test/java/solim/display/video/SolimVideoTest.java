@@ -64,7 +64,7 @@ class SolimVideoTest extends SolimEnv {
 		SolimVideo.setVideoLoader((url, success, error) -> fail("Loader must not run for null URLs"));
 
 		SolimVideo video = track(new SolimVideo().props(fallback(fallback)));
-		video.props(url((String) null));
+		video.props(src((String) null));
 		flushEffects();
 
 		assertSame(fallback, ((Image) video.stack().getChildren().first()).getDrawable());
@@ -124,7 +124,7 @@ class SolimVideoTest extends SolimEnv {
 		});
 
 		Signal<String> url = Signal.of("https://example.com/a.mp4");
-		SolimVideo video = track(new SolimVideo(url));
+		SolimVideo video = track(new SolimVideo(url.map(u -> VideoSource.of(u))));
 		assertEquals(1, requested.size());
 
 		url.set("https://example.com/b.mp4");

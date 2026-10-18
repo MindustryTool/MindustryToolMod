@@ -15,7 +15,6 @@ import solim.core.SpacingAware;
 import solim.modifier.AlignmentCapability;
 import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
-import solim.modifier.ElementCapability;
 import solim.modifier.LabelCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
@@ -25,7 +24,8 @@ import solim.reactive.Effect;
 import solim.reactive.Readable;
 
 public final class Text extends Component
-        implements SpacingAware, Configurable<Text>, ElementCapability, CellCapability, AlignmentCapability, TextCapability, LabelCapability, WrappableCapability {
+        implements SpacingAware, Configurable<Text>, CellCapability, AlignmentCapability, TextCapability,
+        LabelCapability, WrappableCapability {
 
     private final Label label;
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -166,7 +166,6 @@ public final class Text extends Component
     public boolean isWrap() {
         return wrap;
     }
-
 
     @Override
     public Table table() {

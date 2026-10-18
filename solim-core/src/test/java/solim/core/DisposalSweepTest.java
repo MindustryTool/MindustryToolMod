@@ -41,7 +41,7 @@ import arc.scene.ui.TextField.TextFieldStyle;
 import arc.scene.ui.layout.Table;
 import mindustry.game.EventType.ResizeEvent;
 import solim.display.Badge;
-import solim.display.NetworkImage;
+import solim.display.ImageSource;
 import solim.display.SolimImage;
 import solim.display.Text;
 import solim.graphics.RoundedCache;
@@ -162,8 +162,8 @@ class DisposalSweepTest extends OwnershipEnv {
     @AfterEach
     void tearDown() {
         SignalDispatcher.resetForTests();
-        NetworkImage.clearCache();
-        NetworkImage.setImageLoader(null);
+        SolimImage.clearCache();
+        SolimImage.setImageLoader(null);
     }
 
     static final class Nest extends Component {
@@ -400,11 +400,11 @@ class DisposalSweepTest extends OwnershipEnv {
     }
 
     @Test
-    void networkImageUrlBindingDies() {
+    void imageSourceBindingDies() {
         AtomicInteger loads = new AtomicInteger(0);
-        NetworkImage.setImageLoader((url, radius, targetW, targetH, onSuccess, onError) -> loads.incrementAndGet());
+        SolimImage.setImageLoader((url, radius, targetW, targetH, onSuccess, onError) -> loads.incrementAndGet());
         Signal<String> url = Signal.of("sweep://a");
-        NetworkImage image = new NetworkImage(url);
+        SolimImage image = new SolimImage().src(url.map(u -> ImageSource.of(u)));
         assertEquals(1, loads.get());
         assertFalse(image.isDisposed());
 
@@ -417,14 +417,14 @@ class DisposalSweepTest extends OwnershipEnv {
 
         url.set("sweep://c");
         SignalDispatcher.flush();
-        assertEquals(2, loads.get(), "Disposed NetworkImage must stop loading");
+        assertEquals(2, loads.get(), "Disposed SolimImage must stop loading");
     }
 
     @Test
-    void networkImageColorBindingDiesNested() {
+    void imageColorBindingDiesNested() {
         Signal<Color> color = Signal.of(Color.red.cpy());
-        Probe<NetworkImage> probe = new Probe<>();
-        Nest nest = new Nest(() -> probe.setValue(new NetworkImage().props(color(color))));
+        Probe<SolimImage> probe = new Probe<>();
+        Nest nest = new Nest(() -> probe.setValue(new SolimImage().props(color(color))));
         nest.element();
 
         nest.dispose();
@@ -619,12 +619,12 @@ class DisposalSweepTest extends OwnershipEnv {
     void instanceDisposalLeavesGlobalStateAlone() {
         Text text = Text.of("x");
         text.dispose();
-        NetworkImage image = new NetworkImage();
+        SolimImage image = new SolimImage();
         image.dispose();
         RoundedDrawable drawable = RoundedDrawable.of(4, Color.white.cpy());
         drawable.dispose();
 
-        assertDoesNotThrow(NetworkImage::clearCache, "Static cache API must survive instance disposal");
+        assertDoesNotThrow(SolimImage::clearCache, "Static cache API must survive instance disposal");
         assertNotNull(RoundedCache.getSolid(4),
                 "Shared rounded cache must survive instance disposal");
 

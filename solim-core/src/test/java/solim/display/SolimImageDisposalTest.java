@@ -10,60 +10,29 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import arc.Application;
-import arc.Core;
-import arc.Graphics;
 import arc.func.Cons;
-import arc.graphics.GL20;
 import arc.graphics.g2d.TextureRegion;
 import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
 import solim.test.OwnershipEnv;
 
-class NetworkImageDisposalTest extends OwnershipEnv {
-
-	static Application prevApp;
-	static Graphics prevGraphics;
-	static GL20 prevGl;
-	static GL20 prevGl20;
-
-	@BeforeAll
-	static void initArc() {
-		prevApp = Core.app;
-		prevGraphics = Core.graphics;
-		prevGl = Core.gl;
-		prevGl20 = Core.gl20;
-	}
-
-	@AfterAll
-	static void tearDownArc() {
-		Core.app = prevApp;
-		Core.graphics = prevGraphics;
-		Core.gl = prevGl;
-		Core.gl20 = prevGl20;
-		prevApp = null;
-		prevGraphics = null;
-		prevGl = null;
-		prevGl20 = null;
-	}
+class SolimImageDisposalTest extends OwnershipEnv {
 
 	@BeforeEach
 	void setUp() {
 		SignalDispatcher.resetForTests();
-		NetworkImage.clearCache();
+		SolimImage.clearCache();
 	}
 
 	@AfterEach
 	void tearDown() {
 		SignalDispatcher.resetForTests();
-		NetworkImage.clearCache();
-		NetworkImage.setImageLoader(null);
+		SolimImage.clearCache();
+		SolimImage.setImageLoader(null);
 	}
 
 	static final class CountingLoader implements ImageLoader {
@@ -80,24 +49,24 @@ class NetworkImageDisposalTest extends OwnershipEnv {
 	}
 
 	@Test
-	void staticReUrlDisposesSignalBinding() {
+	void restatingSourceDisposesSignalBinding() {
 		CountingLoader loader = new CountingLoader();
-		NetworkImage.setImageLoader(loader);
-		Signal<String> url = Signal.of("deep://a");
-		NetworkImage image = new NetworkImage(url);
+		SolimImage.setImageLoader(loader);
+		Signal<ImageSource> source = Signal.of(ImageSource.of("deep://a"));
+		SolimImage image = new SolimImage().src(source);
 		assertEquals(1, loader.loadsOf("deep://a"));
 		assertFalse(image.isDisposed());
 
-		url.set("deep://b");
+		source.set(ImageSource.of("deep://b"));
 		SignalDispatcher.flush();
 		assertEquals(1, loader.loadsOf("deep://b"));
 
-		image.props(url("deep://c"));
+		image.props(src("deep://c"));
 		assertEquals(1, loader.loadsOf("deep://c"));
 
-		url.set("deep://d");
+		source.set(ImageSource.of("deep://d"));
 		SignalDispatcher.flush();
-		assertEquals(0, loader.loadsOf("deep://d"), "Re-url must dispose the previous signal binding");
+		assertEquals(0, loader.loadsOf("deep://d"), "Re-sourcing must dispose the previous signal binding");
 
 		image.dispose();
 		assertTrue(image.isDisposed());
@@ -107,20 +76,19 @@ class NetworkImageDisposalTest extends OwnershipEnv {
 	@Test
 	void disposeStopsSignalReloads() {
 		CountingLoader loader = new CountingLoader();
-		NetworkImage.setImageLoader(loader);
-		Signal<String> url = Signal.of("deep://e");
-		NetworkImage image = new NetworkImage(url);
+		SolimImage.setImageLoader(loader);
+		Signal<ImageSource> source = Signal.of(ImageSource.of("deep://e"));
+		SolimImage image = new SolimImage().src(source);
 		assertEquals(1, loader.loadsOf("deep://e"));
 
 		image.dispose();
 		assertTrue(image.isDisposed());
 
-		url.set("deep://f");
+		source.set(ImageSource.of("deep://f"));
 		SignalDispatcher.flush();
-		assertEquals(0, loader.loadsOf("deep://f"), "Disposed NetworkImage must stop reloading");
+		assertEquals(0, loader.loadsOf("deep://f"), "Disposed SolimImage must stop reloading");
 
 		assertDoesNotThrow(image::dispose, "Double dispose must be safe");
 		assertTrue(image.isDisposed());
 	}
 }
-

@@ -511,7 +511,7 @@ public class ChatMessageListView extends Component {
                 final String imageUrl = img.getImageUrl();
                 column().props(growX(), top(), left(), gap(unit(1))).children(() -> {
                     text(imageUrl).props(color(Color.lightGray), fontScale(0.85f), textWrap(true), left(), growX());
-                    networkImage(imageUrl)
+                    image(imageUrl)
                             .props(onClick(() -> new ChatImagePreviewDialog(imageUrl).show()), stopClickPropagation(true),
                                     placeholder(Icon.image), fallback(Icon.cancel), size(unit(40), unit(30)), top(), left());
                 });

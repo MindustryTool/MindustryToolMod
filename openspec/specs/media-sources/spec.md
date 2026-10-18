@@ -1,4 +1,10 @@
-## ADDED Requirements
+# media-sources Specification
+
+## Purpose
+
+Behavior contract for the media source primitives shared by Solim media components: `ImageSource` for images (drawable, texture region, URL, or local file) and `VideoSource` for videos (URL or local file). Each source exposes a typed handle so components can resolve static and asynchronous media without overloading their APIs.
+
+## Requirements
 
 ### Requirement: ImageSource Abstraction
 Solim SHALL provide an `ImageSource` type representing an image data source. `ImageSource` SHALL provide factory methods:

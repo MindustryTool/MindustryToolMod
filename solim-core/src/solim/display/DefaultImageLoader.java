@@ -22,7 +22,7 @@ final class DefaultImageLoader implements ImageLoader {
             Http.get(url)
                     .timeout(30000)
                     .header("User-Agent", "MindustryTool/" + Version.buildString())
-                    .error(onError != null ? onError : err -> Log.err("NetworkImage error", err))
+                    .error(onError != null ? onError : err -> Log.err("SolimImage network load failed", err))
                     .submit(response -> {
                         byte[] bytes = response.getResult();
                         if (bytes == null || bytes.length == 0) {
@@ -30,10 +30,10 @@ final class DefaultImageLoader implements ImageLoader {
                                 onError.get(new IllegalStateException("Empty response"));
                             return;
                         }
-                        NetworkImage.writeToDisk(url, bytes);
+                        ImageCache.writeToDisk(url, bytes);
                         Pixmap pixmap;
                         try {
-                            pixmap = NetworkImage.decodePixmap(bytes, radius, targetW, targetH);
+                            pixmap = ImageCache.decodePixmap(bytes, radius, targetW, targetH);
                         } catch (Throwable t) {
                             if (onError != null)
                                 onError.get(t);
@@ -42,7 +42,7 @@ final class DefaultImageLoader implements ImageLoader {
                         if (Core.app != null) {
                             Core.app.post(() -> {
                                 try {
-                                    onSuccess.get(NetworkImage.toTexture(pixmap));
+                                    onSuccess.get(ImageCache.toTexture(pixmap));
                                 } catch (Throwable t) {
                                     if (onError != null)
                                         onError.get(t);

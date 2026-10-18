@@ -74,12 +74,12 @@ public class SchematicCard extends Component {
                             .props(prefWidth(size), prefHeight(size), onClick(onClick))
                             .children(() -> {
                                 stack().props(grow())
-                                        .layer(() -> networkImage()
+                                        .layer(() -> image()
                                                 .props(
                                                         grow(),
                                                         imageRounded(8),
                                                         scaling(Scaling.fit),
-                                                        url(imageUrl),
+                                                        src(imageUrl),
                                                         placeholder(Icon.image),
                                                         fallback(Icon.image)
                                                 ))

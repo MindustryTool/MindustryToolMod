@@ -29,10 +29,11 @@ import solim.core.Disposable;
 import solim.core.EventsUtil;
 import solim.core.SolimAssert;
 import solim.display.Badge;
-import solim.display.NetworkImage;
+import solim.display.ImageSource;
 import solim.display.SolimImage;
 import solim.display.Text;
 import solim.display.video.SolimVideo;
+import solim.display.video.VideoSource;
 import solim.input.Button;
 import solim.input.Checkbox;
 import solim.input.SolimSelect;
@@ -61,7 +62,7 @@ import solim.modifier.CellCapability;
 import solim.modifier.CheckableCapability;
 import solim.modifier.ElementCapability;
 import solim.modifier.FieldCapability;
-import solim.modifier.IconCapability;
+import solim.modifier.ImageCapability;
 import solim.modifier.LabelCapability;
 import solim.modifier.Prop;
 import solim.modifier.ScrollCapability;
@@ -220,6 +221,14 @@ public final class UI {
         return new SolimImage(drawable);
     }
 
+    public static SolimImage image(@Nullable String url) {
+        return new SolimImage(url);
+    }
+
+    public static SolimImage image(@Nullable ImageSource source) {
+        return new SolimImage(source);
+    }
+
     public static SolimImage image(Readable<Drawable> drawable) {
         SolimImage img = new SolimImage();
         img.drawable(drawable);
@@ -238,18 +247,6 @@ public final class UI {
                 .props(Values.scaling(Scaling.fit), Values.size(iconSize), Values.prefWidth(iconSize), Values.prefHeight(iconSize));
     }
 
-    public static NetworkImage networkImage() {
-        return new NetworkImage();
-    }
-
-    public static NetworkImage networkImage(@Nullable String url) {
-        return new NetworkImage(url);
-    }
-
-    public static NetworkImage networkImage(@Nullable Readable<String> url) {
-        return new NetworkImage(url);
-    }
-
     public static SolimVideo video() {
         return new SolimVideo();
     }
@@ -258,8 +255,12 @@ public final class UI {
         return new SolimVideo(url);
     }
 
+    public static SolimVideo video(@Nullable VideoSource source) {
+        return new SolimVideo(source);
+    }
+
     public static SolimVideo video(@Nullable Readable<String> url) {
-        return new SolimVideo(url);
+        return url == null ? new SolimVideo() : new SolimVideo(url.map(u -> VideoSource.of(u)));
     }
 
     public static Text text(String s) {
@@ -1078,7 +1079,7 @@ public final class UI {
         return Values.placeholder(source);
     }
 
-    public static Prop<IconCapability, Drawable> placeholder(@Nullable Drawable value) {
+    public static Prop<ImageCapability, Drawable> placeholder(@Nullable Drawable value) {
         return Values.placeholder(value);
     }
 
@@ -1198,7 +1199,7 @@ public final class UI {
         return Values.muteIcon(icon);
     }
 
-    public static Prop<IconCapability, Scaling> scaling(@Nullable Scaling scaling) {
+    public static Prop<ImageCapability, Scaling> scaling(@Nullable Scaling scaling) {
         return Values.scaling(scaling);
     }
 
@@ -1242,15 +1243,23 @@ public final class UI {
         return Values.fontScale(source);
     }
 
-    public static Prop<IconCapability, String> url(@Nullable String value) {
-        return Values.url(value);
+    public static Prop<ImageCapability, String> src(@Nullable String value) {
+        return Values.src(value);
     }
 
-    public static Prop<IconCapability, String> url(@Nullable Readable<String> source) {
-        return Values.url(source);
+    public static Prop<ImageCapability, ImageSource> src(@Nullable ImageSource value) {
+        return Values.src(value);
     }
 
-    public static Prop<IconCapability, Drawable> fallback(@Nullable Drawable value) {
+    public static Prop<VideoCapability, VideoSource> src(@Nullable VideoSource value) {
+        return Values.src(value);
+    }
+
+    public static Prop<ImageCapability, Object> src(@Nullable Readable<?> source) {
+        return Values.src(source);
+    }
+
+    public static Prop<ImageCapability, Drawable> fallback(@Nullable Drawable value) {
         return Values.fallback(value);
     }
 
@@ -1258,7 +1267,7 @@ public final class UI {
         return Values.autoplay(value);
     }
 
-    public static Prop<IconCapability, Integer> imageRounded(int radius) {
+    public static Prop<ImageCapability, Integer> imageRounded(int radius) {
         return Values.imageRounded(radius);
     }
 

@@ -11,7 +11,9 @@ import arc.scene.ui.ScrollPane.ScrollPaneStyle;
 import arc.scene.ui.Slider.SliderStyle;
 import arc.scene.ui.TextField.TextFieldStyle;
 import org.junit.jupiter.api.Test;
+import solim.display.ImageSource;
 import solim.display.Text;
+import solim.display.video.VideoSource;
 import solim.input.Button;
 import solim.input.Checkbox;
 import solim.input.SolimSlider;
@@ -38,6 +40,7 @@ public class SemanticTraitRejectionTest extends SolimEnv {
         assertTrue(ElementCapability.class.isAssignableFrom(ScrollCapability.class));
         assertTrue(ElementCapability.class.isAssignableFrom(VideoCapability.class));
         assertTrue(ElementCapability.class.isAssignableFrom(IconCapability.class));
+        assertTrue(ElementCapability.class.isAssignableFrom(ImageCapability.class));
     }
 
     @Test
@@ -73,6 +76,9 @@ public class SemanticTraitRejectionTest extends SolimEnv {
 
         assertFalse(IconCapability.class.isAssignableFrom(Divider.class));
         assertFalse(IconCapability.class.isAssignableFrom(Text.class));
+
+        assertFalse(ImageCapability.class.isAssignableFrom(Divider.class));
+        assertFalse(ImageCapability.class.isAssignableFrom(Text.class));
     }
 
     @Test
@@ -113,9 +119,11 @@ public class SemanticTraitRejectionTest extends SolimEnv {
         assertEquals(WrappableCapability.class, Values.ellipsis().requires());
         assertEquals(WrappableCapability.class, Values.fontScale(1.5f).requires());
         assertEquals(TextCapability.class, Values.text("test").requires());
-        assertEquals(IconCapability.class, Values.url("https://example.com/asset.png").requires());
-        assertEquals(IconCapability.class, Values.placeholder((Drawable) null).requires());
-        assertEquals(IconCapability.class, Values.fallback(null).requires());
+        assertEquals(ImageCapability.class, Values.src("https://example.com/asset.png").requires());
+        assertEquals(ImageCapability.class, Values.src((ImageSource) null).requires());
+        assertEquals(VideoCapability.class, Values.src((VideoSource) null).requires());
+        assertEquals(ImageCapability.class, Values.placeholder((Drawable) null).requires());
+        assertEquals(ImageCapability.class, Values.fallback(null).requires());
         assertEquals(VideoCapability.class, Values.autoplay(true).requires());
     }
 }

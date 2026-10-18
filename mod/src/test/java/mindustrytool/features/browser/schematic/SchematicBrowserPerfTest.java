@@ -26,7 +26,8 @@ import mindustrytool.features.browser.map.MapCard;
 import mindustrytool.models.response.MapData;
 import mindustrytool.models.response.SchematicData;
 import mindustrytool.test.MindustryTestEnv;
-import solim.display.NetworkImage;
+import solim.display.ImageCache;
+import solim.display.SolimImage;
 import solim.layout.ReactiveGrid;
 import solim.performance.Perf;
 import solim.performance.PerfSpan;
@@ -94,8 +95,8 @@ class SchematicBrowserPerfTest extends MindustryTestEnv {
 
     @BeforeEach
     void setUp() {
-        NetworkImage.clearCache();
-        NetworkImage.setImageLoader((url, radius, targetW, targetH, onSuccess, onError) -> onError
+        SolimImage.clearCache();
+        SolimImage.setImageLoader((url, radius, targetW, targetH, onSuccess, onError) -> onError
                 .get(new RuntimeException("fake-offline")));
         Perf.setEnabled(true);
         Perf.setThreshold(0f);
@@ -106,8 +107,8 @@ class SchematicBrowserPerfTest extends MindustryTestEnv {
     void tearDown() {
         Perf.setEnabled(false);
         Perf.setThreshold(50f);
-        NetworkImage.setImageLoader(null);
-        NetworkImage.clearCache();
+        SolimImage.setImageLoader(null);
+        SolimImage.clearCache();
     }
 
     private static SchematicData schematic(String itemId, String name) {
@@ -334,7 +335,7 @@ class SchematicBrowserPerfTest extends MindustryTestEnv {
 
     @Test
     void imageDecodeDoesNotSuppressStructuralSpans() {
-        NetworkImage.setImageLoader((url, radius, targetW, targetH, onSuccess, onError) -> {
+        SolimImage.setImageLoader((url, radius, targetW, targetH, onSuccess, onError) -> {
             Pixmap pixmap = new Pixmap(30, 30);
             int opaqueWhite = Color.rgba8888(1f, 1f, 1f, 1f);
             for (int y = 0; y < 30; y++) {
@@ -342,7 +343,7 @@ class SchematicBrowserPerfTest extends MindustryTestEnv {
                     pixmap.set(x, y, opaqueWhite);
                 }
             }
-            NetworkImage.applyRoundedMask(pixmap, 8);
+            ImageCache.applyRoundedMask(pixmap, 8);
             pixmap.dispose();
             onSuccess.get(new TextureRegion());
         });

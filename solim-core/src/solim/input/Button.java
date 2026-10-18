@@ -38,7 +38,6 @@ import solim.modifier.Configurable;
 import solim.modifier.ContainerCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
-import solim.modifier.TableCapability;
 import solim.modifier.Values;
 import arc.util.Time;
 
@@ -49,7 +48,9 @@ import solim.modifier.TextCapability;
 import solim.modifier.WrappableCapability;
 
 public final class Button
-        extends Component implements GapContainer, Configurable<Button>, TableCapability, CellCapability, ContainerCapability<Button>, AlignmentCapability, ButtonCapability, CheckableCapability, IconCapability, TextCapability, WrappableCapability {
+        extends Component
+        implements GapContainer, Configurable<Button>, CellCapability, ContainerCapability<Button>, AlignmentCapability,
+        ButtonCapability, CheckableCapability, IconCapability, TextCapability, WrappableCapability {
 
     private final arc.scene.ui.Button button;
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -134,7 +135,7 @@ public final class Button
             if (drawable != null) {
                 SolimImage img = new SolimImage(Drawables.scalable(drawable), Scaling.fit);
                 img.props(Values.size(Units.unit(6)), Values.prefWidth(Units.unit(6)),
-                                Values.prefHeight(Units.unit(6)));
+                        Values.prefHeight(Units.unit(6)));
                 AttachmentStack.attachToParent(img.element());
             }
         });
@@ -147,7 +148,7 @@ public final class Button
                 SolimImage img = new SolimImage();
                 img.drawable(drawable.map(Drawables::scalable));
                 img.props(Values.scaling(Scaling.fit), Values.size(Units.unit(6)), Values.prefWidth(Units.unit(6)),
-                                Values.prefHeight(Units.unit(6)));
+                        Values.prefHeight(Units.unit(6)));
                 AttachmentStack.attachToParent(img.element());
             }
         });
