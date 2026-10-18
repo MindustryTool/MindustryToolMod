@@ -3,15 +3,11 @@ package solim.input;
 import solim.reactive.TwoWayBinding;
 
 import arc.scene.ui.Slider;
-import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.DisposableAction;
 import solim.core.OwnershipContext;
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
-import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.modifier.SliderCapability;
@@ -19,7 +15,7 @@ import solim.reactive.Signal;
 import java.util.Objects;
 
 public final class SolimSlider extends Component
-        implements Configurable<SolimSlider>, ElementCapability, CellCapability, AlignmentCapability, SliderCapability {
+        implements Configurable<SolimSlider>, SliderCapability {
     private final Slider slider;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private @Nullable Props<SolimSlider> pending;
@@ -27,11 +23,6 @@ public final class SolimSlider extends Component
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
-    }
-
-    @Override
-    public @Nullable Table table() {
-        return null;
     }
 
     @Override

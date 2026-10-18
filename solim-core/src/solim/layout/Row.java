@@ -1,12 +1,8 @@
 package solim.layout;
 
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.ContainerCapability;
 import solim.modifier.Props;
-import solim.modifier.TableCapability;
-
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
@@ -18,7 +14,7 @@ import solim.modifier.PendingCellConfig;
 import solim.core.OwnershipContext;
 
 public final class Row extends Component
-        implements GapContainer, Configurable<Row>, TableCapability, CellCapability, ContainerCapability<Row>, AlignmentCapability {
+        implements GapContainer, Configurable<Row>, ContainerCapability<Row> {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -59,8 +55,6 @@ public final class Row extends Component
     public PendingCellConfig cellConfig() {
         return constraints;
     }
-
-
 
     @Override
     public Direction direction() {

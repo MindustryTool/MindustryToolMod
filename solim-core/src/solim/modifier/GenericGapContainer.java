@@ -6,6 +6,7 @@ import solim.core.SolimToken;
 import solim.layout.Direction;
 import solim.layout.GapContainer;
 import solim.layout.GapHost;
+import solim.modifier.PendingCellConfig;
 
 final class GenericGapContainer extends Component implements GapContainer {
     private final Table table;
@@ -29,6 +30,16 @@ final class GenericGapContainer extends Component implements GapContainer {
             generic.respace();
         }
         table.invalidateHierarchy();
+    }
+
+    @Override
+    public Table table() {
+        return table;
+    }
+
+    @Override
+    public PendingCellConfig cellConfig() {
+        return null;
     }
 
     @Override

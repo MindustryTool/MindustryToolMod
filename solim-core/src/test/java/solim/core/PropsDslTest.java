@@ -54,6 +54,7 @@ import solim.layout.Scroll;
 import solim.modifier.ContainerCapability;
 import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.TableCapability;
 import solim.modifier.Prop;
 import solim.modifier.Values;
 import solim.overlay.Hud;
@@ -358,9 +359,9 @@ class PropsDslTest extends SolimCoreEnv {
         assertTrue(field.cellConfig().growX, "a widget without a table still records cell props");
         assertTrue(slider.cellConfig().growX);
         assertTrue(toggle.cellConfig().growX);
-        assertNull(field.table(), "a widget that wraps a single Arc widget exposes no table");
-        assertNull(slider.table());
-        assertNull(toggle.table());
+        assertFalse(TableCapability.class.isAssignableFrom(field.getClass()), "a widget that wraps a single Arc widget exposes no table");
+        assertFalse(TableCapability.class.isAssignableFrom(slider.getClass()));
+        assertFalse(TableCapability.class.isAssignableFrom(toggle.getClass()));
     }
 
     @Test

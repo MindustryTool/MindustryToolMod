@@ -1,5 +1,8 @@
 package solim.layout;
 
+
+import solim.modifier.ElementCapability;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -18,7 +21,6 @@ import arc.scene.ui.layout.Table;
 import arc.util.Align;
 import solim.core.Component;
 import solim.layout.LayoutTestFixtures.ComponentAdapter;
-import solim.modifier.AlignmentCapability;
 import solim.modifier.PendingCellConfig;
 import solim.test.SolimEnv;
 
@@ -29,10 +31,10 @@ public class UnifiedComponentAlignmentTest extends SolimEnv {
     }
 
     private static void invokeAlignment(Component comp, String methodName) {
-        if (!(comp instanceof AlignmentCapability)) {
-            throw new IllegalArgumentException("Component is not AlignmentCapability: " + comp.getClass().getSimpleName());
+        if (!(comp instanceof ElementCapability)) {
+            throw new IllegalArgumentException("Component is not ElementCapability: " + comp.getClass().getSimpleName());
         }
-        AlignmentCapability alignable = (AlignmentCapability) comp;
+        ElementCapability alignable = (ElementCapability) comp;
         switch (methodName) {
             case "top":
                 alignable.alignCoordinated(null, Align.top);

@@ -60,8 +60,7 @@ public class HostCapabilityTest extends SolimEnv {
     void hostCapabilityHierarchyIsWellFormed() {
         assertTrue(HostCapability.class.isAssignableFrom(ElementCapability.class));
         assertTrue(ElementCapability.class.isAssignableFrom(TableCapability.class));
-        assertTrue(HostCapability.class.isAssignableFrom(CellCapability.class));
-        assertTrue(HostCapability.class.isAssignableFrom(ContainerCapability.class));
+        assertTrue(ElementCapability.class.isAssignableFrom(ContainerCapability.class));
         assertTrue(HostCapability.class.isAssignableFrom(Component.class));
     }
 
@@ -90,27 +89,30 @@ public class HostCapabilityTest extends SolimEnv {
 
         for (Class<?> clazz : tableContainers) {
             assertTrue(TableCapability.class.isAssignableFrom(clazz), clazz.getSimpleName() + " must implement TableCapability");
-            assertTrue(CellCapability.class.isAssignableFrom(clazz), clazz.getSimpleName() + " must implement CellCapability");
+            assertTrue(ElementCapability.class.isAssignableFrom(clazz), clazz.getSimpleName() + " must implement ElementCapability");
             assertTrue(ContainerCapability.class.isAssignableFrom(clazz), clazz.getSimpleName() + " must implement ContainerCapability");
-            assertTrue(AlignmentCapability.class.isAssignableFrom(clazz), clazz.getSimpleName() + " must implement AlignmentCapability");
         }
     }
 
     @Test
     void stackDeclaresContainerAndElementCapabilityWithoutTableCapability() {
         assertTrue(ElementCapability.class.isAssignableFrom(SolimStack.class));
-        assertTrue(CellCapability.class.isAssignableFrom(SolimStack.class));
         assertTrue(ContainerCapability.class.isAssignableFrom(SolimStack.class));
-        assertTrue(AlignmentCapability.class.isAssignableFrom(SolimStack.class));
         assertFalse(TableCapability.class.isAssignableFrom(SolimStack.class));
     }
 
     @Test
     void badgeDeclaresTableCapabilityWithoutContainerCapability() {
         assertTrue(TableCapability.class.isAssignableFrom(Badge.class));
-        assertTrue(CellCapability.class.isAssignableFrom(Badge.class));
-        assertTrue(AlignmentCapability.class.isAssignableFrom(Badge.class));
+        assertTrue(ElementCapability.class.isAssignableFrom(Badge.class));
         assertFalse(ContainerCapability.class.isAssignableFrom(Badge.class));
+    }
+
+    @Test
+    void spacerDeclaresTableCapabilityWithoutContainerCapability() {
+        assertTrue(TableCapability.class.isAssignableFrom(Spacer.class));
+        assertTrue(ElementCapability.class.isAssignableFrom(Spacer.class));
+        assertFalse(ContainerCapability.class.isAssignableFrom(Spacer.class));
     }
 
     @Test
@@ -119,7 +121,6 @@ public class HostCapabilityTest extends SolimEnv {
                 Text.class,
                 SolimImage.class,
                 Divider.class,
-                Spacer.class,
                 SolimTextField.class,
                 SolimSlider.class,
                 Switch.class,
@@ -130,8 +131,6 @@ public class HostCapabilityTest extends SolimEnv {
 
         for (Class<?> leaf : leaves) {
             assertTrue(ElementCapability.class.isAssignableFrom(leaf), leaf.getSimpleName() + " must implement ElementCapability");
-            assertTrue(CellCapability.class.isAssignableFrom(leaf), leaf.getSimpleName() + " must implement CellCapability");
-            assertTrue(AlignmentCapability.class.isAssignableFrom(leaf), leaf.getSimpleName() + " must implement AlignmentCapability");
             assertFalse(ContainerCapability.class.isAssignableFrom(leaf), leaf.getSimpleName() + " must not implement ContainerCapability");
             assertFalse(TableCapability.class.isAssignableFrom(leaf), leaf.getSimpleName() + " must not implement TableCapability");
         }
@@ -144,7 +143,6 @@ public class HostCapabilityTest extends SolimEnv {
                 SolimImage.class,
                 Badge.class,
                 Divider.class,
-                Spacer.class,
                 SolimTextField.class,
                 SolimSlider.class,
                 Switch.class,
@@ -172,7 +170,6 @@ public class HostCapabilityTest extends SolimEnv {
             new Text("inside-stack");
         });
 
-        assertNull(comp.table());
         Element el = comp.element();
         assertNotNull(el);
         assertTrue(comp.stack().getChildren().size > 0);

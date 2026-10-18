@@ -1,5 +1,8 @@
 package solim.reactive;
 
+
+import solim.modifier.ElementCapability;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -31,7 +34,6 @@ import solim.core.Component;
 import solim.core.SolimToken;
 import arc.util.Nullable;
 import solim.core.OwnershipContext;
-import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.ContainerCapability;
 import solim.modifier.PendingCellConfig;
@@ -43,7 +45,7 @@ import solim.test.SolimCoreEnv;
 class ForEachComponentTest extends SolimCoreEnv {
 
     static class TestComponent extends Component
-            implements Configurable<TestComponent>, TableCapability, CellCapability, ContainerCapability<TestComponent> {
+            implements Configurable<TestComponent>, ElementCapability, ContainerCapability<TestComponent> {
         final String id;
         boolean wasDisposed = false;
         private final PendingCellConfig constraints = new PendingCellConfig();
@@ -58,12 +60,6 @@ class ForEachComponentTest extends SolimCoreEnv {
             return constraints;
         }
 
-        @Override
-        public @Nullable Table table() {
-            return null;
-        }
-
-        
         public TestComponent children(@Nullable Runnable block) {
             applyPendingProps();
             OwnershipContext.push(this);

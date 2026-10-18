@@ -25,8 +25,6 @@ import solim.core.Units;
 import solim.display.Text;
 import solim.input.Button;
 import solim.input.SolimSlider;
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.core.DisposableAction;
 import solim.modifier.Configurable;
 import solim.modifier.ImageCapability;
@@ -42,7 +40,7 @@ import solim.reactive.TwoWayBinding;
 import solim.runtime.AttachmentStack;
 
 public final class SolimVideo extends Component
-        implements Configurable<SolimVideo>, CellCapability, AlignmentCapability, VideoCapability, ImageCapability {
+        implements Configurable<SolimVideo>, VideoCapability, ImageCapability {
 
     private static final long OVERLAY_HIDE_DELAY = 2500;
 
@@ -603,11 +601,6 @@ public final class SolimVideo extends Component
 
     // TODO: Those component arent table, they should not impl these method and
     // having children function causing user missuse
-    @Override
-    public @Nullable Table table() {
-        return null;
-    }
-
     @Override
     public @Nullable Props<SolimVideo> pendingProps() {
         return pending;

@@ -126,7 +126,7 @@ class ElementConfigTooltipTest extends SolimEnv {
     }
 
     private static final class TestTarget extends Component
-            implements Configurable<TestTarget>, ElementCapability, CellCapability {
+            implements Configurable<TestTarget>, ElementCapability {
         private final Table table = new Table();
         private final PendingCellConfig constraints = new PendingCellConfig();
         private @Nullable Props<TestTarget> pending;
@@ -150,7 +150,6 @@ class ElementConfigTooltipTest extends SolimEnv {
             return this;
         }
 
-        @Override
         public Table table() {
             return table;
         }

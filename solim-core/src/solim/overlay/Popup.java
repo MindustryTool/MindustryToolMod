@@ -1,5 +1,8 @@
 package solim.overlay;
 
+
+import solim.modifier.ElementCapability;
+
 import arc.Core;
 import arc.Events;
 import arc.func.Cons;
@@ -18,8 +21,6 @@ import mindustry.game.EventType.ResizeEvent;
 import solim.core.Component;
 import solim.core.SolimToken;
 import solim.layout.Spacer;
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.ContainerCapability;
 import solim.modifier.TableCapability;
@@ -30,7 +31,7 @@ import solim.runtime.AttachmentStack;
 import solim.runtime.OwnershipScope;
 
 public final class Popup<T> extends Component
-        implements Configurable<Popup<T>>, TableCapability, CellCapability, ContainerCapability<Popup<T>>, AlignmentCapability {
+        implements Configurable<Popup<T>>, TableCapability, ElementCapability, ContainerCapability<Popup<T>> {
 
     public enum Edge {
         TOP,

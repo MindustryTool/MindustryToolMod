@@ -13,8 +13,6 @@ import solim.core.Component;
 import solim.core.DisposableAction;
 import solim.core.OwnershipContext;
 import solim.core.SolimToken;
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.FieldCapability;
 import solim.modifier.PendingCellConfig;
@@ -26,7 +24,7 @@ import solim.reactive.Signal;
 import solim.style.InputStyle;
 
 public final class SolimTextField extends Component
-        implements Configurable<SolimTextField>, CellCapability, AlignmentCapability, FieldCapability, TextCapability,
+        implements Configurable<SolimTextField>, FieldCapability, TextCapability,
         WrappableCapability {
 
     private final TextField field;
@@ -140,11 +138,6 @@ public final class SolimTextField extends Component
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
-    }
-
-    @Override
-    public @Nullable Table table() {
-        return null;
     }
 
     @Override

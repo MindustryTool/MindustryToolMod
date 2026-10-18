@@ -1,17 +1,14 @@
 package solim.core;
 
 import arc.scene.Element;
-import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 
 public abstract class SolimElement extends Component
-        implements Configurable<SolimElement>, ElementCapability, CellCapability, AlignmentCapability {
+        implements Configurable<SolimElement>, ElementCapability {
 
     private final PendingCellConfig constraints = new PendingCellConfig();
     private @Nullable Props<SolimElement> pendingProps;
@@ -42,12 +39,6 @@ public abstract class SolimElement extends Component
     public SolimElement name(@Nullable String name) {
         setName(name);
         return this;
-    }
-
-    @Override
-    public @Nullable Table table() {
-        Element element = element();
-        return element instanceof Table ? (Table) element : null;
     }
 
     @Override

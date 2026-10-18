@@ -1,5 +1,8 @@
 package solim.reactive;
 
+
+import solim.modifier.ElementCapability;
+
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
@@ -9,8 +12,6 @@ import arc.func.Cons;
 import solim.core.Component;
 import solim.core.OwnershipContext;
 import solim.core.SolimToken;
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.ContainerCapability;
 import solim.modifier.TableCapability;
@@ -22,7 +23,7 @@ import solim.runtime.Fragment;
 import solim.runtime.ReactiveContext;
 
 public final class Dynamic<T> extends Component
-        implements Configurable<Dynamic<T>>, TableCapability, CellCapability, ContainerCapability<Dynamic<T>>, AlignmentCapability {
+        implements Configurable<Dynamic<T>>, TableCapability, ElementCapability, ContainerCapability<Dynamic<T>> {
     private final Table container = new Table();
     private final PendingCellConfig constraints = new PendingCellConfig();
     private final Readable<T> source;

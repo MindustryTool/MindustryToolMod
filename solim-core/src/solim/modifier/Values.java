@@ -62,75 +62,75 @@ public final class Values {
     private Values() {
     }
 
-    public static Prop<CellCapability, Boolean> growX() {
-        return Prop.cell(CellCapability.class, "growX", Boolean.TRUE, (config, v) -> config.growX = true);
+    public static Prop<ElementCapability, Boolean> growX() {
+        return Prop.cell(ElementCapability.class, "growX", Boolean.TRUE, (config, v) -> config.growX = true);
     }
 
-    public static Prop<CellCapability, Boolean> growY() {
-        return Prop.cell(CellCapability.class, "growY", Boolean.TRUE, (config, v) -> config.growY = true);
+    public static Prop<ElementCapability, Boolean> growY() {
+        return Prop.cell(ElementCapability.class, "growY", Boolean.TRUE, (config, v) -> config.growY = true);
     }
 
-    public static Prop<CellCapability, Boolean> grow() {
-        return Prop.cell(CellCapability.class, "grow", Boolean.TRUE, (config, v) -> {
+    public static Prop<ElementCapability, Boolean> grow() {
+        return Prop.cell(ElementCapability.class, "grow", Boolean.TRUE, (config, v) -> {
             config.growX = true;
             config.growY = true;
         });
     }
 
-    public static Prop<CellCapability, Float> prefWidth(float v) {
-        return Prop.cell(CellCapability.class, "prefWidth", v, (config, val) -> config.prefWidth = Readable.of(val));
+    public static Prop<ElementCapability, Float> prefWidth(float v) {
+        return Prop.cell(ElementCapability.class, "prefWidth", v, (config, val) -> config.prefWidth = Readable.of(val));
     }
 
-    public static Prop<CellCapability, Float> prefWidth(Readable<Float> v) {
-        return Prop.cellSource(CellCapability.class, "prefWidth", v, (config, source) -> config.prefWidth = source);
+    public static Prop<ElementCapability, Float> prefWidth(Readable<Float> v) {
+        return Prop.cellSource(ElementCapability.class, "prefWidth", v, (config, source) -> config.prefWidth = source);
     }
 
-    public static Prop<CellCapability, Float> prefHeight(float v) {
-        return Prop.cell(CellCapability.class, "prefHeight", v, (config, val) -> config.prefHeight = Readable.of(val));
+    public static Prop<ElementCapability, Float> prefHeight(float v) {
+        return Prop.cell(ElementCapability.class, "prefHeight", v, (config, val) -> config.prefHeight = Readable.of(val));
     }
 
-    public static Prop<CellCapability, Float> prefHeight(Readable<Float> v) {
-        return Prop.cellSource(CellCapability.class, "prefHeight", v, (config, source) -> config.prefHeight = source);
+    public static Prop<ElementCapability, Float> prefHeight(Readable<Float> v) {
+        return Prop.cellSource(ElementCapability.class, "prefHeight", v, (config, source) -> config.prefHeight = source);
     }
 
-    public static Prop<CellCapability, Float> minWidth(float v) {
-        return Prop.cell(CellCapability.class, "minWidth", v, (config, val) -> config.minWidth = Readable.of(val));
+    public static Prop<ElementCapability, Float> minWidth(float v) {
+        return Prop.cell(ElementCapability.class, "minWidth", v, (config, val) -> config.minWidth = Readable.of(val));
     }
 
-    public static Prop<CellCapability, Float> minWidth(Readable<Float> v) {
-        return Prop.cellSource(CellCapability.class, "minWidth", v, (config, source) -> config.minWidth = source);
+    public static Prop<ElementCapability, Float> minWidth(Readable<Float> v) {
+        return Prop.cellSource(ElementCapability.class, "minWidth", v, (config, source) -> config.minWidth = source);
     }
 
-    public static Prop<CellCapability, Float> maxWidth(float v) {
-        return Prop.cell(CellCapability.class, "maxWidth", v, (config, val) -> config.maxWidth = Readable.of(val));
+    public static Prop<ElementCapability, Float> maxWidth(float v) {
+        return Prop.cell(ElementCapability.class, "maxWidth", v, (config, val) -> config.maxWidth = Readable.of(val));
     }
 
-    public static Prop<CellCapability, Float> maxWidth(Readable<Float> v) {
-        return Prop.cellSource(CellCapability.class, "maxWidth", v, (config, source) -> config.maxWidth = source);
+    public static Prop<ElementCapability, Float> maxWidth(Readable<Float> v) {
+        return Prop.cellSource(ElementCapability.class, "maxWidth", v, (config, source) -> config.maxWidth = source);
     }
 
-    public static Prop<CellCapability, Float> minHeight(float v) {
-        return Prop.cell(CellCapability.class, "minHeight", v, (config, val) -> config.minHeight = Readable.of(val));
+    public static Prop<ElementCapability, Float> minHeight(float v) {
+        return Prop.cell(ElementCapability.class, "minHeight", v, (config, val) -> config.minHeight = Readable.of(val));
     }
 
-    public static Prop<CellCapability, Float> minHeight(Readable<Float> v) {
-        return Prop.cellSource(CellCapability.class, "minHeight", v, (config, source) -> config.minHeight = source);
+    public static Prop<ElementCapability, Float> minHeight(Readable<Float> v) {
+        return Prop.cellSource(ElementCapability.class, "minHeight", v, (config, source) -> config.minHeight = source);
     }
 
-    public static Prop<CellCapability, Float> maxHeight(float v) {
-        return Prop.cell(CellCapability.class, "maxHeight", v, (config, val) -> config.maxHeight = Readable.of(val));
+    public static Prop<ElementCapability, Float> maxHeight(float v) {
+        return Prop.cell(ElementCapability.class, "maxHeight", v, (config, val) -> config.maxHeight = Readable.of(val));
     }
 
-    public static Prop<CellCapability, Float> maxHeight(Readable<Float> v) {
-        return Prop.cellSource(CellCapability.class, "maxHeight", v, (config, source) -> config.maxHeight = source);
+    public static Prop<ElementCapability, Float> maxHeight(Readable<Float> v) {
+        return Prop.cellSource(ElementCapability.class, "maxHeight", v, (config, source) -> config.maxHeight = source);
     }
 
-    public static Prop<CellCapability, Float> margin(float v) {
+    public static Prop<ElementCapability, Float> margin(float v) {
         return margin(v, v, v, v);
     }
 
-    public static Prop<CellCapability, Float> margin(float top, float left, float bottom, float right) {
-        return Prop.cell(CellCapability.class, "margin", top, (config, val) -> {
+    public static Prop<ElementCapability, Float> margin(float top, float left, float bottom, float right) {
+        return Prop.cell(ElementCapability.class, "margin", top, (config, val) -> {
             config.padTop = Readable.of(top);
             config.padLeft = Readable.of(left);
             config.padBottom = Readable.of(bottom);
@@ -138,14 +138,14 @@ public final class Values {
         });
     }
 
-    public static Prop<CellCapability, Float> margin(Readable<Float> v) {
+    public static Prop<ElementCapability, Float> margin(Readable<Float> v) {
         return margin(v, v, v, v);
     }
 
-    public static Prop<CellCapability, Float> margin(@Nullable Readable<Float> top, @Nullable Readable<Float> left,
+    public static Prop<ElementCapability, Float> margin(@Nullable Readable<Float> top, @Nullable Readable<Float> left,
             @Nullable Readable<Float> bottom, @Nullable Readable<Float> right) {
         if (top != null) {
-            return Prop.cellSource(CellCapability.class, "margin", top, (config, source) -> {
+            return Prop.cellSource(ElementCapability.class, "margin", top, (config, source) -> {
                 config.padTop = top;
                 config.padLeft = left;
                 config.padBottom = bottom;
@@ -153,7 +153,7 @@ public final class Values {
             });
         }
         if (left != null) {
-            return Prop.cellSource(CellCapability.class, "margin", left, (config, source) -> {
+            return Prop.cellSource(ElementCapability.class, "margin", left, (config, source) -> {
                 config.padTop = top;
                 config.padLeft = left;
                 config.padBottom = bottom;
@@ -161,7 +161,7 @@ public final class Values {
             });
         }
         if (bottom != null) {
-            return Prop.cellSource(CellCapability.class, "margin", bottom, (config, source) -> {
+            return Prop.cellSource(ElementCapability.class, "margin", bottom, (config, source) -> {
                 config.padTop = top;
                 config.padLeft = left;
                 config.padBottom = bottom;
@@ -169,113 +169,113 @@ public final class Values {
             });
         }
         if (right != null) {
-            return Prop.cellSource(CellCapability.class, "margin", right, (config, source) -> {
+            return Prop.cellSource(ElementCapability.class, "margin", right, (config, source) -> {
                 config.padTop = top;
                 config.padLeft = left;
                 config.padBottom = bottom;
                 config.padRight = right;
             });
         }
-        return Prop.cell(CellCapability.class, "margin", 0f, (config, val) -> {
+        return Prop.cell(ElementCapability.class, "margin", 0f, (config, val) -> {
         });
     }
 
-    public static Prop<CellCapability, Float> marginTop(float v) {
-        return Prop.cell(CellCapability.class, "marginTop", v, (config, val) -> config.padTop = Readable.of(val));
+    public static Prop<ElementCapability, Float> marginTop(float v) {
+        return Prop.cell(ElementCapability.class, "marginTop", v, (config, val) -> config.padTop = Readable.of(val));
     }
 
-    public static Prop<CellCapability, Float> marginTop(Readable<Float> v) {
-        return Prop.cellSource(CellCapability.class, "marginTop", v, (config, source) -> config.padTop = source);
+    public static Prop<ElementCapability, Float> marginTop(Readable<Float> v) {
+        return Prop.cellSource(ElementCapability.class, "marginTop", v, (config, source) -> config.padTop = source);
     }
 
-    public static Prop<CellCapability, Float> marginBottom(float v) {
-        return Prop.cell(CellCapability.class, "marginBottom", v, (config, val) -> config.padBottom = Readable.of(val));
+    public static Prop<ElementCapability, Float> marginBottom(float v) {
+        return Prop.cell(ElementCapability.class, "marginBottom", v, (config, val) -> config.padBottom = Readable.of(val));
     }
 
-    public static Prop<CellCapability, Float> marginBottom(Readable<Float> v) {
-        return Prop.cellSource(CellCapability.class, "marginBottom", v, (config, source) -> config.padBottom = source);
+    public static Prop<ElementCapability, Float> marginBottom(Readable<Float> v) {
+        return Prop.cellSource(ElementCapability.class, "marginBottom", v, (config, source) -> config.padBottom = source);
     }
 
-    public static Prop<CellCapability, Float> marginLeft(float v) {
-        return Prop.cell(CellCapability.class, "marginLeft", v, (config, val) -> config.padLeft = Readable.of(val));
+    public static Prop<ElementCapability, Float> marginLeft(float v) {
+        return Prop.cell(ElementCapability.class, "marginLeft", v, (config, val) -> config.padLeft = Readable.of(val));
     }
 
-    public static Prop<CellCapability, Float> marginLeft(Readable<Float> v) {
-        return Prop.cellSource(CellCapability.class, "marginLeft", v, (config, source) -> config.padLeft = source);
+    public static Prop<ElementCapability, Float> marginLeft(Readable<Float> v) {
+        return Prop.cellSource(ElementCapability.class, "marginLeft", v, (config, source) -> config.padLeft = source);
     }
 
-    public static Prop<CellCapability, Float> marginRight(float v) {
-        return Prop.cell(CellCapability.class, "marginRight", v, (config, val) -> config.padRight = Readable.of(val));
+    public static Prop<ElementCapability, Float> marginRight(float v) {
+        return Prop.cell(ElementCapability.class, "marginRight", v, (config, val) -> config.padRight = Readable.of(val));
     }
 
-    public static Prop<CellCapability, Float> marginRight(Readable<Float> v) {
-        return Prop.cellSource(CellCapability.class, "marginRight", v, (config, source) -> config.padRight = source);
+    public static Prop<ElementCapability, Float> marginRight(Readable<Float> v) {
+        return Prop.cellSource(ElementCapability.class, "marginRight", v, (config, source) -> config.padRight = source);
     }
 
-    public static Prop<CellCapability, Float> marginX(float v) {
-        return Prop.cell(CellCapability.class, "marginX", v, (config, val) -> {
+    public static Prop<ElementCapability, Float> marginX(float v) {
+        return Prop.cell(ElementCapability.class, "marginX", v, (config, val) -> {
             config.padLeft = Readable.of(val);
             config.padRight = Readable.of(val);
         });
     }
 
-    public static Prop<CellCapability, Float> marginX(@Nullable Readable<Float> v) {
+    public static Prop<ElementCapability, Float> marginX(@Nullable Readable<Float> v) {
         if (v == null) {
-            return Prop.cell(CellCapability.class, "marginX", 0f, (config, val) -> {
+            return Prop.cell(ElementCapability.class, "marginX", 0f, (config, val) -> {
             });
         }
-        return Prop.cellSource(CellCapability.class, "marginX", v, (config, source) -> {
+        return Prop.cellSource(ElementCapability.class, "marginX", v, (config, source) -> {
             config.padLeft = source;
             config.padRight = source;
         });
     }
 
-    public static Prop<CellCapability, Float> marginY(float v) {
-        return Prop.cell(CellCapability.class, "marginY", v, (config, val) -> {
+    public static Prop<ElementCapability, Float> marginY(float v) {
+        return Prop.cell(ElementCapability.class, "marginY", v, (config, val) -> {
             config.padTop = Readable.of(val);
             config.padBottom = Readable.of(val);
         });
     }
 
-    public static Prop<CellCapability, Float> marginY(@Nullable Readable<Float> v) {
+    public static Prop<ElementCapability, Float> marginY(@Nullable Readable<Float> v) {
         if (v == null) {
-            return Prop.cell(CellCapability.class, "marginY", 0f, (config, val) -> {
+            return Prop.cell(ElementCapability.class, "marginY", 0f, (config, val) -> {
             });
         }
-        return Prop.cellSource(CellCapability.class, "marginY", v, (config, source) -> {
+        return Prop.cellSource(ElementCapability.class, "marginY", v, (config, source) -> {
             config.padTop = source;
             config.padBottom = source;
         });
     }
 
-    public static Prop<AlignmentCapability, Integer> align(int align) {
+    public static Prop<ElementCapability, Integer> align(int align) {
         return alignProp("align", align, 0);
     }
 
-    public static Prop<AlignmentCapability, Void> top() {
+    public static Prop<ElementCapability, Void> top() {
         return alignProp("top", null, Align.top);
     }
 
-    public static Prop<AlignmentCapability, Void> bottom() {
+    public static Prop<ElementCapability, Void> bottom() {
         return alignProp("bottom", null, Align.bottom);
     }
 
-    public static Prop<AlignmentCapability, Void> left() {
+    public static Prop<ElementCapability, Void> left() {
         return alignProp("left", null, Align.left);
     }
 
-    public static Prop<AlignmentCapability, Void> right() {
+    public static Prop<ElementCapability, Void> right() {
         return alignProp("right", null, Align.right);
     }
 
-    public static Prop<AlignmentCapability, Void> center() {
+    public static Prop<ElementCapability, Void> center() {
         return alignProp("center", null, Align.center);
     }
 
-    private static <V> Prop<AlignmentCapability, V> alignProp(String label, @Nullable V value, int named) {
+    private static <V> Prop<ElementCapability, V> alignProp(String label, @Nullable V value, int named) {
         final @Nullable Integer explicit = value instanceof Integer ? (Integer) value : null;
-        return new Prop<>(Prop.Kind.CELL, AlignmentCapability.class, label,
-                (view, val) -> view.withCapability(AlignmentCapability.class,
+        return new Prop<>(Prop.Kind.CELL, ElementCapability.class, label,
+                (view, val) -> view.withCapability(ElementCapability.class,
                         alignable -> alignable.alignCoordinated(explicit, named)),
                 value, null, value == null);
     }
@@ -564,54 +564,54 @@ public final class Values {
         });
     }
 
-    public static Prop<CellCapability, Float> width(float v) {
-        return Prop.cell(CellCapability.class, "width", Math.max(0f, v),
+    public static Prop<ElementCapability, Float> width(float v) {
+        return Prop.cell(ElementCapability.class, "width", Math.max(0f, v),
                 (config, val) -> config.prefWidth = Readable.of(val));
     }
 
-    public static Prop<CellCapability, Float> width(Readable<Float> v) {
-        return Prop.cellSource(CellCapability.class, "width", v, (config, source) -> config.prefWidth = source);
+    public static Prop<ElementCapability, Float> width(Readable<Float> v) {
+        return Prop.cellSource(ElementCapability.class, "width", v, (config, source) -> config.prefWidth = source);
     }
 
-    public static Prop<CellCapability, Float> height(float v) {
-        return Prop.cell(CellCapability.class, "height", Math.max(0f, v),
+    public static Prop<ElementCapability, Float> height(float v) {
+        return Prop.cell(ElementCapability.class, "height", Math.max(0f, v),
                 (config, val) -> config.prefHeight = Readable.of(val));
     }
 
-    public static Prop<CellCapability, Float> height(Readable<Float> v) {
-        return Prop.cellSource(CellCapability.class, "height", v, (config, source) -> config.prefHeight = source);
+    public static Prop<ElementCapability, Float> height(Readable<Float> v) {
+        return Prop.cellSource(ElementCapability.class, "height", v, (config, source) -> config.prefHeight = source);
     }
 
-    public static Prop<CellCapability, Float> size(float v) {
+    public static Prop<ElementCapability, Float> size(float v) {
         return size(v, v);
     }
 
-    public static Prop<CellCapability, Float> size(float width, float height) {
-        return Prop.cell(CellCapability.class, "size", width, (config, val) -> {
+    public static Prop<ElementCapability, Float> size(float width, float height) {
+        return Prop.cell(ElementCapability.class, "size", width, (config, val) -> {
             config.prefWidth = Readable.of(Math.max(0f, width));
             config.prefHeight = Readable.of(Math.max(0f, height));
         });
     }
 
-    public static Prop<CellCapability, Float> size(@Nullable Readable<Float> size) {
+    public static Prop<ElementCapability, Float> size(@Nullable Readable<Float> size) {
         return size(size, size);
     }
 
-    public static Prop<CellCapability, Float> size(@Nullable Readable<Float> width, @Nullable Readable<Float> height) {
+    public static Prop<ElementCapability, Float> size(@Nullable Readable<Float> width, @Nullable Readable<Float> height) {
         if (width != null && height != null) {
-            return Prop.cellSource(CellCapability.class, "size", width, (config, source) -> {
+            return Prop.cellSource(ElementCapability.class, "size", width, (config, source) -> {
                 config.prefWidth = width;
                 config.prefHeight = height;
             });
         }
         if (width != null) {
-            return Prop.cellSource(CellCapability.class, "size", width, (config, source) -> config.prefWidth = width);
+            return Prop.cellSource(ElementCapability.class, "size", width, (config, source) -> config.prefWidth = width);
         }
         if (height != null) {
-            return Prop.cellSource(CellCapability.class, "size", height,
+            return Prop.cellSource(ElementCapability.class, "size", height,
                     (config, source) -> config.prefHeight = height);
         }
-        return Prop.cell(CellCapability.class, "size", 0f, (config, val) -> {
+        return Prop.cell(ElementCapability.class, "size", 0f, (config, val) -> {
         });
     }
 

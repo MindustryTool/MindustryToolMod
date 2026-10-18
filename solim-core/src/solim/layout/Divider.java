@@ -1,18 +1,14 @@
 package solim.layout;
 
-
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.style.Drawable;
 import arc.scene.ui.Image;
-import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import arc.util.Scaling;
 import solim.core.Component;
 import solim.core.OwnershipContext;
 import solim.display.SolimImage;
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
@@ -20,7 +16,7 @@ import solim.modifier.Props;
 import solim.modifier.Values;
 
 public final class Divider extends Component
-        implements Configurable<Divider>, ElementCapability, CellCapability, AlignmentCapability {
+        implements Configurable<Divider>, ElementCapability {
     private final SolimImage image;
     private final Direction direction;
     private @Nullable Props<Divider> pending;
@@ -83,11 +79,6 @@ public final class Divider extends Component
     @Override
     public PendingCellConfig cellConfig() {
         return image.cellConfig();
-    }
-
-    @Override
-    public @Nullable Table table() {
-        return null;
     }
 
     @Override

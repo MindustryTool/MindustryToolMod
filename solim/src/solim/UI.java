@@ -56,9 +56,7 @@ import solim.layout.Tabs;
 import solim.layout.VirtualList;
 import solim.layout.ItemHeightProvider;
 import solim.core.HostCapability;
-import solim.modifier.AlignmentCapability;
 import solim.modifier.ButtonCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.CheckableCapability;
 import solim.modifier.ElementCapability;
 import solim.modifier.FieldCapability;
@@ -527,39 +525,39 @@ public final class UI {
         return Drawables.scalable(drawable);
     }
 
-    public static Prop<CellCapability, Boolean> grow() {
+    public static Prop<ElementCapability, Boolean> grow() {
         return Values.grow();
     }
 
-    public static Prop<CellCapability, Boolean> growX() {
+    public static Prop<ElementCapability, Boolean> growX() {
         return Values.growX();
     }
 
-    public static Prop<CellCapability, Boolean> growY() {
+    public static Prop<ElementCapability, Boolean> growY() {
         return Values.growY();
     }
 
-    public static Prop<AlignmentCapability, Void> center() {
+    public static Prop<ElementCapability, Void> center() {
         return Values.center();
     }
 
-    public static Prop<AlignmentCapability, Void> top() {
+    public static Prop<ElementCapability, Void> top() {
         return Values.top();
     }
 
-    public static Prop<AlignmentCapability, Void> bottom() {
+    public static Prop<ElementCapability, Void> bottom() {
         return Values.bottom();
     }
 
-    public static Prop<AlignmentCapability, Void> left() {
+    public static Prop<ElementCapability, Void> left() {
         return Values.left();
     }
 
-    public static Prop<AlignmentCapability, Void> right() {
+    public static Prop<ElementCapability, Void> right() {
         return Values.right();
     }
 
-    public static Prop<AlignmentCapability, Integer> align(int align) {
+    public static Prop<ElementCapability, Integer> align(int align) {
         return Values.align(align);
     }
 
@@ -599,116 +597,116 @@ public final class UI {
         return Values.paddingY(y);
     }
 
-    public static Prop<CellCapability, Float> prefWidth(float v) {
+    public static Prop<ElementCapability, Float> prefWidth(float v) {
         return Values.prefWidth(v);
     }
 
-    public static Prop<CellCapability, Float> prefWidth(Readable<Float> v) {
+    public static Prop<ElementCapability, Float> prefWidth(Readable<Float> v) {
         return Values.prefWidth(v);
     }
 
-    public static Prop<CellCapability, Float> prefHeight(float v) {
+    public static Prop<ElementCapability, Float> prefHeight(float v) {
         return Values.prefHeight(v);
     }
 
-    public static Prop<CellCapability, Float> prefHeight(Readable<Float> v) {
+    public static Prop<ElementCapability, Float> prefHeight(Readable<Float> v) {
         return Values.prefHeight(v);
     }
 
-    public static Prop<CellCapability, Float> minWidth(float v) {
+    public static Prop<ElementCapability, Float> minWidth(float v) {
         return Values.minWidth(v);
     }
 
-    public static Prop<CellCapability, Float> minWidth(Readable<Float> v) {
+    public static Prop<ElementCapability, Float> minWidth(Readable<Float> v) {
         return Values.minWidth(v);
     }
 
-    public static Prop<CellCapability, Float> minHeight(float v) {
+    public static Prop<ElementCapability, Float> minHeight(float v) {
         return Values.minHeight(v);
     }
 
-    public static Prop<CellCapability, Float> minHeight(Readable<Float> v) {
+    public static Prop<ElementCapability, Float> minHeight(Readable<Float> v) {
         return Values.minHeight(v);
     }
 
-    public static Prop<CellCapability, Float> maxWidth(float v) {
+    public static Prop<ElementCapability, Float> maxWidth(float v) {
         return Values.maxWidth(v);
     }
 
-    public static Prop<CellCapability, Float> maxWidth(Readable<Float> v) {
+    public static Prop<ElementCapability, Float> maxWidth(Readable<Float> v) {
         return Values.maxWidth(v);
     }
 
-    public static Prop<CellCapability, Float> maxHeight(float v) {
+    public static Prop<ElementCapability, Float> maxHeight(float v) {
         return Values.maxHeight(v);
     }
 
-    public static Prop<CellCapability, Float> maxHeight(Readable<Float> v) {
+    public static Prop<ElementCapability, Float> maxHeight(Readable<Float> v) {
         return Values.maxHeight(v);
     }
 
-    public static Prop<CellCapability, Float> margin(float v) {
+    public static Prop<ElementCapability, Float> margin(float v) {
         return Values.margin(v);
     }
 
-    public static Prop<CellCapability, Float> margin(float top, float left, float bottom, float right) {
+    public static Prop<ElementCapability, Float> margin(float top, float left, float bottom, float right) {
         return Values.margin(top, left, bottom, right);
     }
 
-    public static Prop<CellCapability, Float> margin(Readable<Float> v) {
+    public static Prop<ElementCapability, Float> margin(Readable<Float> v) {
         return Values.margin(v);
     }
 
-    public static Prop<CellCapability, Float> margin(@Nullable Readable<Float> top, @Nullable Readable<Float> left,
+    public static Prop<ElementCapability, Float> margin(@Nullable Readable<Float> top, @Nullable Readable<Float> left,
             @Nullable Readable<Float> bottom, @Nullable Readable<Float> right) {
         return Values.margin(top, left, bottom, right);
     }
 
-    public static Prop<CellCapability, Float> marginTop(float v) {
+    public static Prop<ElementCapability, Float> marginTop(float v) {
         return Values.marginTop(v);
     }
 
-    public static Prop<CellCapability, Float> marginTop(Readable<Float> v) {
+    public static Prop<ElementCapability, Float> marginTop(Readable<Float> v) {
         return Values.marginTop(v);
     }
 
-    public static Prop<CellCapability, Float> marginBottom(float v) {
+    public static Prop<ElementCapability, Float> marginBottom(float v) {
         return Values.marginBottom(v);
     }
 
-    public static Prop<CellCapability, Float> marginBottom(Readable<Float> v) {
+    public static Prop<ElementCapability, Float> marginBottom(Readable<Float> v) {
         return Values.marginBottom(v);
     }
 
-    public static Prop<CellCapability, Float> marginLeft(float v) {
+    public static Prop<ElementCapability, Float> marginLeft(float v) {
         return Values.marginLeft(v);
     }
 
-    public static Prop<CellCapability, Float> marginLeft(Readable<Float> v) {
+    public static Prop<ElementCapability, Float> marginLeft(Readable<Float> v) {
         return Values.marginLeft(v);
     }
 
-    public static Prop<CellCapability, Float> marginRight(float v) {
+    public static Prop<ElementCapability, Float> marginRight(float v) {
         return Values.marginRight(v);
     }
 
-    public static Prop<CellCapability, Float> marginRight(Readable<Float> v) {
+    public static Prop<ElementCapability, Float> marginRight(Readable<Float> v) {
         return Values.marginRight(v);
     }
 
-    public static Prop<CellCapability, Float> marginX(float v) {
+    public static Prop<ElementCapability, Float> marginX(float v) {
         return Values.marginX(v);
     }
 
-    public static Prop<CellCapability, Float> marginX(@Nullable Readable<Float> v) {
+    public static Prop<ElementCapability, Float> marginX(@Nullable Readable<Float> v) {
         return Values.marginX(v);
     }
 
-    public static Prop<CellCapability, Float> marginY(float v) {
+    public static Prop<ElementCapability, Float> marginY(float v) {
         return Values.marginY(v);
     }
 
-    public static Prop<CellCapability, Float> marginY(@Nullable Readable<Float> v) {
+    public static Prop<ElementCapability, Float> marginY(@Nullable Readable<Float> v) {
         return Values.marginY(v);
     }
 
@@ -789,35 +787,35 @@ public final class UI {
         return Values.backgroundColor(color);
     }
 
-    public static Prop<CellCapability, Float> width(float v) {
+    public static Prop<ElementCapability, Float> width(float v) {
         return Values.width(v);
     }
 
-    public static Prop<CellCapability, Float> width(Readable<Float> v) {
+    public static Prop<ElementCapability, Float> width(Readable<Float> v) {
         return Values.width(v);
     }
 
-    public static Prop<CellCapability, Float> height(float v) {
+    public static Prop<ElementCapability, Float> height(float v) {
         return Values.height(v);
     }
 
-    public static Prop<CellCapability, Float> height(Readable<Float> v) {
+    public static Prop<ElementCapability, Float> height(Readable<Float> v) {
         return Values.height(v);
     }
 
-    public static Prop<CellCapability, Float> size(float v) {
+    public static Prop<ElementCapability, Float> size(float v) {
         return Values.size(v);
     }
 
-    public static Prop<CellCapability, Float> size(float width, float height) {
+    public static Prop<ElementCapability, Float> size(float width, float height) {
         return Values.size(width, height);
     }
 
-    public static Prop<CellCapability, Float> size(@Nullable Readable<Float> size) {
+    public static Prop<ElementCapability, Float> size(@Nullable Readable<Float> size) {
         return Values.size(size);
     }
 
-    public static Prop<CellCapability, Float> size(@Nullable Readable<Float> width, @Nullable Readable<Float> height) {
+    public static Prop<ElementCapability, Float> size(@Nullable Readable<Float> width, @Nullable Readable<Float> height) {
         return Values.size(width, height);
     }
 

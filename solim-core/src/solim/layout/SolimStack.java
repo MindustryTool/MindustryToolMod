@@ -11,18 +11,15 @@ import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.OwnershipContext;
 import solim.core.SolimToken;
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.ContainerCapability;
-import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import java.util.List;
 import solim.runtime.OwnershipScope;
 
 public final class SolimStack extends Component
-        implements Configurable<SolimStack>, ElementCapability, CellCapability, ContainerCapability<SolimStack>, AlignmentCapability {
+        implements Configurable<SolimStack>, ContainerCapability<SolimStack> {
     private final Stack stack;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private @Nullable Props<SolimStack> pending;
@@ -106,12 +103,6 @@ public final class SolimStack extends Component
         return constraints;
     }
 
-    @Override
-    public @Nullable Table table() {
-        return null;
-    }
-
-    
     @Override
     public SolimStack children(@Nullable Runnable block) {
         applyPendingProps();

@@ -1,6 +1,5 @@
 package solim.layout;
 
-
 import arc.graphics.Color;
 import arc.scene.style.Drawable;
 import arc.scene.ui.Button.ButtonStyle;
@@ -20,8 +19,6 @@ import solim.runtime.OwnershipScope;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.ContainerCapability;
 import solim.modifier.TableCapability;
@@ -30,7 +27,7 @@ import solim.modifier.Props;
 import solim.modifier.Values;
 
 public final class Tabs extends Component
-        implements Configurable<Tabs>, GapHost, TableCapability, CellCapability, ContainerCapability<Tabs>, AlignmentCapability {
+        implements Configurable<Tabs>, GapHost, TableCapability, ContainerCapability<Tabs> {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -68,7 +65,8 @@ public final class Tabs extends Component
         try {
             this.headerBar = new Row();
             this.headerBar.name("solim-tabs-headerBar");
-            this.headerBar.props(Values.gap(4f), Values.top(), Values.left(), Values.height(Units.unit(14)), Values.prefHeight(Units.unit(14)));
+            this.headerBar.props(Values.gap(4f), Values.top(), Values.left(), Values.height(Units.unit(14)),
+                    Values.prefHeight(Units.unit(14)));
             this.root.add(headerBar.element()).growX().row();
 
             this.contentStack = new SolimStack();

@@ -1,7 +1,5 @@
 package solim.layout;
 
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.ContainerCapability;
 import solim.modifier.Props;
@@ -18,7 +16,7 @@ import solim.runtime.AttachmentStack;
 import solim.modifier.PendingCellConfig;
 
 public final class Grid extends Component
-        implements GapContainer, Configurable<Grid>, CellCapability, ContainerCapability<Grid>, AlignmentCapability {
+        implements GapContainer, Configurable<Grid>, ContainerCapability<Grid> {
 
     private final Table table;
     private final PendingCellConfig constraints = new PendingCellConfig();

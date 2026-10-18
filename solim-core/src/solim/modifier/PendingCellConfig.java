@@ -125,7 +125,7 @@ public final class PendingCellConfig {
         }
 
         if (target instanceof Configurable) {
-            return ((Configurable<?>) target).cellConfig();
+            return ((ElementCapability) target).cellConfig();
         }
 
         if (target instanceof PendingCellConfig) {
@@ -140,7 +140,7 @@ public final class PendingCellConfig {
                     return token.cellConfig;
                 }
                 if (token.component instanceof Configurable) {
-                    return ((Configurable<?>) token.component).cellConfig();
+                    return ((ElementCapability) token.component).cellConfig();
                 }
             }
             return null;

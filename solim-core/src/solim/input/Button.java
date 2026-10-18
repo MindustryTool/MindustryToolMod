@@ -29,8 +29,6 @@ import solim.reactive.Readable;
 import solim.style.SolimButtonStyle;
 import solim.style.SolimButtonStyleBuilder;
 import arc.scene.style.Drawable;
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.ContainerCapability;
 import solim.modifier.PendingCellConfig;
@@ -46,7 +44,7 @@ import solim.modifier.WrappableCapability;
 
 public final class Button
         extends Component
-        implements GapContainer, Configurable<Button>, CellCapability, ContainerCapability<Button>, AlignmentCapability,
+        implements GapContainer, Configurable<Button>, ContainerCapability<Button>,
         ButtonCapability, CheckableCapability, IconCapability, TextCapability, WrappableCapability {
 
     private final arc.scene.ui.Button button;

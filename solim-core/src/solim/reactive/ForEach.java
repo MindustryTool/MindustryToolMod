@@ -1,5 +1,8 @@
 package solim.reactive;
 
+
+import solim.modifier.ElementCapability;
+
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
@@ -10,8 +13,6 @@ import solim.core.Component;
 import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.ContainerCapability;
 import solim.modifier.TableCapability;
@@ -21,7 +22,7 @@ import solim.runtime.AttachmentStack;
 import solim.runtime.StructuralReconciler;
 
 public final class ForEach<T> extends Component
-        implements Configurable<ForEach<T>>, TableCapability, CellCapability, ContainerCapability<ForEach<T>>, AlignmentCapability {
+        implements Configurable<ForEach<T>>, TableCapability, ElementCapability, ContainerCapability<ForEach<T>> {
     private final Table container = new Table();
     private final PendingCellConfig constraints = new PendingCellConfig();
     private final Readable<? extends Iterable<T>> collection;

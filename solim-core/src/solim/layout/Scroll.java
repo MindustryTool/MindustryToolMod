@@ -1,6 +1,9 @@
 package solim.layout;
 
 
+import solim.modifier.ElementCapability;
+
+
 import arc.func.Cons;
 
 import java.util.ArrayList;
@@ -18,8 +21,6 @@ import arc.util.Align;
 import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.SolimToken;
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.ContainerCapability;
 import solim.modifier.TableCapability;
@@ -30,7 +31,7 @@ import solim.runtime.AttachmentStack;
 import solim.modifier.PendingCellConfig;
 
 public final class Scroll extends Component
-        implements Configurable<Scroll>, TableCapability, CellCapability, ContainerCapability<Scroll>, AlignmentCapability, ScrollCapability {
+        implements Configurable<Scroll>, TableCapability, ContainerCapability<Scroll>, ScrollCapability {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -339,7 +340,7 @@ public final class Scroll extends Component
         if (named == Align.center || (explicit != null && explicit == Align.center)) {
             this.centered = true;
         }
-        AlignmentCapability.coordinateTable(content, constraints, explicit, named);
+        ElementCapability.coordinateTable(content, constraints, explicit, named);
         int a = constraints.align != null ? constraints.align : named;
         table().align(a);
         outer.align(a);

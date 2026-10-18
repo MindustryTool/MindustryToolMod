@@ -5,14 +5,11 @@ import solim.reactive.TwoWayBinding;
 import arc.Core;
 import arc.scene.ui.CheckBox;
 import arc.scene.ui.CheckBox.CheckBoxStyle;
-import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import arc.func.Cons;
 import solim.core.Component;
 import solim.core.DisposableAction;
 import solim.core.OwnershipContext;
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.CheckableCapability;
 import solim.modifier.Configurable;
 import solim.modifier.PendingCellConfig;
@@ -21,8 +18,7 @@ import solim.modifier.WrappableCapability;
 import solim.reactive.Signal;
 
 public final class Checkbox extends Component
-        implements Configurable<Checkbox>, CellCapability, AlignmentCapability, CheckableCapability,
-        WrappableCapability {
+        implements Configurable<Checkbox>, CheckableCapability, WrappableCapability {
 
     private final CheckBox checkBox;
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -31,11 +27,6 @@ public final class Checkbox extends Component
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
-    }
-
-    @Override
-    public Table table() {
-        return null;
     }
 
     @Override

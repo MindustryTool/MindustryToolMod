@@ -12,9 +12,8 @@ import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.SolimToken;
 import solim.core.SpacingAware;
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
+import solim.modifier.ElementCapability;
 import solim.modifier.LabelCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Prop;
@@ -24,7 +23,7 @@ import solim.modifier.WrappableCapability;
 import solim.reactive.Readable;
 
 public final class Text extends Component
-        implements SpacingAware, Configurable<Text>, CellCapability, AlignmentCapability, TextCapability,
+        implements SpacingAware, Configurable<Text>, TextCapability,
         LabelCapability, WrappableCapability {
 
     private final Label label;
@@ -90,7 +89,8 @@ public final class Text extends Component
 
     public Text(Readable<String> readable) {
         this("");
-        props(Prop.elementSource(TextCapability.class, "text", readable, (element, v) -> label.setText(v != null ? v : "")));
+        props(Prop.elementSource(TextCapability.class, "text", readable,
+                (element, v) -> label.setText(v != null ? v : "")));
     }
 
     public static Text of(String text) {
@@ -162,11 +162,6 @@ public final class Text extends Component
     }
 
     @Override
-    public Table table() {
-        return null;
-    }
-
-    @Override
     public PendingCellConfig cellConfig() {
         return constraints;
     }
@@ -189,7 +184,7 @@ public final class Text extends Component
 
     @Override
     public void alignCoordinated(@Nullable Integer explicit, int named) {
-        AlignmentCapability.coordinateCell(constraints, label, explicit, named);
+        ElementCapability.coordinateCell(constraints, label, explicit, named);
         int a = explicit != null ? explicit : constraints.align != null ? constraints.align : named;
         label.setAlignment(a);
     }

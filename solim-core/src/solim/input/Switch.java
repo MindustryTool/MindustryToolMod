@@ -9,15 +9,13 @@ import solim.core.Component;
 import solim.core.DisposableAction;
 import solim.core.OwnershipContext;
 import solim.reactive.Signal;
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.CheckableCapability;
 import solim.modifier.Configurable;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 
 public final class Switch extends Component
-        implements Configurable<Switch>, CellCapability, AlignmentCapability, CheckableCapability {
+        implements Configurable<Switch>, CheckableCapability {
     private final TextButton button;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private @Nullable Props<Switch> pending;
@@ -26,11 +24,6 @@ public final class Switch extends Component
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
-    }
-
-    @Override
-    public @Nullable Table table() {
-        return null;
     }
 
     @Override

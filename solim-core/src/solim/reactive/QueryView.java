@@ -1,5 +1,8 @@
 package solim.reactive;
 
+
+import solim.modifier.ElementCapability;
+
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
@@ -16,8 +19,6 @@ import solim.core.SolimToken;
 import solim.display.Text;
 import solim.input.Button;
 import solim.layout.CollapseHelper;
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.ContainerCapability;
 import solim.modifier.TableCapability;
@@ -28,7 +29,7 @@ import solim.runtime.AttachmentStack;
 import solim.runtime.OwnershipScope;
 
 public final class QueryView<T> extends Component
-        implements Configurable<QueryView<T>>, TableCapability, CellCapability, ContainerCapability<QueryView<T>>, AlignmentCapability {
+        implements Configurable<QueryView<T>>, TableCapability, ElementCapability, ContainerCapability<QueryView<T>> {
 
     private enum ViewState {
         NONE,

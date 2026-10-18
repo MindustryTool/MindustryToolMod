@@ -4,15 +4,13 @@ import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.SolimToken;
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
-import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.TableCapability;
 import solim.modifier.Props;
 
 public final class Spacer extends Component
-        implements Configurable<Spacer>, ElementCapability, CellCapability, AlignmentCapability {
+        implements Configurable<Spacer>, TableCapability {
 
     private final Table table;
     private final PendingCellConfig constraints = new PendingCellConfig();

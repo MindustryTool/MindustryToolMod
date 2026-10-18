@@ -1,27 +1,16 @@
 package solim.modifier;
 
-import arc.scene.Element;
-import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import solim.core.DisposableOwner;
 import solim.core.OwnershipContext;
 
-public interface Configurable<SELF extends Configurable<SELF> & DisposableOwner> {
+public interface Configurable<SELF extends Configurable<SELF> & DisposableOwner & ElementCapability> {
 
     SELF self();
 
     boolean isBuilt();
-
-    @Nullable
-    Element element();
-
-    @Nullable
-    Table table();
-
-    @Nullable
-    PendingCellConfig cellConfig();
 
     @Nullable
     Props<SELF> pendingProps();

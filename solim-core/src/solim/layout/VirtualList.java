@@ -1,6 +1,5 @@
 package solim.layout;
 
-
 import arc.Core;
 import arc.scene.Element;
 import arc.scene.ui.ScrollPane;
@@ -20,8 +19,6 @@ import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.runtime.StructuralReconciler;
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.ContainerCapability;
 import solim.modifier.TableCapability;
@@ -29,7 +26,7 @@ import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 
 public final class VirtualList<T> extends Component
-        implements Configurable<VirtualList<T>>, GapHost, TableCapability, CellCapability, ContainerCapability<VirtualList<T>>, AlignmentCapability {
+        implements Configurable<VirtualList<T>>, GapHost, TableCapability, ContainerCapability<VirtualList<T>> {
 
     private final Table outer;
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -221,7 +218,6 @@ public final class VirtualList<T> extends Component
         return outer;
     }
 
-    
     public VirtualList<T> children(@Nullable Runnable block) {
         applyPendingProps();
         OwnershipContext.push(this);

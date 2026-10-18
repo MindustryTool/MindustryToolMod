@@ -5,14 +5,11 @@ import arc.graphics.g2d.TextureRegion;
 import arc.scene.style.Drawable;
 import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.Image;
-import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import arc.util.Scaling;
 import java.util.Objects;
 import solim.core.Component;
 import solim.core.SolimToken;
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.ImageCapability;
 import solim.modifier.PendingCellConfig;
@@ -22,7 +19,7 @@ import solim.reactive.Readable;
 import solim.reactive.Signal;
 
 public final class SolimImage extends Component
-        implements Configurable<SolimImage>, ImageCapability, CellCapability, AlignmentCapability {
+        implements Configurable<SolimImage>, ImageCapability {
 
     private final Image element;
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -233,11 +230,6 @@ public final class SolimImage extends Component
     @Override
     public SolimImage self() {
         return this;
-    }
-
-    @Override
-    public @Nullable Table table() {
-        return null;
     }
 
     @Override

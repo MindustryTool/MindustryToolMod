@@ -1,5 +1,8 @@
 package solim.layout;
 
+
+import solim.modifier.ElementCapability;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static solim.modifier.Values.gap;
@@ -14,7 +17,6 @@ import arc.scene.ui.layout.Table;
 import solim.core.DisposableOwner;
 import solim.display.Text;
 import solim.input.Button;
-import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.TableCapability;
 import solim.modifier.Values;
@@ -40,7 +42,7 @@ public class UnifiedSpacingCompositionTest extends SolimEnv {
         assertEquals(0f, CellAccess.padRight(cell), 0.01f);
     }
 
-    private static <T extends Configurable<T> & DisposableOwner & CellCapability> void applyMarginAndAssert(T comp) {
+    private static <T extends Configurable<T> & DisposableOwner & ElementCapability> void applyMarginAndAssert(T comp) {
         Table parent = new Table();
         Cell<?> cell = parent.add(comp.element());
         comp.props(Values.margin(5f, 10f, 15f, 20f));
@@ -50,7 +52,7 @@ public class UnifiedSpacingCompositionTest extends SolimEnv {
         assertEquals(15f, CellAccess.padBottom(cell), 0.01f, comp.getClass().getSimpleName() + " padBottom");
         assertEquals(20f, CellAccess.padRight(cell), 0.01f, comp.getClass().getSimpleName() + " padRight");
 
-        Table inner = comp.table();
+        Table inner = comp instanceof TableCapability ? ((TableCapability) comp).table() : null;
         if (inner != null) {
             assertEquals(0f, inner.getMarginTop(), 0.01f);
             assertEquals(0f, inner.getMarginLeft(), 0.01f);

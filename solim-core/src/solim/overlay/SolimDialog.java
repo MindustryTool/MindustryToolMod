@@ -1,4 +1,7 @@
 package solim.overlay;
+
+
+import solim.modifier.ElementCapability;
 import arc.Core;
 import solim.reactive.Readable;
 import arc.func.Cons;
@@ -16,8 +19,6 @@ import solim.core.Component;
 import solim.core.Disposable;
 import solim.core.OwnershipContext;
 import solim.core.SolimToken;
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.ContainerCapability;
 import solim.modifier.TableCapability;
@@ -28,7 +29,7 @@ import solim.reactive.Effect;
 import solim.reactive.Signal;
 
 public class SolimDialog extends Component
-        implements Configurable<SolimDialog>, TableCapability, CellCapability, ContainerCapability<SolimDialog>, AlignmentCapability {
+        implements Configurable<SolimDialog>, TableCapability, ElementCapability, ContainerCapability<SolimDialog> {
 
     private final BaseDialog wrapped;
     private final PendingCellConfig constraints = new PendingCellConfig();

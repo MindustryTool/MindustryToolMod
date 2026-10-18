@@ -10,17 +10,13 @@ import solim.core.DisposableAction;
 import solim.core.OwnershipContext;
 import solim.reactive.Signal;
 import solim.reactive.TwoWayBinding;
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
-import solim.modifier.ElementCapability;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Props;
 import solim.modifier.SelectCapability;
-import arc.scene.ui.layout.Table;
 
 public final class SolimSelect<T> extends Component
-        implements Configurable<SolimSelect<T>>, ElementCapability, CellCapability, AlignmentCapability, SelectCapability {
+        implements Configurable<SolimSelect<T>>, SelectCapability {
     private final TextButton selectBox;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private @Nullable Props<SolimSelect<T>> pending;
@@ -29,11 +25,6 @@ public final class SolimSelect<T> extends Component
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
-    }
-
-    @Override
-    public @Nullable Table table() {
-        return null;
     }
 
     @Override

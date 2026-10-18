@@ -1,4 +1,5 @@
 package solim.display;
+
 import arc.graphics.Color;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
@@ -6,8 +7,6 @@ import solim.core.Component;
 import solim.core.SolimToken;
 import solim.graphics.RoundedDrawable;
 import solim.modifier.RoundedHelper;
-import solim.modifier.AlignmentCapability;
-import solim.modifier.CellCapability;
 import solim.modifier.Configurable;
 import solim.modifier.PendingCellConfig;
 import solim.modifier.Prop;
@@ -16,7 +15,7 @@ import solim.modifier.TableCapability;
 import solim.modifier.TextCapability;
 import solim.reactive.Readable;
 
-public final class Badge extends Component implements Configurable<Badge>, TableCapability, CellCapability, AlignmentCapability, TextCapability {
+public final class Badge extends Component implements Configurable<Badge>, TableCapability, TextCapability {
 
     private final Table element;
     private final PendingCellConfig constraints = new PendingCellConfig();

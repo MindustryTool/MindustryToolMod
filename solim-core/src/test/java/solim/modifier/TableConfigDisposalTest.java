@@ -267,7 +267,7 @@ class TableConfigDisposalTest extends OwnershipEnv {
     }
 
     private static final class TableTarget extends Component
-            implements Configurable<TableTarget>, TableCapability, CellCapability, ContainerCapability<TableTarget> {
+            implements Configurable<TableTarget>, TableCapability, ElementCapability, ContainerCapability<TableTarget> {
 
         private final Table table;
         private final PendingCellConfig constraints = new PendingCellConfig();

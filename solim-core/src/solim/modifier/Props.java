@@ -10,7 +10,7 @@ import solim.core.DisposableOwner;
 import solim.core.HostCapability;
 import solim.reactive.Effect;
 
-public final class Props<T extends Configurable<T> & DisposableOwner> {
+public final class Props<T extends Configurable<T> & DisposableOwner & ElementCapability> {
 
     private final T host;
     private final List<Prop<? super T, ?>> props;
@@ -106,9 +106,11 @@ public final class Props<T extends Configurable<T> & DisposableOwner> {
 
             @Override
             public void withTable(Cons<Table> action) {
-                Table table = host.table();
-                if (table != null) {
-                    action.get(table);
+                if (host instanceof TableCapability) {
+                    Table table = ((TableCapability) host).table();
+                    if (table != null) {
+                        action.get(table);
+                    }
                 }
             }
 
