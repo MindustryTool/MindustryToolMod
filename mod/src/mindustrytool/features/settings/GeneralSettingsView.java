@@ -20,7 +20,7 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureKeybind;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.services.crash.CrashTimestampParser;
-import solim.core.Component;
+    import solim.core.Component;
 
 public class GeneralSettingsView extends Component {
 
@@ -101,6 +101,13 @@ public class GeneralSettingsView extends Component {
                     .children(() -> {
                         icon(Icon.warning).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                         text(Core.bundle.get("setting.button.copy-crash"));
+                    });
+
+            button(() -> new SolimDemoDialog().show())
+                    .props(style(WebStyles.primary()), growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)), tooltip("Open a dialog demonstrating Solim UI framework features."))
+                    .children(() -> {
+                        icon(Icon.box).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
+                        text("Solim Demo");
                     });
         });
     }
