@@ -15,10 +15,6 @@ import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
 import arc.scene.Element;
 
-/**
- * Feature for browsing, searching, and downloading maps from the online
- * library. Supports direct download into custom maps and instant play.
- */
 public class MapBrowserFeature extends Feature {
 
     private @Nullable MapBrowserDialog dialog;
@@ -33,7 +29,7 @@ public class MapBrowserFeature extends Feature {
                 .quickAccess(false)
                 .build());
 
-        bindDialog("mapBrowser", KeyCode.unset, this::showDialog);
+        bindDialog("mapbrowser", KeyCode.unset, this::showDialog);
     }
 
     @Override

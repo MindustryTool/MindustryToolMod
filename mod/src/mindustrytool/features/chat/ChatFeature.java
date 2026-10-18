@@ -14,6 +14,7 @@ import mindustrytool.features.settings.ModSettings;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
+import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.reactive.Signals;
@@ -101,9 +102,9 @@ public class ChatFeature extends Feature {
         service = new ChatService(store, channelId -> hudView != null && hudView.isFeedVisible(channelId));
         presence = new ChatPresence(store.session(), ModSettings.sharePresence, enabled());
 
-        bindAction("chatOverlay", KeyCode.unset, this::toggleCollapsed, false);
+        bindAction("chatoverlay", KeyCode.unset, this::toggleCollapsed, false);
 
-        collapsedConfig.signal().subscribe(col -> {
+        Effect.of(collapsedConfig.signal(), col -> {
             boolean isCollapsed = Boolean.TRUE.equals(col);
             if (!isCollapsed) {
                 String activeId = store.channels().currentActiveId();

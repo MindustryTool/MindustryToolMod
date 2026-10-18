@@ -21,13 +21,11 @@ import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
 import solim.core.Units;
 import solim.overlay.SolimDialog;
+import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.reactive.Signals;
 
-/**
- * Quick access grid of player-configured schematics with HUD and Popup variants.
- */
 public class QuickSchematicGridFeature extends Feature {
 
     public static final String DISPLAY_HUD = "hud";
@@ -102,7 +100,7 @@ public class QuickSchematicGridFeature extends Feature {
         entriesJsonConfig = config.stringValue("entries", "[]");
         pageIconsJsonConfig = config.stringValue("pageIcons", "[]");
 
-        pageCountConfig.signal().subscribe(count -> {
+        Effect.of(pageCountConfig.signal(), count -> {
             int max = Math.max(0, (count != null ? count : 1) - 1);
             if (activePage.get() > max) {
                 activePage.set(max);
@@ -133,7 +131,7 @@ public class QuickSchematicGridFeature extends Feature {
 
         entries.set(QuickSchematicEntry.fromJson(entriesJsonConfig.get()));
 
-        entriesJsonConfig.signal().subscribe(json -> {
+        Effect.of(entriesJsonConfig.signal(), json -> {
             if (syncingEntries) {
                 return;
             }
@@ -147,7 +145,7 @@ public class QuickSchematicGridFeature extends Feature {
 
         pageIcons.set(parsePageIcons(pageIconsJsonConfig.get()));
 
-        pageIconsJsonConfig.signal().subscribe(json -> {
+        Effect.of(pageIconsJsonConfig.signal(), json -> {
             if (syncingPageIcons) {
                 return;
             }
@@ -159,7 +157,7 @@ public class QuickSchematicGridFeature extends Feature {
             }
         });
 
-        displayModeConfig.signal().subscribe(mode -> updateHud());
+        Effect.of(displayModeConfig.signal(), mode -> updateHud());
     }
 
     public Readable<List<QuickSchematicEntry>> entries() {
@@ -668,7 +666,7 @@ public class QuickSchematicGridFeature extends Feature {
                 return;
             }
             quickAccessHooked = true;
-            quickAccess.enabled().subscribe(value -> updateHud());
+            Effect.of(quickAccess.enabled(), value -> updateHud());
         } catch (Exception ignored) {
         }
     }

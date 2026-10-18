@@ -1,64 +1,84 @@
 package solim.input;
 
+import arc.scene.Element;
+import arc.scene.event.ChangeListener;
 import arc.scene.ui.TextButton;
+import arc.util.Nullable;
 import java.util.List;
 import solim.core.Component;
-import solim.core.Disposable;
 import solim.core.DisposableAction;
+import solim.core.OwnershipContext;
 import solim.reactive.Signal;
 import solim.reactive.TwoWayBinding;
-import solim.modifier.ElementConfig;
-import solim.modifier.CellConfig;
+import solim.modifier.Configurable;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.OwnershipContext;
+import solim.modifier.Props;
+import solim.modifier.SelectCapability;
 
-/**
- * Select widget bound to Signal&lt;T&gt;. Uses TextButton as placeholder (Arc
- * SelectBox unavailable in this version). State held in signal; visual updates
- * on change.
- */
-public final class SolimSelect<T> implements Component, ElementConfig<SolimSelect<T>>, CellConfig<SolimSelect<T>> {
-    private final TextButton selectBox = new TextButton("");
+public final class SolimSelect<T> extends Component
+        implements Configurable<SolimSelect<T>>, SelectCapability {
+    private final TextButton selectBox;
     private final PendingCellConfig constraints = new PendingCellConfig();
+    private @Nullable Props<SolimSelect<T>> pending;
     private int selectedIndex = 0;
-    private Disposable binding;
-    private boolean disposed = false;
 
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
     }
 
-    {
-        selectBox.name = "solim-select-selectBox";
+    @Override
+    public @Nullable Props<SolimSelect<T>> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<SolimSelect<T>> props) {
+        this.pending = props;
     }
 
     public SolimSelect(Signal<T> signal, List<T> options) {
+        this(new TextButton(""), signal, options);
+    }
+
+    private SolimSelect(TextButton selectBox, Signal<T> signal, List<T> options) {
+        super(selectBox);
+        this.selectBox = selectBox;
+        selectBox.name = "solim-select-selectBox";
         if (signal.peek() != null) {
             int idx = options.indexOf(signal.peek());
             if (idx >= 0)
                 selectedIndex = idx;
         }
         selectBox.setText(String.valueOf(signal.peek()));
-        this.binding = new TwoWayBinding<>(
-                signal,
-                () -> options.isEmpty() ? null : options.get(selectedIndex),
-                cur -> {
-                    int idx = options.indexOf(cur);
-                    if (idx >= 0)
-                        selectedIndex = idx;
-                    selectBox.setText(String.valueOf(cur));
-                },
-                onChange -> {
-                    selectBox.changed(() -> {
-                        if (!options.isEmpty()) {
-                            selectedIndex = (selectedIndex + 1) % options.size();
-                            onChange.run();
-                        }
+        OwnershipContext.push(this);
+        try {
+            new TwoWayBinding<>(
+                    signal,
+                    () -> options.isEmpty() ? null : options.get(selectedIndex),
+                    cur -> {
+                        int idx = options.indexOf(cur);
+                        if (idx >= 0)
+                            selectedIndex = idx;
+                        selectBox.setText(String.valueOf(cur));
+                    },
+                    onChange -> {
+
+                        ChangeListener listener = new ChangeListener() {
+                            @Override
+                            public void changed(ChangeEvent event, @Nullable Element actor) {
+                                if (!options.isEmpty()) {
+                                    selectedIndex = (selectedIndex + 1) % options.size();
+                                    onChange.run();
+                                }
+                            }
+                        };
+                        selectBox.addListener(listener);
+                        return DisposableAction.of(() -> selectBox.removeListener(listener));
                     });
-                    return DisposableAction.empty();
-                });
-        OwnershipContext.register(this);
+        } finally {
+            OwnershipContext.pop();
+        }
     }
 
     public static <T> SolimSelect<T> of(Signal<T> signal, List<T> options) {
@@ -69,31 +89,9 @@ public final class SolimSelect<T> implements Component, ElementConfig<SolimSelec
         return selectBox;
     }
 
-    @Override
-    public TextButton element() {
-        return selectBox;
-    }
-
     public SolimSelect<T> name(String name) {
-        selectBox.name = name;
+        setName(name);
         return this;
-    }
-
-    @Override
-    public void dispose() {
-        if (disposed) {
-            return;
-        }
-        disposed = true;
-        if (binding != null) {
-            binding.dispose();
-            binding = null;
-        }
-    }
-
-    @Override
-    public boolean isDisposed() {
-        return disposed;
     }
 
     @Override

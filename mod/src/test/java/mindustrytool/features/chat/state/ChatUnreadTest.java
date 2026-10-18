@@ -8,7 +8,7 @@ import arc.scene.Element;
 import arc.scene.ui.layout.Table;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Readable;
 import solim.test.SolimEnv;
 
@@ -30,7 +30,7 @@ class ChatUnreadTest extends SolimEnv {
 
     @Test
     void testUuidV7Comparison() {
-        // Earlier timestamp UUIDv7 vs later timestamp UUIDv7
+
         String earlierId = "01944800-0000-7000-8000-000000000001";
         String laterId = "01944900-0000-7000-8000-000000000001";
 
@@ -38,15 +38,12 @@ class ChatUnreadTest extends SolimEnv {
         assertFalse(ChatUnread.isNewer(earlierId, laterId));
         assertFalse(ChatUnread.isNewer(earlierId, earlierId));
 
-        // Temporary optimistic ID should never be considered newer
         assertFalse(ChatUnread.isNewer("temp_1234", earlierId));
         assertFalse(ChatUnread.isNewer(null, earlierId));
 
-        // Fresh launch / no read ID: any real latest ID is considered newer
         assertTrue(ChatUnread.isNewer(earlierId, null));
         assertTrue(ChatUnread.isNewer(earlierId, ""));
 
-        // compareMessageIds
         assertTrue(ChatUnread.compareMessageIds(laterId, earlierId) > 0);
         assertTrue(ChatUnread.compareMessageIds(earlierId, laterId) < 0);
         assertEquals(0, ChatUnread.compareMessageIds(earlierId, earlierId));
@@ -77,7 +74,6 @@ class ChatUnreadTest extends SolimEnv {
         assertEquals(0, unread.get("ch1"));
         assertEquals(msg1, Core.settings.getString(ChatUnread.SETTING_PREFIX + "ch1"));
 
-        // When newer message arrives
         unread.setLatestMessage("ch1", msg2);
         assertEquals(1, unread.get("ch1"));
         assertEquals(1, unread.total().get());
@@ -89,10 +85,8 @@ class ChatUnreadTest extends SolimEnv {
         String msg1 = "01944800-0000-7000-8000-000000000001";
         String msg2 = "01944900-0000-7000-8000-000000000002";
 
-        // User already read up to msg2
         Core.settings.put(ChatUnread.SETTING_PREFIX + "ch1", msg2);
 
-        // Older message msg1 is received
         unread.setLatestMessage("ch1", msg1);
         assertEquals(0, unread.get("ch1"));
         assertEquals(0, unread.total().get());
@@ -159,8 +153,7 @@ class ChatUnreadTest extends SolimEnv {
     void testForChannelRetainsReactivityAfterComponentRebuild() {
         ChatUnread unread = new ChatUnread();
 
-        // Simulate component 1 building and obtaining a reactive binding
-        BaseComponent comp1 = new BaseComponent() {
+        Component comp1 = new Component() {
             @Override
             protected Element build() {
                 Readable<Integer> binding = unread.forChannel("ch1");
@@ -169,20 +162,17 @@ class ChatUnreadTest extends SolimEnv {
             }
         };
         comp1.element();
-        // Component 1 unmounts/disposes
+
         comp1.dispose();
 
-        // Simulate component 2 building for the same channel
-        BaseComponent comp2 = new BaseComponent() {
+        Component comp2 = new Component() {
             @Override
             protected Element build() {
                 Readable<Integer> binding = unread.forChannel("ch1");
                 assertEquals(0, binding.get());
 
-                // An incoming message arrives
                 unread.increment("ch1");
 
-                // Reactive binding must reflect the incremented count
                 assertEquals(1, binding.get());
                 return new Table();
             }
@@ -190,5 +180,25 @@ class ChatUnreadTest extends SolimEnv {
         comp2.element();
         comp2.dispose();
     }
-}
 
+    @Test
+    void testMutedChannelExcludedFromTotal() {
+        ChatNotifications notifications = new ChatNotifications();
+        ChatUnread unread = new ChatUnread(notifications.mutedChannelIds());
+
+        unread.increment("ch1");
+        unread.increment("ch2");
+
+        assertEquals(2, unread.total().get());
+
+        notifications.setMuted("ch1", true);
+        assertEquals(1, unread.total().get());
+        assertEquals(1, unread.get("ch1"));
+
+        notifications.setMuted("ch2", true);
+        assertEquals(0, unread.total().get());
+
+        notifications.setMuted("ch1", false);
+        assertEquals(1, unread.total().get());
+    }
+}

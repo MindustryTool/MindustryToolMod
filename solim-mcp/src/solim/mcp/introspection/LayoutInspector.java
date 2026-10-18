@@ -6,19 +6,20 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import solim.core.SolimToken;
 
-/** Reads layout metrics of an Arc element via its public API. */
 public final class LayoutInspector {
-	private LayoutInspector() {}
+    private LayoutInspector() {
+    }
 
-	public static @Nullable ObjectNode node(@Nullable Element element) {
-		if (element == null) return null;
-		ObjectNode node = JsonNodeFactory.instance.objectNode();
-		node.put("x", element.x);
-		node.put("y", element.y);
-		node.put("width", element.getWidth());
-		node.put("height", element.getHeight());
-		node.put("visible", element.visible);
-		node.put("expanding", SolimToken.isExpanding(element));
-		return node;
-	}
+    public static @Nullable ObjectNode node(@Nullable Element element) {
+        if (element == null)
+            return null;
+        ObjectNode node = JsonNodeFactory.instance.objectNode();
+        node.put("x", element.x);
+        node.put("y", element.y);
+        node.put("width", element.getWidth());
+        node.put("height", element.getHeight());
+        node.put("visible", element.visible);
+        node.put("expanding", SolimToken.isExpanding(element));
+        return node;
+    }
 }

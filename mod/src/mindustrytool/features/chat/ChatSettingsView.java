@@ -4,10 +4,15 @@ import static solim.UI.*;
 
 import arc.Core;
 import arc.scene.Element;
-import mindustry.ui.Styles;
-import solim.core.BaseComponent;
+import mindustry.gen.Icon;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingKeybindCard;
+import mindustrytool.components.SettingScaffold;
+import mindustrytool.components.SettingSlider;
+import mindustrytool.components.WebStyles;
+import solim.core.Component;
 
-public class ChatSettingsView extends BaseComponent {
+public class ChatSettingsView extends Component {
 
     private final ChatFeature feature;
 
@@ -17,50 +22,70 @@ public class ChatSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().grow().center().children(() -> {
-            scroll().center().children(() -> {
-                column().growX().gap(unit(2)).children(() -> {
-                    // Opacity
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.chat.settings.opacity", "Opacity")).left();
-                        spacer();
-                        slider(feature.opacityConfig.signal(), 0.2f, 1.0f, 0.05f);
-                        row().width(unit(14)).children(() -> {
-                            text(feature.opacityConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100)));
-                        });
-                    });
+        return SettingScaffold.build(() -> {
+            headerCard();
+            layoutCard();
+            keybindsCard();
+            actionsCard();
+        });
+    }
 
-                    // Width Ratio
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.chat.settings.width", "Width")).left();
-                        spacer();
-                        slider(feature.widthRatioConfig.signal(), 0.4f, 1.0f, 0.05f);
-                        row().width(unit(14)).children(() -> {
-                            text(feature.widthRatioConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 0.6f) * 100)));
-                        });
-                    });
+    private void keybindsCard() {
+        SettingKeybindCard.forFeature(feature);
+    }
 
-                    // Height Ratio
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.chat.settings.height", "Height")).left();
-                        spacer();
-                        slider(feature.heightRatioConfig.signal(), 0.4f, 1.0f, 0.05f);
-                        row().width(unit(14)).children(() -> {
-                            text(feature.heightRatioConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 0.6f) * 100)));
-                        });
-                    });
+    private Component headerCard() {
+        return SettingCard.header(feature, Core.bundle.get("feature.chat.badge.communication", "COMMUNICATION"));
+    }
 
-                    divider();
+    private Component layoutCard() {
+        return SettingCard.section(Icon.layers,
+                Core.bundle.get("feature.chat.settings.overlay-layout", "Overlay Layout"), () -> {
 
-                    button(Core.bundle.get("feature.chat.settings.reset-position", "Reset Position"), feature::resetPosition)
-                            .style(Styles.defaultb)
-                            .growX();
+                    SettingSlider.of(
+                            Core.bundle.get("feature.chat.settings.opacity", "Opacity"),
+                            feature.opacityConfig.signal(),
+                            0.2f,
+                            1.0f,
+                            0.05f,
+                            feature.opacityConfig.signal()
+                                    .map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100)));
 
-                    button(Core.bundle.get("feature.chat.settings.reset-appearance", "Reset Appearance"), feature::resetAppearance)
-                            .style(Styles.defaultb)
-                            .growX();
+                    SettingSlider.of(
+                            Core.bundle.get("feature.chat.settings.width", "Width"),
+                            feature.widthRatioConfig.signal(),
+                            0.4f,
+                            1.0f,
+                            0.05f,
+                            feature.widthRatioConfig.signal()
+                                    .map(v -> String.format("%.0f%%", (v != null ? v : 0.6f) * 100)));
+
+                    SettingSlider.of(
+                            Core.bundle.get("feature.chat.settings.height", "Height"),
+                            feature.heightRatioConfig.signal(),
+                            0.4f,
+                            1.0f,
+                            0.05f,
+                            feature.heightRatioConfig.signal()
+                                    .map(v -> String.format("%.0f%%", (v != null ? v : 0.6f) * 100)));
                 });
-            });
-        }).element();
+    }
+
+    private Component actionsCard() {
+        return SettingCard.card().children(() -> {
+            button(feature::resetPosition)
+                    .props(style(WebStyles.outline()), growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
+                    .children(() -> {
+                        icon(Icon.move).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
+                        text(Core.bundle.get("feature.chat.settings.reset-position", "Reset Position"));
+                    });
+
+            button(feature::resetAppearance)
+                    .props(style(WebStyles.outline()), growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
+                    .children(() -> {
+                        icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
+                        text(Core.bundle.get("feature.chat.settings.reset-appearance", "Reset Appearance"));
+                    });
+        });
     }
 }

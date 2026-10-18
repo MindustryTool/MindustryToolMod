@@ -5,198 +5,269 @@ import static solim.UI.*;
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
+import arc.scene.style.Drawable;
 import arc.struct.Seq;
 import mindustry.gen.Icon;
 import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.prettychat.Prettier;
 import mindustrytool.features.prettychat.PrettyChatFeature;
-import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.reactive.Computed;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
-/**
- * Declarative Solim settings view for Pretty Chat.
- * Features an interactive real-time preview and a reorderable pipeline list.
- */
-public class PrettyChatSettingsView extends BaseComponent {
+public class PrettyChatSettingsView extends Component {
+
+    private static final String[] CATEGORIES = { "all", "color", "font", "effect", "case", "fun", "custom" };
 
     private final PrettyChatFeature feature;
     private final Signal<String> previewSignal;
-    private final Computed<String> resultComputed;
+    private final Signal<String> selectedCategory;
 
     public PrettyChatSettingsView(PrettyChatFeature feature) {
         this.feature = feature;
-        this.previewSignal = Signal.of("Hello World! This is a test message.");
-        this.resultComputed = new Computed<>(() -> {
+        String initialSample = Core.bundle.get("feature.pretty-chat.settings.preview-sample");
+        this.previewSignal = Signal.of(initialSample);
+        this.selectedCategory = Signal.of("all");
+    }
+
+    @Override
+    protected Element build() {
+
+        Computed<String> resultComputed = new Computed<>(() -> {
             String input = previewSignal.get();
             List<String> enabled = feature.config().enabledIdsSignal.get();
             return !enabled.isEmpty() && input != null && !input.isEmpty()
                     ? feature.transform(input)
                     : (input != null ? input : "");
         });
-    }
-
-    @Override
-    protected Element build() {
-        String previewLabel = Core.bundle != null
-                ? Core.bundle.get("feature.pretty-chat.settings.preview-label", "Preview Message")
-                : "Preview Message";
-        String previewPlaceholder = Core.bundle != null
-                ? Core.bundle.get("feature.pretty-chat.settings.preview-placeholder", "Type a message to preview...")
-                : "Type a message to preview...";
-        String resultLabel = Core.bundle != null
-                ? Core.bundle.get("feature.pretty-chat.settings.result-label", "Result:")
-                : "Result:";
-        String pipelineTitle = Core.bundle != null
-                ? Core.bundle.get("feature.pretty-chat.settings.pipeline-title", "Transformer Pipeline")
-                : "Transformer Pipeline";
-        String pipelineDesc = Core.bundle != null
-                ? Core.bundle.get("feature.pretty-chat.settings.pipeline-desc",
-                        "Enabled transformers run sequentially in the order shown below.")
-                : "Enabled transformers run sequentially in the order shown below.";
-
-        return column().grow().center().children(() -> {
-            scroll().center().children(() -> {
-                column().growX().gap(unit(2)).padding(unit(2)).children(() -> {
-                    // Preview Input Section
-                    column().growX().gap(unit(1.5f)).left().children(() -> {
-                        text(previewLabel).left();
-                        row().growX().height(unit(10)).border(1.5f, WebStyles.Colors.BORDER)
-                                .paddingX(unit(2)).rounded(unit(2)).children(() -> {
-                                    textField(previewSignal)
-                                            .placeholder(previewPlaceholder)
-                                            .grow()
-                                            .style(WebStyles.clearInput());
-                                });
-                    });
-
-                    // Real-time Result Section
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(resultLabel).color(Color.lightGray).left();
-                        text(resultComputed).color(Pal.accent).wrap().left().growX();
-                        text(resultComputed.map(r -> r.length() + "/150"))
-                                .color(resultComputed.map(r -> r.length() > 150 ? Color.scarlet
-                                        : (r.length() > 130 ? Color.gold : Color.lightGray)))
-                                .right();
-                    });
-
-                    divider();
-
-                    // Pipeline Section Header
-                    column().growX().gap(unit(0.5f)).left().children(() -> {
-                        text(pipelineTitle).color(Pal.accent).left();
-                        text(pipelineDesc).color(Color.lightGray).left();
-                    });
-
-                    // Dynamic Prettier Cards List
-                    dynamic(feature.config().enabledIdsSignal, this::buildCardList).growX();
-                });
-            });
-        }).element();
-    }
-
-    private Component buildCardList(List<String> enabledIds) {
-        Seq<Prettier> displayList = new Seq<>(feature.prettiers());
-        displayList.sort((p1, p2) -> {
-            int idx1 = enabledIds.indexOf(p1.id());
-            int idx2 = enabledIds.indexOf(p2.id());
-            if (idx1 != -1 && idx2 != -1) {
-                return Integer.compare(idx1, idx2);
+        Computed<Seq<Prettier>> filteredPrettiers = new Computed<>(() -> {
+            String cat = selectedCategory.get();
+            Seq<Prettier> all = feature.prettiers();
+            Seq<Prettier> list = new Seq<>();
+            for (int i = 0; i < all.size; i++) {
+                Prettier p = all.get(i);
+                if ("all".equals(cat) || cat.equalsIgnoreCase(p.category())) {
+                    list.add(p);
+                }
             }
-            return idx1 != -1 ? -1 : (idx2 != -1 ? 1 : 0);
+            return list;
         });
 
-        return column().growX().gap(unit(2)).children(() -> {
-            for (int i = 0; i < displayList.size; i++) {
-                Prettier p = displayList.get(i);
-                boolean isEnabled = enabledIds.contains(p.id());
-                int enabledIndex = isEnabled ? enabledIds.indexOf(p.id()) : -1;
-                int enabledCount = enabledIds.size();
+        return SettingScaffold.build(() -> {
+            headerCard();
+            livePreviewCard(resultComputed);
+            pipelineCard();
+            availableTransformersPanel(filteredPrettiers);
+        });
+    }
 
-                row()
-                        .growX()
-                        .padding(unit(2.5f))
-                        .rounded(unit(2))
-                        .border(1.5f, isEnabled ? Pal.accent : WebStyles.Colors.BORDER)
-                        .tooltip(t -> t.background(Styles.black6).margin(6f).add(p.description()).color(Color.lightGray))
-                        .children(() -> {
-                    // Left Information Column: Name & Direct Preview
-                    column().growX().gap(unit(1)).left().children(() -> {
-                        row().growX().gap(unit(1.5f)).left().children(() -> {
-                            if (isEnabled) {
-                                text("#" + (enabledIndex + 1))
-                                        .color(Pal.accent)
-                                        .left();
-                            }
-                            text(p.name())
-                                    .color(isEnabled ? Pal.accent : Color.white)
-                                    .left();
+    private Component headerCard() {
+        return SettingCard.header(feature, "COMMUNICATION");
+    }
+
+    private Component livePreviewCard(Computed<String> resultComputed) {
+        String previewLabel = Core.bundle.get("feature.pretty-chat.settings.preview-label");
+        String previewDesc = Core.bundle.get("feature.pretty-chat.settings.preview-desc");
+        String previewPlaceholder = Core.bundle.get("feature.pretty-chat.settings.preview-placeholder");
+        String simSender = Core.bundle.get("feature.pretty-chat.settings.sim-sender");
+        String escapeHint = Core.bundle.get("feature.pretty-chat.settings.escape-hint");
+
+        return SettingCard.section(Icon.chat, previewLabel, () -> {
+            text(previewDesc)
+                    .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(true), growX());
+
+            row().props(growX(), height(unit(10)), prefHeight(unit(10)), border(1.5f, WebStyles.Colors.BORDER), paddingX(unit(2)), rounded(unit(2))).children(() -> {
+                        textField(previewSignal)
+                                .props(style(WebStyles.clearInput()), grow(), placeholder(previewPlaceholder));
+                    });
+
+            column().props(growX(), padding(unit(2)), rounded(6, WebStyles.Colors.SECONDARY), gap(unit(1)), left())
+                    .children(() -> {
+                        row().props(growX(), center()).children(() -> {
+                            text(simSender).props(left(), textWrap(true));
+                            spacer();
+                            text(resultComputed.map(r -> r.length() + "/150"))
+                                    .props(color(resultComputed.map(r -> r.length() > 150 ? Color.scarlet
+                                            : (r.length() > 130 ? Color.gold : Color.lightGray))), right());
                         });
 
-                        // Direct transformed preview reacting immediately to preview input
+                        text(resultComputed)
+                                .props(textWrap(true), growX(), left());
+                    });
+
+            text(escapeHint)
+                    .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(true), growX());
+        });
+    }
+
+    private Component pipelineCard() {
+        String pipelineTitle = Core.bundle.get("feature.pretty-chat.settings.pipeline-title");
+        String pipelineDesc = Core.bundle.get("feature.pretty-chat.settings.pipeline-desc");
+        String clearText = Core.bundle.get("feature.pretty-chat.settings.clear-pipeline");
+        String resetText = Core.bundle.get("feature.pretty-chat.settings.reset-default");
+
+        return SettingCard.section(Icon.tree, pipelineTitle, () -> {
+            text(pipelineDesc)
+                    .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(true), growX());
+
+            dynamic(feature.config().enabledIdsSignal, this::buildActivePipelineList).props(growX());
+
+            row().props(growX(), gap(unit(2))).children(() -> {
+                button(clearText, () -> feature.config().setEnabledIds(new ArrayList<>()))
+                        .props(style(WebStyles.outlineText()), height(unit(11)), prefHeight(unit(11)), growX());
+
+                button(resetText, () -> {
+                    List<String> def = new ArrayList<>();
+                    def.add("rainbow");
+                    feature.config().setEnabledIds(def);
+                })
+                        .props(style(WebStyles.outlineText()), height(unit(11)), prefHeight(unit(11)), growX());
+            });
+        });
+    }
+
+    private void buildActivePipelineList(List<String> enabledIds) {
+        if (enabledIds.isEmpty()) {
+            String emptyMessage = Core.bundle.get("feature.pretty-chat.settings.no-transformers");
+
+            column().props(growX(), padding(unit(2)), rounded(6, WebStyles.Colors.SECONDARY)).children(() -> {
+                text(emptyMessage)
+                        .props(color(WebStyles.Colors.GHOST_FG), center(), textWrap(true), growX());
+            });
+            return;
+        }
+
+        column().props(growX(), gap(unit(1.5f))).children(() -> {
+            for (int i = 0; i < enabledIds.size(); i++) {
+                int index = i;
+                String id = enabledIds.get(i);
+                Prettier p = feature.getPrettier(id);
+                if (p == null) {
+                    continue;
+                }
+
+                row().props(growX(), padding(unit(2)), rounded(6, WebStyles.Colors.SECONDARY), gap(unit(1.5f)), center())
+                        .children(() -> {
+                            text("#" + (index + 1))
+                                    .props(color(Pal.accent));
+
+                            text(p.name())
+                                    .props(color(Color.white), textWrap(true), growX(), left());
+
+                            if (index > 0) {
+                                button(() -> feature.config().move(id, -1))
+                                        .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.pretty-chat.settings.move-up")))
+                                        .children(() -> icon(Icon.up).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
+                            } else {
+                                row().props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)));
+                            }
+
+                            if (index < enabledIds.size() - 1) {
+                                button(() -> feature.config().move(id, 1))
+                                        .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.pretty-chat.settings.move-down")))
+                                        .children(() -> icon(Icon.down).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
+                            } else {
+                                row().props(size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)));
+                            }
+
+                            button(() -> feature.config().toggle(id))
+                                    .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.pretty-chat.settings.remove")))
+                                    .children(() -> icon(Icon.cancel).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(WebStyles.Colors.DANGER)));
+                        });
+            }
+        });
+    }
+
+    private Component availableTransformersPanel(Computed<Seq<Prettier>> filteredPrettiers) {
+        String availableTitle = Core.bundle.get("feature.pretty-chat.settings.available-transformers");
+
+        return SettingCard.section(Icon.settings, availableTitle, () -> {
+
+            wrap().props(growX(), gap(unit(1))).children(() -> {
+                for (String cat : CATEGORIES) {
+                    String label = getCategoryName(cat);
+                    button(label, () -> selectedCategory.set(cat))
+                            .props(style(WebStyles.filterChipText()), checked(selectedCategory.map(curr -> curr.equals(cat))));
+                }
+            });
+
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
+
+            reactiveGrid(filteredPrettiers)
+                    .props(gap(unit(2)))
+                    .columns(1)
+                    .key(Prettier::id)
+                    .items(this::prettierCard);
+        });
+    }
+
+    private Component prettierCard(Prettier p) {
+        Readable<Boolean> isEnabled = feature.config().enabledIdsSignal.map(ids -> ids != null && ids.contains(p.id()));
+        Readable<Integer> enabledIndex = feature.config().enabledIdsSignal
+                .map(ids -> ids != null ? ids.indexOf(p.id()) : -1);
+
+        return row()
+                .props(growX(), padding(unit(2.5f)), rounded(6), border(1.5f, isEnabled.map(e -> Boolean.TRUE.equals(e) ? Pal.accent : WebStyles.Colors.BORDER)), background(WebStyles.Colors.SECONDARY), tooltip(t -> t.background(Styles.black6).margin(6f).add(p.description()).color(Color.lightGray)))
+                .children(() -> {
+
+                    column().props(growX(), gap(unit(1)), left()).children(() -> {
+                        wrap().props(growX(), gap(unit(1.5f)), left()).children(() -> {
+                            text(enabledIndex.map(idx -> idx != null && idx >= 0 ? "#" + (idx + 1) : ""))
+                                    .props(color(Pal.accent), visible(isEnabled), left());
+
+                            text(p.name())
+                                    .props(color(isEnabled.map(e -> Boolean.TRUE.equals(e) ? Pal.accent : Color.white)), textWrap(true), left());
+
+                            text("[" + getCategoryName(p.category()) + "]")
+                                    .props(color(WebStyles.Colors.GHOST_FG), textWrap(true), left());
+                        });
+
+                        text(p.description())
+                                .props(color(Color.lightGray), textWrap(true), growX(), left());
+
                         Readable<String> previewTransformed = previewSignal.map(input -> {
                             String str = input != null ? input : "";
                             return p.transform(str);
                         });
                         text(previewTransformed)
-                                .color(Color.white)
-                                .left()
-                                .wrap()
-                                .growX();
+                                .props(color(Color.white), left(), textWrap(true), growX());
                     });
 
-                    spacer();
-
-                    // Right Action Buttons
-                    row().gap(unit(1)).right().children(() -> {
+                    row().props(gap(unit(1)), right(), center()).children(() -> {
                         if (p.isEditable()) {
                             button(() -> {
                                 new PrettyChatEditDialog(p, () -> {
                                     feature.config().setEnabledIds(feature.config().getEnabledIds());
                                 }).show();
-                            }).icon(Icon.edit)
-                                    .style(Styles.emptyi)
-                                    .size(unit(8))
-                                    .tooltip(Core.bundle != null
-                                            ? Core.bundle.get("feature.pretty-chat.settings.edit-script", "Edit Script")
-                                            : "Edit Script");
+                            })
+                                    .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.pretty-chat.settings.edit-script")))
+                                    .children(() -> icon(Icon.edit).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
                         }
 
-                        if (isEnabled) {
-                            if (enabledIndex > 0) {
-                                button(() -> feature.config().move(p.id(), -1)).icon(Icon.up)
-                                        .style(Styles.emptyi)
-                                        .size(unit(8))
-                                        .tooltip(Core.bundle != null
-                                                ? Core.bundle.get("feature.pretty-chat.settings.move-up", "Move Up")
-                                                : "Move Up");
-                            } else {
-                                row().size(unit(8));
-                            }
-
-                            if (enabledIndex < enabledCount - 1) {
-                                button(() -> feature.config().move(p.id(), 1)).icon(Icon.down)
-                                        .style(Styles.emptyi)
-                                        .size(unit(8))
-                                        .tooltip(Core.bundle != null
-                                                ? Core.bundle.get("feature.pretty-chat.settings.move-down", "Move Down")
-                                                : "Move Down");
-                            } else {
-                                row().size(unit(8));
-                            }
-                        }
-
-                        checkbox("", isEnabled, checked -> feature.config().toggle(p.id()))
-                                .size(unit(8));
+                        button(() -> feature.config().toggle(p.id()))
+                                .props(style(WebStyles.filterChip()), checked(isEnabled), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(isEnabled.map(e -> Boolean.TRUE.equals(e)
+                                        ? (Core.bundle.get("feature.pretty-chat.settings.remove"))
+                                        : (Core.bundle.get("feature.pretty-chat.settings.enable")))))
+                                .children(() -> icon(isEnabled
+                                        .map(e -> Boolean.TRUE.equals(e) ? (Drawable) Icon.ok : (Drawable) Icon.add))
+                                        .props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
                     });
                 });
-            }
-        });
+    }
+
+    private String getCategoryName(String cat) {
+        String key = "pretty-chat.category." + cat.toLowerCase(Locale.ROOT);
+        return Core.bundle.has(key)
+                ? Core.bundle.get(key)
+                : cat.substring(0, 1).toUpperCase(Locale.ROOT) + cat.substring(1);
     }
 }

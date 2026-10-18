@@ -6,12 +6,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-/**
- * Fixed filename utilities for the screenshot feature.
- * Always produces timestamped png names and resolves collisions
- * with an incremental numeric suffix. Contains no game state
- * so it stays unit testable.
- */
 public final class ScreenshotNaming {
 
     public static final String PREFIX = "screenshot";
@@ -25,17 +19,10 @@ public final class ScreenshotNaming {
         return new SimpleDateFormat(TIMESTAMP_FORMAT, Locale.US).format(new Date(millis));
     }
 
-    /**
-     * Resolves the fixed filename for the given capture time.
-     */
     public static String resolveFilename(long timestampMillis) {
         return PREFIX + "-" + formatTimestamp(timestampMillis) + ".png";
     }
 
-    /**
-     * Returns a non-existing target file inside directory by appending
-     * an incremental numeric suffix when a collision is detected.
-     */
     public static Fi resolveCollision(@Nullable Fi directory, @Nullable String filename) {
         String safeName = filename != null && !filename.trim().isEmpty()
                 ? filename.trim()

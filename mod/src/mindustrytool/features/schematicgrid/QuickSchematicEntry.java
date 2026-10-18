@@ -6,10 +6,6 @@ import java.util.List;
 import java.util.UUID;
 import mindustrytool.utils.JsonUtils;
 
-/**
- * Serializable entry linking a quick-grid slot to a local schematic.
- * Resolution prefers exact file match, then falls back to schematic name.
- */
 public class QuickSchematicEntry {
 
     public String id;
@@ -52,7 +48,8 @@ public class QuickSchematicEntry {
         this(id, 0, 0, 0, schematicName, schematicFile, customIcon, customLabel);
     }
 
-    public static QuickSchematicEntry of(int page, int row, int col, String schematicName, @Nullable String schematicFile) {
+    public static QuickSchematicEntry of(int page, int row, int col, String schematicName,
+            @Nullable String schematicFile) {
         String name = schematicName != null ? schematicName : "";
         return new QuickSchematicEntry(UUID.randomUUID().toString(), page, row, col, name, schematicFile, null, null);
     }

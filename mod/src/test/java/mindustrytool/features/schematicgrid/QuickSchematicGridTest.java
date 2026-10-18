@@ -20,8 +20,10 @@ import arc.struct.Seq;
 import arc.struct.StringMap;
 import mindustry.game.Schematic;
 import mindustry.gen.Icon;
+import mindustrytool.components.WebStyles;
 import mindustrytool.test.MindustryTestEnv;
 import solim.reactive.Computed;
+import solim.reactive.Effect;
 import solim.reactive.Signal;
 
 class QuickSchematicGridTest extends MindustryTestEnv {
@@ -279,12 +281,10 @@ class QuickSchematicGridTest extends MindustryTestEnv {
         assertNull(feature.getEntryAt(0, 0, 0));
         assertNull(feature.getEntryAt(1, 1, 2));
 
-        // Overwrite slot
         feature.addSchematic(0, 1, 2, "Solar", "solar.msch");
         assertEquals(1, feature.getEntries().size());
         assertEquals("Solar", feature.getEntryAt(0, 1, 2).schematicName);
 
-        // Clear slot
         assertTrue(feature.clearSlotAt(0, 1, 2));
         assertNull(feature.getEntryAt(0, 1, 2));
         assertFalse(feature.clearSlotAt(0, 1, 2));
@@ -302,25 +302,21 @@ class QuickSchematicGridTest extends MindustryTestEnv {
         feature.addSchematic(0, 0, 0, "Page0Item", null);
         feature.addSchematic(1, 0, 0, "Page1Item", null);
 
-        assertTrue(feature.addPage()); // pageCount = 3
+        assertTrue(feature.addPage());
         feature.addSchematic(2, 0, 0, "Page2Item", null);
 
-        // Delete middle page (page 1)
         assertTrue(feature.deletePage(1));
         assertEquals(2, feature.pageCountConfig.get().intValue());
 
-        // Page 0 entry intact
         assertNotNull(feature.getEntryAt(0, 0, 0));
         assertEquals("Page0Item", feature.getEntryAt(0, 0, 0).schematicName);
 
-        // Former Page 2 entry shifted to Page 1
         assertNotNull(feature.getEntryAt(1, 0, 0));
         assertEquals("Page2Item", feature.getEntryAt(1, 0, 0).schematicName);
 
-        // Cannot delete below 1 page
         assertTrue(feature.deletePage(1));
         assertEquals(1, feature.pageCountConfig.get().intValue());
-        assertFalse(feature.deletePage(0)); // Only 1 page left
+        assertFalse(feature.deletePage(0));
     }
 
     @Test
@@ -346,7 +342,6 @@ class QuickSchematicGridTest extends MindustryTestEnv {
         assertNull(feature.getPageIcon(0));
         assertEquals("🛡", feature.getPageIcon(2));
 
-        // Blank string behaves as null
         feature.setPageIcon(2, "   ");
         assertNull(feature.getPageIcon(2));
     }
@@ -354,18 +349,17 @@ class QuickSchematicGridTest extends MindustryTestEnv {
     @Test
     void pageIcons_deletePageShiftsIcons() {
         QuickSchematicGridFeature feature = new QuickSchematicGridFeature();
-        assertTrue(feature.addPage()); // page 1
-        assertTrue(feature.addPage()); // page 2
+        assertTrue(feature.addPage());
+        assertTrue(feature.addPage());
 
         feature.setPageIcon(0, "Icon0");
         feature.setPageIcon(1, "Icon1");
         feature.setPageIcon(2, "Icon2");
 
-        // Delete middle page (page 1)
         assertTrue(feature.deletePage(1));
 
         assertEquals("Icon0", feature.getPageIcon(0));
-        assertEquals("Icon2", feature.getPageIcon(1)); // Shifted from index 2 to index 1
+        assertEquals("Icon2", feature.getPageIcon(1));
         assertNull(feature.getPageIcon(2));
     }
 
@@ -376,7 +370,6 @@ class QuickSchematicGridTest extends MindustryTestEnv {
         feature1.setPageIcon(0, "First");
         feature1.setPageIcon(1, "Second");
 
-        // New feature instance reading same settings
         QuickSchematicGridFeature feature2 = new QuickSchematicGridFeature();
         assertEquals("First", feature2.getPageIcon(0));
         assertEquals("Second", feature2.getPageIcon(1));
@@ -557,14 +550,23 @@ class QuickSchematicGridTest extends MindustryTestEnv {
         String id = feature.getEntries().get(0).id;
 
         Computed<List<QuickSchematicEntry>> watcher = Signal.computed(() -> feature.entries().get());
-        int[] notifications = {0};
-        watcher.subscribe(value -> notifications[0]++);
-        watcher.get();
+        int[] notifications = { 0 };
+        Effect.of(watcher, value -> notifications[0]++);
         int before = notifications[0];
 
         assertTrue(feature.updateEntry(id, entry -> entry.customIcon = "X"));
+        flushEffects();
 
         assertEquals(before + 1, notifications[0]);
         assertEquals("X", feature.getEntry(id).customIcon);
+    }
+
+    @Test
+    void colors_dark90AlphaColorProperties() {
+        assertEquals(0.080f, WebStyles.Colors.DARK_90.r, 0.001f);
+        assertEquals(0.080f, WebStyles.Colors.DARK_90.g, 0.001f);
+        assertEquals(0.090f, WebStyles.Colors.DARK_90.b, 0.001f);
+        assertEquals(0.90f, WebStyles.Colors.DARK_90.a, 0.001f);
+        assertEquals(WebStyles.Colors.DARK_90, WebStyles.Colors.CHIP_HOVER_BG);
     }
 }

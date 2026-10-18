@@ -18,17 +18,11 @@ import mindustrytool.features.browser.common.BrowserLayout;
 import mindustrytool.features.browser.common.BrowserStatsBadge;
 import mindustrytool.models.response.MapDetailData;
 import mindustrytool.services.MindustryTool;
-import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.overlay.SolimDialog;
 import solim.reactive.Query;
 import solim.reactive.QueryKey;
 
-/**
- * Detail dialog showing a full map preview, author, dimensions, stats, tags,
- * description, and download/play shortcuts. Stacks vertically in portrait and
- * side-by-side in landscape.
- */
 public class MapDetailDialog extends SolimDialog {
 
     public MapDetailDialog(MapDetailData detail, String itemId) {
@@ -36,13 +30,12 @@ public class MapDetailDialog extends SolimDialog {
 
         addCloseButton();
         closeOnBack();
-        fillParent(true);
         children(() -> new DetailContent(detail, itemId));
         actionButton(Core.bundle.get("browser.detail.open-online"), Icon.link,
                 () -> Core.app.openURI(Config.WEB_URL + "/maps/" + itemId));
     }
 
-    private static class DetailContent extends BaseComponent {
+    private static class DetailContent extends Component {
         private final MapDetailData detail;
         private final String itemId;
         private final @Nullable String authorId;
@@ -67,76 +60,80 @@ public class MapDetailDialog extends SolimDialog {
 
         @Override
         protected Element build() {
-            return column().grow().padding(unit(2)).gap(unit(2)).children(() -> {
+            return column().props(grow(), padding(unit(2)), gap(unit(2))).children(() -> {
                 when(isPortrait())
                         .thenDo(this::portraitLayout)
                         .elseDo(this::landscapeLayout)
-                        .grow();
+                        .props(grow());
             }).element();
         }
 
         private Component portraitLayout() {
-            return column().grow().top().left().gap(unit(4)).children(() -> {
+            return column().props(grow(), top(), left(), gap(unit(4))).children(() -> {
                 previewImagePortrait();
-                scroll().grow().children(() -> details());
+                scroll().props(grow()).children(() -> details());
             });
         }
 
         private Component landscapeLayout() {
-            return row().grow().center().top().gap(unit(4)).children(() -> {
+            return row().props(grow(), center(), top(), gap(unit(4))).children(() -> {
                 previewImageLandscape();
-                scroll().grow().children(() -> details());
+                scroll().props(grow()).children(() -> details());
             });
         }
 
         private void previewImagePortrait() {
-            row().grow().children(() -> {
-                networkImage(BrowserImages.mapImageUrl(itemId))
-                        .placeholder(Icon.terrain)
-                        .origin(Align.top | Align.left)
-                        .fallback(Icon.terrain)
-                        .growX()
-                        .rounded(8)
-                        .scaling(Scaling.fit);
+            row().props(grow()).children(() -> {
+                image(BrowserImages.mapImageUrl(itemId))
+                        .props(
+                                origin(Align.top | Align.left),
+                                growX(),
+                                placeholder(Icon.terrain),
+                                fallback(Icon.terrain),
+                                imageRounded(8),
+                                scaling(Scaling.fit)
+                        );
             });
         }
 
         private void previewImageLandscape() {
-            row().grow().children(() -> {
-                networkImage(BrowserImages.mapImageUrl(itemId))
-                        .placeholder(Icon.terrain)
-                        .origin(Align.top)
-                        .fallback(Icon.terrain)
-                        .growX()
-                        .scaling(Scaling.fit);
+            row().props(grow()).children(() -> {
+                image(BrowserImages.mapImageUrl(itemId))
+                        .props(
+                                origin(Align.top),
+                                growX(),
+                                placeholder(Icon.terrain),
+                                fallback(Icon.terrain),
+                                scaling(Scaling.fit)
+                        );
             });
         }
 
         private void details() {
-            column().growX().gap(unit(2)).children(() -> {
-                card(WebStyles.previewCardBackground()).padding(unit(4)).gap(unit(2)).growX().children(() -> {
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("browser.detail.author")).color(Color.lightGray).fontScale(1.2f);
+            column().props(growX(), gap(unit(2))).children(() -> {
+                card(WebStyles.previewCardBackground()).props(padding(unit(4)), growX(), gap(unit(2))).children(() -> {
+                    row().props(growX(), gap(unit(2))).children(() -> {
+                        text(Core.bundle.get("browser.detail.author")).props(color(Color.lightGray), fontScale(1.2f));
                         if (authorQuery != null) {
                             query(authorQuery)
-                                    .growX()
-                                    .loading(() -> text(authorId != null ? authorId : "").color(Color.white)
-                                            .fontScale(1.2f))
-                                    .error(err -> text(authorId != null ? authorId : "").color(Color.white)
-                                            .fontScale(1.2f))
-                                    .data(name -> text(name).color(Color.white).fontScale(1.2f));
+                                    .props(growX())
+                                    .loading(() -> text(authorId != null ? authorId : "")
+                                            .props(color(Color.white), fontScale(1.2f)))
+                                    .error(err -> text(authorId != null ? authorId : "")
+                                            .props(color(Color.white), fontScale(1.2f)))
+                                    .data(name -> text(name).props(color(Color.white), fontScale(1.2f)));
                         } else {
-                            text(authorId != null ? authorId : "").color(Color.white).fontScale(1.2f);
+                            text(authorId != null ? authorId : "").props(color(Color.white), fontScale(1.2f));
                         }
                     });
 
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("browser.detail.dimensions")).color(Color.lightGray);
-                        text(detail.getWidth() + "x" + detail.getHeight()).color(Color.white);
+                    row().props(growX(), gap(unit(2))).children(() -> {
+                        text(Core.bundle.get("browser.detail.dimensions")).props(color(Color.lightGray));
+                        text(detail.getWidth() + "x" + detail.getHeight()).props(color(Color.white));
                     });
                 });
 
-                card(WebStyles.previewCardBackground()).padding(unit(4)).gap(unit(2)).growX().children(() -> {
+                card(WebStyles.previewCardBackground()).props(padding(unit(4)), growX(), gap(unit(2))).children(() -> {
                     new BrowserStatsBadge(
                             BrowserImages.count(detail.getLikes()),
                             BrowserImages.count(detail.getComments()),
@@ -146,25 +143,21 @@ public class MapDetailDialog extends SolimDialog {
                 BrowserLayout.renderTags(detail.getTags());
 
                 if (detail.getDescription() != null && !detail.getDescription().isEmpty()) {
-                    card(WebStyles.previewCardBackground()).padding(unit(4)).gap(unit(2)).growX().children(() -> {
-                        text(detail.getDescription()).color(Color.lightGray).wrap(true).left().growX();
+                    card(WebStyles.previewCardBackground()).props(padding(unit(4)), growX(), gap(unit(2))).children(() -> {
+                        text(detail.getDescription()).props(color(Color.lightGray), textWrap(true), left(), growX());
                     });
                 }
 
                 divider();
 
-                row().growX().gap(unit(2)).children(() -> {
+                row().props(growX(), gap(unit(2))).children(() -> {
                     button(Core.bundle.get("browser.map.download"),
                             () -> MapActions.downloadAndImport(itemId))
-                                    .style(WebStyles.primary())
-                                    .growX()
-                                    .height(unit(11));
+                            .props(style(WebStyles.primary()), growX(), height(unit(11)), prefHeight(unit(11)));
 
                     button(Core.bundle.get("browser.map.play"),
                             () -> MapActions.playMap(itemId))
-                                    .style(WebStyles.primary())
-                                    .growX()
-                                    .height(unit(11));
+                            .props(style(WebStyles.primary()), growX(), height(unit(11)), prefHeight(unit(11)));
                 });
             });
         }

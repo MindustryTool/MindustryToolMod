@@ -4,15 +4,18 @@ import static solim.UI.*;
 
 import arc.Core;
 import arc.files.Fi;
+import arc.graphics.Color;
 import arc.scene.Element;
 import mindustry.Vars;
+import mindustry.gen.Icon;
+import mindustrytool.components.FileIcon;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingKeybindCard;
+import mindustrytool.components.SettingScaffold;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 
-/**
- * Tiny declarative Solim settings view for screenshot capture mode.
- */
-public class ScreenshotSettingsView extends BaseComponent {
+public class ScreenshotSettingsView extends Component {
 
     private final ScreenshotFeature feature;
 
@@ -22,26 +25,50 @@ public class ScreenshotSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().grow().center().children(() -> {
-            scroll().grow().center().children(() -> {
-                column().growX().gap(unit(2)).children(() -> {
-                    checkbox(Core.bundle.get("feature.screenshot.settings.include-ui"),
-                            feature.includeUiConfig.signal()).growX();
+        return SettingScaffold.build(() -> {
+            headerCard();
+            optionsCard();
+            keybindsCard();
+            actionsCard();
+        });
+    }
 
-                    divider();
+    private void keybindsCard() {
+        SettingKeybindCard.forFeature(feature);
+    }
 
-                    button(Core.bundle.get("feature.screenshot.settings.capture-now"), feature::capture)
-                            .style(WebStyles.primary())
-                            .growX()
-                            .height(unit(11));
+    private Component headerCard() {
+        return SettingCard.header(feature, "MEDIA");
+    }
 
-                    button(Core.bundle.get("feature.screenshot.settings.open-folder"), this::openScreenshotsFolder)
-                            .style(WebStyles.outline())
-                            .growX()
-                            .height(unit(11));
+    private Component optionsCard() {
+        return SettingCard.section(Icon.settings, Core.bundle.get("feature.screenshot.settings.section.options"),
+                () -> {
+                    row().props(growX(), gap(unit(2)), center()).children(() -> {
+                        text(Core.bundle.get("feature.screenshot.settings.include-ui"))
+                                .props(color(Color.white), growX(), left());
+                        spacer();
+                        checkbox("", feature.includeUiConfig.signal());
+                    });
                 });
-            });
-        }).element();
+    }
+
+    private Component actionsCard() {
+        return SettingCard.card().children(() -> {
+            button(feature::capture)
+                    .props(style(WebStyles.primary()), growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
+                    .children(() -> {
+                        icon(FileIcon.of("camera.png", Icon.image)).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
+                        text(Core.bundle.get("feature.screenshot.settings.capture-now"));
+                    });
+
+            button(this::openScreenshotsFolder)
+                    .props(style(WebStyles.outline()), growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
+                    .children(() -> {
+                        icon(Icon.link).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
+                        text(Core.bundle.get("feature.screenshot.settings.open-folder"));
+                    });
+        });
     }
 
     private void openScreenshotsFolder() {

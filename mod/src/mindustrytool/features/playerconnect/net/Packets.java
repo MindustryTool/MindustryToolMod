@@ -22,8 +22,8 @@ public class Packets {
     public Packets() {
     }
 
-    public static <T extends Packet> void register(Prov<T> cons) {
-        packets.put(((Packet) cons.get()).getClass(), cons);
+    public static void register(Prov<? extends Packet> cons) {
+        packets.put(cons.get().getClass(), cons);
     }
 
     public static byte getId(Packet packet) {
@@ -34,11 +34,9 @@ public class Packets {
         return (byte) id;
     }
 
-    @SuppressWarnings("unchecked")
-    public static <T extends Packet> T newPacket(byte id) {
+    public static Packet newPacket(byte id) {
         if (id >= 0 && id < packets.size) {
-            Packet prov = packets.getValueAt(id).get();
-            return (T) prov;
+            return packets.getValueAt(id).get();
         }
         throw new ArcRuntimeException("Unknown packet id: " + id);
     }

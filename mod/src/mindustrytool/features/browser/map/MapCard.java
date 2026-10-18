@@ -15,15 +15,11 @@ import mindustrytool.features.browser.common.BrowserImages;
 import mindustrytool.features.browser.common.BrowserLayout;
 import mindustrytool.features.browser.common.BrowserStatsBadge;
 import mindustrytool.models.response.MapData;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Readable;
 import mindustrytool.components.WebStyles;
 
-/**
- * Image-first card layout showing a dedicated preview card with a centered
- * title strip and a compact row of interactive stat action buttons.
- */
-public class MapCard extends BaseComponent {
+public class MapCard extends Component {
 
     public static final float CARD_SIZE = BrowserLayout.CARD_SIZE;
 
@@ -66,41 +62,33 @@ public class MapCard extends BaseComponent {
 
         return column()
                 .name("MapCard-" + map.getItemId())
-                .width(size)
-                .gap(unit(2))
+                .props(prefWidth(size), gap(unit(2)))
                 .children(() -> {
                     card()
-                            .background(Color.black)
                             .name("MapCard-preview-" + map.getItemId())
-                            .size(size)
-                            .onClick(onClick)
+                            .props(background(Color.black), prefWidth(size), prefHeight(size), onClick(onClick))
                             .children(() -> {
-                                stack().grow()
-                                        .layer(() -> networkImage()
-                                                .rounded(8)
-                                                .scaling(Scaling.fit)
-                                                .grow()
-                                                .url(imageUrl)
-                                                .placeholder(Icon.terrain)
-                                                .fallback(Icon.terrain))
-                                        .layer(() -> column().grow().children(() -> {
+                                stack().props(grow())
+                                        .layer(() -> image()
+                                                .props(
+                                                        grow(),
+                                                        imageRounded(8),
+                                                        scaling(Scaling.fit),
+                                                        src(imageUrl),
+                                                        placeholder(Icon.terrain),
+                                                        fallback(Icon.terrain)
+                                                ))
+                                        .layer(() -> column().props(grow()).children(() -> {
                                             spacer();
-                                            row().growX()
-                                                    .background(Styles.black8)
-                                                    .padding(unit(1.5f), unit(2f), unit(1.5f), unit(2f))
-                                                    .center()
+                                            row().props(growX(), background(Styles.black8), padding(unit(1.5f), unit(2f), unit(1.5f), unit(2f)), center())
                                                     .children(() -> {
                                                         text(title)
-                                                                .style(Styles.defaultLabel)
-                                                                .color(Color.white)
-                                                                .ellipsis(true)
-                                                                .center()
-                                                                .growX();
+                                                                .props(style(Styles.defaultLabel), color(Color.white), ellipsis(true), center(), growX());
                                                     });
                                         }));
                             });
 
-                    row().width(size).gap(unit(1.5f)).children(() -> {
+                    row().props(prefWidth(size), gap(unit(1.5f))).children(() -> {
                         statButton(
                                 likesText,
                                 FileIcon.of("heart.png", Icon.upOpenSmall),
@@ -121,25 +109,18 @@ public class MapCard extends BaseComponent {
                                 Core.bundle.get("browser.map.download"));
 
                         button(onPlay)
-                                .style(WebStyles.cardActionText())
-                                .growX()
-                                .height(unit(9))
-                                .tooltip(Core.bundle.get("browser.map.play"))
-                                .children(() -> icon(Icon.play).size(unit(4.5f)).color(Color.white));
+                                .props(style(WebStyles.actionCardText()), growX(), prefHeight(unit(9)), tooltip(Core.bundle.get("browser.map.play")))
+                                .children(() -> icon(Icon.play).props(prefWidth(unit(4.5f)), prefHeight(unit(4.5f)), color(Color.white)));
                     });
                 }).element();
     }
 
     private void statButton(String count, Drawable iconDrawable, Color textColor, Runnable action, String tooltip) {
         button(action)
-                .style(WebStyles.cardActionText())
-                .growX()
-                .height(unit(9))
-                .gap(unit(1))
-                .tooltip(tooltip)
+                .props(style(WebStyles.actionCardText()), growX(), prefHeight(unit(9)), gap(unit(1)), tooltip(tooltip))
                 .children(() -> {
-                    icon(iconDrawable).size(unit(4.5f)).color(Color.white).marginRight(unit(1));
-                    text(count).style(Styles.defaultLabel).fontScale(0.85f).color(textColor);
+                    icon(iconDrawable).props(prefWidth(unit(4.5f)), prefHeight(unit(4.5f)), marginRight(unit(1)), color(Color.white));
+                    text(count).props(style(Styles.defaultLabel), color(textColor), fontScale(0.85f));
                 });
     }
 }

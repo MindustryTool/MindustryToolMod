@@ -7,139 +7,101 @@ Mechanical merge of 10 specs per change `spec-domain-merge` (stage 3 core, conca
 
 **Source: solim-reactivity**
 
-TBD - created by archiving change create-solim-core. Update Purpose after archive.
-
 ### Requirement: Signal primitive
-`Signal<T>` SHALL be a mutable reactive value created via `Signal.of(initial)` with `T get()`, `void set(T)`, equality-guarded notification, `Subscription subscribe(Consumer<T>)` returning disposable handle, and `Computed<U> map(Function<T,U>)` convenience. `get()` SHALL register as dependency when called inside a `Computed` or `Effect` evaluation.
+`Signal<T>` SHALL be a write-read reactive state holder implementing `Readable<T>` and `ReactiveSource`. `Signal.set(T)` SHALL notify `ReactiveObserver`s via the reactive graph. `Signal` SHALL NOT expose a `subscribe()` method and SHALL NOT maintain a listener list. `Signal.get()` SHALL track the caller as a reactive dependency via `ReactiveContext`. `Signal.peek()` SHALL return the current value without tracking. `Signal.map(Func)` SHALL create a derived `Computed<R>`. The equality guard in `set()` remains: if the new value equals the current value, no notification is issued.
 
 #### Scenario: Equality-guarded notification
-- **WHEN** `Signal<Integer> c = Signal.of(0)` and a subscriber is registered, then `c.set(0)` is called with equal value
-- **THEN** subscriber is NOT notified and dependent Computeds/Effects do not re-run
-
-#### Scenario: Subscription dispose stops notifications
-- **WHEN** `Subscription s = count.subscribe(v -> log(v))` then `s.dispose()` is called
-- **THEN** subsequent `count.set(...)` does not invoke the disposed callback
+- **WHEN** `signal.set(value)` is called with a value equal to the current value
+- **THEN** no observer is notified and `observerCount()` observers remain unchanged
 
 #### Scenario: Map creates derived Computed
-- **WHEN** `Computed<String> t = enabled.map(v -> v ? "Enabled" : "Disabled")`
-- **THEN** `t.get()` returns mapped value and re-computes when `enabled` changes, with disposal support
+- **WHEN** `signal.map(v -> v + "!")` is called
+- **THEN** a `Computed<String>` is returned whose value updates reactively when the signal changes
 
 #### Scenario: Signal get tracks dependency in Computed and Effect
-- **WHEN** `Computed<String> c = Signal.computed(() -> count.get() + "")` or `Effect.of(() -> log(count.get()))` reads `count.get()` during evaluation
-- **THEN** the Computed/Effect is automatically subscribed to `count` and re-evaluates when `count` changes
+- **WHEN** `signal.get()` is called inside a running `Computed` or `Effect`
+- **THEN** the signal is recorded as a dependency and the observer is invalidated on the next `signal.set()`
+
+#### Scenario: No subscribe method exists
+- **WHEN** a caller attempts to call `signal.subscribe(...)`
+- **THEN** a compile-time error is raised because the method does not exist
 
 ### Requirement: Computed with lazy recomputation and dynamic dependencies
-`Computed<T>` SHALL be created via `Signal.computed(Supplier<T>)` or `signal.map(...)`, SHALL implement `solim.core.Disposable` so it can be passed to `own()` and `registerDisposable()` like `Effect` and `Subscription`, with automatic dependency tracking, lazy recomputation (recompute on `get()` after invalidation), dynamic dependency cleanup when source branch changes, cycle detection, public `isDisposed()` reporting `true` after disposal, and `Subscription subscribe(Consumer<T>)` + `void dispose()`.
+`Computed<T>` SHALL implement `Readable<T>`, `ReactiveSource`, `ReactiveObserver`, and `Disposable`. It SHALL be always and only lazy pull: it marks itself dirty when any dependency invalidates it, and recomputes only when `get()` or `peek()` is called and `dirty` is true. `Computed` SHALL NOT expose a `subscribe()` method and SHALL NOT maintain a listener list. `Computed.invalidate()` SHALL set `dirty = true`, propagate invalidation to downstream observers, and return immediately without recomputing. `Computed` SHALL auto-register with the ambient `OwnershipContext` when constructed.
 
 #### Scenario: Lazy recomputation only on get
-- **WHEN** `Computed<String> title = Signal.computed(() -> "Count: " + count.get())` and `count.set(10)` invalidates `title`
-- **THEN** supplier does NOT re-execute until `title.get()` or a subscriber/effect reads it
+- **WHEN** a dependency signal changes and `computed.get()` is not yet called
+- **THEN** the computed supplier is NOT invoked until `computed.get()` or `computed.peek()` is called
+
+#### Scenario: Invalidate does not recompute
+- **WHEN** a dependency signal changes and the computed has downstream observers but no listeners
+- **THEN** `invalidate()` sets dirty, propagates to downstream observers, and does NOT call the supplier
 
 #### Scenario: Dynamic dependencies cleanup
-- **WHEN** `Computed<String> v = Signal.computed(() -> darkMode.get() ? username.get() : email.get())` and `darkMode` toggles from true to false
-- **THEN** `v` unsubscribes from `username` and subscribes to `email`; subsequent `username.set(...)` does NOT invalidate `v` while `email.set(...)` does
+- **WHEN** a computed conditionally reads signal A or signal B based on a boolean and the boolean changes
+- **THEN** the computed unregisters from the signal it no longer reads and registers with the newly read signal
 
 #### Scenario: Cycle detection does not infinite loop
-- **WHEN** a `Computed` directly or transitively reads itself during evaluation
-- **THEN** implementation detects the cycle and throws or logs without stack overflow / infinite loop, and old dependencies are not leaked
+- **WHEN** a computed's supplier reads itself
+- **THEN** an `IllegalStateException` is thrown rather than infinite recursion
 
 #### Scenario: Invalidation propagates to dependent Computeds
-- **WHEN** `Computed b = a.map(...)` and `Computed c = b.map(...)` chain and `a` changes
-- **THEN** both `b` and `c` are marked invalid and recompute correctly on next `get()` in topological order
-
-#### Scenario: Computed subscription and dispose
-- **WHEN** `Subscription s = computed.subscribe(v -> render(v))` then `computed.dispose()` is called
-- **THEN** `computed` unsubscribes from all dependencies, clears listeners, and no longer recomputes or notifies
+- **WHEN** a signal changes and a chain of computeds depends on it
+- **THEN** all dependent computeds are marked dirty in order without recomputing
 
 #### Scenario: Computed is ownable as a Disposable
-- **WHEN** a `Computed` is passed to `own()` or a dialog `registerDisposable()` inside a component build and the owner is disposed
-- **THEN** the computed is disposed with the owner and `isDisposed()` returns `true`
+- **WHEN** a `Computed` is constructed inside a component `build()`
+- **THEN** it is auto-registered with the ambient owner and disposed when the component is disposed
 
-### Requirement: Effect with auto-tracking and dynamic dependencies
-`Effect` SHALL be created via `Effect.of(Runnable|Supplier<Disposable>|Consumer<Cleanup>)` or `Ui.effect(...)`, automatically track every `Signal`/`Computed` read during execution, subscribe to those dependencies, re-run when any dependency changes, remove old dependencies before collecting new ones, handle dynamic branches, prevent leaks, log errors without crashing, and be disposable via `void dispose()`.
-
-#### Scenario: Auto-tracking signals and computeds
-- **WHEN** `Effect e = Effect.of(() -> Log.info(darkMode.get() + username.get()))`
-- **THEN** `e` subscribes to `darkMode` and `username`; changing either re-runs the effect
-
-#### Scenario: Dynamic dependency branch switch
-- **WHEN** `Effect e = Effect.of(() -> { if (enabled.get()) Log.info(username.get()); else Log.info(email.get()); })` and `enabled` toggles
-- **THEN** after toggle, `e` stops depending on the old branch value and starts depending on the new one; old dependency changes no longer trigger `e`
-
-#### Scenario: Old dependencies removed before new collection
-- **WHEN** Effect re-runs due to dependency change
-- **THEN** it first unsubscribes from previous dependencies before executing supplier to collect new set, preventing leak of stale deps
-
-#### Scenario: Dispose stops reacting
-- **WHEN** `Effect e = Effect.of(...)` then `e.dispose()` is called
-- **THEN** `e` unsubscribes from all dependencies, runs cleanup, and no longer re-runs on signal changes
-
-#### Scenario: Effect errors are logged safely
-- **WHEN** effect supplier throws an exception
-- **THEN** exception is caught and logged via `arc.util.Log` (or equivalent) and does not break reactive graph or prevent other effects from running
-
-### Requirement: Effect cleanup
-Effects SHALL support cleanup that runs before re-execution and on dispose. Two acceptable APIs: returning `Disposable`/`Runnable` from supplier, or accepting `Cleanup` parameter with `cleanup.add(Runnable)`. Cleanup errors SHALL be logged and not prevent other cleanups or disposal.
-
-#### Scenario: Cleanup runs before re-run
-- **WHEN** `Effect.of(cleanup -> { Subscription s = api.events().subscribe(...); cleanup.add(s::dispose); })` and a dependency changes causing re-run
-- **THEN** previous `s.dispose()` is invoked before new subscription is created
-
-#### Scenario: Cleanup runs on dispose
-- **WHEN** effect with registered cleanups is disposed
-- **THEN** all cleanups are executed, errors are caught/logged, and disposal completes
-
-#### Scenario: Cleanup failure does not block others
-- **WHEN** multiple cleanups are registered and one throws
-- **THEN** remaining cleanups still execute and the exception is logged
-
-### Requirement: ReactiveContext and ReactiveObserver shared mechanism
-A shared dependency-tracking mechanism SHALL allow the currently executing `Computed` or `Effect` (both implementing internal `ReactiveObserver`) to collect dependencies when `signal.get()`/`computed.get()` is called. Implementation SHALL use a stack-based context (e.g., `Deque<ReactiveObserver>`) suitable for single-threaded Arc/Mindustry UI thread and SHALL NOT use `ThreadLocal` unless necessary. Context SHALL support `push(observer)`, `pop()`, `current()`, and `track(dependency)`.
-
-#### Scenario: Stack push/pop during evaluation
-- **WHEN** `Effect` starts execution it pushes itself onto `ReactiveContext` stack, then `signal.get()` registers dependency via `ReactiveContext.current().addDependency(signal)`, then effect pops
-- **THEN** only the active observer collects dependencies and nested evaluations correctly push/pop without corrupting outer observer
-
-#### Scenario: Computed and Effect both use same context
-- **WHEN** `Computed` evaluation reads a `Signal` that is also read by an `Effect`
-- **THEN** both correctly register dependencies via the same `ReactiveContext`/`ReactiveObserver` abstraction without duplicate code paths
-
-#### Scenario: No ThreadLocal by default
-- **WHEN** `src/solim/signal/ReactiveContext.java` is inspected
-- **THEN** it uses a plain static stack/Deque (or ArrayDeque) and does not import `java.lang.ThreadLocal` unless justified by test for threading
+#### Scenario: No subscribe method exists on Computed
+- **WHEN** a caller attempts to call `computed.subscribe(...)`
+- **THEN** a compile-time error is raised because the method does not exist
 
 ### Requirement: Subscription and Disposable contracts
-`Subscription` (or `Disposable`) SHALL expose `void dispose()` idempotent. `Signal.subscribe`, `Computed.subscribe`, and `Computed/Effect.dispose` SHALL all return or implement this contract, clean up listener lists, and be safe to call multiple times.
+`Subscription` as a distinct interface SHALL NOT exist. Reactive observation and reactive change reactions SHALL be expressed exclusively through `Effect`. The `Disposable` contract remains unchanged.
 
-#### Scenario: Idempotent dispose
-- **WHEN** `subscription.dispose()` is called twice
-- **THEN** second call is no-op and does not throw
+#### Scenario: Subscription type does not exist
+- **WHEN** code references the type `Subscription`
+- **THEN** a compile-time error is raised because the type has been removed
 
-#### Scenario: No leak after dispose
-- **WHEN** 100 signals/computeds/effects are created and disposed
-- **THEN** no strong references remain in dependency graphs (verifiable via listener count == 0 and no retained observer entries)
+#### Scenario: Reactions expressed through Effect
+- **WHEN** a caller wants to react to signal changes
+- **THEN** they create an `Effect.of(() -> signal.get())` which auto-owns and disposes with its parent
 
-### Requirement: Signal.map convenience
-`Signal<T>.map(Function<T,R>)` SHALL return a `Computed<R>` equivalent to `Signal.computed(() -> fn.apply(signal.get()))` with same lazy/dynamic/disposal semantics.
+### Requirement: Binding updates Arc element directly, no rebuild
+An `Effect.of(Readable<T>, Cons<T>)` SHALL update the bound Arc element property directly without creating or replacing any Element or Component. The Effect SHALL re-run on the next game frame after the source changes, calling the consumer with the new value.
 
-#### Scenario: Map reactive updates
-- **WHEN** `Signal<Boolean> dark = Signal.of(false)` and `Computed<String> label = dark.map(v -> v ? "On" : "Off")`
-- **THEN** `label.get()` is "Off", after `dark.set(true)` `label.get()` is "On", and `label` notifies subscribers
+#### Scenario: No Element recreation on change
+- **WHEN** a signal bound to a label's text changes
+- **THEN** only `label.setText(newValue)` is called and the label element instance remains the same
+
+### Requirement: Binding is disposable and tracks subscription
+An `Effect` created via `Effect.of(Readable<T>, Cons<T>)` SHALL be a `Disposable`. Disposing it SHALL detach it from its reactive dependencies and stop all future consumer invocations. This replaces the prior `Subscription`-based disposal model.
+
+#### Scenario: Binding dispose stops updates
+- **WHEN** the owning component is disposed (which disposes the effect)
+- **THEN** subsequent source changes do not invoke the consumer
 
 ### Requirement: Untracked Execution in ReactiveContext
-`ReactiveContext` SHALL provide an `untracked(Supplier<T>)` and `untracked(Runnable)` mechanism that temporarily suspends active dependency tracking so that any signal or computed reads occurring inside the block are not recorded as dependencies of the active `ReactiveObserver`.
+`ReactiveContext` SHALL provide an `untracked(Supplier<T>)` and `untracked(Runnable)` mechanism that temporarily suspends active dependency tracking so that any signal or computed reads occurring inside the block are not recorded as dependencies of the active `ReactiveObserver`. Suspension SHALL be implemented by recording the current stack depth and restoring to that depth on exit, rather than by copying the observer stack. Restoration SHALL occur even when the block pushes an observer without popping it.
 
 #### Scenario: Reading signals inside untracked block
 - **WHEN** an `Effect` is executing and invokes `ReactiveContext.untracked(() -> signal.get())`
-- **THEN** `signal` is not added as a dependency to the running `Effect`, and changes to `signal` do not trigger the effect to re-run.
+- **THEN** `signal` is not added as a dependency to the running `Effect`, and changes to `signal` do not trigger the effect to re-run
 
 #### Scenario: Dynamic component factory isolation
 - **WHEN** `Dynamic` executes its child component factory
-- **THEN** the factory is invoked within an untracked scope, preventing child signal evaluations during component construction from leaking into the `Dynamic` switcher effect.
+- **THEN** the factory is invoked within an untracked scope, preventing child signal evaluations during component construction from leaking into the `Dynamic` switcher effect
+
+#### Scenario: Observer stack is restored after a balanced block
+- **WHEN** a block pushed onto and popped from the observer stack runs inside `untracked`
+- **THEN** the surrounding observer stack is exactly as it was before the call
+
+#### Scenario: Observer stack is restored after an unbalanced block
+- **WHEN** a block inside `untracked` pushes an observer and does not pop it
+- **THEN** after `untracked` returns, the stack depth equals the depth recorded on entry
 
 **Source: automatic-effect-ownership**
-
-TBD - created by archiving change solim-architecture-refactor. Update Purpose after archive.
 
 ### Requirement: Effects auto-register inside component scope
 When `Effect.of(...)` is called while a component's `build()` is executing (i.e., `OwnershipContext` has an active component), the Effect SHALL be registered with that component's ownership list before its initial execution.
@@ -153,11 +115,19 @@ When `Effect.of(...)` is called while a component's `build()` is executing (i.e.
 - **THEN** the Effect is disposed and unsubscribes from all its signal dependencies
 
 ### Requirement: Effects outside component scope are caller-managed
-When `Effect.of(...)` is called outside any active component context, it SHALL not be auto-registered anywhere and SHALL be the caller's responsibility to dispose.
+When `Effect.of(...)` is called outside any active component context, it SHALL establish an `OwnershipScope` for the duration of its body, adopt every resource registered by that body into the Effect itself, and dispose any resource that was not adopted if the body throws. It SHALL NOT attach those resources to an ambient enclosing component.
 
 #### Scenario: Effect outside component scope has no implicit owner
 - **WHEN** `Effect.of(...)` is called outside a `build()` execution
-- **THEN** no component owns the Effect
+- **THEN** no enclosing component owns the Effect
+
+#### Scenario: Effect owns resources its body creates
+- **WHEN** an effect body creates a component or a reactive primitive and the effect is later disposed
+- **THEN** that resource is disposed with the effect and not left attached to the session root
+
+#### Scenario: Effect body throwing disposes what it created
+- **WHEN** an effect body registers resources and then throws
+- **THEN** the unadopted resources are disposed before the exception propagates
 
 ### Requirement: All Effect.of() overloads share the same registration path
 All three `Effect.of(Runnable)`, `Effect.of(Supplier<Runnable>)`, and `Effect.of(Consumer<Cleanup>)` SHALL use a single internal `create(...)` factory that performs registration before execution.
@@ -263,8 +233,6 @@ Provides a framework-level reactive signal tracking screen orientation (portrait
 
 **Source: signal-callback-cleanup**
 
-TBD - created by archiving change solim-architecture-refactor. Update Purpose after archive.
-
 ### Requirement: createSignal registrar returns a cleanup handle
 The `createSignal` method on `BaseComponent` SHALL accept a `Function<Runnable, Disposable>` as the registrar, where the returned `Disposable` represents the callback subscription. The returned disposable SHALL be owned by the component.
 
@@ -284,8 +252,6 @@ APIs that cannot actually unregister a callback SHALL NOT claim automatic cleanu
 - **THEN** this is documented at the call site and does not silently claim cleanup capability
 
 **Source: solim-binding**
-
-TBD - created by archiving change create-solim-core. Update Purpose after archive.
 
 ### Requirement: Widgets support static and reactive values
 Widget factory methods (e.g., `text(...)`, `button(...)`, `visible(...)`, `enabled(...)`) SHALL accept both plain values (`String`, `boolean`) and reactive values (`Signal<T>`, `Computed<T>`). Reactive overloads SHALL apply current value immediately and update on change.
@@ -309,16 +275,16 @@ Reactive bindings SHALL update the underlying Arc `Element` property via setter 
 - **WHEN** reactive `text` binding updates due to signal change
 - **THEN** `label` instance identity remains same (`==` check passes) and only its property changed
 
-### Requirement: Binding is disposable and tracks subscription
-Each reactive binding SHALL create an internal `Subscription`/`Effect` that is disposable. Widget wrappers SHALL expose or internally hold this subscription and dispose on `Component.dispose()` or when element is removed.
+### Requirement: Binding is disposable and tracks reactive source
+Each reactive binding SHALL create an internal `Effect` that is disposable. Widget wrappers SHALL internally hold this effect and dispose it on `Component.dispose()` or when element is removed.
 
 #### Scenario: Binding dispose stops updates
-- **WHEN** `Binding<String> b = Binding.of(label::setText, username)` then `b.dispose()` then `username.set("Charlie")`
-- **THEN** `label` text remains previous value
+- **WHEN** an effect-based property binding is disposed and the source signal changes
+- **THEN** the bound property remains its previous value and does not update
 
 #### Scenario: Component dispose disposes bindings
 - **WHEN** component creates `text(username)` binding and then `component.dispose()` is called
-- **THEN** the binding subscription is disposed and no longer reacts
+- **THEN** the binding effect is disposed and no longer reacts
 
 ### Requirement: Common reactive properties
 Widgets SHALL support reactive bindings for at least: `text` (String), `visible` (boolean), `enabled`/`disabled` (boolean), `style` (Style), and `checked` (for Checkbox/Switch). Additional widget-specific bindings (e.g., `value` for TextField/Slider, `progress` for ProgressBar) follow same pattern.
@@ -331,8 +297,8 @@ Widgets SHALL support reactive bindings for at least: `text` (String), `visible`
 - **WHEN** `button(saveText, onClick).enabled(dirty)` where `dirty = Signal.of(false)` then `dirty.set(true)`
 - **THEN** button enabled state updates via `button.setDisabled(!dirty.get())`
 
-### Requirement: Binding helper and Effect integration
-`Binding` utility SHALL be implementable via `Effect.of(() -> target.set(prop.get()))` or direct `Subscription`; both are valid. Implementation SHALL prefer `Effect` where multi-dependency computed is involved, or `Subscription` for single signal.
+### Requirement: Reactive property binding and Effect integration
+Reactive property bindings SHALL be implemented via `Effect.of(() -> target.set(prop.get()))` or equivalent `Readable` effect binding. Multi-dependency `Computed` values and single `Signal` sources SHALL both be supported seamlessly.
 
 #### Scenario: Computed text binding
 - **WHEN** `Computed<String> saveText = dirty.map(v -> v ? "● Save" : "Save")` and `button(saveText, ...)` is bound
@@ -346,8 +312,6 @@ Dynamic text SHALL use bundle formatting or `Computed` mapping, not manual `Core
 - **THEN** it is expressed as `Signal.computed(() -> Core.bundle.format("message.player", name.get()))` and bound as reactive text
 
 **Source: solim-property-bindings**
-
-TBD - created by archiving change clean-up-solim-refactor. Update Purpose after archive.
 
 ### Requirement: Direct Reactive Element Property Bindings
 Solim SHALL provide direct property binding mechanisms that mutate existing Arc scene elements when reactive signals or computeds change without requiring standalone `Effect` definitions in user code.
@@ -427,8 +391,6 @@ The reactive system SHALL register its frame hook with Mindustry's `Trigger.upda
 - **THEN** the update listener is registered exactly once with the event bus
 
 **Source: two-way-binding**
-
-TBD - created by archiving change solim-architecture-refactor. Update Purpose after archive.
 
 ### Requirement: Shared TwoWayBinding utility
 A `TwoWayBinding<T>` utility SHALL exist in `solim.input` (package-private is acceptable) that implements the signal ↔ widget synchronization pattern with feedback loop prevention. It SHALL implement `Disposable`.
@@ -567,11 +529,19 @@ The `solim.UI` facade SHALL expose static methods for creating `Query` and `Muta
 - **THEN** it SHALL create and return a `Mutation<T, R>` instance, equivalent to `Mutation.of(mutator)`
 
 ### Requirement: Reactive pipeline fail-fast error propagation
-The reactive framework (`SignalDispatcher`, `Computed`, `Signal`, `MapSignal`, and `Mutation`) SHALL NOT swallow or silently log unhandled exceptions thrown during reactive effect execution, computed value calculation, subscriber notifications, or mutation completion callbacks, and SHALL re-throw them so they terminate the executing thread.
+The reactive framework (`SignalDispatcher`, `Computed`, `Signal`, `MapSignal`, `Mutation`, and `Effect`) SHALL NOT swallow or silently log unhandled exceptions thrown during reactive effect execution, computed value calculation, subscriber notifications, or mutation completion callbacks, and SHALL re-throw them so they terminate the executing thread.
 
 #### Scenario: Reactive effect execution error terminates flush
 - **WHEN** a scheduled effect throws a `RuntimeException` during `SignalDispatcher.flush()`
 - **THEN** `SignalDispatcher` does NOT swallow the exception in `catch (Throwable t)` and the exception escapes `flush()`
+
+#### Scenario: Effect body errors are not caught by Effect
+- **WHEN** an `Effect` body throws during `runPending()`
+- **THEN** the exception propagates out of `runPending()` rather than being caught and logged inside `Effect`
+
+#### Scenario: Exception raised during an effect's initial synchronous run
+- **WHEN** `Effect.of(...)` is called and the body throws during the initial run inside `build()`
+- **THEN** the exception propagates out of `Effect.of` and the owning component's `build()` fails as a result
 
 #### Scenario: Computed supplier error propagates immediately
 - **WHEN** a `Computed` evaluation throws an unhandled exception inside its supplier (`Prov.get()`)
@@ -585,5 +555,25 @@ The reactive framework (`SignalDispatcher`, `Computed`, `Signal`, `MapSignal`, a
 - **WHEN** an `onSuccess` or `onError` callback in `Mutation` throws an unhandled exception
 - **THEN** the exception is not swallowed in an empty `catch (Throwable t)` block and propagates to the main thread
 
+### Requirement: Unprocessed effects survive an aborted flush
+When an effect throws during `SignalDispatcher.flush()`, effects that were not polled from the queue SHALL retain their pending flag and remain in the queue, so they execute on the next flush rather than being silently discarded.
 
+#### Scenario: Remaining queue survives a throwing effect
+- **WHEN** effects A, B and C are queued and A throws during flush
+- **THEN** B and C remain queued with their pending flags set and execute on the next flush
+
+#### Scenario: Dispatcher is not left marked as flushing
+- **WHEN** flush terminates because an effect threw
+- **THEN** `isFlushing()` reports false so the next flush is permitted
+
+### Requirement: Dependency staging buffer is reused
+`Computed` and `Effect` SHALL reuse a single dependency-collection buffer across recomputations rather than allocating a fresh collection per run, clearing and refilling it before each evaluation and diffing it against the previously recorded dependency set.
+
+#### Scenario: Repeated recomputation allocates no staging collection
+- **WHEN** the same `Computed` recomputes N times with an unchanged dependency set
+- **THEN** no new dependency-collection object is allocated for those runs
+
+#### Scenario: Dependency diff is still correct when the set is unchanged
+- **WHEN** a recomputation observes exactly the dependencies recorded previously
+- **THEN** no `addObserver` or `removeObserver` call is issued
 

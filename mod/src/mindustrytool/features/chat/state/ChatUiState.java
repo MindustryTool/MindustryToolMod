@@ -11,11 +11,10 @@ public final class ChatUiState {
     private final Signal<ChatMessage> replyTarget = Signal.of(null);
     private final Signal<String> expandedMessageId = Signal.of(null);
     private final Signal<String> translatingMessageId = Signal.of(null);
-    // Panel collapse state: backed by the ConfigValue signals from ChatFeature —
-    // single source of truth
+
     private final Signal<Boolean> channelsCollapsed;
     private final Signal<Boolean> usersCollapsed;
-    private final Signal<Integer> mobileTab = Signal.of(1); // 0: Channels, 1: Messages, 2: Members
+    private final Signal<Integer> mobileTab = Signal.of(1);
 
     public ChatUiState(Signal<Boolean> channelsCollapsedSignal, Signal<Boolean> usersCollapsedSignal) {
         this.channelsCollapsed = channelsCollapsedSignal;

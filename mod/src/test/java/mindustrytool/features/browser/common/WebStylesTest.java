@@ -1,6 +1,8 @@
 package mindustrytool.features.browser.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -151,10 +153,96 @@ class WebStylesTest extends MindustryTestEnv {
     }
 
     @Test
+    void actionChipHasNoCheckedStateAndMatchesFilterChipAppearance() {
+        assertSame(WebStyles.actionChip(), WebStyles.actionChip());
+        SolimButtonStyle action = WebStyles.actionChip();
+        SolimButtonStyle filter = WebStyles.filterChip();
+
+        assertNull(action.style().checked);
+
+        RoundedDrawable actionUp = (RoundedDrawable) action.style().up;
+        RoundedDrawable filterUp = (RoundedDrawable) filter.style().up;
+        assertEquals(rgba(filterUp.getFillColor()), rgba(actionUp.getFillColor()));
+        assertEquals(rgba(filterUp.getBorderColor()), rgba(actionUp.getBorderColor()));
+        assertEquals(filterUp.getStroke(), actionUp.getStroke(), 0.001f);
+        assertEquals(filterUp.getRadius(), actionUp.getRadius());
+
+        RoundedDrawable actionOver = (RoundedDrawable) action.style().over;
+        RoundedDrawable filterOver = (RoundedDrawable) filter.style().over;
+        assertEquals(rgba(filterOver.getFillColor()), rgba(actionOver.getFillColor()));
+        assertEquals(rgba(filterOver.getBorderColor()), rgba(actionOver.getBorderColor()));
+
+        RoundedDrawable actionDown = (RoundedDrawable) action.style().down;
+        RoundedDrawable filterDown = (RoundedDrawable) filter.style().down;
+        assertEquals(rgba(filterDown.getFillColor()), rgba(actionDown.getFillColor()));
+        assertEquals(rgba(filterDown.getBorderColor()), rgba(actionDown.getBorderColor()));
+
+        assertNotNull(filter.style().checked);
+    }
+
+    @Test
+    void actionCardTextHasNoCheckedStateButMatchesCardActionTextAppearance() {
+        assertSame(WebStyles.actionCardText(), WebStyles.actionCardText());
+        SolimButtonStyle action = WebStyles.actionCardText();
+        SolimButtonStyle card = WebStyles.cardActionText();
+
+        assertNull(action.style().checked);
+
+        RoundedDrawable actionUp = (RoundedDrawable) action.style().up;
+        RoundedDrawable cardUp = (RoundedDrawable) card.style().up;
+        assertEquals(rgba(cardUp.getFillColor()), rgba(actionUp.getFillColor()));
+        assertEquals(rgba(cardUp.getBorderColor()), rgba(actionUp.getBorderColor()));
+        assertEquals(cardUp.getStroke(), actionUp.getStroke(), 0.001f);
+        assertEquals(cardUp.getRadius(), actionUp.getRadius());
+
+        RoundedDrawable actionOver = (RoundedDrawable) action.style().over;
+        RoundedDrawable cardOver = (RoundedDrawable) card.style().over;
+        assertEquals(rgba(cardOver.getFillColor()), rgba(actionOver.getFillColor()));
+
+        RoundedDrawable actionDown = (RoundedDrawable) action.style().down;
+        RoundedDrawable cardDown = (RoundedDrawable) card.style().down;
+        assertEquals(rgba(cardDown.getFillColor()), rgba(actionDown.getFillColor()));
+
+        assertNotNull(card.style().checked);
+    }
+
+    @Test
+    void cardActionCheckedStateIsVisibleRatherThanTransparent() {
+        RoundedDrawable checked = (RoundedDrawable) WebStyles.cardAction().style().checked;
+        assertNotNull(checked, "cardAction is used as a toggle and must declare a checked visual");
+
+        RoundedDrawable up = (RoundedDrawable) WebStyles.cardAction().style().up;
+        assertTrue(checked.getFillColor().a > 0.001f, "checked fill must be visible, not transparent");
+        assertTrue(rgba(checked.getFillColor()) != rgba(up.getFillColor()),
+                "checked fill must be distinguishable from the up fill");
+    }
+
+    @Test
+    void nonToggleStylesResolveToNoCheckedState() {
+
+        assertNull(WebStyles.outline().style().checked);
+        assertNull(WebStyles.sectionPanel().style().checked);
+        assertNull(WebStyles.clearFilters().style().checked);
+        assertNull(WebStyles.previewCard().style().checked);
+        assertNull(WebStyles.primary().style().checked);
+        assertNull(WebStyles.secondary().style().checked);
+        assertNull(WebStyles.ghost().style().checked);
+        assertNull(WebStyles.danger().style().checked);
+    }
+
+    @Test
+    void toggleStylesKeepAnExplicitCheckedState() {
+        assertNotNull(WebStyles.filterChip().style().checked);
+        assertNotNull(WebStyles.filterChipText().style().checked);
+        assertNotNull(WebStyles.cardAction().style().checked);
+        assertNotNull(WebStyles.cardActionText().style().checked);
+        assertNotNull(WebStyles.tab().style().checked);
+    }
+
+    @Test
     void clearInputReturnsCachedSingleton() {
         assertSame(WebStyles.clearInput(), WebStyles.clearInput());
-        // Slot blankness is covered in solim-core InputStyleTest with stub
-        // drawables: Tex.clear is null until the game loads assets headless.
+
     }
 
     @Test

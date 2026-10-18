@@ -4,38 +4,34 @@ import arc.struct.Seq;
 import arc.util.Strings;
 import arc.func.Prov;
 
-/** Single Responsibility: enrich raw crash log with enabled-feature metadata. */
 public final class CrashLogEnricher {
 
-	private final Prov<Seq<String>> enabledFeatureNames;
+    private final Prov<Seq<String>> enabledFeatureNames;
 
-	public CrashLogEnricher(Prov<Seq<String>> enabledFeatureNames) {
-		this.enabledFeatureNames = enabledFeatureNames;
-	}
+    public CrashLogEnricher(Prov<Seq<String>> enabledFeatureNames) {
+        this.enabledFeatureNames = enabledFeatureNames;
+    }
 
-	/**
-	 * If log contains a double-newline separator, inserts enabled-feature list after first block.
-	 * Otherwise returns log unchanged. Caller already verified the log contains "mindustry-tool".
-	 */
-	public String enrich(String log) {
-		if (log == null) return "";
+    public String enrich(String log) {
+        if (log == null)
+            return "";
 
-		int separatorIndex = log.indexOf("\n\n");
-		if (separatorIndex == -1) {
-			return log;
-		}
+        int separatorIndex = log.indexOf("\n\n");
+        if (separatorIndex == -1) {
+            return log;
+        }
 
-		String firstPart = log.substring(0, separatorIndex);
-		String secondPart = log.substring(separatorIndex);
+        String firstPart = log.substring(0, separatorIndex);
+        String secondPart = log.substring(separatorIndex);
 
-		Seq<String> names;
-		try {
-			names = enabledFeatureNames.get();
-		} catch (Exception e) {
-			names = new Seq<>();
-		}
+        Seq<String> names;
+        try {
+            names = enabledFeatureNames.get();
+        } catch (Exception e) {
+            names = new Seq<>();
+        }
 
-		String featureString = (names != null && names.size > 0) ? Strings.join(",", names) : "None";
-		return firstPart + "\nEnabled features: " + featureString + secondPart;
-	}
+        String featureString = (names != null && names.size > 0) ? Strings.join(",", names) : "None";
+        return firstPart + "\nEnabled features: " + featureString + secondPart;
+    }
 }

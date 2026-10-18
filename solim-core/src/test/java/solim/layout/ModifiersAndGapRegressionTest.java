@@ -1,8 +1,17 @@
 package solim.layout;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.opacity;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.visible;
+import static solim.modifier.Values.width;
 
 import arc.scene.Element;
 import arc.scene.event.Touchable;
@@ -16,146 +25,132 @@ import solim.test.TestScheduler;
 
 public class ModifiersAndGapRegressionTest extends SolimCoreEnv {
 
-	// ==========================================
-	// Phase 14: Modifier Pipeline & Cell Config
-	// ==========================================
+    @Test
+    void elementModifiersAppliedCorrectly() {
+        Column col = new Column();
+        col.props(width(120f), prefWidth(120f), height(60f), prefHeight(60f), visible(false), opacity(0.75f), touchable(Touchable.disabled));
 
-	@Test
-	void elementModifiersAppliedCorrectly() {
-		Column col = new Column();
-		col.width(120f).height(60f).visible(false).opacity(0.75f).touchable(Touchable.disabled);
+        Element el = col.element();
+        assertEquals(120f, el.getWidth(), 0.01f);
+        assertEquals(60f, el.getHeight(), 0.01f);
+        assertFalse(el.visible);
+        assertEquals(0.75f, el.color.a, 0.01f);
+        assertEquals(Touchable.disabled, el.touchable);
+    }
 
-		Element el = col.element();
-		assertEquals(120f, el.getWidth(), 0.01f);
-		assertEquals(60f, el.getHeight(), 0.01f);
-		assertFalse(el.visible);
-		assertEquals(0.75f, el.color.a, 0.01f);
-		assertEquals(Touchable.disabled, el.touchable);
-	}
+    @Test
+    void reactiveModifiersUpdateOnSignalChange() {
+        Signal<Float> widthSig = Signal.of(100f);
+        Signal<Boolean> visSig = Signal.of(true);
 
-	@Test
-	void reactiveModifiersUpdateOnSignalChange() {
-		Signal<Float> widthSig = Signal.of(100f);
-		Signal<Boolean> visSig = Signal.of(true);
+        Row row = new Row();
+        row.props(width(widthSig), prefWidth(widthSig), visible(visSig));
 
-		Row row = new Row();
-		row.width(widthSig).visible(visSig);
+        assertEquals(100f, row.element().getWidth(), 0.01f);
+        assertTrue(row.element().visible);
 
-		assertEquals(100f, row.element().getWidth(), 0.01f);
-		assertTrue(row.element().visible);
+        widthSig.set(250f);
+        visSig.set(false);
+        TestScheduler.flush();
 
-		widthSig.set(250f);
-		visSig.set(false);
-		TestScheduler.flush();
+        assertEquals(250f, row.element().getWidth(), 0.01f);
+        assertFalse(row.element().visible);
 
-		assertEquals(250f, row.element().getWidth(), 0.01f);
-		assertFalse(row.element().visible);
+        row.dispose();
+    }
 
-		row.dispose();
-	}
+    @Test
+    void pendingCellConfigurationAppliedOnAttachmentWithSiblingIsolation() {
+        Table parent = new Table();
+        AttachmentStack.push(parent);
 
-	@Test
-	void pendingCellConfigurationAppliedOnAttachmentWithSiblingIsolation() {
-		Table parent = new Table();
-		AttachmentStack.push(parent);
+        AttachmentStack.setCellConfigurator((cell, child, comp) -> {
+            if (child.name != null && child.name.equals("c1")) {
+                cell.pad(15f);
+            }
+        });
 
-		// Child 1 with custom pad
-		AttachmentStack.setCellConfigurator((cell, child, comp) -> {
-			if (child.name != null && child.name.equals("c1")) {
-				cell.pad(15f);
-			}
-		});
+        Element c1 = new Element();
+        c1.name = "c1";
+        AttachmentStack.add(c1);
 
-		Element c1 = new Element();
-		c1.name = "c1";
-		AttachmentStack.add(c1);
+        Element c2 = new Element();
+        c2.name = "c2";
+        AttachmentStack.add(c2);
 
-		// Child 2 without pad
-		Element c2 = new Element();
-		c2.name = "c2";
-		AttachmentStack.add(c2);
+        AttachmentStack.pop();
 
-		AttachmentStack.pop();
+        assertEquals(15f, CellAccess.padTop(parent.getCell(c1)), 0.01f);
+        assertEquals(0f, CellAccess.padTop(parent.getCell(c2)), 0.01f,
+                "Cell configuration on Child 1 must not bleed into Child 2");
+    }
 
-		assertEquals(15f, CellAccess.padTop(parent.getCell(c1)), 0.01f);
-		assertEquals(0f, CellAccess.padTop(parent.getCell(c2)), 0.01f,
-				"Cell configuration on Child 1 must not bleed into Child 2");
-	}
+    @Test
+    void gapContainerEmptyAndSingleChild() {
+        Column emptyCol = new Column().props(gap(12f));
+        assertEquals(0, emptyCol.table().getChildren().size);
 
-	// ==========================================
-	// Phase 15: GapContainer Dynamic Spacing
-	// ==========================================
+        Column singleCol = new Column().props(gap(12f));
+        Element singleEl = new Element();
+        singleCol.table().add(singleEl);
 
-	@Test
-	void gapContainerEmptyAndSingleChild() {
-		Column emptyCol = new Column().gap(12f);
-		assertEquals(0, emptyCol.table().getChildren().size);
+        assertEquals(0f, CellAccess.padTop(singleCol.table().getCell(singleEl)), 0.01f);
+    }
 
-		Column singleCol = new Column().gap(12f);
-		Element singleEl = new Element();
-		singleCol.table().add(singleEl);
+    @Test
+    void gapContainerMultipleChildrenAndVisibilityTransitions() {
+        Column col = new Column().props(gap(10f));
+        Table table = col.table();
 
-		// With a single child, no gap should be applied before or after it
-		assertEquals(0f, CellAccess.padTop(singleCol.table().getCell(singleEl)), 0.01f);
-	}
+        Element c1 = new Element();
+        Element c2 = new Element();
+        Element c3 = new Element();
 
-	@Test
-	void gapContainerMultipleChildrenAndVisibilityTransitions() {
-		Column col = new Column().gap(10f);
-		Table table = col.table();
+        table.add(c1);
+        table.add(c2);
+        table.add(c3);
 
-		Element c1 = new Element();
-		Element c2 = new Element();
-		Element c3 = new Element();
+        c1.visible = true;
+        c2.visible = true;
+        c3.visible = true;
+        col.respace();
 
-		table.add(c1);
-		table.add(c2);
-		table.add(c3);
+        assertEquals(0f, CellAccess.padTop(table.getCell(c1)), 0.01f, "First visible child has no gap");
+        assertEquals(10f, CellAccess.padTop(table.getCell(c2)), 0.01f, "Second visible child has gap");
+        assertEquals(10f, CellAccess.padTop(table.getCell(c3)), 0.01f, "Third visible child has gap");
 
-		// Initial state: all visible
-		c1.visible = true;
-		c2.visible = true;
-		c3.visible = true;
-		col.respace();
+        c2.visible = false;
+        col.respace();
 
-		assertEquals(0f, CellAccess.padTop(table.getCell(c1)), 0.01f, "First visible child has no gap");
-		assertEquals(10f, CellAccess.padTop(table.getCell(c2)), 0.01f, "Second visible child has gap");
-		assertEquals(10f, CellAccess.padTop(table.getCell(c3)), 0.01f, "Third visible child has gap");
+        assertEquals(0f, CellAccess.padTop(table.getCell(c1)), 0.01f);
+        assertEquals(0f, CellAccess.padTop(table.getCell(c2)), 0.01f, "Hidden child has 0 gap");
+        assertEquals(10f, CellAccess.padTop(table.getCell(c3)), 0.01f,
+                "c3 becomes second visible child and receives gap");
 
-		// Transition 1: Middle child (c2) hidden
-		c2.visible = false;
-		col.respace();
+        c1.visible = false;
+        col.respace();
 
-		assertEquals(0f, CellAccess.padTop(table.getCell(c1)), 0.01f);
-		assertEquals(0f, CellAccess.padTop(table.getCell(c2)), 0.01f, "Hidden child has 0 gap");
-		assertEquals(10f, CellAccess.padTop(table.getCell(c3)), 0.01f, "c3 becomes second visible child and receives gap");
+        assertEquals(0f, CellAccess.padTop(table.getCell(c1)), 0.01f);
+        assertEquals(0f, CellAccess.padTop(table.getCell(c2)), 0.01f);
+        assertEquals(0f, CellAccess.padTop(table.getCell(c3)), 0.01f,
+                "c3 is now the first visible child, receives 0 gap");
 
-		// Transition 2: First child (c1) also hidden -> only c3 visible
-		c1.visible = false;
-		col.respace();
+        c3.visible = false;
+        col.respace();
 
-		assertEquals(0f, CellAccess.padTop(table.getCell(c1)), 0.01f);
-		assertEquals(0f, CellAccess.padTop(table.getCell(c2)), 0.01f);
-		assertEquals(0f, CellAccess.padTop(table.getCell(c3)), 0.01f, "c3 is now the first visible child, receives 0 gap");
+        assertEquals(0f, CellAccess.padTop(table.getCell(c1)), 0.01f);
+        assertEquals(0f, CellAccess.padTop(table.getCell(c2)), 0.01f);
+        assertEquals(0f, CellAccess.padTop(table.getCell(c3)), 0.01f);
 
-		// Transition 3: All hidden
-		c3.visible = false;
-		col.respace();
+        c1.visible = true;
+        c2.visible = true;
+        c3.visible = true;
+        col.respace();
 
-		assertEquals(0f, CellAccess.padTop(table.getCell(c1)), 0.01f);
-		assertEquals(0f, CellAccess.padTop(table.getCell(c2)), 0.01f);
-		assertEquals(0f, CellAccess.padTop(table.getCell(c3)), 0.01f);
+        assertEquals(0f, CellAccess.padTop(table.getCell(c1)), 0.01f);
+        assertEquals(10f, CellAccess.padTop(table.getCell(c2)), 0.01f);
+        assertEquals(10f, CellAccess.padTop(table.getCell(c3)), 0.01f);
 
-		// Transition 4: Restore all visible
-		c1.visible = true;
-		c2.visible = true;
-		c3.visible = true;
-		col.respace();
-
-		assertEquals(0f, CellAccess.padTop(table.getCell(c1)), 0.01f);
-		assertEquals(10f, CellAccess.padTop(table.getCell(c2)), 0.01f);
-		assertEquals(10f, CellAccess.padTop(table.getCell(c3)), 0.01f);
-
-		col.dispose();
-	}
+        col.dispose();
+    }
 }

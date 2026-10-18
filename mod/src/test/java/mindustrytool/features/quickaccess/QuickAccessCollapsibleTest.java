@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.concurrent.atomic.AtomicInteger;
 import mindustrytool.test.MindustryTestEnv;
 import org.junit.jupiter.api.Test;
+import solim.reactive.Effect;
 
 class QuickAccessCollapsibleTest extends MindustryTestEnv {
 
@@ -24,18 +25,20 @@ class QuickAccessCollapsibleTest extends MindustryTestEnv {
     void setCollapsible_updatesConfigAndSignal() {
         QuickAccessFeature qa = new QuickAccessFeature();
         AtomicInteger notifications = new AtomicInteger(0);
-        qa.collapsibleConfig.signal().subscribe(v -> notifications.incrementAndGet());
+        Effect.of(qa.collapsibleConfig.signal(), v -> notifications.incrementAndGet());
 
         qa.setCollapsible(true);
+        flushEffects();
 
         assertTrue(qa.isCollapsible());
         assertTrue(qa.collapsibleConfig.get());
-        assertEquals(1, notifications.get());
+        assertEquals(2, notifications.get());
 
         qa.setCollapsible(false);
+        flushEffects();
         assertFalse(qa.isCollapsible());
         assertFalse(qa.collapsibleConfig.get());
-        assertEquals(2, notifications.get());
+        assertEquals(3, notifications.get());
     }
 
     @Test

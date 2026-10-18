@@ -8,20 +8,26 @@ import arc.graphics.g2d.TextureRegion;
 import arc.scene.Element;
 import arc.scene.style.Drawable;
 import arc.scene.style.TextureRegionDrawable;
+import arc.struct.ObjectSet;
+import arc.struct.Seq;
 import mindustry.Vars;
+import mindustry.gen.Groups;
+import mindustry.gen.Icon;
 import mindustry.gen.Tex;
+import mindustry.graphics.Pal;
 import mindustry.world.Block;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingKeybindCard;
+import mindustrytool.components.SettingScaffold;
+import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
-import solim.reactive.Readable;
+import solim.core.Component;
 import solim.reactive.Signal;
 
-/**
- * Declarative Solim settings view for unified Visualizer options.
- */
-public class VisualizerSettingsView extends BaseComponent {
+public class VisualizerSettingsView extends Component {
 
     private final VisualizerFeature feature;
+    private final Signal<Boolean> turretActiveOnMapOnly = Signal.of(false);
 
     public VisualizerSettingsView(VisualizerFeature feature) {
         this.feature = feature;
@@ -29,140 +35,201 @@ public class VisualizerSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        Readable<String> bScaleText = feature.bridgeItemScaleConfig.signal()
-                .map(v -> Math.round((v != null ? v : 1f) * 100) + "%");
+        return SettingScaffold.build(() -> {
+            headerCard();
+            bridgesCard();
+            turretsCard();
+            turretFilterCard();
+            keybindsCard();
+            actionsCard();
+        });
+    }
 
-        Readable<String> bOpacityText = feature.bridgeOpacityConfig.signal()
-                .map(v -> Math.round((v != null ? v : 1f) * 100) + "%");
+    private void keybindsCard() {
+        SettingKeybindCard.forFeature(feature);
+    }
 
-        Readable<String> bFlowRateScaleText = feature.bridgeFlowRateScaleConfig.signal()
-                .map(v -> Math.round((v != null ? v : 1f) * 100) + "%");
+    private Component headerCard() {
+        return SettingCard.header(feature, "TACTICAL");
+    }
 
-        Readable<String> tScaleText = feature.turretBadgeScaleConfig.signal()
-                .map(v -> Math.round((v != null ? v : 1f) * 100) + "%");
-
-        Readable<String> tOpacityText = feature.targetLineOpacityConfig.signal()
-                .map(v -> Math.round((v != null ? v : 0.6f) * 100) + "%");
-
-        return column().grow().center().children(() -> {
-            scroll().center().children(() -> {
-                column().growX().gap(unit(2)).children(() -> {
-                    // Section: Bridges
-                    text(Core.bundle.get("feature.visualizer.settings.section.bridges", "Bridges")).left();
-
+    private Component bridgesCard() {
+        return SettingCard.section(Icon.waves,
+                Core.bundle.get("feature.visualizer.settings.section.bridges", "Bridges"), () -> {
                     checkbox(Core.bundle.get("feature.visualizer.settings.show-item-bridges", "Show Item Bridges"),
-                            feature.showItemBridgesConfig.signal()).growX();
+                            feature.showItemBridgesConfig.signal()).props(growX());
 
                     checkbox(Core.bundle.get("feature.visualizer.settings.show-duct-bridges", "Show Duct Bridges"),
-                            feature.showDuctBridgesConfig.signal()).growX();
+                            feature.showDuctBridgesConfig.signal()).props(growX());
 
                     checkbox(Core.bundle.get("feature.visualizer.settings.show-liquid-bridges", "Show Liquid Bridges"),
-                            feature.showLiquidBridgesConfig.signal()).growX();
+                            feature.showLiquidBridgesConfig.signal()).props(growX());
 
-                    checkbox(Core.bundle.get("feature.visualizer.settings.show-bridge-flow-rate", "Show Bridge Flow Rate"),
-                            feature.showBridgeFlowRateConfig.signal()).growX();
+                    checkbox(
+                            Core.bundle.get("feature.visualizer.settings.show-bridge-flow-rate",
+                                    "Show Bridge Flow Rate"),
+                            feature.showBridgeFlowRateConfig.signal()).props(growX());
 
                     checkbox(Core.bundle.get("feature.visualizer.settings.hide-idle-bridge-flow", "Hide When Idle"),
-                            feature.hideIdleBridgeFlowConfig.signal()).growX();
+                            feature.hideIdleBridgeFlowConfig.signal()).props(growX());
 
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.visualizer.settings.bridge-item-scale", "Bridge Item Scale")).left();
-                        spacer();
-                        slider(feature.bridgeItemScaleConfig.signal(), 0.3f, 2.0f, 0.05f);
-                        row().width(unit(12)).children(() -> {
-                            text(bScaleText);
-                        });
-                    });
+                    divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.visualizer.settings.bridge-opacity", "Bridge Opacity")).left();
-                        spacer();
-                        slider(feature.bridgeOpacityConfig.signal(), 0.2f, 1.0f, 0.05f);
-                        row().width(unit(12)).children(() -> {
-                            text(bOpacityText);
-                        });
-                    });
+                    SettingSlider.of(
+                            Core.bundle.get("feature.visualizer.settings.bridge-opacity", "Bridge Opacity"),
+                            feature.bridgeOpacityConfig.signal(),
+                            0.2f,
+                            1.0f,
+                            0.05f,
+                            feature.bridgeOpacityConfig.signal()
+                                    .map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
 
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.visualizer.settings.bridge-flow-rate-scale", "Bridge Flow Rate Scale")).left();
-                        spacer();
-                        slider(feature.bridgeFlowRateScaleConfig.signal(), 0.5f, 2.0f, 0.05f);
-                        row().width(unit(12)).children(() -> {
-                            text(bFlowRateScaleText);
-                        });
-                    });
+                    SettingSlider.of(
+                            Core.bundle.get("feature.visualizer.settings.bridge-item-scale", "Bridge Item Scale"),
+                            feature.bridgeItemScaleConfig.signal(),
+                            0.3f,
+                            2.0f,
+                            0.05f,
+                            feature.bridgeItemScaleConfig.signal()
+                                    .map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
 
-                    divider();
+                    SettingSlider.of(
+                            Core.bundle.get("feature.visualizer.settings.bridge-flow-rate-scale",
+                                    "Bridge Flow Rate Scale"),
+                            feature.bridgeFlowRateScaleConfig.signal(),
+                            0.5f,
+                            2.0f,
+                            0.05f,
+                            feature.bridgeFlowRateScaleConfig.signal()
+                                    .map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
+                });
+    }
 
-                    // Section: Turrets
-                    text(Core.bundle.get("feature.visualizer.settings.section.turrets", "Turrets")).left();
-
+    private Component turretsCard() {
+        return SettingCard.section(Icon.turret,
+                Core.bundle.get("feature.visualizer.settings.section.turrets", "Turrets"), () -> {
                     checkbox(Core.bundle.get("feature.visualizer.settings.show-ammo-badge", "Show Ammo Badge"),
-                            feature.showAmmoBadgeConfig.signal()).growX();
+                            feature.showAmmoBadgeConfig.signal()).props(growX());
 
                     checkbox(Core.bundle.get("feature.visualizer.settings.show-target-line", "Show Target Line"),
-                            feature.showTargetLineConfig.signal()).growX();
+                            feature.showTargetLineConfig.signal()).props(growX());
 
-                    checkbox(Core.bundle.get("feature.visualizer.settings.target-line-ally", "Show Allied Turret Lines"),
-                            feature.targetLineAllyConfig.signal()).growX();
+                    checkbox(
+                            Core.bundle.get("feature.visualizer.settings.target-line-ally", "Show Allied Turret Lines"),
+                            feature.targetLineAllyConfig.signal()).props(growX());
 
-                    checkbox(Core.bundle.get("feature.visualizer.settings.target-line-enemy", "Show Enemy Turret Lines"),
-                            feature.targetLineEnemyConfig.signal()).growX();
+                    checkbox(
+                            Core.bundle.get("feature.visualizer.settings.target-line-enemy", "Show Enemy Turret Lines"),
+                            feature.targetLineEnemyConfig.signal()).props(growX());
 
                     checkbox(Core.bundle.get("feature.visualizer.settings.only-when-shooting", "Only When Shooting"),
-                            feature.onlyWhenShootingConfig.signal()).growX();
+                            feature.onlyWhenShootingConfig.signal()).props(growX());
 
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.visualizer.settings.turret-badge-scale", "Turret Badge Scale")).left();
-                        spacer();
-                        slider(feature.turretBadgeScaleConfig.signal(), 0.2f, 2.0f, 0.05f);
-                        row().width(unit(12)).children(() -> {
-                            text(tScaleText);
-                        });
-                    });
+                    divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.visualizer.settings.target-line-opacity", "Target Line Opacity")).left();
-                        spacer();
-                        slider(feature.targetLineOpacityConfig.signal(), 0.1f, 1.0f, 0.05f);
-                        row().width(unit(12)).children(() -> {
-                            text(tOpacityText);
-                        });
-                    });
+                    SettingSlider.of(
+                            Core.bundle.get("feature.visualizer.settings.target-line-opacity", "Target Line Opacity"),
+                            feature.targetLineOpacityConfig.signal(),
+                            0.1f,
+                            1.0f,
+                            0.05f,
+                            feature.targetLineOpacityConfig.signal()
+                                    .map(v -> Math.round((v != null ? v : 0.6f) * 100) + "%"));
 
-                    divider();
+                    SettingSlider.of(
+                            Core.bundle.get("feature.visualizer.settings.turret-badge-scale", "Turret Badge Scale"),
+                            feature.turretBadgeScaleConfig.signal(),
+                            0.2f,
+                            2.0f,
+                            0.05f,
+                            feature.turretBadgeScaleConfig.signal()
+                                    .map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
+                });
+    }
 
-                    // Granular Turret Filter
-                    row().growX().gap(unit(2)).center().children(() -> {
-                        text(Core.bundle.get("feature.visualizer.settings.turret-filter", "Turret Filter")).left();
-                        spacer();
-                        row().gap(unit(1)).children(() -> {
-                            button(() -> feature.setAllTurretsEnabled(true))
-                                    .style(WebStyles.outline())
-                                    .height(unit(7))
-                                    .padding(unit(1), unit(2.5f), unit(1), unit(2.5f))
-                                    .children(() -> text(Core.bundle.get("feature.visualizer.settings.all", "All")));
+    private Component turretFilterCard() {
+        return SettingCard.card().children(() -> {
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
+                icon(Icon.filter).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)), color(Pal.accent));
+                text(Core.bundle.get("feature.visualizer.settings.turret-filter", "Turret Filter"))
+                        .props(color(Pal.accent), growX(), left());
 
-                            button(() -> feature.setAllTurretsEnabled(false))
-                                    .style(WebStyles.ghost())
-                                    .height(unit(7))
-                                    .padding(unit(1), unit(2.5f), unit(1), unit(2.5f))
-                                    .children(() -> text(Core.bundle.get("feature.visualizer.settings.none", "None")));
-                        });
-                    });
+                row().props(gap(unit(1))).children(() -> {
+                    button(Core.bundle.get("feature.visualizer.settings.all", "All"),
+                            () -> feature.setAllTurretsEnabled(true))
+                            .props(style(WebStyles.outlineText()), height(unit(8)), prefHeight(unit(8)), padding(unit(1), unit(2.5f), unit(1), unit(2.5f)));
 
-                    wrap().growX().left().gap(unit(1.5f)).children(() -> {
-                        if (Vars.content != null && Vars.content.blocks() != null) {
-                            for (Block block : Vars.content.blocks()) {
-                                if (block != null && feature.isTurretBlock(block)) {
-                                    turretChip(block);
-                                }
-                            }
-                        }
-                    });
+                    button(Core.bundle.get("feature.visualizer.settings.none", "None"),
+                            () -> feature.setAllTurretsEnabled(false))
+                            .props(style(WebStyles.ghostText()), height(unit(8)), prefHeight(unit(8)), padding(unit(1), unit(2.5f), unit(1), unit(2.5f)));
                 });
             });
-        }).element();
+
+            if (Vars.state != null && Vars.state.isGame()) {
+                row().props(growX(), gap(unit(1.5f)), left()).children(() -> {
+                    button(Core.bundle.get("feature.visualizer.settings.filter.all", "All"),
+                            () -> turretActiveOnMapOnly.set(false))
+                            .props(style(WebStyles.filterChipText()), checked(turretActiveOnMapOnly.map(active -> !Boolean.TRUE.equals(active))));
+
+                    button(Core.bundle.get("feature.visualizer.settings.filter.active-on-map", "Active on Map"),
+                            () -> turretActiveOnMapOnly.set(true))
+                            .props(style(WebStyles.filterChipText()), checked(turretActiveOnMapOnly.map(active -> Boolean.TRUE.equals(active))));
+                });
+            }
+
+            dynamic(turretActiveOnMapOnly, activeOnly -> {
+                Seq<Block> blocks = getFilteredTurretBlocks(Boolean.TRUE.equals(activeOnly));
+                if (blocks.isEmpty()) {
+                    text(Core.bundle.get("feature.range-display.settings.filter.empty-map", "No blocks on current map"))
+                            .props(color(WebStyles.Colors.GHOST_FG), margin(unit(2)));
+                } else {
+                    wrap().props(growX(), left(), gap(unit(1.5f))).children(() -> {
+                        for (Block block : blocks) {
+                            turretChip(block);
+                        }
+                    });
+                }
+            }).props(growX());
+        });
+    }
+
+    private Seq<Block> getFilteredTurretBlocks(boolean activeOnly) {
+        Seq<Block> result = new Seq<>();
+        if (Vars.content == null || Vars.content.blocks() == null) {
+            return result;
+        }
+
+        if (activeOnly) {
+            ObjectSet<Block> activeBlocks = new ObjectSet<>();
+            if (Vars.state != null && Vars.state.isGame() && Groups.build != null) {
+                Groups.build.each(b -> {
+                    if (b != null && b.block != null) {
+                        activeBlocks.add(b.block);
+                    }
+                });
+            }
+            for (Block block : Vars.content.blocks()) {
+                if (block != null && feature.isTurretBlock(block) && activeBlocks.contains(block)) {
+                    result.add(block);
+                }
+            }
+            return result;
+        }
+
+        for (Block block : Vars.content.blocks()) {
+            if (block != null && feature.isTurretBlock(block)) {
+                result.add(block);
+            }
+        }
+        return result;
+    }
+
+    private Component actionsCard() {
+        return SettingCard.card().children(() -> {
+            button(Core.bundle.get("feature.visualizer.settings.reset", "Reset to Defaults"),
+                    feature::resetToDefaults)
+                    .props(style(WebStyles.outlineText()), height(unit(11)), prefHeight(unit(11)), growX());
+        });
     }
 
     private void turretChip(Block block) {
@@ -171,18 +238,12 @@ public class VisualizerSettingsView extends BaseComponent {
         Drawable drawable = region != null ? new TextureRegionDrawable(region) : Tex.clear;
 
         button()
-                .style(WebStyles.filterChip())
-                .size(unit(11))
-                .padding(unit(1))
-                .tooltip(block.localizedName)
-                .checked(signal)
+                .props(style(WebStyles.filterChip()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), padding(unit(1)), tooltip(block.localizedName), checked(signal))
                 .onClick(() -> feature.setTurretEnabled(block, !feature.isTurretEnabled(block)))
                 .children(() -> {
                     icon(drawable)
-                            .size(unit(6))
-                            .color(signal.map(enabled ->
-                                    Boolean.TRUE.equals(enabled) ? Color.white : new Color(1f, 1f, 1f, 0.35f)
-                            ));
+                            .props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(signal.map(enabled -> Boolean.TRUE.equals(enabled) ? Color.white
+                                    : new Color(1f, 1f, 1f, 0.35f))));
                 });
     }
 }

@@ -181,3 +181,15 @@ The system SHALL lazily load schematics and their preview textures in the Schema
 - **WHEN** the user modifies the search text or selects a different tag filter
 - **THEN** the displayed batch resets to the first 36 filtered items
 
+### Requirement: Dark Transparent Empty Slots and Tab Hover
+The system SHALL render empty schematic grid slots and page tab button hover states with a theme-consistent dark background with 90% alpha.
+
+#### Scenario: Rendering an empty slot
+- **WHEN** an unassigned schematic slot is rendered in the HUD or Popup
+- **THEN** the slot button background has a dark fill with 90% opacity and rounded border
+
+#### Scenario: Hovering a page tab button
+- **WHEN** the user points the cursor over a page tab button in the HUD or Popup
+- **THEN** the button background renders with the dark 90% alpha hover styling
+
+

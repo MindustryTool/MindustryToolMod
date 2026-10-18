@@ -64,7 +64,6 @@ public class ClientPathfinder {
     private final LongMap<ClientFlowfield> flowfields = new LongMap<>();
     private final IntQueue frontier = new IntQueue();
 
-    // Reusable structures for A* to minimize allocations
     private final IntFloatMap gScores = new IntFloatMap();
     private final IntIntMap cameFrom = new IntIntMap();
     private final IntSet closed = new IntSet();
@@ -120,7 +119,6 @@ public class ClientPathfinder {
 
         frontier.clear();
 
-        // Targets: enemy cores
         Seq<Building> cores = Vars.indexer.getEnemy(field.team, BlockFlag.core);
         if (cores != null) {
             for (int i = 0; i < cores.size; i++) {
@@ -131,7 +129,6 @@ public class ClientPathfinder {
             }
         }
 
-        // Also add spawn points if this team is the wave enemy team
         if (Vars.state.rules.waves && field.team == Vars.state.rules.defaultTeam && Vars.spawner != null) {
             Seq<Tile> spawns = Vars.spawner.getSpawns();
             if (spawns != null) {
@@ -350,7 +347,8 @@ public class ClientPathfinder {
                     if (p.x != 0 && p.y != 0) {
                         int p1Data = Vars.pathfinder.get(cx + p.x, cy);
                         int p2Data = Vars.pathfinder.get(cx, cy + p.y);
-                        if (pathCost.getCost(unit.team.id, p1Data) == -1 || pathCost.getCost(unit.team.id, p2Data) == -1) {
+                        if (pathCost.getCost(unit.team.id, p1Data) == -1
+                                || pathCost.getCost(unit.team.id, p2Data) == -1) {
                             continue;
                         }
                     }
@@ -367,7 +365,7 @@ public class ClientPathfinder {
                 }
             }
         } catch (Throwable t) {
-            // Pathfinder buffers out of sync during world transition; fallback to direct straight-line
+
             ensureCapacity(cacheEntry, 4);
             cacheEntry.data[0] = unit.x;
             cacheEntry.data[1] = unit.y;

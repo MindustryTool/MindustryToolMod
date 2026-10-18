@@ -25,13 +25,11 @@ public class ReactivityBenchmarkTest extends SolimEnv {
             effectRuns.incrementAndGet();
         });
 
-        // Warmup
         for (int i = 0; i < 1000; i++) {
             source.set(i);
         }
         SignalDispatcher.flush();
 
-        // Measure 10,000 updates
         int iterations = 10000;
         long t0 = System.nanoTime();
         for (int i = 0; i < iterations; i++) {
@@ -46,7 +44,7 @@ public class ReactivityBenchmarkTest extends SolimEnv {
 
         assertEquals(iterations - 1, (int) source.get());
         assertEquals((iterations - 1) * 2, lastValue.get());
-        // 10,000 updates should take well under 100ms in modern JVM
+
         assertTrue(elapsedMs < 100.0, "10,000 updates took " + elapsedMs + " ms, expected < 100 ms");
     }
 }

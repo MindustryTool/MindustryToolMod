@@ -1,5 +1,7 @@
 package solim.layout;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -74,10 +76,10 @@ class ScrollTest extends SolimEnv {
     void visibleModifierChangesOuterVisibility() {
         Scroll s = new Scroll();
 
-        s.visible(false);
+        s.props(visible(false));
         assertFalse(s.outer().visible);
 
-        s.visible(true);
+        s.props(visible(true));
         assertTrue(s.outer().visible);
     }
 
@@ -85,13 +87,13 @@ class ScrollTest extends SolimEnv {
     void positionSetsOuterCoordinates() {
         Scroll s = new Scroll();
 
-        s.x(10f);
+        s.props(x(10f));
         assertEquals(10f, s.outer().x, 0.01f);
 
-        s.y(20f);
+        s.props(y(20f));
         assertEquals(20f, s.outer().y, 0.01f);
 
-        s.position(30f, 40f);
+        s.props(position(30f, 40f));
         assertEquals(30f, s.outer().x, 0.01f);
         assertEquals(40f, s.outer().y, 0.01f);
     }
@@ -118,20 +120,20 @@ class ScrollTest extends SolimEnv {
     @Test
     void scrollDisabledConfiguration() {
         Scroll scroll = new Scroll();
-        scroll.scrollingDisabled(false, true);
+        scroll.props(scrollingDisabled(false, true));
         assertFalse(scroll.isScrollingDisabledX());
         assertTrue(scroll.isScrollingDisabledY());
 
-        scroll.scrollX(true);
+        scroll.props(scrollX(true));
         assertFalse(scroll.isScrollingDisabledX());
 
-        scroll.scrollX(false);
+        scroll.props(scrollX(false));
         assertTrue(scroll.isScrollingDisabledX());
 
-        scroll.scrollY(true);
+        scroll.props(scrollY(true));
         assertFalse(scroll.isScrollingDisabledY());
 
-        scroll.scrollY(false);
+        scroll.props(scrollY(false));
         assertTrue(scroll.isScrollingDisabledY());
     }
 

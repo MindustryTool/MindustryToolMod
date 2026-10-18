@@ -5,6 +5,17 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.bottom;
+import static solim.modifier.Values.center;
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.left;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.position;
+import static solim.modifier.Values.right;
+import static solim.modifier.Values.top;
+import static solim.modifier.Values.visible;
+import static solim.modifier.Values.x;
+import static solim.modifier.Values.y;
 
 import org.junit.jupiter.api.Test;
 
@@ -18,7 +29,6 @@ import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
 class ColumnTest extends SolimEnv {
-
 
     @Test
     void createsTableWithDefaultName() {
@@ -50,7 +60,7 @@ class ColumnTest extends SolimEnv {
         col.add(a);
         col.add(b);
 
-        col.gap(16f);
+        col.props(gap(16f));
 
         assertEquals(0f, CellAccess.padTop(col.table().getCell(a)), 0.01f);
         assertEquals(16f, CellAccess.padTop(col.table().getCell(b)), 0.01f);
@@ -64,8 +74,8 @@ class ColumnTest extends SolimEnv {
         Element child = new Element();
         col.add(child);
 
-        assertSame(col, col.padding(24f));
-        assertSame(col, col.padding(1f, 2f, 3f, 4f));
+        assertSame(col, col.props(padding(24f)));
+        assertSame(col, col.props(padding(1f, 2f, 3f, 4f)));
         assertEquals(1, col.table().getChildren().size);
         assertSame(child, col.table().getChildren().get(0));
     }
@@ -74,10 +84,10 @@ class ColumnTest extends SolimEnv {
     void visibleModifierChangesTableVisibility() {
         Column col = new Column();
 
-        col.visible(false);
+        col.props(visible(false));
         assertFalse(col.table().visible);
 
-        col.visible(true);
+        col.props(visible(true));
         assertTrue(col.table().visible);
     }
 
@@ -85,7 +95,7 @@ class ColumnTest extends SolimEnv {
     void reactiveVisibleUpdatesTableVisibility() {
         Signal<Boolean> vis = Signal.of(true);
         Column col = new Column();
-        col.visible(vis);
+        col.props(visible(vis));
 
         assertTrue(col.table().visible);
 
@@ -102,13 +112,13 @@ class ColumnTest extends SolimEnv {
     void positionSetsTableCoordinates() {
         Column col = new Column();
 
-        col.x(10f);
+        col.props(x(10f));
         assertEquals(10f, col.table().x, 0.01f);
 
-        col.y(20f);
+        col.props(y(20f));
         assertEquals(20f, col.table().y, 0.01f);
 
-        col.position(30f, 40f);
+        col.props(position(30f, 40f));
         assertEquals(30f, col.table().x, 0.01f);
         assertEquals(40f, col.table().y, 0.01f);
     }
@@ -137,12 +147,12 @@ class ColumnTest extends SolimEnv {
     void fluentApiReturnsSameColumn() {
         Column col = new Column();
 
-        assertSame(col, col.gap(8f));
-        assertSame(col, col.padding(4f));
+        assertSame(col, col.props(gap(8f)));
+        assertSame(col, col.props(padding(4f)));
         assertSame(col, col.name("test"));
-        assertSame(col, col.visible(true));
-        assertSame(col, col.x(0f));
-        assertSame(col, col.y(0f));
+        assertSame(col, col.props(visible(true)));
+        assertSame(col, col.props(x(0f)));
+        assertSame(col, col.props(y(0f)));
     }
 
     @Test
@@ -160,7 +170,7 @@ class ColumnTest extends SolimEnv {
     @Test
     void columnTopLeftAlignsChildren() {
         Column col = new Column();
-        col.top().left();
+        col.props(top(), left());
         Element e1 = new Element() {
             @Override
             public float getPrefWidth() {
@@ -196,7 +206,6 @@ class ColumnTest extends SolimEnv {
         assertEquals(Align.top | Align.left, CellAccess.align(c1) & (Align.top | Align.left));
         assertEquals(Align.top | Align.left, CellAccess.align(c2) & (Align.top | Align.left));
 
-        // Left aligned: both start at x = 0
         assertEquals(0f, e1.x, 0.01f, "Child 1 must be at left edge");
         assertEquals(0f, e2.x, 0.01f, "Child 2 must be at left edge");
     }
@@ -204,7 +213,7 @@ class ColumnTest extends SolimEnv {
     @Test
     void columnBottomRightAlignsChildren() {
         Column col = new Column();
-        col.bottom().right();
+        col.props(bottom(), right());
         Element e1 = new Element() {
             @Override
             public float getPrefWidth() {
@@ -234,7 +243,6 @@ class ColumnTest extends SolimEnv {
         col.table().setSize(200f, 300f);
         col.table().layout();
 
-        // Right aligned: both end at x = 200
         assertEquals(200f, e1.x + e1.getWidth(), 0.01f, "Child 1 must be flush with right edge");
         assertEquals(200f, e2.x + e2.getWidth(), 0.01f, "Child 2 must be flush with right edge");
     }
@@ -255,7 +263,7 @@ class ColumnTest extends SolimEnv {
         };
         col.children(() -> AttachmentStack.add(e1));
 
-        col.right();
+        col.props(right());
         col.table().setSize(200f, 300f);
         col.table().layout();
 
@@ -308,7 +316,7 @@ class ColumnTest extends SolimEnv {
     @Test
     void explicitCenterOverridesTopLeftDefault() {
         Column col = new Column();
-        col.center();
+        col.props(center());
         Element e1 = new Element();
         col.children(() -> {
             AttachmentStack.add(e1);

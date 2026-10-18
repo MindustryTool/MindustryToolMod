@@ -1,47 +1,52 @@
 package solim.display;
 
-import arc.Core;
 import arc.graphics.Color;
-import arc.scene.style.Drawable;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
-import solim.core.Disposable;
-import solim.core.LeafComponent;
-import solim.modifier.TableConfig;
-import solim.reactive.Effect;
+import solim.core.Component;
+import solim.core.SolimToken;
+import solim.graphics.RoundedDrawable;
+import solim.modifier.RoundedHelper;
+import solim.modifier.Configurable;
+import solim.modifier.PendingCellConfig;
+import solim.modifier.Prop;
+import solim.modifier.Props;
+import solim.modifier.TableCapability;
+import solim.modifier.TextCapability;
 import solim.reactive.Readable;
 
-/**
- * Compact pill-shaped badge component for notification counters and tag
- * indicators.
- */
-public final class Badge extends LeafComponent<Table, Badge> implements TableConfig<Badge> {
+public final class Badge extends Component implements Configurable<Badge>, TableCapability, TextCapability {
 
-    private final Text label;
+    private final Table element;
+    private final PendingCellConfig constraints = new PendingCellConfig();
+    private @Nullable Text label;
+    private @Nullable Props<Badge> pending;
     private boolean hideOnZero = false;
-    private @Nullable Effect visibilityEffect;
     private @Nullable Readable<Integer> countSignal;
 
     public Badge(String text) {
         this(Readable.of(text));
     }
 
-    public Badge(Readable<String> text) {
-        super(new Table());
+    public Badge(@Nullable Readable<String> text) {
+        this(new Table(), text);
+    }
+
+    private Badge(Table element, @Nullable Readable<String> text) {
+        super(element);
+        this.element = element;
         this.element.name = "solim-badge-table";
         this.element.center();
+        SolimToken.bind(element, this, constraints);
 
-        Drawable bg = (Core.atlas != null && Core.atlas.has("whiteui"))
-                ? Core.atlas.drawable("whiteui")
-                : null;
-        if (bg != null) {
-            element.setBackground(bg);
-            element.setColor(new Color(0.85f, 0.25f, 0.25f, 0.9f));
-        }
-        element.margin(2f, 6f, 2f, 6f);
+        RoundedDrawable badgeBackground = RoundedHelper.getOrCreateRounded(element, 8);
+        badgeBackground.radius(8);
+        badgeBackground.fillColor(new Color(1f, 1f, 1f, 0.12f));
+        badgeBackground.border(1f, new Color(1f, 1f, 1f, 0.25f));
+        element.margin(2f, 8f, 2f, 8f);
 
-        this.label = Text.of(text);
-        element.add(label.label()).center();
+        props(Prop.elementSource(TextCapability.class, "text", text != null ? text : Readable.of(""),
+                (host, value) -> setText(value)));
     }
 
     public static Badge of(String text) {
@@ -57,57 +62,72 @@ public final class Badge extends LeafComponent<Table, Badge> implements TableCon
     }
 
     public static Badge ofCount(Readable<Integer> count) {
-        Readable<String> text = count.map(c -> c != null ? String.valueOf(c) : "0");
-        Badge badge = new Badge(text);
-        if (text instanceof Disposable) {
-            badge.disposables.add((Disposable) text);
-        }
+        Badge badge = new Badge("");
         badge.countSignal = count;
-        badge.hideOnZero(true);
+        badge.hideOnZero = true;
+        badge.props(
+                Prop.elementSource(TextCapability.class, "text",
+                        count.map(c -> c != null ? String.valueOf(c) : "0"),
+                        (element, v) -> badge.setText(v)),
+                Prop.tableSource(TableCapability.class, "visibleOnCount", count,
+                        (table, v) -> table.visible = !badge.hideOnZero || (v != null && v > 0)));
         return badge;
     }
 
-    public Badge hideOnZero(boolean hide) {
+    public void setHideOnZero(boolean hide) {
         this.hideOnZero = hide;
-        updateVisibilityBinding();
-        return this;
-    }
-
-    public Badge hideOnZero() {
-        return hideOnZero(true);
-    }
-
-    private void updateVisibilityBinding() {
-        if (visibilityEffect != null) {
-            visibilityEffect.dispose();
-            disposables.remove(visibilityEffect);
-            visibilityEffect = null;
-        }
         if (countSignal != null) {
-            visibilityEffect = Effect.of(() -> {
-                Integer c = countSignal.get();
-                if (hideOnZero) {
-                    element.visible = (c != null && c > 0);
-                } else {
-                    element.visible = true;
-                }
-            });
-            disposables.add(visibilityEffect);
+            applyCountVisibility(countSignal.peek());
         }
     }
 
-    public Badge color(Color color) {
-        element.setColor(color);
-        return this;
+    private void applyCountVisibility(@Nullable Integer count) {
+        element.visible = !hideOnZero || (count != null && count > 0);
     }
 
-    public Badge textColor(Color color) {
-        label.color(color);
-        return this;
+    public void setText(@Nullable String value) {
+        label().setText(value != null ? value : "");
+    }
+
+    public void setBadgeColor(Color color) {
+        element.setColor(color);
+        if (element.getBackground() instanceof RoundedDrawable) {
+            RoundedDrawable rd = (RoundedDrawable) element.getBackground();
+            if (color != null) {
+                rd.fillColor(new Color(color.r, color.g, color.b, 0.16f));
+                rd.border(1f, new Color(color.r, color.g, color.b, 0.55f));
+                label().element().setColor(color);
+            }
+        }
+    }
+
+    public void setTextColor(Color color) {
+        label().element().setColor(color);
     }
 
     public Text text() {
-        return label;
+        return label();
+    }
+
+    private Text label() {
+        Text existing = label;
+        if (existing != null) {
+            return existing;
+        }
+        Text created = Text.of("");
+        element.add(created.label()).center();
+        label = created;
+        return created;
+    }
+
+    public Badge name(@Nullable String name) {
+        setName(name);
+        return this;
+    }
+
+    @Override
+    public PendingCellConfig cellConfig() {
+        return constraints;
     }
 
     @Override
@@ -116,15 +136,17 @@ public final class Badge extends LeafComponent<Table, Badge> implements TableCon
     }
 
     @Override
-    public void dispose() {
-        if (isDisposed()) {
-            return;
-        }
-        if (visibilityEffect != null) {
-            visibilityEffect.dispose();
-            visibilityEffect = null;
-        }
-        label.dispose();
-        super.dispose();
+    public @Nullable Props<Badge> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<Badge> props) {
+        this.pending = props;
+    }
+
+    @Override
+    public Badge self() {
+        return this;
     }
 }

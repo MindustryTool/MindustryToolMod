@@ -2,10 +2,6 @@ package mindustrytool.features.browser.common;
 
 import mindustrytool.Config;
 
-/**
- * Shared helpers for building API image URLs and reading nullable stat
- * counters from list responses.
- */
 public final class BrowserImages {
 
     private BrowserImages() {

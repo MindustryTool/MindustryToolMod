@@ -4,16 +4,19 @@ import static solim.UI.*;
 
 import arc.Core;
 import arc.files.Fi;
-import arc.graphics.Color;
 import arc.scene.Element;
 import mindustry.Vars;
+import mindustry.gen.Icon;
 import mindustry.ui.FileChooser;
-import mindustry.ui.Styles;
 import mindustrytool.Folders;
-import solim.core.BaseComponent;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingScaffold;
+import mindustrytool.components.SettingSlider;
+import mindustrytool.components.WebStyles;
+import solim.core.Component;
 import solim.reactive.Readable;
 
-public class BackgroundSettingsView extends BaseComponent {
+public class BackgroundSettingsView extends Component {
 
     private final BackgroundFeature feature;
 
@@ -23,6 +26,19 @@ public class BackgroundSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
+        return SettingScaffold.build(() -> {
+            headerCard();
+            imageSelectionCard();
+            appearanceCard();
+            actionsCard();
+        });
+    }
+
+    private Component headerCard() {
+        return SettingCard.header(feature, Core.bundle.get("feature.background.badge.graphics", "GRAPHICS"));
+    }
+
+    private Component imageSelectionCard() {
         Readable<String> currentFileText = feature.pathConfig.signal().map(path -> {
             String fileName = (path != null && !path.trim().isEmpty())
                     ? path
@@ -30,42 +46,47 @@ public class BackgroundSettingsView extends BaseComponent {
             return Core.bundle.format("feature.background.settings.current-file", fileName);
         });
 
-        Readable<String> opacityText = feature.opacityConfig.signal().map(v -> (v != null ? v : 100) + "%");
+        return SettingCard.section(Icon.image,
+                Core.bundle.get("feature.background.settings.image-selection", "Image Selection"), () -> {
+                    text(Core.bundle.get("feature.background.settings.image-desc",
+                            "Select a custom PNG image to replace the main menu background."))
+                            .props(color(WebStyles.Colors.GHOST_FG), textWrap(), growX(), left());
 
-        return column().grow().center().children(() -> {
-            scroll().center().children(() -> {
-                column().growX().gap(unit(2)).children(() -> {
-                    button(Core.bundle.get("feature.background.settings.select-image"), this::selectImage)
-                            .style(Styles.defaultb)
-                            .growX();
+                    button(this::selectImage)
+                            .props(style(WebStyles.outline()), growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
+                            .children(() -> {
+                                icon(Icon.file).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
+                                text(Core.bundle.get("feature.background.settings.select-image",
+                                        "Select Background Image"));
+                            });
 
                     text(currentFileText)
-                            .color(Color.lightGray)
-                            .fontScale(0.9f)
-                            .left();
-
-                    divider();
-
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.background.settings.opacity")).left();
-
-                        spacer();
-
-                        slider(feature.opacityConfig.signal(), 5, 100, 5);
-
-                        row().width(unit(14)).children(() -> {
-                            text(opacityText);
-                        });
-                    });
-
-                    divider();
-
-                    button(Core.bundle.get("feature.background.settings.reset"), feature::resetBackground)
-                            .style(Styles.defaultb)
-                            .growX();
+                            .props(color(WebStyles.Colors.GHOST_FG), left());
                 });
-            });
-        }).element();
+    }
+
+    private Component appearanceCard() {
+        return SettingCard.section(Icon.spray, Core.bundle.get("feature.background.settings.appearance", "Appearance"),
+                () -> {
+                    SettingSlider.of(
+                            Core.bundle.get("feature.background.settings.opacity", "Opacity"),
+                            feature.opacityConfig.signal(),
+                            5,
+                            100,
+                            5,
+                            feature.opacityConfig.signal().map(v -> (v != null ? v : 100) + "%"));
+                });
+    }
+
+    private Component actionsCard() {
+        return SettingCard.card().children(() -> {
+            button(feature::resetBackground)
+                    .props(style(WebStyles.outline()), growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
+                    .children(() -> {
+                        icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
+                        text(Core.bundle.get("feature.background.settings.reset", "Reset Background"));
+                    });
+        });
     }
 
     private void selectImage() {

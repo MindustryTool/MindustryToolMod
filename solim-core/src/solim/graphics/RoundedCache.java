@@ -10,13 +10,6 @@ import arc.scene.style.NinePatchDrawable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * In-memory cache for white continuous-curvature rounded NinePatchDrawables.
- *
- * <p>Textures are pure white (#FFFFFF) with sub-pixel anti-aliasing. A single texture
- * per radius or stroke width is reused across all components and tinted dynamically via
- * vertex colors.
- */
 public final class RoundedCache {
 
     private static final Map<Integer, NinePatchDrawable> solidCache = new ConcurrentHashMap<>();
@@ -25,17 +18,11 @@ public final class RoundedCache {
     private RoundedCache() {
     }
 
-    /**
-     * Retrieves or generates a white solid rounded NinePatchDrawable for the given radius.
-     */
     public static NinePatchDrawable getSolid(int radius) {
         int r = Math.max(1, radius);
         return solidCache.computeIfAbsent(r, RoundedCache::createSolidDrawable);
     }
 
-    /**
-     * Retrieves or generates a white hollow rounded border NinePatchDrawable.
-     */
     public static NinePatchDrawable getBorder(int radius, float stroke) {
         int r = Math.max(1, radius);
         float s = Math.max(0.5f, stroke);
@@ -66,13 +53,9 @@ public final class RoundedCache {
             pixmap.dispose();
         }
 
-        // Fallback for headless testing environments without OpenGL context
         return new NinePatchDrawable();
     }
 
-    /**
-     * Clears all cached drawables and releases textures.
-     */
     public static void clear() {
         for (NinePatchDrawable drawable : solidCache.values()) {
             disposeDrawable(drawable);

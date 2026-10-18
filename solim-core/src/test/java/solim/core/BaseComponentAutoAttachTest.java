@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.grow;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -15,14 +17,13 @@ import solim.layout.Divider;
 import solim.layout.Row;
 import solim.layout.Spacer;
 import solim.layout.Direction;
-import solim.runtime.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.test.SolimEnv;
 
-class BaseComponentAutoAttachTest extends SolimEnv {
+class lazyComponentAutoAttachTest extends SolimEnv {
 
 
-    static class Probe extends BaseComponent {
+    static class Probe extends Component {
         @Override
         protected Element build() {
             return new Element();
@@ -84,7 +85,7 @@ class BaseComponentAutoAttachTest extends SolimEnv {
         final Element[] divider = new Element[1];
         final Probe[] inputView = new Probe[1];
 
-        Column col = new Column().grow().gap(4f).children(() -> {
+        Column col = new Column().props(grow(), gap(4f)).children(() -> {
             messageList[0] = new Probe();
             Divider div = new Divider(Direction.X);
             AttachmentStack.attachToParent(div.element());

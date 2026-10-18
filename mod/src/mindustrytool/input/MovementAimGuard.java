@@ -7,14 +7,6 @@ import arc.util.Nullable;
 import arc.util.Time;
 import mindustry.gen.Unit;
 
-/**
- * Shared fault tolerance for copied vanilla movement logic.
- * Stale third-party units compiled against an older Mindustry may lack newer
- * {@code Weaponsc} methods, throwing {@link LinkageError} (e.g.
- * {@code AbstractMethodError} on {@code aim}) on the render thread.
- * The latch records such unit classes once and skips their aim/weapon section
- * proactively; transient failures are throttled and retried.
- */
 public final class MovementAimGuard {
 
     private static final long THROTTLE_MILLIS = 5000L;

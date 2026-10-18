@@ -31,12 +31,6 @@ import mindustrytool.features.autoplay.AutoplayFeature;
 import mindustrytool.features.freecamera.FreeCameraFeature;
 import mindustrytool.features.joystick.JoystickFeature;
 
-/**
- * Unified mobile input handler for MindustryTool.
- * Drives unit movement purely from virtual joystick vector when JoystickFeature is enabled,
- * falls back to camera-centered movement when disabled, suppresses camera lerp when
- * FreeCameraFeature is active, and intercepts pinch gestures during joystick holding.
- */
 public class ModMobileInput extends MobileInput {
 
     private static final float JOYSTICK_OFFSET = 80f;
@@ -179,7 +173,7 @@ public class ModMobileInput extends MobileInput {
         } else if (freeCam) {
             targetPos.set(Vars.player);
         } else {
-            // Faithful vanilla fallback: unit moves towards camera position on mobile
+
             targetPos.set(Core.camera.position);
         }
 
@@ -209,7 +203,8 @@ public class ModMobileInput extends MobileInput {
             if (unit.within(payloadTarget, 3f * Time.delta)) {
                 if (pay.hasPayload() && (payloadTarget instanceof Vec2
                         || (payloadTarget instanceof Building && ((Building) payloadTarget).team == Vars.player.team()
-                                && ((Building) payloadTarget).acceptPayload((Building) payloadTarget, pay.payloads().peek())))) {
+                                && ((Building) payloadTarget).acceptPayload((Building) payloadTarget,
+                                        pay.payloads().peek())))) {
                     tryDropPayload();
                 } else if (payloadTarget instanceof Building && ((Building) payloadTarget).team == unit.team) {
                     Call.requestBuildPayload(Vars.player, (Building) payloadTarget);
@@ -254,12 +249,14 @@ public class ModMobileInput extends MobileInput {
             if (!unit.activelyBuilding() && unit.mineTile == null && !Vars.state.isEditor()) {
                 if (manualShooting) {
                     Vars.player.shooting = !boosted;
-                    unit.aim(Vars.player.mouseX = Core.input.mouseWorldX(), Vars.player.mouseY = Core.input.mouseWorldY(), true);
+                    unit.aim(Vars.player.mouseX = Core.input.mouseWorldX(),
+                            Vars.player.mouseY = Core.input.mouseWorldY(), true);
                 } else if (target == null) {
                     Vars.player.shooting = false;
                     if (Core.settings.getBool("autotarget") && !isControlledBlockUnit()) {
                         if (unit.type.canAttack) {
-                            target = Units.closestTarget(unit.team, unit.x, unit.y, range, u -> u.checkTarget(type.targetAir, type.targetGround),
+                            target = Units.closestTarget(unit.team, unit.x, unit.y, range,
+                                    u -> u.checkTarget(type.targetAir, type.targetGround),
                                     u -> type.targetGround && type.targetBuildingsMobile);
                         }
 
@@ -273,7 +270,8 @@ public class ModMobileInput extends MobileInput {
 
                     unit.aim(Core.input.mouseWorldX(), Core.input.mouseWorldY(), true);
                 } else {
-                    Vec2 intercept = Vars.player.unit().type.weapons.contains(w -> w.predictTarget) ? Predict.intercept(unit, target, type.weapons.first().bullet)
+                    Vec2 intercept = Vars.player.unit().type.weapons.contains(w -> w.predictTarget)
+                            ? Predict.intercept(unit, target, type.weapons.first().bullet)
                             : Tmp.v1.set(target);
 
                     Vars.player.mouseX = intercept.x;

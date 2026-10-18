@@ -253,11 +253,14 @@ public class PlayerConnectFeature extends Feature {
             }
         }
 
+        if (joinInjector != null) {
+            joinInjector.dispose();
+            joinInjector = null;
+        }
+
         PlayerConnectClient.disposePinger();
         roomsQuery.dispose();
     }
-
-    // ─── Signals & Properties ──────────────────────────────────────
 
     public Readable<Boolean> isFetching() {
         return roomsQuery.fetching();
@@ -294,8 +297,6 @@ public class PlayerConnectFeature extends Feature {
     public @Nullable PlayerConnectLink getActiveLink() {
         return activeLink;
     }
-
-    // ─── Room Hosting & Management ─────────────────────────────────
 
     public void createRoom(String host, int port, Cons<PlayerConnectLink> onSuccess, Cons<Throwable> onError) {
         if (!Vars.net.server()) {
@@ -393,8 +394,6 @@ public class PlayerConnectFeature extends Feature {
         }
     }
 
-    // ─── Join Request Moderation ───────────────────────────────────
-
     private void onPlayerJoin(PlayerJoin event) {
         if (!isHosting() || Boolean.TRUE.equals(autoAcceptConfig.get())) {
             return;
@@ -470,8 +469,6 @@ public class PlayerConnectFeature extends Feature {
         });
     }
 
-    // ─── Real-Time Room Directory & SSE ────────────────────────────
-
     private void startSseSync() {
         stopSseSync();
 
@@ -543,8 +540,6 @@ public class PlayerConnectFeature extends Feature {
         roomsQuery.refetch();
     }
 
-    // ─── Provider Management ───────────────────────────────────────
-
     public void refreshProviders() {
         MindustryTool.getPlayerConnectProviders()
                 .thenAccept(apiProviders -> {
@@ -568,6 +563,7 @@ public class PlayerConnectFeature extends Feature {
                 });
     }
 
+    // Arc's Settings.getJson(String, Class<T>, Class<?>, Prov<T>) derives T from the container Class, so ArrayMap.class can only yield a raw ArrayMap.
     @SuppressWarnings("unchecked")
     public ArrayMap<String, String> getCustomProviders() {
         return Core.settings.getJson(
@@ -609,8 +605,6 @@ public class PlayerConnectFeature extends Feature {
             refreshProviders();
         }
     }
-
-    // ─── Pause Menu Injection & HUD Ping ──────────────────────────
 
     private void setupPingLabel() {
         if (Vars.ui == null || Vars.ui.hudGroup == null) {
@@ -660,6 +654,7 @@ public class PlayerConnectFeature extends Feature {
             return;
         }
 
+        // Arc's Table.getCells() is declared as Seq<Cell>, with a raw Cell argument that cannot be recovered from that API.
         @SuppressWarnings("rawtypes")
         Seq<Cell> cells = root.getCells();
         if (cells.isEmpty()) {
@@ -706,7 +701,6 @@ public class PlayerConnectFeature extends Feature {
             addedCell.get().name = PAUSE_BUTTON_NAME;
         }
 
-        // Swap with quit button if present
         if (cells.size >= 2) {
             cells.swap(cells.size - 1, cells.size - 2);
         }

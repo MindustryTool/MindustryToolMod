@@ -2,17 +2,14 @@ package mindustrytool.features;
 
 import arc.Core;
 import arc.Events;
+import arc.input.KeyCode;
+import arc.util.Nullable;
 import mindustry.game.EventType.Trigger;
+import mindustrytool.components.SettingKeybindRow;
 
-/**
- * Centralized dispatcher for all feature keybinds.
- * Polls registered {@link FeatureKeybind}s on {@link Trigger#update},
- * suppresses execution while any scene field holds focus,
- * enforces {@code requireEnabled} preconditions,
- * and runs actions on the application main thread.
- */
 public final class FeatureKeybindManager {
     private static boolean initialized = false;
+    private static volatile @Nullable SettingKeybindRow captureTarget;
 
     private FeatureKeybindManager() {
     }
@@ -25,7 +22,26 @@ public final class FeatureKeybindManager {
         Events.run(Trigger.update, FeatureKeybindManager::update);
     }
 
+    public static void beginCapture(SettingKeybindRow row) {
+        captureTarget = row;
+    }
+
+    public static void endCapture(SettingKeybindRow row) {
+        if (captureTarget == row) {
+            captureTarget = null;
+        }
+    }
+
+    public static boolean isCapturing() {
+        return captureTarget != null;
+    }
+
     static void update() {
+        SettingKeybindRow target = captureTarget;
+        if (target != null) {
+            captureKey(target);
+            return;
+        }
         if (Core.scene.hasField()) {
             return;
         }
@@ -38,15 +54,15 @@ public final class FeatureKeybindManager {
         }
     }
 
-    /**
-     * Pure precondition check used by {@link #update()} and unit tests.
-     *
-     * @param feature     parent feature owning the keybind
-     * @param keybind     keybind descriptor to evaluate
-     * @param hasField    true when any scene field holds keyboard focus
-     * @param keyReleased true when the bound key was pressed and released
-     * @return true when the action should run
-     */
+    private static void captureKey(SettingKeybindRow row) {
+        for (KeyCode key : KeyCode.all) {
+            if (Core.input.keyTap(key)) {
+                row.handleInput(key);
+                break;
+            }
+        }
+    }
+
     public static boolean shouldTrigger(Feature feature, FeatureKeybind keybind, boolean hasField,
             boolean keyReleased) {
         if (hasField || !keyReleased) {

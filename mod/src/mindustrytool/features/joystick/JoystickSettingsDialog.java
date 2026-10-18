@@ -3,9 +3,6 @@ package mindustrytool.features.joystick;
 import arc.Core;
 import solim.overlay.SolimDialog;
 
-/**
- * Settings dialog for the Virtual Joystick feature.
- */
 public class JoystickSettingsDialog extends SolimDialog {
 
     public JoystickSettingsDialog(JoystickFeature feature) {

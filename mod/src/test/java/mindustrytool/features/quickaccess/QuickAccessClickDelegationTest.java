@@ -44,7 +44,6 @@ import mindustrytool.features.browser.schematic.SchematicBrowserFeature;
 import mindustrytool.features.browser.map.MapBrowserFeature;
 import mindustrytool.test.MindustryTestEnv;
 import solim.core.Component;
-import solim.core.SolimToken;
 import solim.overlay.SolimDialog;
 
 class QuickAccessClickDelegationTest extends MindustryTestEnv {
@@ -62,7 +61,8 @@ class QuickAccessClickDelegationTest extends MindustryTestEnv {
 
     static class CustomClickFeature extends Feature {
         boolean clicked = false;
-        @Nullable Element receivedAnchor;
+        @Nullable
+        Element receivedAnchor;
 
         CustomClickFeature() {
             super(FeatureMetadata.builder()
@@ -84,8 +84,10 @@ class QuickAccessClickDelegationTest extends MindustryTestEnv {
         final TextureRegionDrawable iconDrawable;
         boolean clicked;
         boolean longClicked;
-        @Nullable Element clickAnchor;
-        @Nullable Element longClickAnchor;
+        @Nullable
+        Element clickAnchor;
+        @Nullable
+        Element longClickAnchor;
 
         AnchorRecordingFeature(TextureRegionDrawable iconDrawable) {
             super(FeatureMetadata.builder()
@@ -247,8 +249,7 @@ class QuickAccessClickDelegationTest extends MindustryTestEnv {
             chat.onQuickAccessClick(null);
             assertFalse(chat.collapsedConfig.get(), "Second click expands chat");
         } finally {
-            // ChatFeature spawns a ChatStore + ChatService owning ambient
-            // effects: dispose so later tests see an empty dispatcher.
+
             chat.getService().dispose();
             chat.getStore().dispose();
             flushEffects();
@@ -280,9 +281,12 @@ class QuickAccessClickDelegationTest extends MindustryTestEnv {
         feature.onQuickAccessClick();
         assertFalse(feature.isEnabled(), "Clicking QuickAccess on schematic browser must not toggle enabled");
         assertNotNull(feature.getMainDialog());
-        assertNotNull(feature.getMainDialog().get(), "Dialog must be created and available");
+        SolimDialog dlg = feature.getMainDialog().get();
+        assertNotNull(dlg, "Dialog must be created and available");
 
-        assertTrue(feature.quickAccessHighlight().peek(), "Schematic browser quick access icon must always be highlighted");
+        assertTrue(feature.quickAccessHighlight().peek(),
+                "Schematic browser quick access icon must always be highlighted");
+        dlg.dispose();
     }
 
     @Test
@@ -293,9 +297,11 @@ class QuickAccessClickDelegationTest extends MindustryTestEnv {
         feature.onQuickAccessClick();
         assertFalse(feature.isEnabled(), "Clicking QuickAccess on map browser must not toggle enabled");
         assertNotNull(feature.getMainDialog());
-        assertNotNull(feature.getMainDialog().get(), "Dialog must be created and available");
+        SolimDialog dlg = feature.getMainDialog().get();
+        assertNotNull(dlg, "Dialog must be created and available");
 
         assertTrue(feature.quickAccessHighlight().peek(), "Map browser quick access icon must always be highlighted");
+        dlg.dispose();
     }
 
     @Test
@@ -395,7 +401,7 @@ class QuickAccessClickDelegationTest extends MindustryTestEnv {
     }
 
     private static void fireLongClick(Button button) throws Exception {
-        Component comp = SolimToken.getComponent(button);
+        Component comp = componentOf(button);
         assertTrue(comp instanceof solim.input.Button,
                 "HUD buttons must be Solim buttons");
         Field field = solim.input.Button.class.getDeclaredField("onLongClick");

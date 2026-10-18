@@ -1,7 +1,5 @@
 package solim.core;
 
-import solim.runtime.OwnershipContext;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 import arc.Core;
@@ -10,107 +8,105 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 import solim.input.SolimTextField;
 import solim.reactive.Signal;
-import solim.reactive.Binding;
+import solim.reactive.Effect;
 import solim.runtime.SignalDispatcher;
-import solim.test.SolimEnv;
+import solim.test.OwnershipEnv;
 
-class AmbientOwnershipTest extends SolimEnv {
+class AmbientOwnershipTest extends OwnershipEnv {
 
-	static class ChildComponent extends BaseComponent {
-		final AtomicBoolean disposedFlag;
 
-		ChildComponent(AtomicBoolean disposedFlag) {
-			this.disposedFlag = disposedFlag;
-		}
+    static class ChildComponent extends Component {
+        final AtomicBoolean disposedFlag;
 
-		@Override
-		protected Element build() {
-			return new Element();
-		}
+        ChildComponent(AtomicBoolean disposedFlag) {
+            this.disposedFlag = disposedFlag;
+        }
 
-		@Override
-		protected void onDispose() {
-			disposedFlag.set(true);
-		}
-	}
+        @Override
+        protected Element build() {
+            return new Element();
+        }
 
-	static class CustomDisposable implements Disposable {
-		final AtomicBoolean disposedFlag = new AtomicBoolean(false);
+        @Override
+        protected void onDispose() {
+            disposedFlag.set(true);
+        }
+    }
 
-		CustomDisposable() {
-			OwnershipContext.register(this);
-		}
+    static class CustomDisposable implements Disposable {
+        final AtomicBoolean disposedFlag = new AtomicBoolean(false);
 
-		@Override
-		public void dispose() {
-			disposedFlag.set(true);
-		}
+        CustomDisposable() {
+            OwnershipContext.register(this);
+        }
 
-		@Override
-		public boolean isDisposed() {
-			return disposedFlag.get();
-		}
-	}
+        @Override
+        public void dispose() {
+            disposedFlag.set(true);
+        }
 
-	static class ParentComponent extends BaseComponent {
-		ChildComponent child;
-		CustomDisposable customDisposable;
-		SolimTextField textField;
-		final Signal<String> textSignal = Signal.of("initial");
-		final Signal<Float> widthSignal = Signal.of(100f);
-		Element boundElement;
-		final AtomicBoolean childDisposed = new AtomicBoolean(false);
+        @Override
+        public boolean isDisposed() {
+            return disposedFlag.get();
+        }
+    }
 
-		@Override
-		protected Element build() {
-			child = new ChildComponent(childDisposed);
-			customDisposable = new CustomDisposable();
-			if (Core.app != null && Core.scene != null) {
-				textField = SolimTextField.of(textSignal);
-			}
-			boundElement = new Element();
-			Binding.bindWidth(boundElement, widthSignal);
-			return new Element();
-		}
-	}
+    static class ParentComponent extends Component {
+        ChildComponent child;
+        CustomDisposable customDisposable;
+        SolimTextField textField;
+        final Signal<String> textSignal = Signal.of("initial");
+        final Signal<Float> widthSignal = Signal.of(100f);
+        Element boundElement;
+        final AtomicBoolean childDisposed = new AtomicBoolean(false);
 
-	@Test
-	void ambientOwnershipAutomaticallyDisposesChildrenAndBindings() {
-		ParentComponent parent = new ParentComponent();
-		parent.element();
+        @Override
+        protected Element build() {
+            child = new ChildComponent(childDisposed);
+            customDisposable = new CustomDisposable();
+            if (Core.app != null && Core.scene != null) {
+                textField = SolimTextField.of(textSignal);
+            }
+            boundElement = new Element();
+            Effect.of(widthSignal, w -> boundElement.setWidth(w));
+            return new Element();
+        }
+    }
 
-		assertFalse(parent.childDisposed.get());
-		assertFalse(parent.customDisposable.disposedFlag.get());
+    @Test
+    void ambientOwnershipAutomaticallyDisposesChildrenAndBindings() {
+        ParentComponent parent = new ParentComponent();
+        parent.element();
 
-		// Reactive bindings update
-		parent.widthSignal.set(200f);
-		SignalDispatcher.flush();
-		assertEquals(200f, parent.boundElement.getWidth());
+        assertFalse(parent.childDisposed.get());
+        assertFalse(parent.customDisposable.disposedFlag.get());
 
-		// Disposing parent automatically disposes child, custom disposable, and binding
-		parent.dispose();
-		assertTrue(parent.isDisposed());
-		assertTrue(parent.child.isDisposed());
-		assertTrue(parent.childDisposed.get());
-		assertTrue(parent.customDisposable.disposedFlag.get());
+        parent.widthSignal.set(200f);
+        SignalDispatcher.flush();
+        assertEquals(200f, parent.boundElement.getWidth());
 
-		// Post-disposal signal update should not affect boundElement
-		parent.widthSignal.set(300f);
-		SignalDispatcher.flush();
-		assertEquals(200f, parent.boundElement.getWidth());
-	}
+        parent.dispose();
+        assertTrue(parent.isDisposed());
+        assertTrue(parent.child.isDisposed());
+        assertTrue(parent.childDisposed.get());
+        assertTrue(parent.customDisposable.disposedFlag.get());
 
-	@Test
-	void cleanStackUnwindingOnBuildFailure() {
-		assertEquals(0, OwnershipContext.size());
-		BaseComponent failingComponent = new BaseComponent() {
-			@Override
-			protected Element build() {
-				throw new IllegalStateException("Simulated build error");
-			}
-		};
+        parent.widthSignal.set(300f);
+        SignalDispatcher.flush();
+        assertEquals(200f, parent.boundElement.getWidth());
+    }
 
-		assertThrows(IllegalStateException.class, failingComponent::element);
-		assertEquals(0, OwnershipContext.size(), "OwnershipContext stack must be unwound even if build() throws");
-	}
+    @Test
+    void cleanStackUnwindingOnBuildFailure() {
+        assertEquals(0, OwnershipContext.size());
+        Component failingComponent = new Component() {
+            @Override
+            protected Element build() {
+                throw new IllegalStateException("Simulated build error");
+            }
+        };
+
+        assertThrows(IllegalStateException.class, failingComponent::element);
+        assertEquals(0, OwnershipContext.size(), "OwnershipContext stack must be unwound even if build() throws");
+    }
 }

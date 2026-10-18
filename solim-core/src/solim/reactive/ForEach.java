@@ -6,28 +6,27 @@ import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import java.util.*;
 import arc.func.Func;
-import solim.core.BaseComponent;
 import solim.core.Component;
+import solim.core.OwnershipContext;
 import solim.core.SolimToken;
 
-import solim.modifier.CellConfig;
-import solim.modifier.ElementConfig;
+import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.TableCapability;
 import solim.modifier.PendingCellConfig;
-import solim.modifier.TableConfig;
+import solim.modifier.Props;
+import solim.runtime.AttachmentStack;
 import solim.runtime.StructuralReconciler;
 
-/**
- * Keyed reactive list component that efficiently manages child components
- * without rebuilding unchanged items.
- */
-public final class ForEach<T> extends BaseComponent
-        implements CellConfig<ForEach<T>>, ElementConfig<ForEach<T>>, TableConfig<ForEach<T>> {
+public final class ForEach<T> extends Component
+        implements Configurable<ForEach<T>>, TableCapability, ContainerCapability<ForEach<T>> {
     private final Table container = new Table();
     private final PendingCellConfig constraints = new PendingCellConfig();
     private final Readable<? extends Iterable<T>> collection;
     private Func<T, ?> keyExtractor = v -> v;
     private final Signal<Func<T, Component>> itemFactorySignal = Signal.of(null);
     private final StructuralReconciler<Object, Component> reconciler = new StructuralReconciler<>();
+    private @Nullable Props<ForEach<T>> pending;
 
     public ForEach(Readable<? extends Iterable<T>> collection) {
         this.collection = collection;
@@ -45,8 +44,12 @@ public final class ForEach<T> extends BaseComponent
         return this;
     }
 
-    public void children(@Nullable Func<T, Component> itemFactory) {
+    public ForEach<T> items(@Nullable Func<T, Component> itemFactory) {
         this.itemFactorySignal.set(itemFactory);
+        if (itemFactory != null && isBuilt()) {
+            reconcile();
+        }
+        return this;
     }
 
     private Object extractKey(T item) {
@@ -62,15 +65,121 @@ public final class ForEach<T> extends BaseComponent
         return container;
     }
 
+    public ForEach<T> children(@Nullable Runnable block) {
+        applyPendingProps();
+        OwnershipContext.push(this);
+        try {
+            if (block != null) {
+                block.run();
+            }
+        } finally {
+            OwnershipContext.pop();
+        }
+        return this;
+    }
+
+    @Override
+    public @Nullable Props<ForEach<T>> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<ForEach<T>> props) {
+        this.pending = props;
+    }
+
+    @Override
+    protected void onRealized(Element element) {
+        applyPendingProps();
+    }
+
     @Override
     public ForEach<T> name(@Nullable String name) {
-        super.name(name);
+        setName(name);
         return this;
     }
 
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
+    }
+
+    public ForEach<T> align(int align) {
+        table().align(align);
+        constraints.align = align;
+        constraints.applyAlignToParentCell(element());
+        container.defaults().align(align);
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.align(align);
+            }
+        }
+        return this;
+    }
+
+    public ForEach<T> center() {
+        table().center();
+        constraints.alignCenter();
+        constraints.applyAlignToParentCell(element());
+        container.defaults().center();
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.center();
+            }
+        }
+        return this;
+    }
+
+    public ForEach<T> top() {
+        table().top();
+        constraints.alignTop();
+        constraints.applyAlignToParentCell(element());
+        container.defaults().top();
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.top();
+            }
+        }
+        return this;
+    }
+
+    public ForEach<T> bottom() {
+        table().bottom();
+        constraints.alignBottom();
+        constraints.applyAlignToParentCell(element());
+        container.defaults().bottom();
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.bottom();
+            }
+        }
+        return this;
+    }
+
+    public ForEach<T> left() {
+        table().left();
+        constraints.alignLeft();
+        constraints.applyAlignToParentCell(element());
+        container.defaults().left();
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.left();
+            }
+        }
+        return this;
+    }
+
+    public ForEach<T> right() {
+        table().right();
+        constraints.alignRight();
+        constraints.applyAlignToParentCell(element());
+        container.defaults().right();
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.right();
+            }
+        }
+        return this;
     }
 
     @Override
@@ -91,15 +200,13 @@ public final class ForEach<T> extends BaseComponent
         container.clearChildren();
         for (Component comp : active.values()) {
             Element el = comp.element();
-            Cell<?> cell = container.add(el);
-            cell.minWidth(0f);
-            PendingCellConfig sc = PendingCellConfig.find(comp);
-            if (sc == null) {
-                sc = PendingCellConfig.find(el);
+            Cell<?> cell = AttachmentStack.attach(container, el, null, comp);
+            if (cell == null) {
+                continue;
             }
-            if (sc != null) {
-                sc.applyToCell(cell);
-            } else if (SolimToken.isExpandingChild(el)) {
+            cell.minWidth(0f);
+            if (PendingCellConfig.find(comp) == null && PendingCellConfig.find(el) == null
+                    && SolimToken.isExpandingChild(el)) {
                 cell.growX();
             }
             cell.row();

@@ -1,0 +1,181 @@
+package mindustrytool.features.translation;
+
+import arc.util.Nullable;
+import arc.util.Strings;
+import java.util.regex.Pattern;
+
+public final class ChatFilter {
+
+    private static final Pattern SYSTEM_OR_BOT_PREFIX = Pattern.compile(
+            "^(?:\\[|<|\\()\\s*(?:server|system|host|admin|discord|irc|bridge|bot|telegram|tg|console)\\s*(?:\\]|>|\\))",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern COORDINATES_PATTERN = Pattern.compile(
+            "^(?:x\\s*[:=]\\s*-?\\d+\\s*,?\\s*y\\s*[:=]\\s*-?\\d+|\\(\\s*-?\\d+\\s*[, ]\\s*-?\\d+\\s*\\)|-?\\d+\\s*[, ]\\s*-?\\d+)$",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern URL_PATTERN = Pattern.compile(
+            "^(?:https?://|www\\.)\\S+$",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern SCHEMATIC_BASE64 = Pattern.compile(
+            "^bXN[a-zA-Z0-9+/=_-]{20,}$");
+
+    private static final Pattern NUMBERS_ONLY = Pattern.compile(
+            "^-?\\d+(?:[.,]\\d+)?$");
+
+    private static final Pattern SYSTEM_EVENT_PHRASES = Pattern.compile(
+            "(?:has connected|has disconnected|đã kết nối|đã ngắt kết nối|joined the game|left the game|server restarting|game over|next wave in)",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final String[] UNIVERSAL_ACRONYMS = {
+            "gg", "ggwp", "glhf", "gl", "hf", "ty", "np", "thx", "pls", "plz", "wp", "afk", "brb", "omg", "wtf", "xd",
+            "lol"
+    };
+
+    private ChatFilter() {
+    }
+
+    public static boolean shouldTranslateIncoming(@Nullable String raw) {
+        if (raw == null) {
+            return false;
+        }
+        String clean = Strings.stripColors(raw).trim();
+        if (clean.isEmpty()) {
+            return false;
+        }
+
+        if (isSystemOrBotMessage(clean) || SYSTEM_EVENT_PHRASES.matcher(clean).find()) {
+            return false;
+        }
+
+        String content = extractMessageContent(clean);
+        if (content.isEmpty()) {
+            return false;
+        }
+
+        return !isNoise(content);
+    }
+
+    public static boolean shouldTranslateOutgoing(@Nullable String raw) {
+        if (raw == null) {
+            return false;
+        }
+        String text = raw.trim();
+        if (text.isEmpty()) {
+            return false;
+        }
+
+        if (text.startsWith("//")) {
+            return false;
+        }
+
+        if (text.startsWith("/tr ") || text.startsWith("/dich ")) {
+            String sub = text.startsWith("/tr ") ? text.substring(4).trim() : text.substring(6).trim();
+            return !sub.isEmpty();
+        }
+
+        if (text.startsWith("/t ") || text.startsWith("/a ")) {
+            String sub = text.substring(3).trim();
+            return !sub.isEmpty() && !isNoise(sub);
+        }
+
+        if (text.startsWith("/")) {
+            return false;
+        }
+
+        return !isNoise(text);
+    }
+
+    public static boolean isSystemOrBotMessage(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return false;
+        }
+        return SYSTEM_OR_BOT_PREFIX.matcher(text.trim()).find();
+    }
+
+    public static boolean isNoise(String text) {
+        if (text == null) {
+            return true;
+        }
+        String clean = Strings.stripColors(text).trim();
+        if (clean.isEmpty()) {
+            return true;
+        }
+
+        if (NUMBERS_ONLY.matcher(clean).matches()) {
+            return true;
+        }
+
+        if (COORDINATES_PATTERN.matcher(clean).matches()) {
+            return true;
+        }
+
+        if (URL_PATTERN.matcher(clean).matches()) {
+            return true;
+        }
+
+        if (isSchematic(clean)) {
+            return true;
+        }
+
+        if (isPunctuationOrEmoticonOnly(clean)) {
+            return true;
+        }
+
+        String lower = clean.toLowerCase();
+        for (String acr : UNIVERSAL_ACRONYMS) {
+            if (lower.equals(acr)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static boolean isSchematic(String text) {
+        if (text == null || text.length() < 20) {
+            return false;
+        }
+        return SCHEMATIC_BASE64.matcher(text.trim()).matches();
+    }
+
+    public static boolean isPunctuationOrEmoticonOnly(String text) {
+        if (text == null || text.isEmpty()) {
+            return true;
+        }
+        boolean hasLetter = false;
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (Character.isLetter(c)) {
+                hasLetter = true;
+                break;
+            }
+        }
+
+        if (!hasLetter) {
+            return true;
+        }
+
+        String trimmed = text.trim();
+        if (trimmed.length() <= 4) {
+            String lower = trimmed.toLowerCase();
+            return lower.equals(":d") || lower.equals("xd") || lower.equals(":p") || lower.equals("xp")
+                    || lower.equals("d:") || lower.equals("q_q") || lower.equals("t_t") || lower.equals("o_o")
+                    || lower.equals("u_u") || lower.equals("o/");
+        }
+
+        return false;
+    }
+
+    public static String extractMessageContent(String cleanText) {
+        if (cleanText == null) {
+            return "";
+        }
+        int colonIdx = cleanText.indexOf(':');
+        if (colonIdx >= 0 && colonIdx < cleanText.length() - 1) {
+            return cleanText.substring(colonIdx + 1).trim();
+        }
+        return cleanText.trim();
+    }
+}

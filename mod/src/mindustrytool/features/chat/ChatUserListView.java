@@ -10,10 +10,10 @@ import mindustry.gen.Icon;
 import mindustrytool.components.Loader;
 import mindustrytool.components.WebStyles;
 import mindustrytool.models.response.ChatUser;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Readable;
 
-public class ChatUserListView extends BaseComponent {
+public class ChatUserListView extends Component {
 
     private final ChatStore store;
     private final @Nullable ChatService service;
@@ -31,97 +31,97 @@ public class ChatUserListView extends BaseComponent {
     protected Element build() {
         Readable<Boolean> hasChannel = store.channels().activeId().map(id -> id != null && !id.isEmpty());
 
-        return column().name("user-list").grow().top().left().gap(unit(1)).padding(unit(2)).children(() -> {
+        return column().name("user-list").props(grow(), padding(unit(2)), top(), left(), gap(unit(1))).children(() -> {
             when(hasChannel)
                     .elseDo(() -> {
-                    dynamic(store.channels().loading(), chanLoading -> {
-                        if (Boolean.TRUE.equals(chanLoading)) {
-                            Loader.centered();
-                        } else {
-                            dynamic(store.channels().error(), chanErr -> {
-                                if (chanErr != null && !chanErr.trim().isEmpty()) {
-                                    column().grow().center().gap(unit(2)).padding(unit(2)).children(() -> {
-                                        icon(Icon.warning).size(unit(6)).color(Color.scarlet);
-                                        text(Core.bundle.get("feature.chat.ui.channels-failed", "Channels failed to load."))
-                                                .color(Color.scarlet)
-                                                .fontScale(0.95f)
-                                                .wrap()
-                                                .center();
-                                        text(chanErr).color(Color.gray).fontScale(0.8f).wrap().center();
-                                        button(Core.bundle.get("feature.chat.ui.retry-channels", "Retry Channels"), () -> {
-                                            if (service != null) {
-                                                service.refreshChannels();
-                                            }
-                                        })
-                                                .style(WebStyles.secondary())
-                                                .height(unit(9))
+                        dynamic(store.channels().loading(), chanLoading -> {
+                            if (Boolean.TRUE.equals(chanLoading)) {
+                                Loader.centered();
+                            } else {
+                                dynamic(store.channels().error(), chanErr -> {
+                                    if (chanErr != null && !chanErr.trim().isEmpty()) {
+                                        column().props(grow(), padding(unit(2)), center(), gap(unit(2)))
                                                 .children(() -> {
-                                                    icon(Icon.refresh).size(unit(4));
-                                                    text(Core.bundle.get("feature.chat.ui.retry-channels",
-                                                            "Retry Channels"));
+                                                    icon(Icon.warning).props(size(unit(6)), prefWidth(unit(6)),
+                                                            prefHeight(unit(6)), color(Color.scarlet));
+                                                    text(Core.bundle.get("feature.chat.ui.channels-failed",
+                                                            "Channels failed to load."))
+                                                            .props(color(Color.scarlet), fontScale(0.95f), textWrap(true),
+                                                                    center());
+                                                    text(chanErr).props(color(Color.gray), fontScale(0.8f), textWrap(true),
+                                                            center());
+                                                    button(Core.bundle.get("feature.chat.ui.retry-channels",
+                                                            "Retry Channels"), () -> {
+                                                                if (service != null) {
+                                                                    service.refreshChannels();
+                                                                }
+                                                            })
+                                                            .props(style(WebStyles.secondary()), height(unit(9)),
+                                                                    prefHeight(unit(9)))
+                                                            .children(() -> {
+                                                                icon(Icon.refresh).props(size(unit(4)),
+                                                                        prefWidth(unit(4)), prefHeight(unit(4)));
+                                                                text(Core.bundle.get("feature.chat.ui.retry-channels",
+                                                                        "Retry Channels"));
+                                                            });
                                                 });
-                                    });
-                                } else {
-                                    column().padding(unit(2)).children(() -> {
-                                        text(Core.bundle.get("feature.chat.ui.empty-channels", "No channels available."))
-                                                .color(Color.gray)
-                                                .fontScale(0.9f);
+                                    } else {
+                                        column().props(padding(unit(2))).children(() -> {
+                                            text(Core.bundle.get("feature.chat.ui.empty-channels",
+                                                    "No channels available."))
+                                                    .props(color(Color.gray), fontScale(0.9f));
+                                        });
+                                    }
+                                }).props(grow());
+                            }
+                        }).props(grow());
+                    })
+                    .thenDo(() -> query(store.members().query())
+                            .props(grow())
+                            .loading(Loader::centered)
+                            .error(err -> column().props(grow(), padding(unit(2)), center(), gap(unit(2)))
+                                    .children(() -> {
+                                        icon(Icon.warning).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)),
+                                                color(Color.scarlet));
+                                        text(Core.bundle.get("feature.chat.ui.error.members",
+                                                "Failed to load members."))
+                                                .props(color(Color.scarlet), fontScale(0.95f), textWrap(true), center());
+                                        text(err != null ? err.getMessage() : "")
+                                                .props(color(Color.gray), fontScale(0.8f), textWrap(true), center());
+                                        button(Core.bundle.get("feature.chat.ui.retry", "Retry"),
+                                                () -> store.members().query().refetch())
+                                                .props(style(WebStyles.secondary()), height(unit(9)),
+                                                        prefHeight(unit(9)))
+                                                .children(() -> {
+                                                    icon(Icon.refresh).props(size(unit(4)), prefWidth(unit(4)),
+                                                            prefHeight(unit(4)));
+                                                    text(Core.bundle.get("feature.chat.ui.retry", "Retry"));
+                                                });
+                                    }))
+                            .data(users -> {
+                                if (users != null && !users.isEmpty()) {
+                                    return scroll().props(grow(), top(), left()).children(() -> {
+                                        column().props(growX(), top(), left(), gap(unit(1))).children(() -> {
+                                            forEach(store.members().active())
+                                                    .key(ChatUser::getName)
+                                                    .items(UserItem::new);
+                                        });
                                     });
                                 }
-                            }).grow();
-                        }
-                    }).grow();
-                 })
-                .thenDo(() -> query(store.members().query())
-                        .grow()
-                        .loading(Loader::centered)
-                        .error(err -> column().grow().center().gap(unit(2)).padding(unit(2)).children(() -> {
-                            icon(Icon.warning).size(unit(6)).color(Color.scarlet);
-                            text(Core.bundle.get("feature.chat.ui.error.members", "Failed to load members."))
-                                    .color(Color.scarlet)
-                                    .fontScale(0.95f)
-                                    .wrap()
-                                    .center();
-                            text(err != null ? err.getMessage() : "")
-                                    .color(Color.gray)
-                                    .fontScale(0.8f)
-                                    .wrap()
-                                    .center();
-                            button(Core.bundle.get("feature.chat.ui.retry", "Retry"),
-                                    () -> store.members().query().refetch())
-                                            .style(WebStyles.secondary())
-                                            .height(unit(9))
-                                            .children(() -> {
-                                                icon(Icon.refresh).size(unit(4));
-                                                text(Core.bundle.get("feature.chat.ui.retry", "Retry"));
-                                            });
-                        }))
-                        .data(users -> {
-                            if (users != null && !users.isEmpty()) {
-                                return scroll().grow().left().children(() -> {
-                                    column().growX().top().left().gap(unit(1)).children(() -> {
-                                        forEach(store.members().active()).key(ChatUser::getName)
-                                                .children(UserItem::new);
-                                    });
-                                });
-                            }
 
-                            return column()
-                                    .padding(unit(2))
-                                    .top().left()
-                                    .children(() -> {
-                                        text(Core.bundle.get("feature.chat.ui.empty-members",
-                                                "No members online."))
-                                                        .color(Color.gray)
-                                                        .fontScale(0.9f)
-                                                        .left();
-                                    });
-                        }))
-                    .grow();
+                                return column()
+                                        .props(padding(unit(2)), top(), left())
+                                        .children(() -> {
+                                            text(Core.bundle.get("feature.chat.ui.empty-members",
+                                                    "No members online."))
+                                                    .props(color(Color.gray), fontScale(0.9f), left());
+                                        });
+                            }))
+                    .props(grow());
         }).element();
     }
 
-    private static class UserItem extends BaseComponent {
+    private static class UserItem extends Component {
         private final ChatUser user;
 
         public UserItem(ChatUser user) {
@@ -147,18 +147,15 @@ public class ChatUserListView extends BaseComponent {
 
             final Color finalRoleColor = roleColor;
 
-            return card().growX().top().left()
+            return card().props(growX(), top(), left())
                     .children(() -> {
-                        row().growX().top().left().padding(unit(1)).gap(unit(1)).children(() -> {
+                        row().props(growX(), padding(unit(1)), top(), left(), gap(unit(1))).children(() -> {
                             new ChatAvatar(name, user.getImageUrl(), name, unit(10));
                             column().children(() -> {
-                                text(name).color(finalRoleColor)
-                                        .growX()
-                                        .ellipsis()
-                                        .left();
+                                text(name).props(color(finalRoleColor), growX(), ellipsis(true), left());
 
                                 if (user.getState() != null && !user.getState().isEmpty()) {
-                                    text(user.getState()).color(Color.lightGray).fontScale(0.8f);
+                                    text(user.getState()).props(color(Color.lightGray), fontScale(0.8f));
                                 }
                             });
                         });
@@ -167,4 +164,3 @@ public class ChatUserListView extends BaseComponent {
         }
     }
 }
-

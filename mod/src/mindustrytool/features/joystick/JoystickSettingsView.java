@@ -4,16 +4,16 @@ import static solim.UI.*;
 
 import arc.Core;
 import arc.scene.Element;
+import mindustry.gen.Icon;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingScaffold;
+import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.freecamera.FreeCameraFeature;
-import solim.core.BaseComponent;
+import solim.core.Component;
 
-/**
- * Settings view for the Virtual Joystick feature: size and opacity sliders,
- * handle visibility toggle, and a reset position button.
- */
-public class JoystickSettingsView extends BaseComponent {
+public class JoystickSettingsView extends Component {
 
     private final JoystickFeature feature;
 
@@ -23,59 +23,66 @@ public class JoystickSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().grow().center().children(() -> {
-            scroll().center().children(() -> {
-                column().growX().gap(unit(2.5f)).padding(unit(3)).children(() -> {
-                    row().growX().gap(unit(2)).center().children(() -> {
-                        text(Core.bundle.get("feature.joystick.settings.size")).left()
-                                .color(WebStyles.Colors.GHOST_FG);
+        FreeCameraFeature freeCam = FeatureManager.getFeature(FreeCameraFeature.class);
 
-                        spacer();
-                        slider(feature.sizeConfig.signal(), 0.5f, 2.5f, 0.1f);
+        return SettingScaffold.build(() -> {
+            headerCard();
+            sizingCard();
+            if (freeCam != null) {
+                cameraCard(freeCam);
+            }
+            actionsCard();
+        });
+    }
 
-                        row().width(unit(14)).children(() -> {
-                            text(feature.sizeConfig.signal()
-                                    .map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100)));
-                        });
-                    });
+    private Component headerCard() {
+        return SettingCard.header(feature, Core.bundle.get("feature.joystick.badge.controls", "CONTROLS"));
+    }
 
-                    divider();
+    private Component sizingCard() {
+        return SettingCard.section(Icon.spray,
+                Core.bundle.get("feature.joystick.settings.sizing", "Sizing & Appearance"), () -> {
 
-                    row().growX().gap(unit(2)).center().children(() -> {
-                        text(Core.bundle.get("feature.joystick.settings.opacity")).left()
-                                .color(WebStyles.Colors.GHOST_FG);
+                    SettingSlider.of(
+                            Core.bundle.get("feature.joystick.settings.size", "Joystick Size"),
+                            feature.sizeConfig.signal(),
+                            0.5f,
+                            2.5f,
+                            0.1f,
+                            feature.sizeConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100)));
 
-                        spacer();
-                        slider(feature.opacityConfig.signal(), 0.2f, 1.0f, 0.05f);
-
-                        row().width(unit(14)).children(() -> {
-                            text(feature.opacityConfig.signal()
+                    SettingSlider.of(
+                            Core.bundle.get("feature.joystick.settings.opacity", "Opacity"),
+                            feature.opacityConfig.signal(),
+                            0.2f,
+                            1.0f,
+                            0.05f,
+                            feature.opacityConfig.signal()
                                     .map(v -> String.format("%.0f%%", (v != null ? v : 0.8f) * 100)));
-                        });
-                    });
 
-                    divider();
+                    divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
-                    checkbox(Core.bundle.get("feature.joystick.settings.show-handle"),
-                            feature.showHandleConfig.signal()).growX();
-
-                    divider();
-
-                    FreeCameraFeature freeCam = FeatureManager.getFeature(FreeCameraFeature.class);
-                    if (freeCam != null) {
-                        checkbox(Core.bundle.get("feature.free-camera.name", "Free Camera"),
-                                freeCam.enabled()).growX();
-
-                        divider();
-                    }
-
-                    button(feature::resetPosition)
-                            .style(WebStyles.secondary())
-                            .growX()
-                            .padding(unit(2))
-                            .children(() -> text(Core.bundle.get("feature.joystick.settings.reset-position")));
+                    checkbox(Core.bundle.get("feature.joystick.settings.show-handle", "Show Reposition Handle"),
+                            feature.showHandleConfig.signal()).props(growX());
                 });
-            });
-        }).element();
+    }
+
+    private Component cameraCard(FreeCameraFeature freeCam) {
+        return SettingCard.section(Icon.eye, Core.bundle.get("feature.joystick.settings.camera", "Camera Controls"),
+                () -> {
+                    checkbox(Core.bundle.get("feature.free-camera.name", "Free Camera"),
+                            freeCam.enabled()).props(growX());
+                });
+    }
+
+    private Component actionsCard() {
+        return SettingCard.card().children(() -> {
+            button(feature::resetPosition)
+                    .props(style(WebStyles.outline()), growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
+                    .children(() -> {
+                        icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
+                        text(Core.bundle.get("feature.joystick.settings.reset-position", "Reset Joystick Position"));
+                    });
+        });
     }
 }

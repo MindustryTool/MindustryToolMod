@@ -9,10 +9,6 @@ import mindustrytool.features.quickaccess.QuickAccessPopupHelper;
 import solim.core.Component;
 import solim.overlay.Popup;
 
-/**
- * QuickAccess popup for the schematic grid, anchored to the QuickAccess bar.
- * Reuses the shared reactive grid from the HUD view and auto-dismisses on selection.
- */
 public final class QuickSchematicGridPopup {
 
     private static @Nullable Popup<QuickSchematicGridFeature> menu;
@@ -38,7 +34,7 @@ public final class QuickSchematicGridPopup {
         }
         if (menu == null) {
             menu = popup();
-            menu.children(QuickSchematicGridPopup::buildContent);
+            menu.items(QuickSchematicGridPopup::buildContent);
         }
         QuickAccessPopupHelper.show(menu, feature, quickAccessBar);
     }

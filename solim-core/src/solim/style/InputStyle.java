@@ -6,11 +6,6 @@ import arc.scene.style.Drawable;
 import arc.scene.ui.TextField;
 import arc.util.Nullable;
 
-/**
- * Immutable textfield chrome preset. Every slot is optional: unset slots
- * fall back to the field's base style when applied, so presets only declare
- * what they change.
- */
 public final class InputStyle {
 
     private final @Nullable Drawable background;
@@ -93,12 +88,6 @@ public final class InputStyle {
         return messageFontColor;
     }
 
-    /**
-     * Builds a complete per-instance style from the given base: starts from
-     * Arc's copy of the base, tops up the slots Arc's copy constructor drops
-     * ({@code invalidBackground}), then overrides the declared slots.
-     * Unset slots therefore always fall back to base values.
-     */
     public TextField.TextFieldStyle appliedTo(@Nullable TextField.TextFieldStyle base) {
         TextField.TextFieldStyle copy = base != null
                 ? new TextField.TextFieldStyle(base)
@@ -110,12 +99,6 @@ public final class InputStyle {
         return copy;
     }
 
-    /**
-     * Overrides only the declared slots on the given non-null style, leaving
-     * the rest untouched so unset slots keep their base values. Prefer
-     * {@link #appliedTo(TextField.TextFieldStyle)} when creating per-instance
-     * copies, since Arc's copy constructor drops {@code invalidBackground}.
-     */
     public void applyTo(TextField.TextFieldStyle style) {
         if (background != null) {
             style.background = background;

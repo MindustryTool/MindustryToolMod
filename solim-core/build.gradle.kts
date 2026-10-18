@@ -9,7 +9,10 @@ val mindustryVersion: String by rootProject.extra
 dependencies {
     // The import must not change unless i asked for it
     api(project(":solim-api"))
+    api(project(":solim-reactive"))
     implementation(project(":solim-runtime"))
+
+    implementation("org.jcodec:jcodec:0.2.5")
 
     // Mindustry/Arc needed at test runtime for Element instantiation in component tests
     testImplementation("Anuken:Mindustry:$mindustryVersion")

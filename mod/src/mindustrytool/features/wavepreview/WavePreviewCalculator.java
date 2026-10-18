@@ -8,10 +8,6 @@ import mindustry.content.StatusEffects;
 import mindustry.game.SpawnGroup;
 import mindustry.type.UnitType;
 
-/**
- * Computes upcoming-wave unit compositions matching legacy parity with domain grouping and sorting,
- * scaled by the number of matching map spawn points.
- */
 public final class WavePreviewCalculator {
 
     @FunctionalInterface
@@ -19,7 +15,8 @@ public final class WavePreviewCalculator {
         int count(SpawnGroup group);
     }
 
-    private WavePreviewCalculator() {}
+    private WavePreviewCalculator() {
+    }
 
     public static WaveSectionData computeWave(
             int waveNumber,

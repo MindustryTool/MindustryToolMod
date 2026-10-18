@@ -7,53 +7,53 @@ import solim.core.Disposable;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
 
-/** ProgressBar bound to Signal&lt;Float&gt; 0..1. */
 public final class ProgressBar implements Disposable {
-	private final Table bar = new Table();
-	private final Signal<Float> signal;
-	private Effect effect;
-	private boolean disposed = false;
-	private float current = 0f;
+    private final Table bar = new Table();
+    private final Signal<Float> signal;
+    private Effect effect;
+    private boolean disposed = false;
+    private float current = 0f;
 
-	public ProgressBar(Signal<Float> signal) {
-		this.signal = signal;
-		bar.top().left();
-		updateBar();
-		this.effect = Effect.of((Cons<Effect.Cleanup>) cleanup -> {
-			updateBar();
-		});
-	}
+    public ProgressBar(Signal<Float> signal) {
+        this.signal = signal;
+        bar.top().left();
+        updateBar();
+        this.effect = Effect.of((Cons<Effect.Cleanup>) cleanup -> {
+            updateBar();
+        });
+    }
 
-	public static ProgressBar of(Signal<Float> signal) {
-		return new ProgressBar(signal);
-	}
+    public static ProgressBar of(Signal<Float> signal) {
+        return new ProgressBar(signal);
+    }
 
-	private void updateBar() {
-		float v = Math.max(0f, Math.min(1f, signal.get()));
-		if (Math.abs(v - current) > 0.0001f) {
-			current = v;
-			bar.clearChildren();
-			Image fill = new Image();
-			fill.setScale(v, 1f);
-			bar.add(fill).width(100f * v).height(8f);
-		}
-	}
+    private void updateBar() {
+        float v = Math.max(0f, Math.min(1f, signal.get()));
+        if (Math.abs(v - current) > 0.0001f) {
+            current = v;
+            bar.clearChildren();
+            Image fill = new Image();
+            fill.setScale(v, 1f);
+            bar.add(fill).width(100f * v).height(8f);
+        }
+    }
 
-	public Table bar() {
-		return bar;
-	}
+    public Table bar() {
+        return bar;
+    }
 
-	@Override
-	public void dispose() {
-		if (disposed) {
-			return;
-		}
-		disposed = true;
-		if (effect != null) effect.dispose();
-	}
+    @Override
+    public void dispose() {
+        if (disposed) {
+            return;
+        }
+        disposed = true;
+        if (effect != null)
+            effect.dispose();
+    }
 
-	@Override
-	public boolean isDisposed() {
-		return disposed;
-	}
+    @Override
+    public boolean isDisposed() {
+        return disposed;
+    }
 }

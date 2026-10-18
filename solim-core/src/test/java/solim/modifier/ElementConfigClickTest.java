@@ -1,5 +1,6 @@
 package solim.modifier;
 
+import solim.core.Component;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -13,10 +14,10 @@ import arc.scene.event.EventListener;
 import arc.scene.event.InputEvent;
 import arc.scene.event.Touchable;
 import arc.scene.ui.layout.Table;
+import arc.util.Nullable;
 import solim.test.SolimEnv;
 
 class ElementConfigClickTest extends SolimEnv {
-
 
     @Test
     void onClickRunsHandlerAndEnablesTouchable() {
@@ -105,15 +106,45 @@ class ElementConfigClickTest extends SolimEnv {
         return count;
     }
 
-    private static final class Clickable implements ElementConfig<Clickable> {
-        private final Element element = new Table();
+    private static final class Clickable extends Component
+            implements Configurable<Clickable>, ElementCapability {
+        private final PendingCellConfig constraints = new PendingCellConfig();
+        private @Nullable Props<Clickable> pending;
 
-        @Override
-        public Element element() {
-            return element;
+        Clickable() {
+            super(new Table());
+        }
+
+        public Clickable onClick(@Nullable Runnable action) {
+            props(Values.onClick(action));
+            return this;
+        }
+
+        public Clickable stopClickPropagation(boolean stop) {
+            props(Values.stopClickPropagation(stop));
+            return this;
         }
 
         @Override
+        public PendingCellConfig cellConfig() {
+            return constraints;
+        }
+
+        @Override
+        public @Nullable Props<Clickable> pendingProps() {
+            return pending;
+        }
+
+        @Override
+        public void setPendingProps(@Nullable Props<Clickable> props) {
+            this.pending = props;
+        }
+
+        public Clickable name(String name) {
+            setName(name);
+            return this;
+        }
+
         public Clickable self() {
             return this;
         }

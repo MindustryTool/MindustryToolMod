@@ -7,9 +7,6 @@ import arc.scene.Element;
 import arc.util.Nullable;
 import solim.overlay.Popup;
 
-/**
- * Shared positioning helper for feature popups anchored to the QuickAccess bar.
- */
 public final class QuickAccessPopupHelper {
 
     public static final float DEFAULT_GAP = unit(1f);
@@ -19,6 +16,11 @@ public final class QuickAccessPopupHelper {
 
     public static <T> void show(Popup<T> menu, T data, @Nullable Element quickAccessBar) {
         show(menu, data, quickAccessBar, DEFAULT_GAP);
+    }
+
+    public static boolean isUpperHalf(float barY, float barH, float stageH) {
+        float barCenterY = barY + barH / 2f;
+        return stageH > 0f && barCenterY >= stageH / 2f;
     }
 
     public static <T> void show(Popup<T> menu, T data, @Nullable Element quickAccessBar, float gap) {
@@ -35,12 +37,12 @@ public final class QuickAccessPopupHelper {
             barW = quickAccessBar.getWidth();
             barH = quickAccessBar.getHeight();
         }
-        
+
         float barCenterX = barX + barW / 2f;
         float barTop = barY + barH;
-        float barCenterY = barY + barH / 2f;
-        boolean upperHalf = stageH > 0f ? barCenterY >= stageH / 2f : false;
-        float anchorX = quickAccessBar != null ? barCenterX : stageW / 2f;
+        boolean upperHalf = isUpperHalf(barY, barH, stageH);
+        boolean leftHalf = quickAccessBar != null ? barCenterX < stageW / 2f : true;
+        float anchorX = quickAccessBar != null ? (leftHalf ? barX : barX + barW) : stageW / 2f;
         float anchorY = quickAccessBar != null ? (upperHalf ? barY - gap : barTop + gap) : stageH / 2f;
 
         menu.layerBehind(quickAccessBar);
@@ -50,13 +52,23 @@ public final class QuickAccessPopupHelper {
             try {
                 float menuW = menu.table().getWidth();
                 float menuH = menu.table().getHeight();
-                float desiredX = barCenterX - menuW / 2f;
+                float desiredX = computeDesiredX(barX, barW, menuW, stageW);
                 float desiredY = upperHalf ? barY - menuH - gap : barTop + gap;
-                float clampedX = stageW > menuW ? Math.max(0f, Math.min(desiredX, stageW - menuW)) : 0f;
+                float clampedX = clampX(desiredX, menuW, stageW);
                 float clampedY = stageH > menuH ? Math.max(0f, Math.min(desiredY, stageH - menuH)) : 0f;
                 menu.table().setPosition(clampedX, clampedY);
             } catch (Exception ignored) {
             }
         }
+    }
+
+    static float computeDesiredX(float barX, float barW, float menuW, float stageW) {
+        float barCenterX = barX + barW / 2f;
+        boolean leftHalf = barCenterX < stageW / 2f;
+        return leftHalf ? barX : barX + barW - menuW;
+    }
+
+    static float clampX(float desiredX, float menuW, float stageW) {
+        return stageW > menuW ? Math.max(0f, Math.min(desiredX, stageW - menuW)) : 0f;
     }
 }

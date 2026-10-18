@@ -20,10 +20,6 @@ import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Vanilla-style icon picker with font glyph and unlocked content sections.
- * Selection returns the single resolved emoji string for slot storage.
- */
 public class SchematicIconPickerDialog extends SolimDialog {
 
     private final Signal<String> searchQuery = Signal.of("");
@@ -61,36 +57,28 @@ public class SchematicIconPickerDialog extends SolimDialog {
         });
 
         children(() -> {
-            column().grow().gap(unit(2.5f)).padding(unit(3)).center().children(() -> {
-                row().growX().gap(unit(1.5f))
-                        .padding(unit(1.5f))
-                        .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
-                        .border(1.5f, WebStyles.Colors.BORDER_INPUT)
-                        .center()
+            column().props(grow(), padding(unit(3)), center(), gap(unit(2.5f))).children(() -> {
+                row().props(growX(), padding(unit(1.5f)), rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1.5f, WebStyles.Colors.BORDER_INPUT), gap(unit(1.5f)), center())
                         .children(() -> {
-                            icon(Icon.zoom).size(unit(4.5f)).color(WebStyles.Colors.GHOST_FG);
+                            icon(Icon.zoom).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f)), color(WebStyles.Colors.GHOST_FG));
                             textField(searchQuery)
-                                    .growX()
-                                    .height(unit(8))
-                                    .style(WebStyles.clearInput())
-                                    .placeholder(Core.bundle.get("feature.quick-schematic-grid.icon.search"));
+                                    .props(style(WebStyles.clearInput()), growX(), height(unit(8)), prefHeight(unit(8)),
+                                            placeholder(Core.bundle.get("feature.quick-schematic-grid.icon.search")));
                         });
 
-                scroll().grow().children(() -> {
-                    column().growX().gap(unit(2)).children(() -> {
+                scroll().props(grow()).children(() -> {
+                    column().props(growX(), gap(unit(2))).children(() -> {
                         text(Core.bundle.get("feature.quick-schematic-grid.icon.glyphs"))
-                                .growX()
-                                .left()
-                                .color(Color.white);
+                                .props(color(Color.white), growX(), left());
 
                         dynamic(filteredGlyphs, items -> {
                             if (items == null || items.isEmpty()) {
-                                row().growX().padding(unit(2)).center().children(() -> {
+                                row().props(growX(), padding(unit(2)), center()).children(() -> {
                                     text(Core.bundle.get("feature.quick-schematic-grid.icon.empty"))
-                                            .color(Color.gray);
+                                            .props(color(Color.gray));
                                 });
                             } else {
-                                wrap().left().gap(unit(1.5f)).children(() -> {
+                                wrap().props(left(), gap(unit(1.5f))).children(() -> {
                                     for (Entry entry : items) {
                                         glyphChip(entry);
                                     }
@@ -99,18 +87,16 @@ public class SchematicIconPickerDialog extends SolimDialog {
                         });
 
                         text(Core.bundle.get("feature.quick-schematic-grid.icon.content"))
-                                .growX()
-                                .left()
-                                .color(Color.white);
+                                .props(color(Color.white), growX(), left());
 
                         dynamic(filteredContents, items -> {
                             if (items == null || items.isEmpty()) {
-                                row().growX().padding(unit(2)).center().children(() -> {
+                                row().props(growX(), padding(unit(2)), center()).children(() -> {
                                     text(Core.bundle.get("feature.quick-schematic-grid.icon.empty"))
-                                            .color(Color.gray);
+                                            .props(color(Color.gray));
                                 });
                             } else {
-                                wrap().left().gap(unit(1.5f)).children(() -> {
+                                wrap().props(left(), gap(unit(1.5f))).children(() -> {
                                     for (UnlockableContent content : items) {
                                         contentChip(content);
                                     }
@@ -125,23 +111,17 @@ public class SchematicIconPickerDialog extends SolimDialog {
 
     private void glyphChip(Entry entry) {
         button()
-                .style(WebStyles.filterChip())
+                .props(style(WebStyles.actionChip()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), padding(unit(1)), tooltip(entry.name))
                 .onClick(() -> select(String.valueOf(entry.glyph)))
-                .size(unit(11))
-                .padding(unit(1))
-                .tooltip(entry.name)
-                .children(() -> text(String.valueOf(entry.glyph)).fontScale(1.2f));
+                .children(() -> text(String.valueOf(entry.glyph)).props(fontScale(1.2f)));
     }
 
     private void contentChip(UnlockableContent content) {
         String emoji = content.emoji() + "";
         button()
-                .style(WebStyles.filterChip())
+                .props(style(WebStyles.actionChip()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), padding(unit(1)), tooltip(content.localizedName))
                 .onClick(() -> select(emoji))
-                .size(unit(11))
-                .padding(unit(1))
-                .tooltip(content.localizedName)
-                .children(() -> image(new TextureRegionDrawable(content.uiIcon)).size(unit(6.5f)));
+                .children(() -> image(new TextureRegionDrawable(content.uiIcon)).props(size(unit(6.5f)), prefWidth(unit(6.5f)), prefHeight(unit(6.5f))));
     }
 
     private void select(@Nullable String emoji) {

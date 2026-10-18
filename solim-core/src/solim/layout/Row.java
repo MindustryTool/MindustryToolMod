@@ -1,26 +1,20 @@
 package solim.layout;
-import solim.modifier.CellConfig;
 
+import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.Props;
 import arc.scene.Element;
-import arc.scene.event.Touchable;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
-import java.util.ArrayList;
-import java.util.List;
 import solim.core.Component;
-import solim.core.Disposable;
 import solim.core.SolimToken;
-import solim.modifier.ElementConfig;
-import solim.modifier.TableConfig;
 import solim.runtime.AttachmentStack;
-import solim.reactive.Readable;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.OwnershipContext;
-import solim.reactive.Effect;
+import solim.core.OwnershipContext;
 
-/** Row layout — horizontal Table wrapper. */
-public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>, TableConfig<Row>, GapContainer {
+public final class Row extends Component
+        implements GapContainer, Configurable<Row>, ContainerCapability<Row> {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -37,16 +31,20 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
     private final Table table;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private float gap = 0f;
-    private final List<Disposable> bindings = new ArrayList<>();
-    private boolean disposed = false;
+    private boolean attached = false;
+    private @Nullable Props<Row> pending;
 
     public Row() {
-        this.table = new Table();
+        this(new Table());
+    }
+
+    private Row(Table table) {
+        super(table);
+        this.table = table;
         SolimToken.bind(this.table, this, constraints);
         this.table.name = "solim-row-table";
         this.table.top().left();
         this.table.defaults().top().left();
-        OwnershipContext.register(this);
     }
 
     public Table table() {
@@ -54,47 +52,8 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
     }
 
     @Override
-    public Element element() {
-        return table;
-    }
-
-    @Override
     public PendingCellConfig cellConfig() {
         return constraints;
-    }
-
-    public Row fillParent(boolean fillParent) {
-        table.setFillParent(fillParent);
-        return this;
-    }
-
-    public Row fillParent() {
-        return fillParent(true);
-    }
-
-    public Row touchable(Touchable touchable) {
-        table.touchable = touchable;
-        return this;
-    }
-
-    public Row gap(float g) {
-        this.gap = g;
-        respace();
-        return this;
-    }
-
-    public Row gap(@Nullable Readable<Float> gapSignal) {
-        if (gapSignal != null) {
-            Effect e = Effect.of(() -> {
-                Float g = gapSignal.get();
-                if (g != null) {
-                    gap(g);
-                }
-            });
-            bindings.add(e);
-            OwnershipContext.register(e);
-        }
-        return this;
     }
 
     @Override
@@ -108,81 +67,19 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
     }
 
     @Override
+    public void setGap(float g) {
+        this.gap = g;
+        respace();
+    }
+
+    @Override
     public void respace() {
         GapContainer.applySpacing(table, Direction.HORIZONTAL, gap);
     }
 
-    @Override
-    public Row top() {
-        TableConfig.super.top();
-        table.defaults().top();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null)
-                c.top();
-        }
-        return this;
-    }
-
-    @Override
-    public Row bottom() {
-        TableConfig.super.bottom();
-        table.defaults().bottom();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null)
-                c.bottom();
-        }
-        return this;
-    }
-
-    @Override
-    public Row left() {
-        TableConfig.super.left();
-        table.defaults().left();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null)
-                c.left();
-        }
-        return this;
-    }
-
-    @Override
-    public Row right() {
-        TableConfig.super.right();
-        table.defaults().right();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null)
-                c.right();
-        }
-        return this;
-    }
-
-    @Override
-    public Row center() {
-        TableConfig.super.center();
-        table.defaults().center();
-        for (Cell<?> c : table.getCells()) {
-            if (c != null)
-                c.center();
-        }
-        return this;
-    }
-
-    public Row align(Align a) {
-        switch (a) {
-        case START:
-        case STRETCH:
-            return top();
-        case CENTER:
-            return center();
-        case END:
-            return bottom();
-        default:
-            break;
-        }
-        return this;
-    }
-
     public Row children(@Nullable Runnable r) {
+        applyPendingProps();
+        OwnershipContext.push(this);
         AttachmentStack.push(table, ATTACHER);
         try {
             if (r != null) {
@@ -190,10 +87,18 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
             }
         } finally {
             AttachmentStack.pop();
+            OwnershipContext.pop();
         }
-        AttachmentStack.attachToParent(table);
+        attachSelf();
         respace();
         return this;
+    }
+
+    private void attachSelf() {
+        if (!attached) {
+            attached = true;
+            AttachmentStack.attachToParent(table);
+        }
     }
 
     public Cell<?> add(Element e) {
@@ -203,23 +108,21 @@ public final class Row implements Component, CellConfig<Row>, ElementConfig<Row>
     }
 
     @Override
-    public void dispose() {
-        if (disposed) {
-            return;
-        }
-        disposed = true;
-        for (Disposable d : bindings) {
-            d.dispose();
-        }
-        bindings.clear();
+    public Row name(@Nullable String name) {
+        setName(name);
+        return this;
     }
 
     @Override
-    public boolean isDisposed() {
-        return disposed;
+    public @Nullable Props<Row> pendingProps() {
+        return pending;
     }
 
     @Override
+    public void setPendingProps(@Nullable Props<Row> props) {
+        this.pending = props;
+    }
+
     public Row self() {
         return this;
     }

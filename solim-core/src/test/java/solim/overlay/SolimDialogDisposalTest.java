@@ -3,6 +3,7 @@ package solim.overlay;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,9 +29,9 @@ import solim.core.DisposableAction;
 import solim.display.Text;
 import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
-import solim.test.SolimEnv;
+import solim.test.OwnershipEnv;
 
-class SolimDialogDisposalTest extends SolimEnv {
+class SolimDialogDisposalTest extends OwnershipEnv {
 
 	static Font testFont() {
 		FontData fontData = new FontData() {
@@ -134,7 +135,7 @@ class SolimDialogDisposalTest extends SolimEnv {
 		}));
 		dialog.registerDisposable(DisposableAction.of(() -> cleaned.set(true)));
 
-		assertDoesNotThrow(dialog::dispose, "Disposal must not throw when a disposable fails");
+		assertThrows(IllegalStateException.class, dialog::dispose, "Disposal must fail loud when a disposable fails");
 		assertTrue(cleaned.get(), "Remaining disposables must run despite failures");
 		assertTrue(dialog.isDisposed());
 	}

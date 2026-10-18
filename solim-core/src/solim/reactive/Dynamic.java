@@ -6,54 +6,41 @@ import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import java.util.Objects;
 import arc.func.Cons;
-import solim.core.BaseComponent;
 import solim.core.Component;
+import solim.core.OwnershipContext;
 import solim.core.SolimToken;
-import solim.modifier.CellConfig;
-import solim.layout.GapContainer;
-import solim.modifier.ElementConfig;
+import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.TableCapability;
+import solim.layout.CollapseHelper;
 import solim.modifier.PendingCellConfig;
-import solim.modifier.TableConfig;
+import solim.modifier.Props;
 import solim.runtime.AttachmentStack;
 import solim.runtime.Fragment;
 import solim.runtime.ReactiveContext;
-import java.util.ArrayList;
-import java.util.List;
-import solim.core.Disposable;
 
-/**
- * Structural reactive component for switching dynamic subtrees based on a
- * reactive value.
- *
- * <p>The factory {@code Cons<T>} is invoked with the current source value (including {@code null}).
- * The factory creates components declaratively without returning a value. If the factory creates
- * no components, the container collapses.</p>
- *
- * <p>Use {@link #of} to create a Dynamic with a void factory.</p>
- */
-public final class Dynamic<T> extends BaseComponent
-         implements CellConfig<Dynamic<T>>, TableConfig<Dynamic<T>>, ElementConfig<Dynamic<T>> {
-     private static final Object SENTINEL = new Object();
-     private final Table container = new Table();
-     private final PendingCellConfig constraints = new PendingCellConfig();
-     private final Readable<T> source;
-     private final Cons<T> factory;
-     private Component currentComponent;
-     @SuppressWarnings("unchecked")
-     private T lastValue = (T) SENTINEL;
-     private final List<Disposable> currentBindings = new ArrayList<>();
+public final class Dynamic<T> extends Component
+        implements Configurable<Dynamic<T>>, TableCapability, ContainerCapability<Dynamic<T>> {
+    private final Table container = new Table();
+    private final PendingCellConfig constraints = new PendingCellConfig();
+    private final Readable<T> source;
+    private final Cons<T> factory;
+    private Component currentComponent;
+    private @Nullable Props<Dynamic<T>> pending;
+    private @Nullable T lastValue;
+    private boolean hasValue;
 
-     private Dynamic(Readable<T> source, Cons<T> factory) {
-         this.source = Objects.requireNonNull(source, "source must not be null");
-         this.factory = Objects.requireNonNull(factory, "factory must not be null");
-         SolimToken.bind(this.container, this, constraints);
-         this.container.top().left();
-         this.container.defaults().top().left();
-     }
+    private Dynamic(Readable<T> source, Cons<T> factory) {
+        this.source = Objects.requireNonNull(source, "source must not be null");
+        this.factory = Objects.requireNonNull(factory, "factory must not be null");
+        SolimToken.bind(this.container, this, constraints);
+        this.container.top().left();
+        this.container.defaults().top().left();
+    }
 
-     public static <T> Dynamic<T> of(Readable<T> source, Cons<T> factory) {
-         return new Dynamic<>(source, factory);
-     }
+    public static <T> Dynamic<T> of(Readable<T> source, Cons<T> factory) {
+        return new Dynamic<>(source, factory);
+    }
 
     public Table container() {
         return container;
@@ -64,9 +51,37 @@ public final class Dynamic<T> extends BaseComponent
         return container;
     }
 
+    public Dynamic<T> children(@Nullable Runnable block) {
+        applyPendingProps();
+        OwnershipContext.push(this);
+        try {
+            if (block != null) {
+                block.run();
+            }
+        } finally {
+            OwnershipContext.pop();
+        }
+        return this;
+    }
+
+    @Override
+    public @Nullable Props<Dynamic<T>> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<Dynamic<T>> props) {
+        this.pending = props;
+    }
+
+    @Override
+    protected void onRealized(Element element) {
+        applyPendingProps();
+    }
+
     @Override
     public Dynamic<T> name(@Nullable String name) {
-        super.name(name);
+        setName(name);
         return this;
     }
 
@@ -75,23 +90,98 @@ public final class Dynamic<T> extends BaseComponent
         return constraints;
     }
 
+    public Dynamic<T> align(int align) {
+        table().align(align);
+        constraints.align = align;
+        constraints.applyAlignToParentCell(element());
+        container.defaults().align(align);
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.align(align);
+            }
+        }
+        return this;
+    }
+
+    public Dynamic<T> center() {
+        table().center();
+        constraints.alignCenter();
+        constraints.applyAlignToParentCell(element());
+        container.defaults().center();
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.center();
+            }
+        }
+        return this;
+    }
+
+    public Dynamic<T> top() {
+        table().top();
+        constraints.alignTop();
+        constraints.applyAlignToParentCell(element());
+        container.defaults().top();
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.top();
+            }
+        }
+        return this;
+    }
+
+    public Dynamic<T> bottom() {
+        table().bottom();
+        constraints.alignBottom();
+        constraints.applyAlignToParentCell(element());
+        container.defaults().bottom();
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.bottom();
+            }
+        }
+        return this;
+    }
+
+    public Dynamic<T> left() {
+        table().left();
+        constraints.alignLeft();
+        constraints.applyAlignToParentCell(element());
+        container.defaults().left();
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.left();
+            }
+        }
+        return this;
+    }
+
+    public Dynamic<T> right() {
+        table().right();
+        constraints.alignRight();
+        constraints.applyAlignToParentCell(element());
+        container.defaults().right();
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.right();
+            }
+        }
+        return this;
+    }
+
     @Override
     protected Element build() {
         applyContainerAlign();
         Effect.of(() -> {
             T value = source.get();
-            if (Objects.equals(value, lastValue)) {
+            if (hasValue && Objects.equals(value, lastValue)) {
                 return;
             }
+            hasValue = true;
             lastValue = value;
             if (currentComponent != null) {
                 currentComponent.dispose();
                 currentComponent = null;
             }
-            for (Disposable d : currentBindings) {
-                d.dispose();
-            }
-            currentBindings.clear();
             container.clearChildren();
             mount(value);
             applyContainerAlign();
@@ -102,8 +192,7 @@ public final class Dynamic<T> extends BaseComponent
     }
 
     private void mount(T value) {
-        // Capture and eager-build inside untracked so signals read during the void factory
-        // (including inside captured root builds) never re-trigger this Dynamic effect.
+
         Fragment fragment = ReactiveContext.untracked(() -> {
             Fragment f = Fragment.capture(() -> factory.get(value));
             AttachmentStack.isolate(() -> {
@@ -124,26 +213,20 @@ public final class Dynamic<T> extends BaseComponent
             if (el.parent != null) {
                 continue;
             }
-            Cell<?> cell = container.add(el);
+            Cell<?> cell = AttachmentStack.attach(container, el, null, root);
+            if (cell == null) {
+                continue;
+            }
             cell.minWidth(0f);
-            applyRootCellConfig(root, el, cell);
+            if (PendingCellConfig.find(root) == null && PendingCellConfig.find(el) == null
+                    && SolimToken.isExpandingChild(el)) {
+                cell.growX();
+            }
             mounted++;
         }
         if (mounted == 0) {
             currentComponent.dispose();
             currentComponent = null;
-        }
-    }
-
-    private void applyRootCellConfig(Component root, Element el, Cell<?> cell) {
-        PendingCellConfig sc = PendingCellConfig.find(root);
-        if (sc == null) {
-            sc = PendingCellConfig.find(el);
-        }
-        if (sc != null) {
-            currentBindings.addAll(sc.applyToCell(cell));
-        } else if (SolimToken.isExpandingChild(el)) {
-            cell.growX();
         }
     }
 
@@ -156,23 +239,7 @@ public final class Dynamic<T> extends BaseComponent
     }
 
     private void updateParentCell() {
-        Cell<?> parentCell = container.parent instanceof Table ? ((Table) container.parent).getCell(container) : null;
-        if (currentComponent != null) {
-            container.visible = true;
-            if (parentCell != null) {
-                parentCell.minWidth(Float.NEGATIVE_INFINITY).minHeight(Float.NEGATIVE_INFINITY);
-                parentCell.maxWidth(Float.NEGATIVE_INFINITY).maxHeight(Float.NEGATIVE_INFINITY);
-                constraints.applyToCell(parentCell);
-            }
-        } else {
-            container.visible = false;
-            if (parentCell != null) {
-                parentCell.size(0f).pad(0f);
-            }
-        }
-        if (container.parent instanceof Table) {
-            GapContainer.respace((Table) container.parent);
-        }
+        CollapseHelper.updateParentCell(container, currentComponent != null, constraints, this);
     }
 
     @Override
@@ -181,10 +248,6 @@ public final class Dynamic<T> extends BaseComponent
             currentComponent.dispose();
             currentComponent = null;
         }
-        for (Disposable d : currentBindings) {
-            d.dispose();
-        }
-        currentBindings.clear();
         container.clearChildren();
     }
 

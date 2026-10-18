@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.gap;
 
 import org.junit.jupiter.api.Test;
 
@@ -34,7 +35,8 @@ class ElementModifiersTest extends SolimEnv {
     @Test
     void elementConfigModifiersOnRow() {
         Row row = new Row();
-        row.width(100f).height(50f).x(10f).y(20f).visible(false).opacity(0.8f);
+        row.props(Values.width(100f), Values.prefWidth(100f), Values.height(50f), Values.prefHeight(50f),
+                Values.x(10f), Values.y(20f), Values.visible(false), Values.opacity(0.8f));
 
         assertEquals(100f, row.element().getWidth(), 0.01f);
         assertEquals(50f, row.element().getHeight(), 0.01f);
@@ -43,11 +45,11 @@ class ElementModifiersTest extends SolimEnv {
         assertFalse(row.element().visible);
         assertEquals(0.8f, row.element().color.a, 0.01f);
 
-        row.size(80f);
+        row.props(Values.size(80f), Values.prefWidth(80f), Values.prefHeight(80f));
         assertEquals(80f, row.element().getWidth(), 0.01f);
         assertEquals(80f, row.element().getHeight(), 0.01f);
 
-        row.position(30f, 40f);
+        row.props(Values.position(30f, 40f));
         assertEquals(30f, row.element().x, 0.01f);
         assertEquals(40f, row.element().y, 0.01f);
     }
@@ -55,19 +57,19 @@ class ElementModifiersTest extends SolimEnv {
     @Test
     void tableConfigPaddingOnRow() {
         Row row = new Row();
-        row.padding(10f);
+        row.props(Values.padding(10f));
         assertEquals(10f, row.table().getMarginLeft(), 0.01f);
         assertEquals(10f, row.table().getMarginRight(), 0.01f);
         assertEquals(10f, row.table().getMarginTop(), 0.01f);
         assertEquals(10f, row.table().getMarginBottom(), 0.01f);
 
-        row.padding(1f, 2f, 3f, 4f);
+        row.props(Values.padding(1f, 2f, 3f, 4f));
         assertEquals(1f, row.table().getMarginTop(), 0.01f);
         assertEquals(2f, row.table().getMarginLeft(), 0.01f);
         assertEquals(3f, row.table().getMarginBottom(), 0.01f);
         assertEquals(4f, row.table().getMarginRight(), 0.01f);
 
-        row.paddingX(12f).paddingY(6f);
+        row.props(Values.paddingX(12f), Values.paddingY(6f));
         assertEquals(12f, row.table().getMarginLeft(), 0.01f);
         assertEquals(12f, row.table().getMarginRight(), 0.01f);
         assertEquals(6f, row.table().getMarginTop(), 0.01f);
@@ -78,7 +80,7 @@ class ElementModifiersTest extends SolimEnv {
     void cellConfigMarginOnRow() {
         Table parent = new Table();
         Row row = new Row();
-        row.margin(8f);
+        row.props(Values.margin(8f));
         Cell<?> cell = parent.add(row.element());
         row.cellConfig().applyToCell(cell);
         assertEquals(8f, CellAccess.padLeft(cell), 0.01f);
@@ -86,14 +88,15 @@ class ElementModifiersTest extends SolimEnv {
         assertEquals(8f, CellAccess.padTop(cell), 0.01f);
         assertEquals(8f, CellAccess.padBottom(cell), 0.01f);
 
-        row.marginX(14f).marginY(8f);
+        row.props(Values.marginX(14f), Values.marginY(8f));
         row.cellConfig().applyToCell(cell);
         assertEquals(14f, CellAccess.padLeft(cell), 0.01f);
         assertEquals(14f, CellAccess.padRight(cell), 0.01f);
         assertEquals(8f, CellAccess.padTop(cell), 0.01f);
         assertEquals(8f, CellAccess.padBottom(cell), 0.01f);
 
-        row.marginTop(12f).marginLeft(14f).marginBottom(16f).marginRight(18f);
+        row.props(Values.marginTop(12f), Values.marginLeft(14f), Values.marginBottom(16f),
+                Values.marginRight(18f));
         row.cellConfig().applyToCell(cell);
         assertEquals(12f, CellAccess.padTop(cell), 0.01f);
         assertEquals(14f, CellAccess.padLeft(cell), 0.01f);
@@ -104,7 +107,7 @@ class ElementModifiersTest extends SolimEnv {
     @Test
     void elementConfigStylingOnRow() {
         Row row = new Row();
-        row.rounded(12, Color.royal).border(2f, Color.gold);
+        row.props(Values.rounded(12, Color.royal), Values.border(2f, Color.gold));
 
         assertTrue(row.table().getBackground() instanceof RoundedDrawable);
         RoundedDrawable rd = (RoundedDrawable) row.table().getBackground();
@@ -116,7 +119,7 @@ class ElementModifiersTest extends SolimEnv {
 
     @Test
     void componentGapDelegation() {
-        Row row = new Row().gap(14f);
+        Row row = new Row().props(gap(14f));
         Element ra = new Element();
         Element rb = new Element();
         row.add(ra);
@@ -125,7 +128,7 @@ class ElementModifiersTest extends SolimEnv {
         assertEquals(14f, CellAccess.padLeft(row.table().getCell(rb)), 0.01f);
         assertEquals(0f, CellAccess.padTop(row.table().getCell(rb)), 0.01f);
 
-        Column column = new Column().gap(18f);
+        Column column = new Column().props(gap(18f));
         Element ca = new Element();
         Element cb = new Element();
         column.add(ca);
@@ -134,7 +137,7 @@ class ElementModifiersTest extends SolimEnv {
         assertEquals(18f, CellAccess.padTop(column.table().getCell(cb)), 0.01f);
         assertEquals(0f, CellAccess.padLeft(column.table().getCell(cb)), 0.01f);
 
-        Grid grid = new Grid(2).gap(10f);
+        Grid grid = new Grid(2).props(gap(10f));
         Element ga = new Element();
         Element gb = new Element();
         Element gc = new Element();
@@ -145,7 +148,7 @@ class ElementModifiersTest extends SolimEnv {
         assertEquals(10f, CellAccess.padLeft(grid.table().getCell(gb)), 0.01f);
         assertEquals(10f, CellAccess.padTop(grid.table().getCell(gc)), 0.01f);
 
-        Wrap wrap = new Wrap().gap(12f);
+        Wrap wrap = new Wrap().props(gap(12f));
         Element wa = new Element();
         Element wb = new Element();
         wrap.add(wa);
@@ -157,7 +160,7 @@ class ElementModifiersTest extends SolimEnv {
         assertEquals(12f, CellAccess.padRight(wrap.table().getCell(wb)), 0.01f);
         assertEquals(12f, CellAccess.padBottom(wrap.table().getCell(wb)), 0.01f);
 
-        Card card = new Card().gap(16f);
+        Card card = new Card().props(gap(16f));
         Element cda = new Element();
         Element cdb = new Element();
         card.container().add(cda);
@@ -166,7 +169,7 @@ class ElementModifiersTest extends SolimEnv {
         assertEquals(0f, CellAccess.padTop(card.container().getCell(cda)), 0.01f);
         assertEquals(16f, CellAccess.padTop(card.container().getCell(cdb)), 0.01f);
 
-        Button button = new Button().gap(8f);
+        Button button = new Button().props(gap(8f));
         Element bta = new Element();
         Element btb = new Element();
         button.button().add(bta);
@@ -179,19 +182,19 @@ class ElementModifiersTest extends SolimEnv {
 
     @Test
     void componentNameDelegationAndChaining() {
-        Row row = new Row().name("my-row").gap(8f);
+        Row row = new Row().name("my-row").props(gap(8f));
         assertEquals("my-row", row.element().name);
 
-        Column column = new Column().name("my-column").gap(8f);
+        Column column = new Column().name("my-column").props(gap(8f));
         assertEquals("my-column", column.element().name);
 
-        Card card = new Card().name("my-card").gap(8f);
+        Card card = new Card().name("my-card").props(gap(8f));
         assertEquals("my-card", card.element().name);
 
         Scroll scroll = new Scroll().name("my-scroll");
         assertEquals("my-scroll", scroll.element().name);
 
-        Grid grid = new Grid().name("my-grid").gap(8f);
+        Grid grid = new Grid().name("my-grid").props(gap(8f));
         assertEquals("my-grid", grid.element().name);
 
         Divider divider = new Divider().name("my-divider");
@@ -203,10 +206,10 @@ class ElementModifiersTest extends SolimEnv {
         SolimStack stack = new SolimStack().name("my-stack");
         assertEquals("my-stack", stack.element().name);
 
-        Wrap wrap = new Wrap().name("my-wrap").gap(8f);
+        Wrap wrap = new Wrap().name("my-wrap").props(gap(8f));
         assertEquals("my-wrap", wrap.element().name);
 
-        Button button = new Button().name("my-button").gap(8f);
+        Button button = new Button().name("my-button").props(gap(8f));
         assertEquals("my-button", button.element().name);
     }
 
@@ -219,7 +222,7 @@ class ElementModifiersTest extends SolimEnv {
 
     @Test
     void backgroundColorModifierOnColumn() {
-        Column column = new Column().backgroundColor(Color.crimson);
+        Column column = new Column().props(Values.backgroundColor(Color.crimson));
         assertTrue(column.table().getBackground() instanceof RoundedDrawable);
         RoundedDrawable rd = (RoundedDrawable) column.table().getBackground();
         assertEquals(Color.crimson, rd.getFillColor(), "backgroundColor modifier must set fillColor on RoundedDrawable");
@@ -234,7 +237,8 @@ class ElementModifiersTest extends SolimEnv {
         Cell<?> cell = parent.table().getCell(button.element());
         assertNotNull(cell);
 
-        button.minWidth(64f).minHeight(32f).maxWidth(128f).maxHeight(96f);
+        button.props(Values.minWidth(64f), Values.minHeight(32f), Values.maxWidth(128f),
+                Values.maxHeight(96f));
 
         assertEquals(64f, CellAccess.minWidth(cell), 0.01f);
         assertEquals(32f, CellAccess.minHeight(cell), 0.01f);
@@ -255,7 +259,8 @@ class ElementModifiersTest extends SolimEnv {
         Signal<Float> minHeightSig = Signal.of(30f);
         Signal<Float> maxWidthSig = Signal.of(100f);
         Signal<Float> maxHeightSig = Signal.of(80f);
-        button.minWidth(minWidthSig).minHeight(minHeightSig).maxWidth(maxWidthSig).maxHeight(maxHeightSig);
+        button.props(Values.minWidth(minWidthSig), Values.minHeight(minHeightSig),
+                Values.maxWidth(maxWidthSig), Values.maxHeight(maxHeightSig));
 
         assertEquals(50f, CellAccess.minWidth(cell), 0.01f);
         assertEquals(30f, CellAccess.minHeight(cell), 0.01f);

@@ -1,5 +1,6 @@
 package solim.core;
 
+import solim.test.FixedComponent;
 import static org.junit.jupiter.api.Assertions.*;
 
 import arc.scene.Element;
@@ -55,12 +56,7 @@ class SolimTokenTest extends SolimEnv {
     @Test
     void bindAttachesComponentAndConfig() {
         Element el = new Element();
-        Component comp = new Component() {
-            @Override
-            public Element element() {
-                return el;
-            }
-        };
+        Component comp = new FixedComponent(el);
         PendingCellConfig config = new PendingCellConfig();
 
         SolimToken.bind(el, comp, config);
@@ -75,19 +71,14 @@ class SolimTokenTest extends SolimEnv {
     @Test
     void setExpandingUpdatesFlagWithoutClobberingComponent() {
         Element el = new Element();
-        Component comp = new Component() {
-            @Override
-            public Element element() {
-                return el;
-            }
-        };
+        Component comp = new FixedComponent(el);
         SolimToken.bind(el, comp);
 
         assertFalse(SolimToken.isExpanding(el));
 
         SolimToken.setExpanding(el, true);
         assertTrue(SolimToken.isExpanding(el));
-        // Component reference must not be destroyed by expanding flag
+
         assertSame(comp, SolimToken.getComponent(el));
 
         SolimToken.setExpanding(el, false);

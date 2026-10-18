@@ -3,15 +3,17 @@ package mindustrytool.features.smartupgrade;
 import static solim.UI.*;
 
 import arc.Core;
+import arc.graphics.Color;
 import arc.scene.Element;
-import mindustry.ui.Styles;
-import solim.core.BaseComponent;
-import solim.reactive.Readable;
+import mindustry.gen.Icon;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingKeybindCard;
+import mindustrytool.components.SettingScaffold;
+import mindustrytool.components.SettingSlider;
+import mindustrytool.components.WebStyles;
+import solim.core.Component;
 
-/**
- * Settings view for configuring Smart Upgrade feature options.
- */
-public class SmartUpgradeSettingsView extends BaseComponent {
+public class SmartUpgradeSettingsView extends Component {
 
     private final SmartUpgradeFeature feature;
 
@@ -21,66 +23,94 @@ public class SmartUpgradeSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        Readable<String> maxUpdatesText = feature.maxUpdatesConfig.signal()
-                .map(v -> String.valueOf(v != null ? v : 500));
+        return SettingScaffold.build(() -> {
+            headerCard();
+            rulesCard();
+            modeAndLimitsCard();
+            keybindsCard();
+            resetButtonCard();
+        });
+    }
 
-        return column().grow().center().children(() -> {
-            scroll().center().children(() -> {
-                column().growX().gap(unit(2)).children(() -> {
-                    // Checkbox: Only Replace Exact Type
-                    checkbox(Core.bundle.get("feature.smart-upgrade.settings.only-same-type",
-                            "Only Replace Exact Block Type"),
-                            feature.onlySameTypeConfig.signal()).growX();
+    private void keybindsCard() {
+        SettingKeybindCard.forFeature(feature);
+    }
 
-                    // Checkbox: Traverse Bridges and Junctions
-                    checkbox(Core.bundle.get("feature.smart-upgrade.settings.traverse-bridges",
-                            "Traverse Bridges & Junctions"),
-                            feature.traverseBridgesConfig.signal()).growX();
+    private Component headerCard() {
+        return SettingCard.header(feature, "BUILDING");
+    }
 
-                    divider();
+    private Component rulesCard() {
+        return SettingCard.section(Icon.wrench, Core.bundle.get("feature.smart-upgrade.settings.rules"), () -> {
 
-                    // Slider: Max Upgrades
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.smart-upgrade.settings.max-upgrades",
-                                "Max Upgraded Blocks")).left();
-                        spacer();
-                        slider(feature.maxUpdatesConfig.signal(), 50, 2000, 50);
-                        row().width(unit(12)).children(() -> {
-                            text(maxUpdatesText);
-                        });
-                    });
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
+                column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
+                    text(Core.bundle.get("feature.smart-upgrade.settings.only-same-type"))
+                            .props(color(Color.white), left());
+                    text(Core.bundle.get("feature.smart-upgrade.settings.only-same-type.desc"))
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(), growX());
+                });
+                spacer();
+                checkbox("", feature.onlySameTypeConfig.signal());
+            });
 
-                    // Trigger Mode: One Shot vs Persistent
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.smart-upgrade.settings.trigger-mode",
-                                "Trigger Mode")).left();
-                        spacer();
-                        row().gap(unit(2)).children(() -> {
-                            button(Core.bundle.get("feature.smart-upgrade.settings.trigger-mode.one-shot",
-                                            "One Shot"),
-                                    () -> feature.triggerModeConfig.set(SmartUpgradeFeature.MODE_ONE_SHOT))
-                                            .style(Styles.togglet)
-                                            .checked(feature.triggerModeConfig.signal()
-                                                    .map(SmartUpgradeFeature.MODE_ONE_SHOT::equals))
-                                            .height(unit(8.5f));
-                            button(Core.bundle.get("feature.smart-upgrade.settings.trigger-mode.persistent",
-                                            "Persistent"),
-                                    () -> feature.triggerModeConfig.set(SmartUpgradeFeature.MODE_PERSISTENT))
-                                            .style(Styles.togglet)
-                                            .checked(feature.triggerModeConfig.signal()
-                                                    .map(SmartUpgradeFeature.MODE_PERSISTENT::equals))
-                                            .height(unit(8.5f));
-                        });
-                    });
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
-                    divider();
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
+                column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
+                    text(Core.bundle.get("feature.smart-upgrade.settings.traverse-bridges"))
+                            .props(color(Color.white), left());
+                    text(Core.bundle.get("feature.smart-upgrade.settings.traverse-bridges.desc"))
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(), growX());
+                });
+                spacer();
+                checkbox("", feature.traverseBridgesConfig.signal());
+            });
+        });
+    }
 
-                    // Reset Defaults Button
-                    button(Core.bundle.get("feature.smart-upgrade.settings.reset", "Reset to Defaults"),
-                            feature::resetToDefaults)
-                            .style(Styles.defaultb).growX();
+    private Component modeAndLimitsCard() {
+        return SettingCard.section(Icon.settings, Core.bundle.get("feature.smart-upgrade.settings.limits"), () -> {
+
+            column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
+                column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
+                    text(Core.bundle.get("feature.smart-upgrade.settings.trigger-mode"))
+                            .props(color(Color.white), left());
+                    text(Core.bundle.get("feature.smart-upgrade.settings.trigger-mode.desc"))
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(), growX());
+                });
+
+                row().props(gap(unit(1.5f))).children(() -> {
+                    button(Core.bundle.get("feature.smart-upgrade.settings.trigger-mode.one-shot"),
+                            () -> feature.triggerModeConfig.set(SmartUpgradeFeature.MODE_ONE_SHOT))
+                            .props(style(WebStyles.filterChipText()), checked(feature.triggerModeConfig.signal()
+                                    .map(SmartUpgradeFeature.MODE_ONE_SHOT::equals)), height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
+
+                    button(Core.bundle.get("feature.smart-upgrade.settings.trigger-mode.persistent"),
+                            () -> feature.triggerModeConfig.set(SmartUpgradeFeature.MODE_PERSISTENT))
+                            .props(style(WebStyles.filterChipText()), checked(feature.triggerModeConfig.signal()
+                                    .map(SmartUpgradeFeature.MODE_PERSISTENT::equals)), height(unit(8)), prefHeight(unit(8)), paddingX(unit(2.5f)));
                 });
             });
-        }).element();
+
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
+
+            SettingSlider.of(
+                    Core.bundle.get("feature.smart-upgrade.settings.max-upgrades"),
+                    Core.bundle.get("feature.smart-upgrade.settings.max-upgrades.desc"),
+                    feature.maxUpdatesConfig.signal(),
+                    50,
+                    2000,
+                    50,
+                    feature.maxUpdatesConfig.signal().map(v -> String.valueOf(v != null ? v : 500)));
+        });
+    }
+
+    private Component resetButtonCard() {
+        return SettingCard.card().children(() -> {
+            button(Core.bundle.get("feature.smart-upgrade.settings.reset"),
+                    feature::resetToDefaults)
+                    .props(style(WebStyles.outlineText()), height(unit(11)), prefHeight(unit(11)), growX());
+        });
     }
 }

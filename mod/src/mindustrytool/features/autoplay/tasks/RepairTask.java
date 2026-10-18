@@ -158,9 +158,11 @@ public class RepairTask implements AutoplayTask {
     }
 
     public static class RepairAI extends BaseAutoplayAI {
+        private static final float MIN_STANDOFF = 12f;
+
         @Override
         public void updateMovement() {
-            if (target == null || !target.isAdded() || !(target instanceof Building)) {
+            if (target == null || !(target instanceof Building)) {
                 target = null;
                 unit.isShooting(false);
                 unit.controlWeapons(false, false);
@@ -168,6 +170,12 @@ public class RepairTask implements AutoplayTask {
             }
 
             Building b = (Building) target;
+            if (!b.isValid()) {
+                target = null;
+                unit.isShooting(false);
+                unit.controlWeapons(false, false);
+                return;
+            }
             if (!isRepairable(b, unit.team)) {
                 target = null;
                 unit.isShooting(false);
@@ -178,7 +186,12 @@ public class RepairTask implements AutoplayTask {
             float range = getHealRange(unit);
             float approachRange = range * 0.65f;
 
-            if (!target.within(unit, approachRange)) {
+            boolean tooClose = unit.dst(target.getX(), target.getY()) < MIN_STANDOFF;
+            if (tooClose) {
+                moveTo(target, approachRange, 20f, true, null);
+                targetPos.set(target.getX(), target.getY());
+                hasTargetPos = true;
+            } else if (!target.within(unit, approachRange)) {
                 moveTo(target, approachRange);
             } else {
                 targetPos.set(target.getX(), target.getY());

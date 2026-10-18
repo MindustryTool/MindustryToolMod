@@ -5,19 +5,13 @@ import static solim.UI.*;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.util.Nullable;
-import solim.core.BaseComponent;
-import solim.display.NetworkImage;
+import solim.core.Component;
+import solim.display.SolimImage;
 import solim.layout.Column;
 import solim.layout.SolimStack;
 import solim.reactive.Readable;
 
-/**
- * Fixed-size user avatar: network photo on top of a deterministic
- * initial-letter fallback. Renders with continuous-curvature (Apple-style L4
- * superellipse) rounded corners on both the fallback badge and the network
- * image layer.
- */
-public class ChatAvatar extends BaseComponent {
+public class ChatAvatar extends Component {
 
     private static final Color[] PALETTE = {
             Color.valueOf("ef5350"),
@@ -65,23 +59,24 @@ public class ChatAvatar extends BaseComponent {
         int radius = cornerRadius;
 
         SolimStack stack = new SolimStack()
-                .size(size, size)
+                .props(size(size, size), prefWidth(size), prefHeight(size))
                 .layer(() -> {
                     Column fallback = column()
-                            .size(size, size)
-                            .center();
+                            .props(size(size, size), prefWidth(size), prefHeight(size),
+                                    radius > 0 ? solim.UI.rounded(radius, background) : background(background), center());
 
-                    return (radius > 0 ? fallback.rounded(radius, background) : fallback.background(background))
+                    return fallback
                             .children(() -> {
                                 text(initial)
-                                        .color(Color.white)
-                                        .fontScale(size >= 32f ? 1.2f : 0.9f);
+                                        .props(color(Color.white), fontScale(size >= 32f ? 1.2f : 0.9f));
                             });
                 })
                 .layer(() -> {
-                    NetworkImage img = networkImage(avatarUrl).size(size, size).top().left();
+                    SolimImage img = image().props(src(avatarUrl));
                     if (radius > 0) {
-                        img.rounded(radius);
+                        img.props(size(size, size), top(), left(), imageRounded(radius));
+                    } else {
+                        img.props(size(size, size), top(), left());
                     }
                     return img;
                 });

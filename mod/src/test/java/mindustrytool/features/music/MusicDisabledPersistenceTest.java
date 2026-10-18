@@ -14,14 +14,9 @@ import solim.config.ConfigValue;
 import solim.config.OrderedSeqPersister;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
-import solim.test.SolimEnv;
+import mindustrytool.test.MindustryTestEnv;
 
-/**
- * Verifies the list-based disabled model: persistence across reloads, the
- * original/custom key format, reactive state derivation, and pruning of stale
- * custom entries.
- */
-class MusicDisabledPersistenceTest extends SolimEnv {
+class MusicDisabledPersistenceTest extends MindustryTestEnv {
 
     @BeforeAll
     static void initSettings() {
@@ -42,7 +37,6 @@ class MusicDisabledPersistenceTest extends SolimEnv {
                 .value("disabled", new Seq<>(), persister);
         disabled.set(Seq.with("AMBIENT_o:song1", "DARK_c:boss-theme"));
 
-        // Simulate a fresh application start: a new ConfigValue reading the same key
         ConfigValue<Seq<String>> reloaded = ConfigGroup.of(groupNamespace)
                 .value("disabled", new Seq<>(), persister);
 
@@ -79,7 +73,6 @@ class MusicDisabledPersistenceTest extends SolimEnv {
         Signal<Music> current = Signal.of((Music) null);
         TrackState state = new TrackState(music, MusicType.AMBIENT, "song", true, disabled, current);
 
-        //bind once and reuse, as the UI does, to prove the derived readable is reactive
         Readable<Boolean> isDisabled = state.isDisabled();
         Readable<Boolean> isPlaying = state.isPlaying();
 

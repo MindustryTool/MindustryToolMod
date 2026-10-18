@@ -9,6 +9,7 @@ val mindustryVersion: String by rootProject.extra
 dependencies {
     // The import must not change unless i asked for it
     api(project(":solim-core"))
+    api(project(":solim-reactive"))
     implementation(project(":solim-runtime"))
     testImplementation("Anuken:Mindustry:$mindustryVersion")
     testImplementation(project(":solim-test"))

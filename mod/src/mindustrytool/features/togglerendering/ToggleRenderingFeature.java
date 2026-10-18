@@ -22,10 +22,6 @@ import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
 
-/**
- * Allows toggling rendering layers such as allied/enemy units and buildings
- * to improve performance or capture clean screenshots.
- */
 public class ToggleRenderingFeature extends Feature {
 
     public final ConfigGroup config;
@@ -46,7 +42,8 @@ public class ToggleRenderingFeature extends Feature {
                 .icon(Icon.eye)
                 .order(5)
                 .enabledByDefault(false)
-                .quickAccess(true)
+                .quickAccess(false)
+                .displayGroup(true)
                 .build());
 
         config = configGroup();
@@ -68,8 +65,8 @@ public class ToggleRenderingFeature extends Feature {
             Log.err("ToggleRendering: Failed to access tileview", e);
         }
 
-        bindToggle("toggleRendering", KeyCode.unset);
-        bindDialog("toggleRenderingSettings", KeyCode.unset, getSettingDialog(), false);
+        bindToggle("togglerendering", KeyCode.unset);
+        bindDialog("togglerenderingsettings", KeyCode.unset, getSettingDialog(), false);
 
         Events.run(Trigger.draw, this::updateVisibility);
         Events.on(WorldLoadEndEvent.class, e -> hiddenUnits.clear());
@@ -149,6 +146,8 @@ public class ToggleRenderingFeature extends Feature {
 
         if (!drawBlocksConfig.get() && tileviewField != null && Vars.renderer != null && Vars.renderer.blocks != null) {
             try {
+                // java.lang.reflect.Field.get returns Object, and the Seq<Tile> type argument of the renderer's
+                // tileview field is not reifiable, so reflection cannot recover the element type here.
                 @SuppressWarnings("unchecked")
                 Seq<Tile> tileview = (Seq<Tile>) tileviewField.get(Vars.renderer.blocks);
                 if (tileview != null && !tileview.isEmpty()) {

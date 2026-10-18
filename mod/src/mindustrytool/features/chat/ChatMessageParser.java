@@ -1,8 +1,9 @@
 package mindustrytool.features.chat;
 
 import arc.util.Nullable;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import mindustry.Vars;
@@ -21,11 +22,6 @@ import mindustrytool.models.response.ChatMessage;
 import mindustrytool.models.response.UserSession;
 import mindustrytool.services.auth.MindustryAuthProvider;
 
-/**
- * Parser that categorizes raw {@link ChatMessage} instances into typed
- * {@link ParsedChatMessage} domain models, caching results to ensure regexes
- * and base64 schematic decoding execute only once.
- */
 public final class ChatMessageParser {
 
     private static final Pattern MINDUSTRY_TOOL_LINK_PATTERN = Pattern
@@ -33,15 +29,19 @@ public final class ChatMessageParser {
     private static final Pattern IMAGE_URL_PATTERN = Pattern
             .compile("^https?://.*\\.(?:png|jpg|jpeg|gif|webp)(?:\\?.*)?$", Pattern.CASE_INSENSITIVE);
 
-    private static final Map<String, ParsedChatMessage> CACHE = new ConcurrentHashMap<>();
+    static final int MAX_CACHE_ENTRIES = 2048;
+
+    private static final Map<String, ParsedChatMessage> CACHE = Collections.synchronizedMap(
+            new LinkedHashMap<String, ParsedChatMessage>(16, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, ParsedChatMessage> eldest) {
+                    return size() > MAX_CACHE_ENTRIES;
+                }
+            });
 
     private ChatMessageParser() {
     }
 
-    /**
-     * Parses a raw chat message into a strongly-typed {@link ParsedChatMessage}.
-     * Results are cached by message ID when present.
-     */
     public static ParsedChatMessage parse(@Nullable ChatMessage message) {
         if (message == null) {
             return new TextMessage(new ChatMessage(), "", false);
@@ -64,23 +64,19 @@ public final class ChatMessageParser {
     private static ParsedChatMessage parseInternal(ChatMessage message) {
         String content = message.getContent() != null ? message.getContent().trim() : "";
 
-        // 0. Exact-match command tokens (e.g. browser shortcuts)
         CommandKind commandKind = CommandKind.fromToken(content);
         if (commandKind != null) {
             return new CommandMessage(message, commandKind);
         }
 
-        // 1. Room invite
         if (PlayerConnectLink.isValid(content)) {
             return new RoomInviteMessage(message, content);
         }
 
-        // 2. Direct network image
         if (IMAGE_URL_PATTERN.matcher(content).matches()) {
             return new ImageMessage(message, content);
         }
 
-        // 3. MindustryTool web links (maps or schematics)
         Matcher matcher = MINDUSTRY_TOOL_LINK_PATTERN.matcher(content);
         if (matcher.find()) {
             String fullUrl = matcher.group(0);
@@ -89,7 +85,6 @@ public final class ChatMessageParser {
             return new MindustryToolLinkMessage(message, fullUrl, type, itemId);
         }
 
-        // 4. Mindustry base64 schematic
         if (Vars.schematicBaseStart != null) {
             int schemPos = content.indexOf(Vars.schematicBaseStart);
             if (schemPos != -1) {
@@ -118,7 +113,6 @@ public final class ChatMessageParser {
             }
         }
 
-        // 5. Standard text message
         boolean mentioned = isMentioningCurrentUser(content);
         return new TextMessage(message, content, mentioned);
     }
@@ -140,5 +134,9 @@ public final class ChatMessageParser {
 
     public static void clearCache() {
         CACHE.clear();
+    }
+
+    static int cacheSize() {
+        return CACHE.size();
     }
 }

@@ -1,9 +1,12 @@
 package solim.layout;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.padding;
 
 import arc.scene.Element;
 import arc.scene.event.ClickListener;
@@ -25,174 +28,155 @@ import solim.test.TestScheduler;
 
 public class LayoutAndComponentsRegressionTest extends SolimEnv {
 
-	// ==========================================
-	// Phase 16: Layout Containers
-	// ==========================================
+    @Test
+    void gridWrapsChildrenAfterColumns() {
+        Grid grid = new Grid(2);
+        Table table = grid.table();
 
-	@Test
-	void gridWrapsChildrenAfterColumns() {
-		Grid grid = new Grid(2);
-		Table table = grid.table();
+        Element c1 = new Element();
+        Element c2 = new Element();
+        Element c3 = new Element();
+        Element c4 = new Element();
 
-		Element c1 = new Element();
-		Element c2 = new Element();
-		Element c3 = new Element();
-		Element c4 = new Element();
+        grid.add(c1);
+        grid.add(c2);
+        grid.add(c3);
+        grid.add(c4);
 
-		grid.add(c1);
-		grid.add(c2);
-		grid.add(c3);
-		grid.add(c4);
+        assertEquals(4, table.getChildren().size);
+        assertSame(c1, table.getChildren().get(0));
+        assertSame(c2, table.getChildren().get(1));
+        assertSame(c3, table.getChildren().get(2));
+        assertSame(c4, table.getChildren().get(3));
+    }
 
-		assertEquals(4, table.getChildren().size);
-		assertSame(c1, table.getChildren().get(0));
-		assertSame(c2, table.getChildren().get(1));
-		assertSame(c3, table.getChildren().get(2));
-		assertSame(c4, table.getChildren().get(3));
-	}
+    @Test
+    void cardAppliesContentAndPadding() {
+        Card card = new Card().props(padding(16f));
+        Table container = card.container();
 
-	@Test
-	void cardAppliesContentAndPadding() {
-		Card card = new Card().padding(16f);
-		Table container = card.container();
+        Element content = new Element();
+        AttachmentStack.push(container);
+        AttachmentStack.add(content);
+        AttachmentStack.pop();
 
-		Element content = new Element();
-		AttachmentStack.push(container);
-		AttachmentStack.add(content);
-		AttachmentStack.pop();
+        assertEquals(16f, container.getMarginLeft(), 0.01f);
+        assertEquals(16f, container.getMarginRight(), 0.01f);
+        assertEquals(16f, container.getMarginTop(), 0.01f);
+        assertEquals(16f, container.getMarginBottom(), 0.01f);
+        assertTrue(container.getChildren().contains(content, true));
+    }
 
-		assertEquals(16f, container.getMarginLeft(), 0.01f);
-		assertEquals(16f, container.getMarginRight(), 0.01f);
-		assertEquals(16f, container.getMarginTop(), 0.01f);
-		assertEquals(16f, container.getMarginBottom(), 0.01f);
-		assertTrue(container.getChildren().contains(content, true));
-	}
+    @Test
+    void twoWayBindingBidirectionalSyncAndNoFeedbackLoop() {
+        Signal<String> state = Signal.of("initial");
+        String[] widgetValue = new String[] { "from-widget-init" };
+        AtomicInteger widgetSetCalls = new AtomicInteger(0);
+        new AtomicInteger(0);
+        Runnable[] triggerWidgetChange = new Runnable[1];
 
-	// ==========================================
-	// Phase 17: TwoWayBinding
-	// ==========================================
+        TwoWayBinding<String> binding = new TwoWayBinding<>(
+                state,
+                () -> widgetValue[0],
+                val -> {
+                    widgetSetCalls.incrementAndGet();
+                    widgetValue[0] = val;
+                },
+                listener -> {
+                    triggerWidgetChange[0] = listener;
+                    return DisposableAction.empty();
+                });
 
-	@Test
-	void twoWayBindingBidirectionalSyncAndNoFeedbackLoop() {
-		Signal<String> state = Signal.of("initial");
-		String[] widgetValue = new String[]{"from-widget-init"};
-		AtomicInteger widgetSetCalls = new AtomicInteger(0);
-		new AtomicInteger(0);
-		Runnable[] triggerWidgetChange = new Runnable[1];
+        assertEquals(1, widgetSetCalls.get());
+        assertEquals("initial", widgetValue[0]);
 
-		TwoWayBinding<String> binding = new TwoWayBinding<>(
-				state,
-				() -> widgetValue[0],
-				val -> {
-					widgetSetCalls.incrementAndGet();
-					widgetValue[0] = val;
-				},
-				listener -> {
-					triggerWidgetChange[0] = listener;
-					return DisposableAction.empty();
-				}
-		);
+        state.set("from-signal");
+        TestScheduler.flush();
 
-		// Initial effect run applies value to widget
-		assertEquals(1, widgetSetCalls.get());
-		assertEquals("initial", widgetValue[0]);
+        assertEquals(2, widgetSetCalls.get());
+        assertEquals("from-signal", widgetValue[0]);
 
-		// 1. Signal -> Widget
-		state.set("from-signal");
-		TestScheduler.flush();
+        widgetValue[0] = "from-widget";
+        triggerWidgetChange[0].run();
 
-		assertEquals(2, widgetSetCalls.get());
-		assertEquals("from-signal", widgetValue[0]);
+        assertEquals("from-widget", state.get());
 
-		// 2. Widget -> Signal
-		widgetValue[0] = "from-widget";
-		triggerWidgetChange[0].run();
+        TestScheduler.flush();
+        assertEquals(2, widgetSetCalls.get());
 
-		assertEquals("from-widget", state.get());
-		// Verify no feedback loop: widgetSetCalls must NOT increase because equality check suppresses writeback
-		TestScheduler.flush();
-		assertEquals(2, widgetSetCalls.get());
+        binding.dispose();
+        assertTrue(binding.isDisposed());
 
-		// 3. Disposal stops both directions
-		binding.dispose();
-		assertTrue(binding.isDisposed());
+        state.set("post-dispose-signal");
+        TestScheduler.flush();
+        assertEquals("from-widget", widgetValue[0], "Widget setter must not be called after disposal");
 
-		state.set("post-dispose-signal");
-		TestScheduler.flush();
-		assertEquals("from-widget", widgetValue[0], "Widget setter must not be called after disposal");
+        widgetValue[0] = "post-dispose-widget";
+        triggerWidgetChange[0].run();
+        assertEquals("post-dispose-signal", state.get(), "Signal must not be updated from widget after disposal");
+    }
 
-		widgetValue[0] = "post-dispose-widget";
-		triggerWidgetChange[0].run();
-		assertEquals("post-dispose-signal", state.get(), "Signal must not be updated from widget after disposal");
-	}
+    @Test
+    void textComponentUpdatesInPlaceWithoutRebuildingLabel() {
+        Signal<String> labelText = Signal.of("Hello");
+        Text textComp = Text.of(labelText);
 
-	// ==========================================
-	// Phase 18: Concrete Components
-	// ==========================================
+        Element element = textComp.element();
+        assertTrue(element instanceof Label);
+        Label label = (Label) element;
 
-	@Test
-	void textComponentUpdatesInPlaceWithoutRebuildingLabel() {
-		Signal<String> labelText = Signal.of("Hello");
-		Text textComp = Text.of(labelText);
+        assertEquals("Hello", label.getText().toString());
 
-		Element element = textComp.element();
-		assertTrue(element instanceof Label);
-		Label label = (Label) element;
+        labelText.set("World");
+        TestScheduler.flush();
 
-		assertEquals("Hello", label.getText().toString());
+        assertSame(element, textComp.element(), "Label instance identity must be preserved");
+        assertEquals("World", label.getText().toString());
 
-		labelText.set("World");
-		TestScheduler.flush();
+        textComp.dispose();
+    }
 
-		assertSame(element, textComp.element(), "Label instance identity must be preserved");
-		assertEquals("World", label.getText().toString());
+    @Test
+    void buttonComponentClickAndEnabledBinding() {
+        Signal<Boolean> canClick = Signal.of(true);
+        AtomicInteger clicks = new AtomicInteger(0);
 
-		textComp.dispose();
-	}
+        Button btn = new Button(clicks::incrementAndGet).props(enabled(canClick));
+        arc.scene.ui.Button arcBtn = (arc.scene.ui.Button) btn.element();
 
-	@Test
-	void buttonComponentClickAndEnabledBinding() {
-		Signal<Boolean> canClick = Signal.of(true);
-		AtomicInteger clicks = new AtomicInteger(0);
+        assertFalse(arcBtn.isDisabled());
 
-		Button btn = new Button(clicks::incrementAndGet).enabled(canClick);
-		arc.scene.ui.Button arcBtn = (arc.scene.ui.Button) btn.element();
+        for (EventListener listener : arcBtn.getListeners()) {
+            if (listener instanceof ClickListener) {
+                InputEvent event = new InputEvent();
+                ((ClickListener) listener).clicked(event, 0f, 0f);
+            }
+        }
+        assertEquals(1, clicks.get());
 
-		assertFalse(arcBtn.isDisabled());
+        canClick.set(false);
+        TestScheduler.flush();
+        assertTrue(arcBtn.isDisabled(), "Button must reflect disabled state from signal");
 
-		// Trigger click via ClickListener
-		for (EventListener listener : arcBtn.getListeners()) {
-			if (listener instanceof ClickListener) {
-				InputEvent event = new InputEvent();
-				((ClickListener) listener).clicked(event, 0f, 0f);
-			}
-		}
-		assertEquals(1, clicks.get());
+        btn.dispose();
+    }
 
-		// Disable
-		canClick.set(false);
-		TestScheduler.flush();
-		assertTrue(arcBtn.isDisabled(), "Button must reflect disabled state from signal");
+    @Test
+    void badgeComponentCountAndVisibility() {
+        Signal<Integer> count = Signal.of(3);
+        Badge badge = Badge.ofCount(count);
 
-		btn.dispose();
-	}
+        Element el = badge.element();
+        assertTrue(el.visible);
 
-	@Test
-	void badgeComponentCountAndVisibility() {
-		Signal<Integer> count = Signal.of(3);
-		Badge badge = Badge.ofCount(count);
+        count.set(0);
+        TestScheduler.flush();
+        assertFalse(el.visible, "Badge should hide when count is 0");
 
-		Element el = badge.element();
-		assertTrue(el.visible);
+        count.set(12);
+        TestScheduler.flush();
+        assertTrue(el.visible);
 
-		count.set(0);
-		TestScheduler.flush();
-		assertFalse(el.visible, "Badge should hide when count is 0");
-
-		count.set(12);
-		TestScheduler.flush();
-		assertTrue(el.visible);
-
-		badge.dispose();
-	}
+        badge.dispose();
+    }
 }

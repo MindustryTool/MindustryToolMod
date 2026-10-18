@@ -130,7 +130,7 @@ val jarAndroid by tasks.registering {
 }
 
 tasks.named<Jar>("jar") {
-    dependsOn(":solim-api:jar", ":solim-runtime:jar", ":solim-core:jar", ":solim:jar", ":solim-mcp:jar")
+    dependsOn(":solim-api:jar", ":solim-runtime:jar", ":solim-reactive:jar", ":solim-core:jar", ":solim:jar", ":solim-mcp:jar")
     dependsOn(configurations["runtimeClasspath"])
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
@@ -154,6 +154,7 @@ tasks.named<Jar>("jar") {
     exclude("META-INF/*.SF")
     exclude("META-INF/*.DSA")
     exclude("META-INF/*.RSA")
+    exclude("**/*.bak")
 
     doLast {
         val rootLibsDir = File(rootProject.projectDir, "build/libs")

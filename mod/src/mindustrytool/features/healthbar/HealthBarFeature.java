@@ -9,6 +9,7 @@ import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.TextureRegion;
 import arc.input.KeyCode;
+import arc.math.geom.Rect;
 import arc.util.Align;
 import arc.util.Nullable;
 import mindustry.Vars;
@@ -22,18 +23,12 @@ import mindustry.ui.Fonts;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
+import mindustrytool.features.settings.ModSettings;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
-
+import solim.reactive.Effect;
 import solim.overlay.SolimDialog;
 
-/**
- * Draws health bars above damaged units and a single shield bar with a
- * whole-bar count above shielded units, plus optional HP bars above damaged
- * buildings. Configuration is peeked once per frame into scratch fields; the
- * per-entity loops themselves perform no config reads, allocations, or
- * subscriptions.
- */
 public class HealthBarFeature extends Feature {
 
     public final ConfigGroup config;
@@ -50,10 +45,28 @@ public class HealthBarFeature extends Feature {
     private final Cons<Building> buildingDrawer = this::drawBuildingCheck;
     private static final Boolf<Building> ANY_BUILDING = build -> true;
 
+    private final Rect viewBounds = new Rect();
     private @Nullable TextureRegion barRegion;
     private @Nullable HealthBarSettingsDialog settingsDialog;
 
-    // Per-frame scratch written once in draw(), read by the per-entity loops.
+    private static final String[] SHIELD_COUNT_CACHE = new String[64];
+    private static final String SHIELD_COUNT_MAX = "x64+";
+
+    static {
+        for (int i = 0; i < 64; i++) {
+            SHIELD_COUNT_CACHE[i] = "x" + i;
+        }
+    }
+
+    private boolean cachedShowFriendlyUnits = true;
+    private boolean cachedShowEnemyUnits = true;
+    private boolean cachedShowFriendlyBlocks = false;
+    private boolean cachedShowEnemyBlocks = false;
+    private float cachedZoomThreshold = 0.5f;
+    private float cachedOpacity = 1f;
+    private float cachedScale = 1f;
+    private float cachedWidth = 1f;
+
     private boolean frameShowFriendlyUnits;
     private boolean frameShowEnemyUnits;
     private boolean frameShowFriendlyBlocks;
@@ -70,7 +83,8 @@ public class HealthBarFeature extends Feature {
                 .icon(FileIcon.of("healthbar.png"))
                 .order(4)
                 .enabledByDefault(false)
-                .quickAccess(true)
+                .quickAccess(false)
+                .displayGroup(true)
                 .build());
 
         config = configGroup();
@@ -83,10 +97,40 @@ public class HealthBarFeature extends Feature {
         scaleConfig = config.floatValue("scale", 1f);
         widthConfig = config.floatValue("width", 1f);
 
-        bindToggle("healthBar", KeyCode.unset);
-        bindDialog("healthBarSettings", KeyCode.unset, getSettingDialog(), false);
+        Effect.of(showFriendlyUnitsConfig.signal(), v -> cachedShowFriendlyUnits = v != null ? v : true);
+        Effect.of(showEnemyUnitsConfig.signal(), v -> cachedShowEnemyUnits = v != null ? v : true);
+        Effect.of(showFriendlyBlocksConfig.signal(), v -> cachedShowFriendlyBlocks = v != null ? v : false);
+        Effect.of(showEnemyBlocksConfig.signal(), v -> cachedShowEnemyBlocks = v != null ? v : false);
+        Effect.of(zoomThresholdConfig.signal(), v -> cachedZoomThreshold = v != null ? v : 0.5f);
+        Effect.of(opacityConfig.signal(), v -> cachedOpacity = v != null ? v : 1f);
+        Effect.of(scaleConfig.signal(), v -> cachedScale = v != null ? v : 1f);
+        Effect.of(widthConfig.signal(), v -> cachedWidth = v != null ? v : 1f);
+
+        syncConfigCache();
+
+        bindToggle("healthbar", KeyCode.unset);
+        bindDialog("healthbarsettings", KeyCode.unset, getSettingDialog(), false);
 
         Events.run(Trigger.draw, this::draw);
+    }
+
+    private void syncConfigCache() {
+        Boolean sfu = showFriendlyUnitsConfig.get();
+        cachedShowFriendlyUnits = sfu != null ? sfu : true;
+        Boolean seu = showEnemyUnitsConfig.get();
+        cachedShowEnemyUnits = seu != null ? seu : true;
+        Boolean sfb = showFriendlyBlocksConfig.get();
+        cachedShowFriendlyBlocks = sfb != null ? sfb : false;
+        Boolean seb = showEnemyBlocksConfig.get();
+        cachedShowEnemyBlocks = seb != null ? seb : false;
+        Float zt = zoomThresholdConfig.get();
+        cachedZoomThreshold = zt != null ? zt : 0.5f;
+        Float op = opacityConfig.get();
+        cachedOpacity = op != null ? op : 1f;
+        Float sc = scaleConfig.get();
+        cachedScale = sc != null ? sc : 1f;
+        Float w = widthConfig.get();
+        cachedWidth = w != null ? w : 1f;
     }
 
     public void resetToDefaults() {
@@ -98,6 +142,8 @@ public class HealthBarFeature extends Feature {
         opacityConfig.reset();
         scaleConfig.reset();
         widthConfig.reset();
+
+        syncConfigCache();
     }
 
     @Override
@@ -115,23 +161,14 @@ public class HealthBarFeature extends Feature {
             return;
         }
 
-        Float zoomThreshold = zoomThresholdConfig.signal().peek();
-        Float opacity = opacityConfig.signal().peek();
-        Float scale = scaleConfig.signal().peek();
-        Float width = widthConfig.signal().peek();
-        Boolean showFriendlyUnits = showFriendlyUnitsConfig.signal().peek();
-        Boolean showEnemyUnits = showEnemyUnitsConfig.signal().peek();
-        Boolean showFriendlyBlocks = showFriendlyBlocksConfig.signal().peek();
-        Boolean showEnemyBlocks = showEnemyBlocksConfig.signal().peek();
-
-        frameZoomThreshold = zoomThreshold != null ? zoomThreshold : 0.5f;
-        frameOpacity = opacity != null ? opacity : 1f;
-        frameScale = scale != null ? scale : 1f;
-        frameWidth = width != null ? width : 1f;
-        frameShowFriendlyUnits = showFriendlyUnits != null ? showFriendlyUnits : true;
-        frameShowEnemyUnits = showEnemyUnits != null ? showEnemyUnits : true;
-        frameShowFriendlyBlocks = showFriendlyBlocks != null ? showFriendlyBlocks : false;
-        frameShowEnemyBlocks = showEnemyBlocks != null ? showEnemyBlocks : false;
+        frameZoomThreshold = cachedZoomThreshold;
+        frameOpacity = cachedOpacity;
+        frameScale = ModSettings.effectiveScale(cachedScale);
+        frameWidth = cachedWidth;
+        frameShowFriendlyUnits = cachedShowFriendlyUnits;
+        frameShowEnemyUnits = cachedShowEnemyUnits;
+        frameShowFriendlyBlocks = cachedShowFriendlyBlocks;
+        frameShowEnemyBlocks = cachedShowEnemyBlocks;
         framePlayerTeam = Vars.player != null ? Vars.player.team() : null;
 
         float zoom = Vars.renderer.getScale();
@@ -150,13 +187,14 @@ public class HealthBarFeature extends Feature {
         float z = Draw.z();
         Draw.z(Layer.shields + 5f);
 
+        Core.camera.bounds(viewBounds);
         float cx = Core.camera.position.x;
         float cy = Core.camera.position.y;
-        float cw = Core.camera.width;
-        float ch = Core.camera.height;
+        float cw = viewBounds.width;
+        float ch = viewBounds.height;
 
         if (frameShowFriendlyUnits || frameShowEnemyUnits) {
-            Groups.unit.intersect(cx - cw / 2f, cy - ch / 2f, cw, ch, unitDrawer);
+            Groups.unit.intersect(viewBounds.x, viewBounds.y, viewBounds.width, viewBounds.height, unitDrawer);
         }
 
         if (frameShowFriendlyBlocks || frameShowEnemyBlocks) {
@@ -206,6 +244,12 @@ public class HealthBarFeature extends Feature {
             return;
         }
 
+        float halfSize = (build.block.size * Vars.tilesize) / 2f;
+        if (build.x + halfSize < viewBounds.x || build.x - halfSize > viewBounds.x + viewBounds.width
+                || build.y + halfSize + 16f < viewBounds.y || build.y - halfSize > viewBounds.y + viewBounds.height) {
+            return;
+        }
+
         drawBuildingBar(build);
     }
 
@@ -239,8 +283,6 @@ public class HealthBarFeature extends Feature {
             float fillCenterX = build.x - w / 2f + filledW / 2f;
             Draw.rect(barRegion, fillCenterX, y, filledW, h);
         }
-
-        Draw.reset();
     }
 
     private void drawBar(Unit unit) {
@@ -288,8 +330,6 @@ public class HealthBarFeature extends Feature {
                 drawShield(x, y, w, h, left, shieldValue, unit.team.color);
             }
         }
-
-        Draw.reset();
     }
 
     private void drawShield(float x, float y, float w, float h, float left, float shieldValue, Color teamColor) {
@@ -313,11 +353,10 @@ public class HealthBarFeature extends Feature {
         }
 
         if (whole >= 1f) {
-            String count = "x" + (int) whole;
+            int countIdx = (int) whole;
+            String count = countIdx < SHIELD_COUNT_CACHE.length ? SHIELD_COUNT_CACHE[countIdx] : SHIELD_COUNT_MAX;
             Fonts.outline.draw(count, x + w / 2f + 3f * frameScale, shieldY,
                     Color.white, h * 0.11f, false, Align.left);
         }
-
-        Draw.reset();
     }
 }

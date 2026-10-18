@@ -26,17 +26,11 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.models.response.SchematicDetailData;
 import mindustrytool.models.response.SchematicDetailData.SchematicRequirement;
 import mindustrytool.services.MindustryTool;
-import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.overlay.SolimDialog;
 import solim.reactive.Query;
 import solim.reactive.QueryKey;
 
-/**
- * Detail dialog showing a high-resolution preview, author, stats, tags, item
- * requirements, description, and copy/save actions. Stacks vertically in
- * portrait and side-by-side in landscape.
- */
 public class SchematicDetailDialog extends SolimDialog {
 
     public SchematicDetailDialog(SchematicDetailData detail, String itemId) {
@@ -44,13 +38,12 @@ public class SchematicDetailDialog extends SolimDialog {
 
         addCloseButton();
         closeOnBack();
-        fillParent(true);
         children(() -> new DetailContent(detail, itemId));
         actionButton(Core.bundle.get("browser.detail.open-online"), Icon.link,
                 () -> Core.app.openURI(Config.WEB_URL + "/schematics/" + itemId));
     }
 
-    private static class DetailContent extends BaseComponent {
+    private static class DetailContent extends Component {
         private final SchematicDetailData detail;
         private final String itemId;
         private final @Nullable String authorId;
@@ -64,9 +57,10 @@ public class SchematicDetailDialog extends SolimDialog {
                     ? Query.<String>builder()
                             .key(QueryKey.of("user", authorId))
                             .fetch(() -> MindustryTool.getUserBatch(Collections.singletonList(authorId))
-                                    .thenApply(users -> users != null && !users.isEmpty() && users.get(0) != null && users.get(0).getName() != null
-                                            ? users.get(0).getName()
-                                            : authorId))
+                                    .thenApply(users -> users != null && !users.isEmpty() && users.get(0) != null
+                                            && users.get(0).getName() != null
+                                                    ? users.get(0).getName()
+                                                    : authorId))
                             .staleTime(Duration.ofMinutes(10))
                             .build()
                     : null;
@@ -74,17 +68,17 @@ public class SchematicDetailDialog extends SolimDialog {
 
         @Override
         protected Element build() {
-            return column().grow().padding(unit(2)).gap(unit(2)).children(() -> {
+            return column().props(grow(), padding(unit(2)), gap(unit(2))).children(() -> {
                 when(isPortrait())
                         .thenDo(this::portraitLayout)
                         .elseDo(this::landscapeLayout)
-                        .grow();
+                        .props(grow());
             }).element();
         }
 
         private Component portraitLayout() {
-            return scroll().grow().children(() -> {
-                column().grow().top().left().gap(unit(4)).children(() -> {
+            return scroll().props(grow()).children(() -> {
+                column().props(grow(), top(), left(), gap(unit(4))).children(() -> {
                     previewImagePortrait();
                     details();
                 });
@@ -92,8 +86,8 @@ public class SchematicDetailDialog extends SolimDialog {
         }
 
         private Component landscapeLayout() {
-            return scroll().grow().children(() -> {
-                row().grow().center().top().gap(unit(4)).children(() -> {
+            return scroll().props(grow()).children(() -> {
+                row().props(grow(), center(), top(), gap(unit(4))).children(() -> {
                     previewImageLandscape();
                     details();
                 });
@@ -101,52 +95,56 @@ public class SchematicDetailDialog extends SolimDialog {
         }
 
         private void previewImagePortrait() {
-            row().grow().children(() -> {
-                networkImage(BrowserImages.schematicImageUrl(itemId))
-                        .placeholder(Icon.image)
-                        .fallback(Icon.image)
-                        .origin(Align.top | Align.left)
-                        .grow()
-                        .top()
-                        .scaling(Scaling.fit);
+            row().props(grow()).children(() -> {
+                image(BrowserImages.schematicImageUrl(itemId))
+                        .props(
+                                origin(Align.top | Align.left),
+                                grow(),
+                                top(),
+                                placeholder(Icon.image),
+                                fallback(Icon.image),
+                                scaling(Scaling.fit)
+                        );
             });
         }
 
         private void previewImageLandscape() {
-            row().grow().children(() -> {
-                networkImage(BrowserImages.schematicImageUrl(itemId))
-                        .origin(Align.top)
-                        .placeholder(Icon.image)
-                        .fallback(Icon.image)
-                        .grow()
-                        .top()
-                        .scaling(Scaling.fit);
+            row().props(grow()).children(() -> {
+                image(BrowserImages.schematicImageUrl(itemId))
+                        .props(
+                                origin(Align.top),
+                                grow(),
+                                top(),
+                                placeholder(Icon.image),
+                                fallback(Icon.image),
+                                scaling(Scaling.fit)
+                        );
             });
         }
 
         private void details() {
-            column().grow().gap(unit(2)).children(() -> {
-                card(WebStyles.previewCardBackground()).padding(unit(4)).gap(unit(2)).growX().children(() -> {
-                    row().growX().gap(unit(1)).children(() -> {
-                        text(Core.bundle.get("browser.detail.author")).color(Color.lightGray).fontScale(1.3f);
+            column().props(grow(), gap(unit(2))).children(() -> {
+                card(WebStyles.previewCardBackground()).props(padding(unit(4)), growX(), gap(unit(2))).children(() -> {
+                    row().props(growX(), gap(unit(1))).children(() -> {
+                        text(Core.bundle.get("browser.detail.author")).props(color(Color.lightGray), fontScale(1.3f));
                         if (authorQuery != null) {
                             query(authorQuery)
-                            .growX()
-                                    .loading(() -> text(authorId != null ? authorId : "").color(Color.white).fontScale(1.3f))
-                                    .error(err -> text(authorId != null ? authorId : "").color(Color.white).fontScale(1.3f))
-                                    .data(name -> text(name).color(Color.white).fontScale(1.3f));
+                                    .props(growX())
+                                    .loading(() -> text(authorId != null ? authorId : "").props(color(Color.white), fontScale(1.3f)))
+                                    .error(err -> text(authorId != null ? authorId : "").props(color(Color.white), fontScale(1.3f)))
+                                    .data(name -> text(name).props(color(Color.white), fontScale(1.3f)));
                         } else {
-                            text(authorId != null ? authorId : "").color(Color.white).fontScale(1.3f);
+                            text(authorId != null ? authorId : "").props(color(Color.white), fontScale(1.3f));
                         }
                     });
 
-                    row().growX().gap(unit(1)).children(() -> {
-                        text(Core.bundle.get("browser.detail.dimensions")).color(Color.lightGray);
-                        text(detail.getWidth() + "x" + detail.getHeight()).color(Color.white);
+                    row().props(growX(), gap(unit(1))).children(() -> {
+                        text(Core.bundle.get("browser.detail.dimensions")).props(color(Color.lightGray));
+                        text(detail.getWidth() + "x" + detail.getHeight()).props(color(Color.white));
                     });
                 });
 
-                card(WebStyles.previewCardBackground()).padding(unit(4)).gap(unit(2)).growX().children(() -> {
+                card(WebStyles.previewCardBackground()).props(padding(unit(4)), growX(), gap(unit(2))).children(() -> {
                     new BrowserStatsBadge(
                             BrowserImages.count(detail.getLikes()),
                             BrowserImages.count(detail.getComments()),
@@ -158,25 +156,21 @@ public class SchematicDetailDialog extends SolimDialog {
                 renderRequirements();
 
                 if (detail.getDescription() != null && !detail.getDescription().isEmpty()) {
-                    card(WebStyles.previewCardBackground()).padding(unit(4)).gap(unit(2)).growX().children(() -> {
-                        text(detail.getDescription()).color(Color.lightGray).wrap(true).left().growX();
+                    card(WebStyles.previewCardBackground()).props(padding(unit(4)), growX(), gap(unit(2))).children(() -> {
+                        text(detail.getDescription()).props(color(Color.lightGray), textWrap(true), left(), growX());
                     });
                 }
 
                 divider();
 
-                row().growX().gap(unit(2)).children(() -> {
+                row().props(growX(), gap(unit(2))).children(() -> {
                     button(Core.bundle.get("browser.schematic.copy"),
                             () -> SchematicActions.copyToClipboard(itemId))
-                                    .style(WebStyles.primary())
-                                    .growX()
-                                    .height(unit(11));
+                            .props(style(WebStyles.primary()), growX(), height(unit(11)), prefHeight(unit(11)));
 
                     button(Core.bundle.get("browser.schematic.save"),
                             () -> SchematicActions.saveToLocal(itemId))
-                                    .style(WebStyles.primary())
-                                    .growX()
-                                    .height(unit(11));
+                            .props(style(WebStyles.primary()), growX(), height(unit(11)), prefHeight(unit(11)));
                 });
             });
         }
@@ -189,12 +183,12 @@ public class SchematicDetailDialog extends SolimDialog {
                 return;
             }
 
-            card(WebStyles.previewCardBackground()).growX().top().left().padding(unit(4)).gap(unit(2)).children(() -> {
-                text(Core.bundle.get("browser.detail.requirements")).color(Color.white).growX().left();
-                wrap().growX().left().gap(unit(2)).children(() -> {
+            card(WebStyles.previewCardBackground()).props(growX(), padding(unit(4)), top(), left(), gap(unit(2))).children(() -> {
+                text(Core.bundle.get("browser.detail.requirements")).props(color(Color.white), growX(), left());
+                wrap().props(growX(), left(), gap(unit(2))).children(() -> {
                     for (ItemStack stack : requirements) {
-                        row().center().gap(unit(1)).left().children(() -> {
-                            image(new TextureRegionDrawable(stack.item.uiIcon)).size(unit(6));
+                        row().props(center(), gap(unit(1)), left()).children(() -> {
+                            image(new TextureRegionDrawable(stack.item.uiIcon)).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                             text(requirementLabel(stack));
                         });
                     }

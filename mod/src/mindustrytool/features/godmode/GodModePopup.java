@@ -11,10 +11,6 @@ import solim.core.Component;
 import solim.overlay.Popup;
 import solim.reactive.Readable;
 
-/**
- * QuickAccess popup shell for GodMode. Reuses the shared icon-only horizontal
- * row layout from GodModeHudView inside a black rounded container.
- */
 public final class GodModePopup {
 
     private static @Nullable Popup<GodModeFeature> menu;
@@ -40,7 +36,7 @@ public final class GodModePopup {
         }
         if (menu == null) {
             menu = popup();
-            menu.children(GodModePopup::buildContent);
+            menu.items(GodModePopup::buildContent);
         }
         QuickAccessPopupHelper.show(menu, feature, quickAccessBar);
     }
@@ -58,11 +54,7 @@ public final class GodModePopup {
         Readable<Boolean> canEdit = feature.enabled();
 
         return row()
-                .padding(unit(1))
-                .rounded(unit(2), WebStyles.Colors.SECTION_BG)
-                .border(1.5f, WebStyles.Colors.BORDER)
-                .gap(unit(1))
-                .center()
+                .props(padding(unit(1)), rounded(unit(2), WebStyles.Colors.SECTION_BG), border(1.5f, WebStyles.Colors.BORDER), gap(unit(1)), center())
                 .children(() -> GodModeHudView.buildControls(feature, canEdit));
     }
 }

@@ -28,22 +28,23 @@ Unlike web frameworks or backend component trees, Solim operates inside a **sing
                    ▼                                       ▼
 ┌──────────────────────────────────────┐ ┌────────────────────────────────────┐
 │      :solim-core (Public APIs)       │ │  :solim-runtime (Internal Engine)  │
-│  BaseComponent, Signal, Computed,    │ │  AttachmentStack, OwnershipContext,    │
-│  Effect, Binding, Column, Row,       │ │  ReactiveContext, SignalDispatcher,│
-│  ReactiveGrid, Button, Text, etc.    │ │  StructuralReconciler              │
+│  Signal, Computed, Effect, Binding,  │ │  AttachmentStack, OwnershipContext,│
+│  Column, Row, ReactiveGrid, Button,  │ │  OwnershipScope, ReactiveContext,  │
+│  Text, etc.                          │ │  SignalDispatcher, Reconciler     │
 └──────────────────┬───────────────────┘ └─────────────────┬──────────────────┘
                    │ depends on                            │ depends on
                    └───────────────────┬───────────────────┘
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                       :solim-api (Minimal Contracts)                        │
-│   Component, Disposable, ReactiveObserver, SchedulableEffect, SpacingAware   │
+│   Component, Disposable, DisposableOwner, ReactiveObserver, ReactiveSource, │
+│   SchedulableEffect, SpacingAware                                           │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 | Module | Access Level | Description |
 |---|---|---|
-| `:solim-api` | Public | Foundational interfaces with zero dependencies (`Component`, `Disposable`, `ReactiveObserver`, `SchedulableEffect`, `SpacingAware`). |
+| `:solim-api` | Public | Foundational interfaces and base `Component` (`Component`, `Disposable`, `DisposableOwner`, `ReactiveObserver`, `ReactiveSource`, `SchedulableEffect`, `SpacingAware`). |
 | `:solim-runtime` | Internal engine | Stack-based contexts, reconciliation algorithms, and frame-rate event loop dispatchers. **Hidden from mods**. |
 | `:solim-core` | Public framework | Reactive primitives, layout containers, Arc Scene2D widget wrappers, modifier mixins, and configuration bridges. |
 | `:solim` | Public facade | Single-entry static facade (`solim.UI`) providing mod developer ergonomics. |
@@ -65,24 +66,26 @@ public interface Disposable {
 
 ### 2.2 `Component`
 ```java
-public interface Component extends Disposable {
-    Element element();
-    @Override default void dispose() {}
+public abstract class Component implements DisposableOwner {
+    public final Element element() { ... }
+    protected Element build() { ... }
+    public final <T extends Disposable> T own(@Nullable T resource) { ... }
+    @Override public void dispose() { ... }
 }
 ```
-- **Role**: Unit of UI composition owning an underlying Arc `Element`.
-- **Contract**: Calling `element()` returns the root Arc Scene2D widget. Calling `element()` on a disposed component throws an `IllegalStateException`.
+- **Role**: Base unit of UI composition owning an underlying Arc `Element`.
+- **Contract**: Calling `element()` returns the root Arc Scene2D widget (evaluating `build()` lazily on first access). Calling `element()` on a disposed component throws an `IllegalStateException`.
 
 ### 2.3 `ReactiveObserver`
 ```java
 public interface ReactiveObserver {
-    void addDependency(Object observable);
+    void addDependency(ReactiveSource observable);
     void invalidate();
 }
 ```
 - **Role**: Represents a node in the reactive dependency graph (`Computed`, `Effect`).
 - **Contract**:
-  - `addDependency(Object)`: Called during evaluation when a `Signal` or `Computed` is accessed via `.get()`.
+  - `addDependency(ReactiveSource)`: Called during evaluation when a `Signal` or `Computed` is accessed via `.get()`.
   - `invalidate()`: Called by an upstream dependency when its value changes, notifying this observer that its state is stale.
 
 ### 2.4 `SchedulableEffect`
@@ -117,8 +120,8 @@ The engine relies on thread-local-free ambient stacks because Mindustry runs its
 │         AttachmentStack            │ Manages active layout container for        │
 │    Deque<AttachmentStack.Entry>    │ declarative child attachment.              │
 ├────────────────────────────────┼────────────────────────────────────────────┤
-│       OwnershipContext         │ Tracks the active BaseComponent.build()    │
-│  Deque<Consumer<Disposable>>   │ scope to automatically own child resources.│
+│       OwnershipContext         │ Tracks the active Component.build()        │
+│  Deque<DisposableOwner>        │ scope to automatically own child resources.│
 ├────────────────────────────────┼────────────────────────────────────────────┤
 │       ReactiveContext          │ Tracks active ReactiveObserver (Computed   │
 │   Deque<ReactiveObserver>      │ or Effect) collecting .get() dependencies. │
@@ -134,19 +137,20 @@ Manages implicit parent-child hierarchy construction for declarative blocks like
 | Field | Type | Role & Purpose | Why It Exists |
 |---|---|---|---|
 | `stack` | `Deque<Entry>` | Stack of active parent `Table`s and their `Attacher` strategies. | Enables nested declarative syntax (`row(() -> { column(() -> { ... }); });`) without explicitly passing parent references. |
-| `pendingComponents` | `Map<Table, List<Component>>` | Stash of components instantiated during parent's `children()` block. | Ensures child components are **fully constructed** before their `.element()` is resolved and attached to Arc Scene2D. |
+| `pendingComponents` | `List<Component>` (on `Entry`) | Per-`Entry` stash of components instantiated during parent's `children()` block. | Ensures child components are **fully constructed** before their `.element()` is resolved and attached to Arc Scene2D. |
 | `tableAttachers` | `Map<Table, Attacher>` | Custom cell attachment rules mapped by `Table`. | Allows `Column`, `Row`, `Grid`, and `Card` to dictate how children are added (e.g., calling `.row()` after vertical items). |
-| `cellConfigurator` | `BiConsumer<Cell<?>, Element>` | Global hook executed whenever an element is attached to a cell. | Automatically applies `PendingCellConfig` constraints and triggers `GapContainer.respace()`. |
+| `cellConfigurator` | `CellConfigurator` | 3-argument hook (`(Cell<?>, Element, Component)`) executed whenever an element is attached to a cell. | Automatically applies `PendingCellConfig` constraints and triggers `GapContainer.respace()`. |
 
 #### Inner Classes
 - `AttachmentStack.Attacher`: Functional interface `Cell<?> attach(Table parent, Element child)` defining container-specific placement logic.
-- `AttachmentStack.Entry`: Stores the `Table` and its `Attacher` pair.
+- `AttachmentStack.Entry`: Stores the `Table`, its `Attacher` pair, and its per-entry `pendingComponents` list.
+- `AttachmentStack.CellConfigurator`: Functional interface `void configure(Cell<?> cell, Element child, @Nullable Component component)`.
 
 #### Key Mechanics & Lifecycle
-1. **`push(Table parent, Attacher attacher)`**: Pushes container onto `stack`.
+1. **`push(Table parent, Attacher attacher)`**: Pushes container entry onto `stack`.
 2. **`attachToParent(Element child)`**: If `stack` is not empty, peeks the current table, attaches pending components first, then attaches `child` using the active `attacher`.
-3. **`isolate(Supplier<T> supplier)`**: Saves the current stack, clears it during `supplier.get()`, and restores it in a `finally` block. **Prevents accidental parent-child hijacking** when creating standalone dialogs or detached components.
-4. **`registerPendingComponent(Component component, Table parent)`**: Registers a child component to be attached only when `parent` is popped from the stack.
+3. **`isolate(Prov<T> supplier)`**: Saves the current stack, clears it during `supplier.get()`, and restores it in a `finally` block. **Prevents accidental parent-child hijacking** when creating standalone dialogs or detached components.
+4. **`registerPendingComponent(Component component, Table parent)`**: Registers a child component to be attached to the matching `Entry` only when `parent` is popped from the stack.
 
 ---
 
@@ -156,24 +160,29 @@ Enables automatic, ambient resource ownership without manual `.own()` boilerplat
 #### Fields
 | Field | Type | Role & Purpose | Why It Exists |
 |---|---|---|---|
-| `stack` | `Deque<Consumer<Disposable>>` | Stack of resource registrars belonging to currently building `BaseComponent` instances. | Enables nested components to capture their own effects, bindings, and sub-components automatically. |
-| `paused` | `int` | Re-entrancy counter for temporarily disabling auto-ownership. | Used by `StructuralReconciler` so recycled or cached components are not accidentally re-registered into a temporary scope. |
+| `stack` | `Deque<DisposableOwner>` | Stack of owners belonging to currently building `Component` or `OwnershipScope` instances. | Enables nested components to capture their own effects, bindings, and sub-components automatically. |
+| `paused` | `int` | Re-entrancy counter for temporarily disabling auto-ownership. | Used by `StructuralReconciler` and `OwnershipScope` so recycled or adopted components are not accidentally captured into a temporary outer scope. |
 
 #### Key Mechanics
 ```java
-// Inside BaseComponent.element():
-OwnershipContext.push(this::own);
+// Inside Component.element():
+OwnershipContext.push(this);
 try {
     cached = build();
 } finally {
-    OwnershipContext.pop();
+    OwnershipContext.pop(this);
 }
 ```
 Whenever an `Effect`, `Binding`, or child `Component` is created:
 ```java
 OwnershipContext.register(disposable);
 ```
-If a parent is currently building, its registrar captures the disposable. When that parent is later disposed, all captured disposables are freed automatically.
+If a parent is currently building, its registrar captures the disposable via `adopt()`. When that parent is later disposed, all captured disposables are freed automatically.
+
+`OwnershipScope` provides an isolated ownership session for dynamic builds:
+```java
+OwnershipScope.build(() -> factory.apply(item));
+```
 
 ---
 
@@ -186,8 +195,8 @@ Stack-based dynamic dependency tracking engine.
 | `stack` | `Deque<ReactiveObserver>` | Stack of observers currently evaluating (`Computed` or `Effect`). | Tracks fine-grained dependencies dynamically as `.get()` is invoked during computation. |
 
 #### Key Mechanics
-1. **`track(Object observable)`**: When `signal.get()` or `computed.get()` is executed, it calls `ReactiveContext.track(this)`. If an observer is on the stack, it records the dependency.
-2. **`untracked(Supplier<T>)`**: Suspends dependency collection while running code that should not trigger reactive re-evaluations (used inside reconcilers and event dispatchers).
+1. **`track(ReactiveSource observable)`**: When `signal.get()` or `computed.get()` is executed, it calls `ReactiveContext.track(this)`. If an observer is on the stack, it records the dependency.
+2. **`untracked(Prov<T>)`**: Suspends dependency collection while running code that should not trigger reactive re-evaluations (used inside reconcilers and event dispatchers).
 
 ---
 
@@ -239,7 +248,7 @@ Keyed identity reconciliation engine for dynamic lists (`ForEach`, `ReactiveGrid
 #### Reconciliation Algorithm (`reconcile`)
 1. Iterates through new items and extracts each item's key `K`.
 2. **Key exists in `activeComponents`**: Reuses existing component instance directly. No rebuild.
-3. **Key is new**: Executes `factory.apply(item)` in an isolated context (`AttachmentStack.isolate()` + `withoutAutoOwnership()`), eagerly forces `.element()`, and registers it in `nextComponents`.
+3. **Key is new**: Executes `factory.apply(item)` in an isolated context (`AttachmentStack.isolate()` + `OwnershipScope.build(...)`), eagerly forces `.element()`, and registers it in `nextComponents`.
 4. **Key was removed**: Any key in `activeComponents` that is absent from `nextComponents` is immediately disposed via `comp.dispose()`.
 5. Swaps `activeComponents` with `nextComponents`.
 
@@ -299,8 +308,8 @@ A lazily-evaluated, memoized reactive derivation with automatic dynamic dependen
 | `hasValue` | `boolean` | True if computed at least once. | Differentiates between uncomputed state and a computed `null`. |
 | `dirty` | `boolean` | True if dependencies changed and re-evaluation is needed. | Enables lazy recomputation only when read. |
 | `computing` | `boolean` | Re-entrancy guard flag. | Detects circular computation loops (`A -> B -> A`) and throws `IllegalStateException`. |
-| `dependencies` | `Set<Object>` | Upstream signals/computeds currently observed. | Stored to allow unsubscribing when dependencies change dynamically. |
-| `collecting` | `Set<Object>` | Temporary dependency bucket during recomputation. | Populated via `ReactiveContext.track()`. |
+| `dependencies` | `Set<ReactiveSource>` | Upstream signals/computeds currently observed. | Stored to allow unsubscribing when dependencies change dynamically. |
+| `collecting` | `Set<ReactiveSource>` | Temporary dependency bucket during recomputation. | Populated via `ReactiveContext.track()`. |
 | `observers` | `Set<ReactiveObserver>` | Downstream computeds/effects depending on this computed. | Propagates invalidation down the graph. |
 | `listeners` | `List<Consumer<T>>` | Manual consumers subscribed to changes. | Triggers eager recompute when listeners exist. |
 
@@ -331,14 +340,14 @@ Executes side effects in response to dependency changes, with automatic cleanup 
 | `runnable` | `Runnable` | Simple effect action. | Executed on evaluation. |
 | `supplierWithCleanup` | `Supplier<Runnable>` | Effect returning a cleanup action. | Allows effects to register teardown logic (e.g. unregistering timers). |
 | `cleanupConsumer` | `Consumer<Cleanup>` | Consumer accepting a multi-cleanup registry. | Supports registering multiple teardown tasks. |
-| `dependencies` | `Set<Object>` | Upstream reactive dependencies. | Allows auto-unsubscribing and resubscribing. |
+| `dependencies` | `Set<ReactiveSource>` | Upstream reactive dependencies. | Allows auto-unsubscribing and resubscribing. |
 | `cleanups` | `List<Runnable>` | Teardown actions from previous executions. | Executed before the next effect run and on disposal. |
 | `running` | `boolean` | Execution guard flag. | Prevents nested re-entrancy. |
 | `pending` | `boolean` | Scheduled execution flag. | Prevents enqueuing duplicate entries in `SignalDispatcher`. |
 | `disposed` | `boolean` | Cleanup status. | Halts all future executions. |
 
 #### Lifecycle
-1. **Initial Run**: Executes immediately upon creation within `BaseComponent.build()`. Automatically owned by `OwnershipContext`.
+1. **Initial Run**: Executes immediately upon creation within `Component.build()`. Automatically owned by `OwnershipContext`.
 2. **Invalidation**: When any dependency changes, `invalidate()` is called:
    - Sets `pending = true`.
    - Calls `SignalDispatcher.enqueue(this)`.
@@ -430,18 +439,18 @@ Buffers parent-cell settings before the element is attached to an Arc `Table`.
 #### Automatic Hook via `AttachmentStack`
 When `PendingCellConfig` class loads:
 ```java
-AttachmentStack.setCellConfigurator((cell, child) -> {
-    PendingCellConfig config = find(child);
+AttachmentStack.setCellConfigurator((cell, child, comp) -> {
+    PendingCellConfig config = comp != null ? find(comp) : null;
+    if (config == null) {
+        config = find(child);
+    }
     if (config != null) {
         List<Disposable> effects = config.applyToCell(cell);
         for (Disposable effect : effects) {
             OwnershipContext.register(effect);
         }
     }
-    Table t = cell.getTable();
-    if (t != null && t.userObject instanceof GapContainer) {
-        ((GapContainer) t.userObject).respace();
-    }
+    GapContainer.respace(cell.getTable());
 });
 ```
 Every time a child is added, its cell configuration is applied immediately, and reactive bindings (e.g. reactive width/margins) are automatically registered into `OwnershipContext`.
@@ -480,7 +489,7 @@ Row with gap(8):
 Vertical layout container wrapping an Arc `Table`.
 - **Attacher Strategy (`Column.ATTACHER`)**:
   - Adds child to table.
-  - If `Ui.isExpanding(child)` is true, sets `cell.growY()`.
+  - If `SolimToken.isExpandingChild(child)` is true, sets `cell.growY()`.
   - Calls `cell.row()` to advance to the next line.
   - Invokes `GapContainer.spaceAttachedCell(table, cell, Direction.VERTICAL, gap)`.
 
@@ -488,7 +497,7 @@ Vertical layout container wrapping an Arc `Table`.
 Horizontal layout container wrapping an Arc `Table`.
 - **Attacher Strategy (`Row.ATTACHER`)**:
   - Adds child to table.
-  - If `Ui.isExpanding(child)` is true, sets `cell.growX()`.
+  - If `SolimToken.isExpandingChild(child)` is true, sets `cell.growX()`.
   - Does **not** call `cell.row()`.
   - Invokes `GapContainer.spaceAttachedCell(table, cell, Direction.HORIZONTAL, gap)`.
 
@@ -516,13 +525,38 @@ High-performance virtualized vertical list:
 
 ---
 
-## 6. Base Component Model (`BaseComponent`)
+### 5.5 Design Units & The Sizing Contract
 
-Every custom Solim component should extend `BaseComponent`.
+Every length a modifier accepts is a **design unit**, a scale-independent number. Arc then converts it to scene pixels through `Scl.scl(value)` when it lays the cell out, so the same UI renders proportionally on any display.
+
+```
+width(232)  ──recorded as──▶  PendingCellConfig.prefWidth = 232
+                                 │
+                                 ▼  AttachmentStack cell configurator
+                            Cell.width(232) = min = max = Scl.scl(232)
+                                 │
+                                 ▼  Table.layout()
+                            element.width = 232 * Scl.scl()
+                            (162px at the default 70% UI scale)
+```
+
+#### Rules
+- `width` / `height` / `size` are **cell-driving synonyms of `prefWidth` / `prefHeight`**: they fix the parent cell (`min = max = Scl.scl(value)`), not the raw element size. Use either vocabulary; `width(x)` and `prefWidth(x)` produce the same constraint and the same rendered size.
+- Do **not** pair `width(x)` with a different `prefWidth(y)`: both write the cell, and the last one wins. Pick one value.
+- A cell-less host (a `Hud` root added straight to `Core.scene`, a detached widget) has no parent cell to drive, so `PendingCellConfig` falls back to `element.setWidth/Height(Scl.scl(value))` directly. The fallback keeps the same scale contract; it never writes raw design units.
+- `element.getWidth()` / `element.getHeight()` return **rendered scene pixels** — the truth to read at runtime. `cellConfig().prefWidth.get()` returns the design-unit value the cell was built from. A design value of `232` rendering as `162px` at UI scale 70% is correct, not a bug.
+- `minWidth` / `maxWidth` (and the height pair) are bounds, not sizes: they never write the element directly and only constrain the cell.
+- `grow` / `growX` expand a cell but never weaken an explicit width: the floor a `width(x)` / `prefWidth(x)` pinned survives, so the cell still packs to `Scl.scl(x)` instead of collapsing to the child's content width. With no explicit width or `minWidth`, a growing cell keeps a floor of `0`.
+
+---
+
+## 6. Base Component Model (`Component`)
+
+Every custom Solim component extends `Component`.
 
 ```
 ┌────────────────────────────────────────────────────────┐
-│                     BaseComponent                      │
+│                       Component                        │
 ├────────────────────────────────────────────────────────┤
 │ - cached: Element (Lazily built Arc Element)           │
 │ - componentName: String (Element name / debug ID)      │
@@ -541,7 +575,7 @@ Every custom Solim component should extend `BaseComponent`.
 
 ### Lifecycle Rules
 1. **Lazy Execution**: `build()` is **not** called in the constructor. It is triggered only when `element()` is called.
-2. **Ambient Scope**: Inside `element()`, `OwnershipContext.push(this::own)` activates. Any `Effect`, `Binding`, or child component instantiated during `build()` is automatically added to `disposables`.
+2. **Ambient Scope**: Inside `element()`, `OwnershipContext.push(this)` activates. Any `Effect`, `Binding`, or child component instantiated during `build()` is automatically added to `disposables`.
 3. **LIFO Disposal**: Disposes resources in reverse order so downstream resources are torn down before upstream dependencies.
 4. **Auto-Naming**: If `name(...)` is not explicitly set, Solim generates a default name: `"solim-" + componentName + "-" + elementName`.
 
@@ -571,7 +605,7 @@ High-performance label wrapper:
 ### 7.4 Overlays (`SolimDialog` & `Hud`)
 - **`SolimDialog`**:
   - Wraps Mindustry `BaseDialog`.
-  - Deferred content compilation: `contentBuilder` is executed inside a `BaseComponent` when `.dialog()` or `.show()` is first invoked.
+  - Deferred content compilation: `contentBuilder` is executed inside a `Component` when `.dialog()` or `.show()` is first invoked.
   - Built-in `addCloseButton()`, `closeOnBack()`, and responsive `maxWidth(500f)`.
 - **`Hud`**:
   - Floating non-modal overlay added directly to `Core.scene`.
@@ -583,9 +617,9 @@ High-performance label wrapper:
 
 ## 8. Complete End-to-End Examples
 
-### 8.1 Custom Reactive Component Extending `BaseComponent`
+### 8.1 Custom Reactive Component Extending `Component`
 ```java
-public class CounterWidget extends BaseComponent {
+public class CounterWidget extends Component {
     private final Signal<Integer> count = Signal.of(0);
 
     @Override
@@ -593,15 +627,15 @@ public class CounterWidget extends BaseComponent {
         Computed<String> labelText = count.map(c -> "Current Count: " + c);
         Computed<Color> labelColor = count.map(c -> c > 5 ? Color.scarlet : Color.white);
 
-        return row().gap(unit(2)).children(() -> {
+        return row().props(gap(unit(2))).children(() -> {
             text(labelText)
-                .color(labelColor);
+                .props(color(labelColor));
 
             button("+", () -> count.update(c -> c + 1))
-                .size(unit(10));
+                .props(size(unit(10)), prefWidth(unit(10)), prefHeight(unit(10)));
 
             button("Reset", () -> count.set(0))
-                .enabled(count.map(c -> c > 0));
+                .props(enabled(count.map(c -> c > 0)));
         }).element();
     }
 }
@@ -609,16 +643,16 @@ public class CounterWidget extends BaseComponent {
 
 ### 8.2 Responsive Keyed Grid with `ReactiveGrid`
 ```java
-public class ItemPickerView extends BaseComponent {
+public class ItemPickerView extends Component {
     private final Signal<Seq<Item>> items = Signal.of(new Seq<>());
     private final Signal<Integer> columns = Signal.of(4);
 
     @Override
     protected Element build() {
-        return column().grow().children(() -> {
+        return column().props(grow()).children(() -> {
             // Header
-            row().growX().children(() -> {
-                text("Select Item").growX();
+            row().props(growX()).children(() -> {
+                text("Select Item").props(growX());
                 button("Refresh", this::loadItems);
             });
 
@@ -645,21 +679,20 @@ public class MiniMapHud extends Hud {
     private final Signal<Float> posY = Signal.of(100f);
 
     public MiniMapHud() {
-        x(posX);
-        y(posY);
+        props(position(posX, posY));
         toFrontOnTouch();
 
         children(() -> {
-            card().padding(unit(2)).gap(unit(1)).children(() -> {
+            card().props(padding(unit(2)), gap(unit(1))).children(() -> {
                 // Header serves as the drag handle
-                row().growX().children(() -> {
-                    text("MiniMap").growX();
+                row().props(growX()).children(() -> {
+                    text("MiniMap").props(growX());
                     icon(Icon.move).draggable(this, posX, posY);
                 });
 
                 // Content
                 image(Core.atlas.find("minimap-placeholder"))
-                    .size(unit(40));
+                    .props(size(unit(40)), prefWidth(unit(40)), prefHeight(unit(40)));
             });
         });
     }
@@ -677,7 +710,7 @@ public class MiniMapHud extends Hud {
    - Use `signal.peek()` if an untracked read is genuinely required (e.g. inside an `onClick` callback).
 2. **Never manually instantiate or update Scene2D widgets imperatively**:
    - Do not call `new Table()` or `new Label()` when Solim abstractions exist (`row()`, `column()`, `text()`).
-3. **Never call `BaseComponent.own()` from mod code**:
+3. **Never call `Component.own()` from mod code**:
    - Ambient ownership handles this automatically via `OwnershipContext`.
 4. **Never use static `grid()` for dynamic items**:
    - Always use `reactiveGrid(...)` with a stable key extractor.
@@ -685,6 +718,6 @@ public class MiniMapHud extends Hud {
 ### ✅ Code Review Invariants
 - [ ] Every user-visible text string uses a `bundle.properties` translation key.
 - [ ] No Java 9+ standard library APIs are used (must remain Java 8 runtime compatible).
-- [ ] Subscribed effects and event listeners are properly registered with `OwnershipContext` or `BaseComponent.listen()`.
+- [ ] Subscribed effects and event listeners are properly registered with `OwnershipContext` or `Component.listen()`.
 - [ ] All HTTP calls use `mindustrytool.services.Request`.
 - [ ] Dialogs call `maxWidth(500f)` and center content.

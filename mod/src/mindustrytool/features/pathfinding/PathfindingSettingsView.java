@@ -1,28 +1,23 @@
 package mindustrytool.features.pathfinding;
 
-import static solim.UI.button;
-import static solim.UI.checkbox;
-import static solim.UI.column;
-import static solim.UI.divider;
-import static solim.UI.row;
-import static solim.UI.scroll;
-import static solim.UI.slider;
-import static solim.UI.spacer;
-import static solim.UI.text;
-import static solim.UI.unit;
+import static solim.UI.*;
 
 import arc.Core;
 import arc.scene.Element;
-import mindustry.ui.Styles;
-import solim.core.BaseComponent;
-import solim.reactive.Readable;
+import mindustry.gen.Icon;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingKeybindCard;
+import mindustrytool.components.SettingScaffold;
+import mindustrytool.components.SettingSlider;
+import mindustrytool.components.WebStyles;
+import solim.core.Component;
 
-public class PathfindingSettingsView extends BaseComponent {
+public class PathfindingSettingsView extends Component {
 
     private final PathfindingFeature feature;
 
     private static final String[] COST_KEY_SUFFIXES = {
-        "ground", "legs", "naval", "neoplasm", "none", "hover"
+            "ground", "legs", "naval", "neoplasm", "none", "hover"
     };
 
     public PathfindingSettingsView(PathfindingFeature feature) {
@@ -31,68 +26,96 @@ public class PathfindingSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        Readable<String> zoomText = feature.zoomThresholdConfig.signal().map(v -> {
-            float zoom = v != null ? v : 0.5f;
-            return zoom <= 0.01f
-                    ? Core.bundle.get("feature.pathfinding.settings.off", "Off")
-                    : String.format("%.1fx", zoom);
+        return SettingScaffold.build(() -> {
+            headerCard();
+            layersCard();
+            visualStylingCard();
+            costTypesCard();
+            keybindsCard();
+            actionsCard();
         });
+    }
 
-        Readable<String> opacityText = feature.opacityConfig.signal().map(v -> {
-            float op = v != null ? v : 1.0f;
-            return Math.round(op * 100) + "%";
-        });
+    private void keybindsCard() {
+        SettingKeybindCard.forFeature(feature);
+    }
 
-        return column().grow().center().children(() -> {
-            scroll().center().children(() -> {
-                column().growX().gap(unit(2)).children(() -> {
+    private Component headerCard() {
+        return SettingCard.header(feature, Core.bundle.get("feature.pathfinding.badge.navigation", "NAVIGATION"));
+    }
+
+    private Component layersCard() {
+        return SettingCard.section(Icon.layers,
+                Core.bundle.get("feature.pathfinding.settings.layers", "Display Layers"), () -> {
                     checkbox(Core.bundle.get("feature.pathfinding.settings.draw-unit-path", "Draw Unit Paths"),
-                            feature.drawUnitPathConfig.signal()).growX();
+                            feature.drawUnitPathConfig.signal()).props(growX());
+
+                    divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
                     checkbox(Core.bundle.get("feature.pathfinding.settings.draw-spawn-path", "Draw Spawn Point Paths"),
-                            feature.drawSpawnPathConfig.signal()).growX();
+                            feature.drawSpawnPathConfig.signal()).props(growX());
+
+                    divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
                     checkbox(Core.bundle.get("feature.pathfinding.settings.draw-allies", "Draw Ally Unit Paths"),
-                            feature.drawAlliesConfig.signal()).growX();
-
-                    divider();
-
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.pathfinding.settings.min-zoom", "Min Zoom")).left();
-                        spacer();
-                        slider(feature.zoomThresholdConfig.signal(), 0.0f, 5.0f, 0.1f);
-                        row().width(unit(12)).children(() -> {
-                            text(zoomText);
-                        });
-                    });
-
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.pathfinding.settings.opacity", "Opacity")).left();
-                        spacer();
-                        slider(feature.opacityConfig.signal(), 0.05f, 1.0f, 0.05f);
-                        row().width(unit(12)).children(() -> {
-                            text(opacityText);
-                        });
-                    });
-
-                    divider();
-
-                    text(Core.bundle.get("feature.pathfinding.settings.cost-types", "Cost Types")).left();
-
-                    for (int i = 0; i < feature.costTypeConfigs.length; i++) {
-                        String bundleKey = "feature.pathfinding.settings.cost." + COST_KEY_SUFFIXES[i];
-                        checkbox(Core.bundle.get(bundleKey, COST_KEY_SUFFIXES[i]),
-                                feature.costTypeConfigs[i].signal()).growX();
-                    }
-
-                    divider();
-
-                    button(Core.bundle.get("feature.pathfinding.settings.reset", "Reset to Defaults"),
-                            feature::resetToDefaults)
-                            .style(Styles.defaultb)
-                            .growX();
+                            feature.drawAlliesConfig.signal()).props(growX());
                 });
-            });
-        }).element();
+    }
+
+    private Component visualStylingCard() {
+        return SettingCard.section(Icon.spray,
+                Core.bundle.get("feature.pathfinding.settings.visual-styling", "Visual Styling"), () -> {
+
+                    SettingSlider.of(
+                            Core.bundle.get("feature.pathfinding.settings.min-zoom", "Min Zoom"),
+                            feature.zoomThresholdConfig.signal(),
+                            0.0f,
+                            5.0f,
+                            0.1f,
+                            feature.zoomThresholdConfig.signal().map(v -> {
+                                float zoom = v != null ? v : 0.5f;
+                                return zoom <= 0.01f
+                                        ? Core.bundle.get("feature.pathfinding.settings.off", "Off")
+                                        : String.format("%.1fx", zoom);
+                            }));
+
+                    SettingSlider.of(
+                            Core.bundle.get("feature.pathfinding.settings.opacity", "Opacity"),
+                            feature.opacityConfig.signal(),
+                            0.05f,
+                            1.0f,
+                            0.05f,
+                            feature.opacityConfig.signal().map(v -> {
+                                float op = v != null ? v : 1.0f;
+                                return Math.round(op * 100) + "%";
+                            }));
+                });
+    }
+
+    private Component costTypesCard() {
+        return SettingCard.section(Icon.terrain,
+                Core.bundle.get("feature.pathfinding.settings.cost-types", "Movement Cost Types"), () -> {
+                    wrap().props(gap(unit(1.5f))).children(() -> {
+                        for (int i = 0; i < feature.costTypeConfigs.size; i++) {
+                            final int index = i;
+                            String bundleKey = "feature.pathfinding.settings.cost." + COST_KEY_SUFFIXES[index];
+                            button(Core.bundle.get(bundleKey, COST_KEY_SUFFIXES[index]),
+                                    () -> feature.costTypeConfigs.get(index)
+                                            .set(!Boolean.TRUE.equals(feature.costTypeConfigs.get(index).signal().peek())))
+                                    .props(style(WebStyles.filterChipText()), checked(feature.costTypeConfigs.get(index).signal().map(v -> Boolean.TRUE.equals(v))), height(unit(8)), prefHeight(unit(8)), paddingX(unit(2f)));
+                        }
+                    });
+                });
+    }
+
+    private Component actionsCard() {
+        return SettingCard.card().children(() -> {
+            button(feature::resetToDefaults)
+                    .props(style(WebStyles.outline()), growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
+                    .children(() -> {
+                        icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
+                        text(Core.bundle.get("feature.pathfinding.settings.reset", "Reset to Defaults"));
+                    });
+        });
     }
 }

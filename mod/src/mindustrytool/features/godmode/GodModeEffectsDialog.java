@@ -10,6 +10,7 @@ import mindustry.gen.Icon;
 import mindustry.type.StatusEffect;
 import mindustrytool.components.WebStyles;
 import solim.overlay.SolimDialog;
+import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
@@ -27,7 +28,7 @@ public class GodModeEffectsDialog extends SolimDialog {
         addCloseButton();
         closeOnBack();
 
-        durationString.subscribe(s -> {
+        Effect.of(durationString, s -> {
             if (s != null) {
                 try {
                     float val = Float.parseFloat(s.trim());
@@ -47,73 +48,54 @@ public class GodModeEffectsDialog extends SolimDialog {
         });
 
         children(() -> {
-            column().gap(unit(2.5f)).padding(unit(3)).children(() -> {
-                row().growX().gap(unit(1.5f))
-                        .padding(unit(1.5f))
-                        .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
-                        .border(1.5f, WebStyles.Colors.BORDER_INPUT)
-                        .center()
+            column().props(padding(unit(3)), gap(unit(2.5f))).children(() -> {
+                row().props(growX(), padding(unit(1.5f)), rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1.5f, WebStyles.Colors.BORDER_INPUT), gap(unit(1.5f)), center())
                         .children(() -> {
-                            icon(Icon.zoom).size(unit(4.5f)).color(WebStyles.Colors.GHOST_FG);
+                            icon(Icon.zoom).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f)), color(WebStyles.Colors.GHOST_FG));
                             textField(searchQuery)
-                                    .growX()
-                                    .height(unit(8))
-                                    .style(WebStyles.clearInput())
-                                    .placeholder(Core.bundle.get("feature.god-mode.common.search"));
+                                    .props(style(WebStyles.clearInput()), growX(), height(unit(8)), prefHeight(unit(8)), placeholder(Core.bundle.get("feature.god-mode.common.search")));
                         });
 
-                text(Core.bundle.get("feature.god-mode.effects.select-effect")).color(WebStyles.Colors.GHOST_FG);
+                text(Core.bundle.get("feature.god-mode.effects.select-effect")).props(color(WebStyles.Colors.GHOST_FG));
 
-                scroll().size(440f, 140f).children(() -> {
-                    dynamic(filteredEffects, effects -> wrap().left().gap(unit(1.5f)).children(() -> {
+                scroll().props(size(440f, 140f), prefWidth(440f), prefHeight(140f)).children(() -> {
+                    dynamic(filteredEffects, effects -> wrap().props(left(), gap(unit(1.5f))).children(() -> {
                         if (effects != null) {
                             for (StatusEffect ef : effects) {
                                 button()
-                                        .style(WebStyles.filterChip())
-                                        .checked(selectedEffect.map(sel -> sel == ef))
                                         .onClick(() -> selectedEffect.set(ef))
-                                        .size(unit(10), unit(10))
-                                        .padding(unit(1))
-                                        .tooltip(ef.localizedName)
-                                        .children(() -> image(new TextureRegionDrawable(ef.uiIcon)).size(unit(6.5f)));
+                                        .props(style(WebStyles.filterChip()), checked(selectedEffect.map(sel -> sel == ef)), size(unit(10), unit(10)), prefWidth(unit(10)), prefHeight(unit(10)), padding(unit(1)), tooltip(ef.localizedName))
+                                        .children(() -> image(new TextureRegionDrawable(ef.uiIcon)).props(size(unit(6.5f)), prefWidth(unit(6.5f)), prefHeight(unit(6.5f))));
                             }
                         }
                     }));
                 });
 
-                wrap().gap(unit(2)).center().children(() -> {
-                    row().gap(unit(1.5f)).center().children(() -> {
-                        text(Core.bundle.get("feature.god-mode.effects.duration") + ": ").color(WebStyles.Colors.GHOST_FG);
+                wrap().props(gap(unit(2)), center()).children(() -> {
+                    row().props(gap(unit(1.5f)), center()).children(() -> {
+                        text(Core.bundle.get("feature.god-mode.effects.duration") + ": ").props(color(WebStyles.Colors.GHOST_FG));
 
                         row()
-                                .padding(unit(1))
-                                .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
-                                .border(1.5f, WebStyles.Colors.BORDER_INPUT)
+                                .props(padding(unit(1)), rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1.5f, WebStyles.Colors.BORDER_INPUT))
                                 .children(() -> {
                                     textField(durationString)
-                                            .width(unit(18))
-                                            .height(unit(8))
-                                            .style(WebStyles.clearInput());
+                                             .props(style(WebStyles.clearInput()), width(unit(18)), prefWidth(unit(18)), height(unit(8)), prefHeight(unit(8)));
                                 });
                     });
 
-                    wrap().gap(unit(1.5f)).center().children(() -> {
-                        button(() -> setDuration(10f)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7)).children(() -> text("10s"));
-                        button(() -> setDuration(60f)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7)).children(() -> text("60s"));
-                        button(() -> setDuration(300f)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7)).children(() -> text("5m"));
+                    wrap().props(gap(unit(1.5f)), center()).children(() -> {
+                        button(() -> setDuration(10f)).props(style(WebStyles.outline()), padding(unit(1)), size(unit(11), unit(7)), prefWidth(unit(11)), prefHeight(unit(7))).children(() -> text("10s"));
+                        button(() -> setDuration(60f)).props(style(WebStyles.outline()), padding(unit(1)), size(unit(11), unit(7)), prefWidth(unit(11)), prefHeight(unit(7))).children(() -> text("60s"));
+                        button(() -> setDuration(300f)).props(style(WebStyles.outline()), padding(unit(1)), size(unit(11), unit(7)), prefWidth(unit(11)), prefHeight(unit(7))).children(() -> text("5m"));
                         button(() -> setDuration(999999f))
-                                .style(WebStyles.secondary())
-                                .padding(unit(1))
-                                .size(unit(16), unit(7))
+                                .props(style(WebStyles.secondary()), padding(unit(1)), size(unit(16), unit(7)), prefWidth(unit(16)), prefHeight(unit(7)))
                                 .children(() -> text(Core.bundle.get("feature.god-mode.effects.infinite")));
                     });
                 });
 
-                row().growX().gap(unit(2)).children(() -> {
+                row().props(growX(), gap(unit(2))).children(() -> {
                     button()
-                            .style(WebStyles.primary())
-                            .growX()
-                            .padding(unit(2))
+                            .props(style(WebStyles.primary()), growX(), padding(unit(2)))
                             .onClick(() -> {
                                 StatusEffect ef = selectedEffect.get();
                                 float sec = durationSeconds.get() != null ? durationSeconds.get() : 60f;
@@ -125,9 +107,7 @@ public class GodModeEffectsDialog extends SolimDialog {
                             .children(() -> text(Core.bundle.get("feature.god-mode.effects.apply")));
 
                     button()
-                            .style(WebStyles.danger())
-                            .growX()
-                            .padding(unit(2))
+                            .props(style(WebStyles.danger()), growX(), padding(unit(2)))
                             .onClick(() -> {
                                 StatusEffect ef = selectedEffect.get();
                                 if (ef != null) {

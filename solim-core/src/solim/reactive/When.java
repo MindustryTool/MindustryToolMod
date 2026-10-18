@@ -4,38 +4,23 @@ import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
-import solim.core.BaseComponent;
 import solim.core.Component;
-import solim.core.Disposable;
+import solim.core.OwnershipContext;
 import solim.core.SolimToken;
-import solim.layout.GapContainer;
-import solim.modifier.CellConfig;
-import solim.modifier.ElementConfig;
+import solim.layout.CollapseHelper;
+import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.TableCapability;
 import solim.modifier.PendingCellConfig;
-import solim.modifier.TableConfig;
+import solim.modifier.Props;
 import solim.runtime.AttachmentStack;
 import solim.runtime.Fragment;
 import solim.runtime.ReactiveContext;
 
-/**
- * Structural reactive component for boolean conditional rendering with a
- * fluent chaining API.
- *
- * <p>Declare branches with {@link #thenDo(Runnable)} and {@link #elseDo(Runnable)}.
- * Both accept void runnables that create components declaratively without
- * returning a value. When the condition is {@code true} the then-branch mounts;
- * otherwise the else-branch mounts. A branch that creates nothing collapses,
- * exactly like {@link Dynamic} with an empty void factory.</p>
- *
- * <p>Branch actions should be chained before the first mount for efficiency,
- * but may also be updated after mounting: a post-mount update remounts the
- * current condition value immediately.</p>
- */
-public final class When extends BaseComponent
-        implements CellConfig<When>, TableConfig<When>, ElementConfig<When> {
+public final class When extends Component
+        implements Configurable<When>, TableCapability, ContainerCapability<When> {
+
     private static final Object SENTINEL = new Object();
     private final Table container = new Table();
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -43,8 +28,8 @@ public final class When extends BaseComponent
     private @Nullable Runnable thenAction;
     private @Nullable Runnable elseAction;
     private Component currentComponent;
+    private @Nullable Props<When> pending;
     private Object lastValue = SENTINEL;
-    private final List<Disposable> currentBindings = new ArrayList<>();
 
     private When(Readable<Boolean> condition) {
         this.condition = Objects.requireNonNull(condition, "condition must not be null");
@@ -57,10 +42,6 @@ public final class When extends BaseComponent
         return new When(condition);
     }
 
-    /**
-     * Sets the branch mounted when the condition is {@code true}.
-     * Returns this for chaining.
-     */
     public When thenDo(@Nullable Runnable action) {
         this.thenAction = action;
         if (isBuilt()) {
@@ -69,10 +50,6 @@ public final class When extends BaseComponent
         return this;
     }
 
-    /**
-     * Sets the branch mounted when the condition is not {@code true}
-     * (false or null). Returns this for chaining.
-     */
     public When elseDo(@Nullable Runnable action) {
         this.elseAction = action;
         if (isBuilt()) {
@@ -90,15 +67,121 @@ public final class When extends BaseComponent
         return container;
     }
 
+    public When children(@Nullable Runnable block) {
+        applyPendingProps();
+        OwnershipContext.push(this);
+        try {
+            if (block != null) {
+                block.run();
+            }
+        } finally {
+            OwnershipContext.pop();
+        }
+        return this;
+    }
+
+    @Override
+    public @Nullable Props<When> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<When> props) {
+        this.pending = props;
+    }
+
+    @Override
+    protected void onRealized(Element element) {
+        applyPendingProps();
+    }
+
     @Override
     public When name(@Nullable String name) {
-        super.name(name);
+        setName(name);
         return this;
     }
 
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
+    }
+
+    public When align(int align) {
+        table().align(align);
+        constraints.align = align;
+        constraints.applyAlignToParentCell(element());
+        container.defaults().align(align);
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.align(align);
+            }
+        }
+        return this;
+    }
+
+    public When center() {
+        table().center();
+        constraints.alignCenter();
+        constraints.applyAlignToParentCell(element());
+        container.defaults().center();
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.center();
+            }
+        }
+        return this;
+    }
+
+    public When top() {
+        table().top();
+        constraints.alignTop();
+        constraints.applyAlignToParentCell(element());
+        container.defaults().top();
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.top();
+            }
+        }
+        return this;
+    }
+
+    public When bottom() {
+        table().bottom();
+        constraints.alignBottom();
+        constraints.applyAlignToParentCell(element());
+        container.defaults().bottom();
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.bottom();
+            }
+        }
+        return this;
+    }
+
+    public When left() {
+        table().left();
+        constraints.alignLeft();
+        constraints.applyAlignToParentCell(element());
+        container.defaults().left();
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.left();
+            }
+        }
+        return this;
+    }
+
+    public When right() {
+        table().right();
+        constraints.alignRight();
+        constraints.applyAlignToParentCell(element());
+        container.defaults().right();
+        for (Cell<?> c : container.getCells()) {
+            if (c != null) {
+                c.right();
+            }
+        }
+        return this;
     }
 
     @Override
@@ -116,7 +199,7 @@ public final class When extends BaseComponent
     }
 
     private void refresh() {
-        lastValue = condition.get();
+        lastValue = condition.peek();
         rebuild();
     }
 
@@ -125,10 +208,6 @@ public final class When extends BaseComponent
             currentComponent.dispose();
             currentComponent = null;
         }
-        for (Disposable d : currentBindings) {
-            d.dispose();
-        }
-        currentBindings.clear();
         container.clearChildren();
         mount(condition.get());
         applyContainerAlign();
@@ -137,8 +216,7 @@ public final class When extends BaseComponent
     }
 
     private void mount(Boolean value) {
-        // Capture and eager-build inside untracked so signals read during the
-        // branch runnables never re-trigger this When effect.
+
         Fragment fragment = ReactiveContext.untracked(() -> {
             Fragment f = Fragment.capture(() -> {
                 if (Boolean.TRUE.equals(value)) {
@@ -169,26 +247,20 @@ public final class When extends BaseComponent
             if (el.parent != null) {
                 continue;
             }
-            Cell<?> cell = container.add(el);
+            Cell<?> cell = AttachmentStack.attach(container, el, null, root);
+            if (cell == null) {
+                continue;
+            }
             cell.minWidth(0f);
-            applyRootCellConfig(root, el, cell);
+            if (PendingCellConfig.find(root) == null && PendingCellConfig.find(el) == null
+                    && SolimToken.isExpandingChild(el)) {
+                cell.growX();
+            }
             mounted++;
         }
         if (mounted == 0) {
             currentComponent.dispose();
             currentComponent = null;
-        }
-    }
-
-    private void applyRootCellConfig(Component root, Element el, Cell<?> cell) {
-        PendingCellConfig sc = PendingCellConfig.find(root);
-        if (sc == null) {
-            sc = PendingCellConfig.find(el);
-        }
-        if (sc != null) {
-            currentBindings.addAll(sc.applyToCell(cell));
-        } else if (SolimToken.isExpandingChild(el)) {
-            cell.growX();
         }
     }
 
@@ -201,23 +273,7 @@ public final class When extends BaseComponent
     }
 
     private void updateParentCell() {
-        Cell<?> parentCell = container.parent instanceof Table ? ((Table) container.parent).getCell(container) : null;
-        if (currentComponent != null) {
-            container.visible = true;
-            if (parentCell != null) {
-                parentCell.minWidth(Float.NEGATIVE_INFINITY).minHeight(Float.NEGATIVE_INFINITY);
-                parentCell.maxWidth(Float.NEGATIVE_INFINITY).maxHeight(Float.NEGATIVE_INFINITY);
-                constraints.applyToCell(parentCell);
-            }
-        } else {
-            container.visible = false;
-            if (parentCell != null) {
-                parentCell.size(0f).pad(0f);
-            }
-        }
-        if (container.parent instanceof Table) {
-            GapContainer.respace((Table) container.parent);
-        }
+        CollapseHelper.updateParentCell(container, currentComponent != null, constraints, this);
     }
 
     @Override
@@ -226,10 +282,6 @@ public final class When extends BaseComponent
             currentComponent.dispose();
             currentComponent = null;
         }
-        for (Disposable d : currentBindings) {
-            d.dispose();
-        }
-        currentBindings.clear();
         container.clearChildren();
     }
 

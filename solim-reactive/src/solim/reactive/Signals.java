@@ -1,0 +1,116 @@
+package solim.reactive;
+
+import arc.Core;
+import arc.Events;
+import mindustry.Vars;
+import mindustry.core.GameState;
+import mindustry.game.EventType.ClientServerConnectEvent;
+import mindustry.game.EventType.ConnectionEvent;
+import mindustry.game.EventType.DisposeEvent;
+import mindustry.game.EventType.GameOverEvent;
+import mindustry.game.EventType.HostEvent;
+import mindustry.game.EventType.PlayerConnect;
+import mindustry.game.EventType.PlayerJoin;
+import mindustry.game.EventType.PlayerLeave;
+import mindustry.game.EventType.ResetEvent;
+import mindustry.game.EventType.ResizeEvent;
+import mindustry.game.EventType.StateChangeEvent;
+import mindustry.game.EventType.WorldLoadEvent;
+
+public final class Signals {
+    private static final Signal<Boolean> portrait = Signal.of(false);
+    private static final Signal<Boolean> netActive = Signal.of(false);
+    private static final Signal<Boolean> netServer = Signal.of(false);
+    private static final Signal<Boolean> netClient = Signal.of(false);
+    private static final Signal<Boolean> singlePlayer = Signal.of(true);
+    private static final Signal<Boolean> localHosting = Signal.of(false);
+    private static final Signal<Boolean> clientPlaying = Signal.of(false);
+    private static final Signal<GameState.State> state = Signal.of(GameState.State.menu);
+    private static boolean initialized = false;
+
+    static {
+        init();
+    }
+
+    private Signals() {
+    }
+
+    public static synchronized void init() {
+        if (initialized) {
+            return;
+        }
+
+        Events.on(ResizeEvent.class, e -> {
+            Core.app.post(() -> portrait.set(Core.graphics.isPortrait()));
+        });
+
+        refreshNetNow();
+        Events.on(HostEvent.class, e -> requestRefresh());
+        Events.on(ClientServerConnectEvent.class, e -> requestRefresh());
+        Events.on(ConnectionEvent.class, e -> requestRefresh());
+        Events.on(PlayerConnect.class, e -> requestRefresh());
+        Events.on(PlayerJoin.class, e -> requestRefresh());
+        Events.on(PlayerLeave.class, e -> requestRefresh());
+        Events.on(StateChangeEvent.class, e -> requestRefresh());
+        Events.on(WorldLoadEvent.class, e -> requestRefresh());
+        Events.on(ResetEvent.class, e -> requestRefresh());
+        Events.on(GameOverEvent.class, e -> requestRefresh());
+        Events.on(DisposeEvent.class, e -> requestRefresh());
+        Events.on(StateChangeEvent.class, event -> state.set(event.to));
+        initialized = true;
+    }
+
+    public static Signal<Boolean> isPortrait() {
+        return portrait;
+    }
+
+    public static Signal<Boolean> netActive() {
+        return netActive;
+    }
+
+    public static Signal<Boolean> netServer() {
+        return netServer;
+    }
+
+    public static Signal<Boolean> netClient() {
+        return netClient;
+    }
+
+    public static Signal<Boolean> singlePlayer() {
+        return singlePlayer;
+    }
+
+    public static Signal<Boolean> localHosting() {
+        return localHosting;
+    }
+
+    public static Signal<Boolean> clientPlaying() {
+        return clientPlaying;
+    }
+
+    public static Signal<GameState.State> state() {
+        return state;
+    }
+
+    public static void requestRefresh() {
+        if (Core.app != null) {
+            Core.app.post(Signals::refreshNetNow);
+        } else {
+            refreshNetNow();
+        }
+    }
+
+    private static void refreshNetNow() {
+
+        boolean active = Vars.net != null && Vars.net.active();
+        boolean server = Vars.net != null && Vars.net.server();
+        boolean client = Vars.net != null && Vars.net.client();
+        boolean inGame = Vars.state != null && Vars.state.isGame();
+        netActive.set(active);
+        netServer.set(server);
+        netClient.set(client);
+        singlePlayer.set(!active);
+        localHosting.set(server);
+        clientPlaying.set(client && inGame);
+    }
+}

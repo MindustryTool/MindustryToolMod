@@ -14,6 +14,7 @@ import mindustry.type.UnitType;
 import mindustrytool.components.WebStyles;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
+import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
@@ -37,7 +38,7 @@ public class GodModeUnitsDialog extends SolimDialog {
         Seq<UnitType> allUnits = Vars.content.units().select(GodModeUnitsDialog::isSpawnable);
         this.selectedUnit = Signal.of(allUnits.size > 0 ? allUnits.first() : null);
 
-        countString.subscribe(s -> {
+        Effect.of(countString, s -> {
             if (s != null) {
                 try {
                     int val = Integer.parseInt(s.trim());
@@ -60,93 +61,75 @@ public class GodModeUnitsDialog extends SolimDialog {
                 Math.round(posY.get() != null ? posY.get() : 0f)));
 
         children(() -> {
-            column().gap(unit(2.5f)).padding(unit(3)).children(() -> {
-                row().growX().gap(unit(1.5f))
-                        .padding(unit(1.5f))
-                        .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
-                        .border(1.5f, WebStyles.Colors.BORDER_INPUT)
-                        .center()
+            column().props(padding(unit(3)), gap(unit(2.5f))).children(() -> {
+                row().props(growX(), padding(unit(1.5f)), rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1.5f, WebStyles.Colors.BORDER_INPUT), gap(unit(1.5f)), center())
                         .children(() -> {
-                            icon(Icon.zoom).size(unit(4.5f)).color(WebStyles.Colors.GHOST_FG);
+                            icon(Icon.zoom).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f)), color(WebStyles.Colors.GHOST_FG));
                             textField(searchQuery)
-                                    .growX()
-                                    .height(unit(8))
-                                    .style(WebStyles.clearInput())
-                                    .placeholder(Core.bundle.get("feature.god-mode.common.search"));
+                                    .props(style(WebStyles.clearInput()), growX(), height(unit(8)), prefHeight(unit(8)), placeholder(Core.bundle.get("feature.god-mode.common.search")));
                         });
 
-                text(Core.bundle.get("feature.god-mode.units.select-unit")).color(WebStyles.Colors.GHOST_FG);
+                text(Core.bundle.get("feature.god-mode.units.select-unit")).props(color(WebStyles.Colors.GHOST_FG));
 
-                scroll().size(440f, 130f).children(() -> {
-                    dynamic(filteredUnits, units -> wrap().left().gap(unit(1.5f)).children(() -> {
+                scroll().props(size(440f, 130f), prefWidth(440f), prefHeight(130f)).children(() -> {
+                    dynamic(filteredUnits, units -> wrap().props(left(), gap(unit(1.5f))).children(() -> {
                         if (units != null) {
                             for (UnitType u : units) {
                                 button()
-                                        .style(WebStyles.filterChip())
-                                        .checked(selectedUnit.map(sel -> sel == u))
                                         .onClick(() -> selectedUnit.set(u))
-                                        .size(unit(10), unit(10))
-                                        .padding(unit(1))
-                                        .tooltip(u.localizedName)
-                                        .children(() -> image(new TextureRegionDrawable(u.uiIcon)).size(unit(6.5f)));
+                                        .props(style(WebStyles.filterChip()), checked(selectedUnit.map(sel -> sel == u)), size(unit(10), unit(10)), prefWidth(unit(10)), prefHeight(unit(10)), padding(unit(1)), tooltip(u.localizedName))
+                                        .children(() -> image(new TextureRegionDrawable(u.uiIcon)).props(size(unit(6.5f)), prefWidth(unit(6.5f)), prefHeight(unit(6.5f))));
                             }
                         }
                     }));
                 });
 
-                text(Core.bundle.get("feature.god-mode.items.target-team")).color(WebStyles.Colors.GHOST_FG);
+                text(Core.bundle.get("feature.god-mode.items.target-team")).props(color(WebStyles.Colors.GHOST_FG));
 
-                scroll().size(440f, 65f).children(() -> {
-                    wrap().left().gap(unit(1.5f)).children(() -> {
+                scroll().props(size(440f, 65f), prefWidth(440f), prefHeight(65f)).children(() -> {
+                    wrap().props(left(), gap(unit(1.5f))).children(() -> {
                         for (Team t : Team.baseTeams) {
                             button()
-                                    .style(WebStyles.filterChip())
-                                    .checked(selectedTeam.map(sel -> sel == t))
                                     .onClick(() -> selectedTeam.set(t))
-                                    .padding(unit(1.5f))
+                                    .props(style(WebStyles.filterChip()), checked(selectedTeam.map(sel -> sel == t)), padding(unit(1.5f)))
                                     .children(() -> {
-                                        row().gap(unit(1.5f)).center().children(() -> {
-                                            image(Tex.whiteui).size(unit(3)).color(t.color);
-                                            text(t.localized()).color(t.color);
+                                        row().props(gap(unit(1.5f)), center()).children(() -> {
+                                            image(Tex.whiteui).props(size(unit(3)), prefWidth(unit(3)), prefHeight(unit(3)), color(t.color));
+                                            text(t.localized()).props(color(t.color));
                                         });
                                     });
                         }
                     });
                 });
 
-                wrap().gap(unit(2)).center().children(() -> {
-                    row().gap(unit(1.5f)).center().children(() -> {
-                        text(Core.bundle.get("feature.god-mode.units.count") + ": ").color(WebStyles.Colors.GHOST_FG);
+                wrap().props(gap(unit(2)), center()).children(() -> {
+                    row().props(gap(unit(1.5f)), center()).children(() -> {
+                        text(Core.bundle.get("feature.god-mode.units.count") + ": ").props(color(WebStyles.Colors.GHOST_FG));
 
                         row()
-                                .padding(unit(1))
-                                .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
-                                .border(1.5f, WebStyles.Colors.BORDER_INPUT)
+                                .props(padding(unit(1)), rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1.5f, WebStyles.Colors.BORDER_INPUT))
                                 .children(() -> {
                                     textField(countString)
-                                            .width(unit(18))
-                                            .height(unit(8))
-                                            .style(WebStyles.clearInput());
+                                            .props(style(WebStyles.clearInput()), width(unit(18)), prefWidth(unit(18)), height(unit(8)), prefHeight(unit(8)));
                                 });
                     });
 
-                    wrap().gap(unit(1.5f)).center().children(() -> {
-                        button(() -> addCount(1)).style(WebStyles.outline()).padding(unit(1)).size(unit(10), unit(7))
+                    wrap().props(gap(unit(1.5f)), center()).children(() -> {
+                        button(() -> addCount(1)).props(style(WebStyles.outline()), padding(unit(1)), size(unit(10), unit(7)), prefWidth(unit(10)), prefHeight(unit(7)))
                                 .children(() -> text("+1"));
-                        button(() -> addCount(5)).style(WebStyles.outline()).padding(unit(1)).size(unit(10), unit(7))
+                        button(() -> addCount(5)).props(style(WebStyles.outline()), padding(unit(1)), size(unit(10), unit(7)), prefWidth(unit(10)), prefHeight(unit(7)))
                                 .children(() -> text("+5"));
-                        button(() -> addCount(10)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7))
+                        button(() -> addCount(10)).props(style(WebStyles.outline()), padding(unit(1)), size(unit(11), unit(7)), prefWidth(unit(11)), prefHeight(unit(7)))
                                 .children(() -> text("+10"));
-                        button(() -> addCount(50)).style(WebStyles.outline()).padding(unit(1)).size(unit(11), unit(7))
+                        button(() -> addCount(50)).props(style(WebStyles.outline()), padding(unit(1)), size(unit(11), unit(7)), prefWidth(unit(11)), prefHeight(unit(7)))
                                 .children(() -> text("+50"));
                     });
                 });
 
-                row().growX().gap(unit(2)).center().children(() -> {
-                    text(posLabel).color(WebStyles.Colors.GHOST_FG);
+                row().props(growX(), gap(unit(2)), center()).children(() -> {
+                    text(posLabel).props(color(WebStyles.Colors.GHOST_FG));
                     button()
-                            .style(WebStyles.secondary())
-                            .padding(unit(1.5f))
+                            .props(style(WebStyles.secondary()), padding(unit(1.5f)))
                             .onClick(() -> MapPositionPicker.pick(this::hide, (x, y) -> {
                                 posX.set(x);
                                 posY.set(y);
@@ -155,11 +138,9 @@ public class GodModeUnitsDialog extends SolimDialog {
                             .children(() -> text(Core.bundle.get("feature.god-mode.units.select-position")));
                 });
 
-                row().growX().gap(unit(2)).children(() -> {
+                row().props(growX(), gap(unit(2))).children(() -> {
                     button()
-                            .style(WebStyles.primary())
-                            .growX()
-                            .padding(unit(2))
+                            .props(style(WebStyles.primary()), growX(), padding(unit(2)))
                             .onClick(() -> {
                                 UnitType u = selectedUnit.get();
                                 Team tm = selectedTeam.get();
@@ -174,9 +155,7 @@ public class GodModeUnitsDialog extends SolimDialog {
                             .children(() -> text(Core.bundle.get("feature.god-mode.units.spawn")));
 
                     button()
-                            .style(WebStyles.danger())
-                            .growX()
-                            .padding(unit(2))
+                            .props(style(WebStyles.danger()), growX(), padding(unit(2)))
                             .onClick(() -> {
                                 UnitType u = selectedUnit.get();
                                 Team tm = selectedTeam.get();

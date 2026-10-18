@@ -9,15 +9,8 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * High-performance, fail-safe reflection utility.
- * <p>
- * Unlike standard reflection or Arc's {@code Reflect} which only inspects
- * directly declared members on the concrete runtime class, this utility traverses
- * the full class hierarchy up to {@link Object}. This ensures compatibility when
- * other mods (such as agzam4mod) subclass or wrap Mindustry UI fragments and classes.
- * Lookups are cached to avoid repeated reflection overhead.
- */
+// java.lang.reflect.Field.get and Method.invoke return Object, and a field declared as Seq<Tile> has a non-reifiable
+// type argument, so reflection cannot recover the declarative type without an unchecked cast.
 @SuppressWarnings("unchecked")
 public final class ReflectUtil {
 
@@ -33,7 +26,7 @@ public final class ReflectUtil {
             sentinelField = Sentinel.class.getDeclaredField("SENTINEL");
             sentinelMethod = Sentinel.class.getDeclaredMethod("sentinel");
         } catch (Exception ignored) {
-            // Should never occur
+
         }
         NO_FIELD = sentinelField;
         NO_METHOD = sentinelMethod;
@@ -51,13 +44,6 @@ public final class ReflectUtil {
     private ReflectUtil() {
     }
 
-    /**
-     * Finds a field by searching the given class and all of its superclasses.
-     *
-     * @param type the starting class
-     * @param name the field name
-     * @return the accessible {@link Field}, or {@code null} if not found
-     */
     public static @Nullable Field findField(@Nullable Class<?> type, @Nullable String name) {
         if (type == null || name == null || type == Object.class) {
             return null;
@@ -77,7 +63,7 @@ public final class ReflectUtil {
                 resolved = f;
                 break;
             } catch (NoSuchFieldException ignored) {
-                // Continue up the inheritance hierarchy
+
             } catch (Exception e) {
                 Log.debug("ReflectUtil: Error accessing field @ on @: @", name, current.getName(), e.getMessage());
             }
@@ -87,10 +73,6 @@ public final class ReflectUtil {
         return resolved;
     }
 
-    /**
-     * Safely reads the value of a field on an object, traversing superclasses.
-     * Returns {@code null} on failure without throwing an exception.
-     */
     public static <T> T getOrNull(@Nullable Object object, @Nullable String name) {
         if (object == null || name == null) {
             return null;
@@ -98,10 +80,6 @@ public final class ReflectUtil {
         return getOrNull(object.getClass(), object, name);
     }
 
-    /**
-     * Safely reads the value of a field starting from a specific class type.
-     * Returns {@code null} on failure without throwing an exception.
-     */
     public static <T> T getOrNull(@Nullable Class<?> type, @Nullable Object object, @Nullable String name) {
         Field field = findField(type, name);
         if (field == null) {
@@ -110,16 +88,12 @@ public final class ReflectUtil {
         try {
             return (T) field.get(object);
         } catch (Exception e) {
-            Log.debug("ReflectUtil: Failed to get field @ on @: @", name, type != null ? type.getName() : "null", e.getMessage());
+            Log.debug("ReflectUtil: Failed to get field @ on @: @", name, type != null ? type.getName() : "null",
+                    e.getMessage());
             return null;
         }
     }
 
-    /**
-     * Safely sets the value of a field on an object, traversing superclasses.
-     *
-     * @return {@code true} if successful, {@code false} otherwise
-     */
     public static boolean setSafe(@Nullable Object object, @Nullable String name, @Nullable Object value) {
         if (object == null || name == null) {
             return false;
@@ -127,12 +101,8 @@ public final class ReflectUtil {
         return setSafe(object.getClass(), object, name, value);
     }
 
-    /**
-     * Safely sets the value of a field starting from a specific class type.
-     *
-     * @return {@code true} if successful, {@code false} otherwise
-     */
-    public static boolean setSafe(@Nullable Class<?> type, @Nullable Object object, @Nullable String name, @Nullable Object value) {
+    public static boolean setSafe(@Nullable Class<?> type, @Nullable Object object, @Nullable String name,
+            @Nullable Object value) {
         Field field = findField(type, name);
         if (field == null) {
             return false;
@@ -141,20 +111,14 @@ public final class ReflectUtil {
             field.set(object, value);
             return true;
         } catch (Exception e) {
-            Log.debug("ReflectUtil: Failed to set field @ on @: @", name, type != null ? type.getName() : "null", e.getMessage());
+            Log.debug("ReflectUtil: Failed to set field @ on @: @", name, type != null ? type.getName() : "null",
+                    e.getMessage());
             return false;
         }
     }
 
-    /**
-     * Finds a method by searching the given class and all of its superclasses.
-     *
-     * @param type           the starting class
-     * @param name           the method name
-     * @param parameterTypes the parameter types
-     * @return the accessible {@link Method}, or {@code null} if not found
-     */
-    public static @Nullable Method findMethod(@Nullable Class<?> type, @Nullable String name, Class<?>... parameterTypes) {
+    public static @Nullable Method findMethod(@Nullable Class<?> type, @Nullable String name,
+            Class<?>... parameterTypes) {
         if (type == null || name == null || type == Object.class) {
             return null;
         }
@@ -173,7 +137,7 @@ public final class ReflectUtil {
                 resolved = m;
                 break;
             } catch (NoSuchMethodException ignored) {
-                // Continue up the inheritance hierarchy
+
             } catch (Exception e) {
                 Log.debug("ReflectUtil: Error accessing method @ on @: @", name, current.getName(), e.getMessage());
             }
@@ -183,22 +147,16 @@ public final class ReflectUtil {
         return resolved;
     }
 
-    /**
-     * Safely invokes a method on an object, traversing superclasses.
-     * Returns {@code null} on failure without throwing an exception.
-     */
-    public static <T> T invokeOrNull(@Nullable Object object, @Nullable String name, @Nullable Object[] args, Class<?>... parameterTypes) {
+    public static <T> T invokeOrNull(@Nullable Object object, @Nullable String name, @Nullable Object[] args,
+            Class<?>... parameterTypes) {
         if (object == null || name == null) {
             return null;
         }
         return invokeOrNull(object.getClass(), object, name, args, parameterTypes);
     }
 
-    /**
-     * Safely invokes a method on an object starting from a specific class type.
-     * Returns {@code null} on failure without throwing an exception.
-     */
-    public static <T> T invokeOrNull(@Nullable Class<?> type, @Nullable Object object, @Nullable String name, @Nullable Object[] args, Class<?>... parameterTypes) {
+    public static <T> T invokeOrNull(@Nullable Class<?> type, @Nullable Object object, @Nullable String name,
+            @Nullable Object[] args, Class<?>... parameterTypes) {
         Method method = findMethod(type, name, parameterTypes);
         if (method == null) {
             return null;
@@ -206,14 +164,12 @@ public final class ReflectUtil {
         try {
             return (T) method.invoke(object, args);
         } catch (Exception e) {
-            Log.debug("ReflectUtil: Failed to invoke method @ on @: @", name, type != null ? type.getName() : "null", e.getMessage());
+            Log.debug("ReflectUtil: Failed to invoke method @ on @: @", name, type != null ? type.getName() : "null",
+                    e.getMessage());
             return null;
         }
     }
 
-    /**
-     * Clears all cached reflection entries.
-     */
     public static void clearCache() {
         FIELD_CACHE.clear();
         METHOD_CACHE.clear();

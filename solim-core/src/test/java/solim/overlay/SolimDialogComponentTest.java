@@ -1,5 +1,7 @@
 package solim.overlay;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import arc.Core;
@@ -10,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.core.DisposableAction;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +58,7 @@ class SolimDialogComponentTest extends SolimEnv {
 		AtomicBoolean disposed = new AtomicBoolean(false);
 
 		SolimDialog d = new SolimDialog("Lifecycle Test");
-		d.children(() -> new BaseComponent() {
+		d.children(() -> new Component() {
 			@Override
 			protected Element build() {
 				return new Table();
@@ -105,7 +107,7 @@ class SolimDialogComponentTest extends SolimEnv {
 	void dialogDefaultsToFullScreen() {
 		SolimDialog d = new SolimDialog("Full Screen Test");
 		assertTrue(d.isFillParent(), "SolimDialog must default to full screen");
-		d.fillParent(false);
+		d.props(fillParent(false));
 		assertFalse(d.isFillParent());
 		d.dispose();
 	}
@@ -133,9 +135,9 @@ class SolimDialogComponentTest extends SolimEnv {
 	@Test
 	void dialogFluentApiReturnsSameInstance() {
 		SolimDialog d = new SolimDialog("Test");
-		assertSame(d, d.fillParent(false));
+		assertSame(d, d.props(fillParent(false)));
 		assertTrue(d.isFillParent() == false);
-		assertSame(d, d.fillParent(true));
+		assertSame(d, d.props(fillParent(true)));
 		d.dispose();
 	}
 

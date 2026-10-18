@@ -3,9 +3,6 @@ package mindustrytool.features.wavepreview;
 import arc.Core;
 import solim.overlay.SolimDialog;
 
-/**
- * Settings dialog for Wave Preview.
- */
 public class WavePreviewSettingsDialog extends SolimDialog {
 
     public WavePreviewSettingsDialog(WavePreviewFeature feature) {
@@ -14,6 +11,7 @@ public class WavePreviewSettingsDialog extends SolimDialog {
         name("wavePreviewSettingDialog");
         addCloseButton();
         closeOnBack();
+        maxWidth(500f);
 
         children(() -> new WavePreviewSettingsView(feature));
     }

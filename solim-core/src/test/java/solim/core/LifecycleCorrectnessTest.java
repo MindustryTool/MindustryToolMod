@@ -1,6 +1,6 @@
 package solim.core;
 
-import solim.runtime.OwnershipContext;
+import solim.runtime.OwnershipScope;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,303 +12,350 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
+import solim.reactive.Computed;
 import solim.reactive.Effect;
 import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
 import solim.runtime.StructuralReconciler;
-import solim.test.SolimEnv;
 
-class LifecycleCorrectnessTest extends SolimEnv {
+class LifecycleCorrectnessTest extends solim.test.OwnershipEnv {
 
-	@Test
-	void disposalOrderIsLIFO() {
-		List<String> order = new ArrayList<>();
-		BaseComponent comp = new BaseComponent() {
-			@Override
-			protected Element build() {
-				own(DisposableAction.of(() -> order.add("first")));
-				own(DisposableAction.of(() -> order.add("second")));
-				own(DisposableAction.of(() -> order.add("third")));
-				return new Element();
-			}
-		};
 
-		comp.element();
-		comp.dispose();
 
-		assertEquals(Arrays.asList("third", "second", "first"), order,
-				"Resources must be disposed in reverse registration order (LIFO)");
-	}
+    @Test
+    void disposalOrderIsLIFO() {
+        List<String> order = new ArrayList<>();
+        Component comp = new Component() {
+            @Override
+            protected Element build() {
+                adopt(DisposableAction.of(() -> order.add("first")));
+                adopt(DisposableAction.of(() -> order.add("second")));
+                adopt(DisposableAction.of(() -> order.add("third")));
+                return new Element();
+            }
+        };
 
-	@Test
-	void errorIsolationDuringDisposal() {
-		List<String> disposed = new ArrayList<>();
-		BaseComponent comp = new BaseComponent() {
-			@Override
-			protected Element build() {
-				own(DisposableAction.of(() -> disposed.add("first")));
-				own(DisposableAction.of(() -> {
-					disposed.add("failing");
-					throw new RuntimeException("Simulated disposal failure");
-				}));
-				own(DisposableAction.of(() -> disposed.add("third")));
-				return new Element();
-			}
-		};
+        comp.element();
+        comp.dispose();
 
-		comp.element();
-		assertDoesNotThrow(comp::dispose, "Disposal should not throw even if a disposable fails");
-		assertEquals(Arrays.asList("third", "failing", "first"), disposed,
-				"All disposables must be attempted even if one throws");
-	}
+        assertEquals(Arrays.asList("third", "second", "first"), order,
+                "Resources must be disposed in reverse registration order (LIFO)");
+    }
 
-	@Test
-	void cannotBuildDisposedComponent() {
-		BaseComponent comp = new BaseComponent() {
-			@Override
-			protected Element build() {
-				return new Element();
-			}
-		};
+    @Test
+    void errorIsolationDuringDisposal() {
+        List<String> disposed = new ArrayList<>();
+        Component comp = new Component() {
+            @Override
+            protected Element build() {
+                adopt(DisposableAction.of(() -> disposed.add("first")));
+                adopt(DisposableAction.of(() -> {
+                    disposed.add("failing");
+                    throw new RuntimeException("Simulated disposal failure");
+                }));
+                adopt(DisposableAction.of(() -> disposed.add("third")));
+                return new Element();
+            }
+        };
 
-		comp.dispose();
-		assertThrows(IllegalStateException.class, comp::element,
-				"Calling element() after dispose() must throw IllegalStateException");
-	}
+        comp.element();
+        assertThrows(RuntimeException.class, comp::dispose, "Disposal must fail loud when a disposable fails");
+        assertEquals(Arrays.asList("third", "failing", "first"), disposed,
+                "All disposables must be attempted even if one throws");
+    }
 
-	@Test
-	void doubleDisposalIsSafe() {
-		AtomicInteger count = new AtomicInteger(0);
-		BaseComponent comp = new BaseComponent() {
-			@Override
-			protected Element build() {
-				own(DisposableAction.of(count::incrementAndGet));
-				return new Element();
-			}
-		};
+    @Test
+    void cannotBuildDisposedComponent() {
+        Component comp = new Component() {
+            @Override
+            protected Element build() {
+                return new Element();
+            }
+        };
 
-		comp.element();
-		comp.dispose();
-		assertEquals(1, count.get());
-		comp.dispose();
-		assertEquals(1, count.get(), "Second dispose() must be a no-op");
-	}
+        comp.dispose();
+        assertThrows(IllegalStateException.class, comp::element,
+                "Calling element() after dispose() must throw IllegalStateException");
+    }
 
-	@Test
-	void failedBuildDisposesPartialResources() {
-		AtomicBoolean resourceDisposed = new AtomicBoolean(false);
-		BaseComponent comp = new BaseComponent() {
-			@Override
-			protected Element build() {
-				own(DisposableAction.of(() -> resourceDisposed.set(true)));
-				throw new RuntimeException("Build crashed");
-			}
-		};
+    @Test
+    void doubleDisposalIsSafe() {
+        AtomicInteger count = new AtomicInteger(0);
+        Component comp = new Component() {
+            @Override
+            protected Element build() {
+                adopt(DisposableAction.of(count::incrementAndGet));
+                return new Element();
+            }
+        };
 
-		assertThrows(RuntimeException.class, comp::element);
-		assertTrue(resourceDisposed.get(), "Partially registered resources must be disposed when build() throws");
-		assertTrue(comp.isDisposed());
-		assertEquals(0, OwnershipContext.size(), "OwnershipContext must be popped after build failure");
-	}
+        comp.element();
+        comp.dispose();
+        assertEquals(1, count.get());
+        comp.dispose();
+        assertEquals(1, count.get(), "Second dispose() must be a no-op");
+    }
 
-	@Test
-	void nullBuildReturnsThrowsAndDisposes() {
-		AtomicBoolean resourceDisposed = new AtomicBoolean(false);
-		BaseComponent comp = new BaseComponent() {
-			@Override
-			protected Element build() {
-				own(DisposableAction.of(() -> resourceDisposed.set(true)));
-				return null;
-			}
-		};
+    @Test
+    void failedBuildDisposesPartialResources() {
+        AtomicBoolean resourceDisposed = new AtomicBoolean(false);
+        Component comp = new Component() {
+            @Override
+            protected Element build() {
+                adopt(DisposableAction.of(() -> resourceDisposed.set(true)));
+                throw new RuntimeException("Build crashed");
+            }
+        };
 
-		assertThrows(IllegalStateException.class, comp::element);
-		assertTrue(resourceDisposed.get(), "Resources must be disposed if build() returns null");
-		assertTrue(comp.isDisposed());
-		assertEquals(0, OwnershipContext.size());
-	}
+        assertThrows(RuntimeException.class, comp::element);
+        assertTrue(resourceDisposed.get(), "Partially registered resources must be disposed when build() throws");
+        assertTrue(comp.isDisposed());
+        assertEquals(0, OwnershipContext.size(), "OwnershipContext must be popped after build failure");
+    }
 
-	@Test
-	void effectAutoRegisteredInsideBuild() {
-		Signal<Integer> sig = Signal.of(0);
-		AtomicInteger runs = new AtomicInteger(0);
+    @Test
+    void nullBuildReturnsThrowsAndDisposes() {
+        AtomicBoolean resourceDisposed = new AtomicBoolean(false);
+        Component comp = new Component() {
+            @Override
+            protected Element build() {
+                adopt(DisposableAction.of(() -> resourceDisposed.set(true)));
+                return null;
+            }
+        };
 
-		BaseComponent comp = new BaseComponent() {
-			@Override
-			protected Element build() {
-				Effect.of(() -> {
-					sig.get();
-					runs.incrementAndGet();
-				});
-				return new Element();
-			}
-		};
+        assertThrows(IllegalStateException.class, comp::element);
+        assertTrue(resourceDisposed.get(), "Resources must be disposed if build() returns null");
+        assertTrue(comp.isDisposed());
+        assertEquals(0, OwnershipContext.size());
+    }
 
-		comp.element();
-		assertEquals(1, runs.get());
+    @Test
+    void effectAutoRegisteredInsideBuild() {
+        Signal<Integer> sig = Signal.of(0);
+        AtomicInteger runs = new AtomicInteger(0);
 
-		sig.set(1);
-		SignalDispatcher.flush();
-		assertEquals(2, runs.get());
+        Component comp = new Component() {
+            @Override
+            protected Element build() {
+                Effect.of(() -> {
+                    sig.get();
+                    runs.incrementAndGet();
+                });
+                return new Element();
+            }
+        };
 
-		comp.dispose();
-		sig.set(2);
-		SignalDispatcher.flush();
-		assertEquals(2, runs.get(), "Auto-registered Effect must be disposed with component");
-	}
+        comp.element();
+        assertEquals(1, runs.get());
 
-	@Test
-	void effectNotAutoRegisteredOutsideBuild() {
-		Signal<Integer> sig = Signal.of(0);
-		AtomicInteger runs = new AtomicInteger(0);
+        sig.set(1);
+        SignalDispatcher.flush();
+        assertEquals(2, runs.get());
 
-		Effect e = Effect.of(() -> {
-			sig.get();
-			runs.incrementAndGet();
-		});
+        comp.dispose();
+        sig.set(2);
+        SignalDispatcher.flush();
+        assertEquals(2, runs.get(), "Auto-registered Effect must be disposed with component");
+    }
 
-		assertEquals(1, runs.get());
-		sig.set(1);
-		SignalDispatcher.flush();
-		assertEquals(2, runs.get());
+    @Test
+    void windowlessReactiveCreationFallsBackToTheSessionRoot() {
+        Signal<Integer> sig = Signal.of(0);
 
-		e.dispose();
-		sig.set(2);
-		SignalDispatcher.flush();
-		assertEquals(2, runs.get());
-	}
+        Effect effect = Effect.of(() -> sig.get());
+        Computed<Integer> computed = new Computed<>(sig::get);
 
-	@Test
-	void withoutAutoOwnershipSuppressesRegistration() {
-		AtomicBoolean childDisposed = new AtomicBoolean(false);
-		BaseComponent comp = new BaseComponent() {
-			@Override
-			protected Element build() {
-				OwnershipContext.withoutAutoOwnership(() -> {
-					new BaseComponent() {
-						@Override
-						protected Element build() {
-							return new Element();
-						}
+        assertTrue(SessionRoot.get().disposables().contains(effect),
+                "A windowless Effect must be adopted by SessionRoot");
+        assertTrue(SessionRoot.get().disposables().contains(computed),
+                "A windowless Computed must be adopted by SessionRoot");
 
-						@Override
-						protected void onDispose() {
-							childDisposed.set(true);
-						}
-					};
-				});
-				return new Element();
-			}
-		};
+        Component adopter = new Component() {
+            @Override
+            protected Element build() {
+                return new Element();
+            }
+        };
+        assertThrows(IllegalStateException.class, () -> adopter.adopt(effect),
+                "SessionRoot holds the resource, so a component can not also own it");
 
-		comp.element();
-		comp.dispose();
-		assertFalse(childDisposed.get(), "Component created inside withoutAutoOwnership must not be owned");
-	}
+        SessionRoot.get().dispose();
+        assertTrue(effect.isDisposed(), "SessionRoot disposal must dispose the Effect it adopted");
+        assertTrue(computed.isDisposed(),
+                "SessionRoot disposal must dispose the Computed it adopted");
+    }
 
-	@Test
-	void withoutAutoOwnershipRestoresOnException() {
-		assertThrows(RuntimeException.class, () -> {
-			OwnershipContext.withoutAutoOwnership(() -> {
-				throw new RuntimeException("boom");
-			});
-		});
+    @Test
+    void anAmbientWindowTakesPrecedenceOverTheSessionRootFallback() {
+        Signal<Integer> sig = Signal.of(0);
 
-		AtomicBoolean owned = new AtomicBoolean(false);
-		BaseComponent comp = new BaseComponent() {
-			@Override
-			protected Element build() {
-				own(DisposableAction.of(() -> owned.set(true)));
-				return new Element();
-			}
-		};
-		comp.element();
-		comp.dispose();
-		assertTrue(owned.get(), "Auto-ownership must be restored even if withoutAutoOwnership lambda throws");
-	}
+        Effect windowed = inOwnershipWindow(() -> Effect.of(() -> sig.get()));
 
-	@Test
-	void structuralReconcilerKeyedReuseAndDisposal() {
-		StructuralReconciler<String, TestComp> reconciler = new StructuralReconciler<>();
-		List<String> disposed = new ArrayList<>();
+        assertFalse(SessionRoot.get().disposables().contains(windowed),
+                "A windowed resource belongs to the ambient owner, not to SessionRoot");
+        assertFalse(windowed.isDisposed());
+    }
 
-		// Initial reconciliation: A, B
-		Map<String, TestComp> map1 = reconciler.reconcile(
-				Arrays.asList("A", "B"),
-				k -> k,
-				k -> new TestComp(k, () -> disposed.add(k))
-		);
+    @Test
+    void effectInsideAWindowIsOwnedAndStopsOnDispose() {
+        Signal<Integer> sig = Signal.of(0);
+        AtomicInteger runs = new AtomicInteger(0);
 
-		assertEquals(2, map1.size());
-		TestComp compA = map1.get("A");
-		TestComp compB = map1.get("B");
-		assertEquals("A", compA.id);
-		assertEquals("B", compB.id);
+        Effect e = inOwnershipWindow(() -> Effect.of(() -> {
+            sig.get();
+            runs.incrementAndGet();
+        }));
 
-		// Second reconciliation: B, C (A removed, B reused, C added)
-		Map<String, TestComp> map2 = reconciler.reconcile(
-				Arrays.asList("B", "C"),
-				k -> k,
-				k -> new TestComp(k, () -> disposed.add(k))
-		);
+        assertEquals(1, runs.get());
+        sig.set(1);
+        SignalDispatcher.flush();
+        assertEquals(2, runs.get());
 
-		assertEquals(2, map2.size());
-		assertSame(compB, map2.get("B"), "Existing key must reuse the same component instance");
-		assertEquals(Arrays.asList("A"), disposed, "Removed key must be disposed");
+        e.dispose();
+        sig.set(2);
+        SignalDispatcher.flush();
+        assertEquals(2, runs.get());
+    }
 
-		// Total cleanup
-		reconciler.dispose();
-		assertTrue(disposed.contains("B"));
-		assertTrue(disposed.contains("C"));
-	}
+    @Test
+    void unadoptedScopeResourcesAreDestroyedNotGivenToTheAmbientComponent() {
+        AtomicBoolean childDisposed = new AtomicBoolean(false);
+        Component comp = new Component() {
+            @Override
+            protected Element build() {
+                OwnershipScope scope = OwnershipScope.open();
+                try {
+                    new Component() {
+                        @Override
+                        protected Element build() {
+                            return new Element();
+                        }
 
-	@Test
-	void nestedComponentBuildInsideWithoutAutoOwnershipManagesOwnOwnership() {
-		AtomicBoolean effectRan = new AtomicBoolean(false);
-		AtomicBoolean effectDisposed = new AtomicBoolean(false);
-		final BaseComponent[] innerComp = new BaseComponent[1];
+                        @Override
+                        protected void onDispose() {
+                            childDisposed.set(true);
+                        }
+                    };
+                } finally {
+                    scope.close();
+                }
+                return new Element();
+            }
+        };
 
-		OwnershipContext.withoutAutoOwnership(() -> {
-			BaseComponent comp = new BaseComponent() {
-				@Override
-				protected Element build() {
-					Effect.of(() -> {
-						effectRan.set(true);
-						return () -> effectDisposed.set(true);
-					});
-					return new Element();
-				}
-			};
-			innerComp[0] = comp;
-			comp.element(); // build occurs inside withoutAutoOwnership
-		});
+        comp.element();
+        assertTrue(childDisposed.get(), "A scope destroys what it collected but never adopted");
 
-		assertTrue(effectRan.get(), "Effect inside nested component build must run");
-		assertFalse(effectDisposed.get(), "Effect should not be disposed yet");
+        comp.dispose();
+        assertTrue(childDisposed.get(), "The ambient component must not silently inherit the resource");
+    }
 
-		innerComp[0].dispose();
-		assertTrue(effectDisposed.get(), "Effect should be disposed when component is disposed");
-	}
+    @Test
+    void scopeRestoresAmbientAutoOwnershipOnException() {
+        assertThrows(RuntimeException.class, () -> {
+            OwnershipScope scope = OwnershipScope.open();
+            try {
+                throw new RuntimeException("boom");
+            } finally {
+                scope.close();
+            }
+        });
 
-	static class TestComp extends BaseComponent {
-		final String id;
-		final Runnable onDisposed;
+        AtomicBoolean owned = new AtomicBoolean(false);
+        Component comp = new Component() {
+            @Override
+            protected Element build() {
+                adopt(DisposableAction.of(() -> owned.set(true)));
+                return new Element();
+            }
+        };
+        comp.element();
+        comp.dispose();
+        assertTrue(owned.get(), "Auto-ownership must be restored even if the scope block throws");
+    }
 
-		TestComp(String id, Runnable onDisposed) {
-			this.id = id;
-			this.onDisposed = onDisposed;
-		}
+    @Test
+    void structuralReconcilerKeyedReuseAndDisposal() {
+        StructuralReconciler<String, TestComp> reconciler = new StructuralReconciler<>();
+        List<String> disposed = new ArrayList<>();
 
-		@Override
-		protected Element build() {
-			return new Element();
-		}
+        Map<String, TestComp> map1 = reconciler.reconcile(
+                Arrays.asList("A", "B"),
+                k -> k,
+                k -> new TestComp(k, () -> disposed.add(k)));
 
-		@Override
-		protected void onDispose() {
-			if (onDisposed != null) {
-				onDisposed.run();
-			}
-		}
-	}
+        assertEquals(2, map1.size());
+        TestComp compA = map1.get("A");
+        TestComp compB = map1.get("B");
+        assertEquals("A", compA.id);
+        assertEquals("B", compB.id);
+
+        Map<String, TestComp> map2 = reconciler.reconcile(
+                Arrays.asList("B", "C"),
+                k -> k,
+                k -> new TestComp(k, () -> disposed.add(k)));
+
+        assertEquals(2, map2.size());
+        assertSame(compB, map2.get("B"), "Existing key must reuse the same component instance");
+        assertEquals(Arrays.asList("A"), disposed, "Removed key must be disposed");
+
+        reconciler.dispose();
+        assertTrue(disposed.contains("B"));
+        assertTrue(disposed.contains("C"));
+    }
+
+    @Test
+    void componentBuiltInsideScopeManagesItsOwnResources() {
+        AtomicBoolean effectRan = new AtomicBoolean(false);
+        AtomicBoolean effectDisposed = new AtomicBoolean(false);
+        final Component[] innerComp = new Component[1];
+
+        OwnershipScope scope = OwnershipScope.open();
+        try {
+            Component comp = new Component() {
+                @Override
+                protected Element build() {
+                    Effect.of(() -> {
+                        effectRan.set(true);
+                        return () -> effectDisposed.set(true);
+                    });
+                    return new Element();
+                }
+            };
+            innerComp[0] = comp;
+            comp.element();
+            scope.adoptInto(comp);
+        } finally {
+            scope.close();
+        }
+
+        assertTrue(effectRan.get(), "Effect inside nested component build must run");
+        assertFalse(effectDisposed.get(), "Effect should not be disposed yet");
+
+        innerComp[0].dispose();
+        assertTrue(effectDisposed.get(), "Effect should be disposed when component is disposed");
+    }
+
+    static class TestComp extends Component {
+        final String id;
+        final Runnable onDisposed;
+
+        TestComp(String id, Runnable onDisposed) {
+            this.id = id;
+            this.onDisposed = onDisposed;
+        }
+
+        @Override
+        protected Element build() {
+            return new Element();
+        }
+
+        @Override
+        protected void onDispose() {
+            if (onDisposed != null) {
+                onDisposed.run();
+            }
+        }
+    }
 }

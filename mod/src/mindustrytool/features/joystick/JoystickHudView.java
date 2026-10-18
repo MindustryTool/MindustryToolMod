@@ -8,14 +8,10 @@ import arc.util.Nullable;
 import mindustry.game.EventType.ResizeEvent;
 import mindustry.gen.Icon;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.overlay.Hud;
 
-/**
- * Floating HUD surface hosting the joystick widget and its optional reposition drag handle.
- * Position persists via the feature's posX/posY config values.
- */
-public class JoystickHudView extends BaseComponent {
+public class JoystickHudView extends Component {
 
     private final JoystickFeature feature;
     private @Nullable Hud hud;
@@ -30,18 +26,16 @@ public class JoystickHudView extends BaseComponent {
             column().children(() -> {
                 when(feature.showHandleConfig.signal())
                         .thenDo(() -> button()
-                                .style(WebStyles.ghost())
-                                .size(unit(11))
-                                .tooltip(Core.bundle.get("feature.joystick.settings.show-handle"))
-                                .children(() -> icon(Icon.move).size(unit(6)))
-                                .draggable(feature.posXConfig.signal(), feature.posYConfig.signal()));
+                                .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.joystick.settings.show-handle")), draggable(feature.posXConfig.signal(), feature.posYConfig.signal()))
+                                .children(() -> icon(Icon.move).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)))));
 
                 arc(new JoystickWidget(feature));
             });
         });
 
-        hud.position(feature.posXConfig.signal(), feature.posYConfig.signal());
-        hud.opacity(feature.opacityConfig.signal());
+        hud.props(
+                position(feature.posXConfig.signal(), feature.posYConfig.signal()),
+                opacity(feature.opacityConfig.signal()));
 
         listen(ResizeEvent.class, e -> {
             keepInScreen();
@@ -49,7 +43,7 @@ public class JoystickHudView extends BaseComponent {
         });
 
         effect(() -> {
-            feature.sizeConfig.get();
+            feature.sizeConfig.signal().get();
             Core.app.post(this::keepInScreen);
         });
 

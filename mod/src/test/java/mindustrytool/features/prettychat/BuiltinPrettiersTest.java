@@ -101,15 +101,12 @@ class BuiltinPrettiersTest extends MindustryTestEnv {
         assertEquals("custom", p.id());
         assertTrue(p.isEditable());
 
-        // Default template
         assertEquals("<message>", p.getDefaultScript());
         assertEquals("test text", p.transform("test text"));
 
-        // Custom template
         p.setScript(">>> <message> <<<");
         assertEquals(">>> test text <<<", p.transform("test text"));
 
-        // Reset
         p.resetScript();
         assertEquals("<message>", p.getScript());
     }

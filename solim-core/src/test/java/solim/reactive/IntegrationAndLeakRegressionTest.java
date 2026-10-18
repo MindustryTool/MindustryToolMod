@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.padding;
 
 import arc.scene.Element;
 import arc.scene.ui.layout.Table;
@@ -13,7 +15,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.display.Badge;
 import solim.display.Text;
 import solim.input.Button;
@@ -27,198 +29,173 @@ import solim.test.TestScheduler;
 
 public class IntegrationAndLeakRegressionTest extends SolimEnv {
 
-	// ==========================================
-	// Phase 19: Async & Lifecycle Behavior
-	// ==========================================
+    @Test
+    void asyncCompletionAfterDisposalSafelyIgnored() {
+        Signal<String> data = Signal.of("initial");
+        AtomicBoolean uiMutated = new AtomicBoolean(false);
 
-	@Test
-	void asyncCompletionAfterDisposalSafelyIgnored() {
-		Signal<String> data = Signal.of("initial");
-		AtomicBoolean uiMutated = new AtomicBoolean(false);
+        Component comp = new Component() {
+            @Override
+            protected Element build() {
+                Effect.of(() -> {
+                    String val = data.get();
+                    if (!"initial".equals(val)) {
+                        uiMutated.set(true);
+                    }
+                });
+                return new Element();
+            }
+        };
 
-		BaseComponent comp = new BaseComponent() {
-			@Override
-			protected Element build() {
-				Effect.of(() -> {
-					String val = data.get();
-					if (!"initial".equals(val)) {
-						uiMutated.set(true);
-					}
-				});
-				return new Element();
-			}
-		};
+        comp.element();
+        assertFalse(uiMutated.get());
 
-		comp.element();
-		assertFalse(uiMutated.get());
+        CompletableFuture<String> asyncFetch = new CompletableFuture<>();
 
-		// Simulate async fetch started
-		CompletableFuture<String> asyncFetch = new CompletableFuture<>();
+        comp.dispose();
+        assertTrue(comp.isDisposed());
 
-		// Component is disposed before async fetch completes
-		comp.dispose();
-		assertTrue(comp.isDisposed());
+        asyncFetch.complete("async-result");
+        data.set(asyncFetch.join());
+        TestScheduler.flush();
 
-		// Async fetch finishes now
-		asyncFetch.complete("async-result");
-		data.set(asyncFetch.join());
-		TestScheduler.flush();
+        assertFalse(uiMutated.get(), "Disposed component's effect must not run when async task finishes");
+    }
 
-		assertFalse(uiMutated.get(), "Disposed component's effect must not run when async task finishes");
-	}
+    static class ItemRow extends Component {
+        final String id;
+        final Signal<String> labelText;
+        final Runnable onDelete;
 
-	// ==========================================
-	// Phase 20: Multi-Subsystem Integration Tree
-	// ==========================================
+        ItemRow(String id, String initialText, Runnable onDelete) {
+            this.id = id;
+            this.labelText = Signal.of(initialText);
+            this.onDelete = onDelete;
+        }
 
-	static class ItemRow extends BaseComponent {
-		final String id;
-		final Signal<String> labelText;
-		final Runnable onDelete;
+        @Override
+        protected Element build() {
+            Row row = new Row().props(gap(8f));
+            Table table = row.table();
+            AttachmentStack.push(table);
+            Text.of(labelText);
+            new Button(onDelete);
+            AttachmentStack.pop();
+            return table;
+        }
+    }
 
-		ItemRow(String id, String initialText, Runnable onDelete) {
-			this.id = id;
-			this.labelText = Signal.of(initialText);
-			this.onDelete = onDelete;
-		}
+    @Test
+    void fullComponentTreeLifecycleAndReactivity() {
+        Signal<List<String>> itemKeys = Signal.of(new ArrayList<>(Arrays.asList("k1", "k2", "k3")));
+        Signal<Integer> count = Signal.of(3);
 
-		@Override
-		protected Element build() {
-			Row row = new Row().gap(8f);
-			Table table = row.table();
-			AttachmentStack.push(table);
-			Text.of(labelText);
-			new Button(onDelete);
-			AttachmentStack.pop();
-			return table;
-		}
-	}
+        StructuralReconciler<String, ItemRow> reconciler = new StructuralReconciler<>();
+        List<String> deleted = new ArrayList<>();
 
-	@Test
-	void fullComponentTreeLifecycleAndReactivity() {
-		Signal<List<String>> itemKeys = Signal.of(new ArrayList<>(Arrays.asList("k1", "k2", "k3")));
-		Signal<Integer> count = Signal.of(3);
+        Component app = new Component() {
+            @Override
+            protected Element build() {
+                Column col = new Column().props(gap(16f));
+                Table appTable = col.table();
+                AttachmentStack.push(appTable);
 
-		StructuralReconciler<String, ItemRow> reconciler = new StructuralReconciler<>();
-		List<String> deleted = new ArrayList<>();
+                Row header = new Row().props(gap(8f));
+                Table headerTable = header.table();
+                AttachmentStack.push(headerTable);
+                Text.of("App Header");
+                Badge.ofCount(count);
+                AttachmentStack.pop();
 
-		// 1. Build app tree
-		BaseComponent app = new BaseComponent() {
-			@Override
-			protected Element build() {
-				Column col = new Column().gap(16f);
-				Table appTable = col.table();
-				AttachmentStack.push(appTable);
+                Card card = new Card().props(padding(12f));
+                Table cardContainer = card.container();
+                AttachmentStack.push(cardContainer);
 
-				// Header
-				Row header = new Row().gap(8f);
-				Table headerTable = header.table();
-				AttachmentStack.push(headerTable);
-				Text.of("App Header");
-				Badge.ofCount(count);
-				AttachmentStack.pop();
+                Table listTable = new Table();
+                AttachmentStack.push(listTable);
+                reconciler.reconcile(
+                        itemKeys.get(),
+                        k -> k,
+                        k -> new ItemRow(k, "Item " + k, () -> deleted.add(k)));
+                AttachmentStack.pop();
 
-				// Content Card
-				Card card = new Card().padding(12f);
-				Table cardContainer = card.container();
-				AttachmentStack.push(cardContainer);
+                AttachmentStack.pop();
+                AttachmentStack.pop();
 
-				Table listTable = new Table();
-				AttachmentStack.push(listTable);
-				reconciler.reconcile(
-						itemKeys.get(),
-						k -> k,
-						k -> new ItemRow(k, "Item " + k, () -> deleted.add(k))
-				);
-				AttachmentStack.pop();
+                return appTable;
+            }
+        };
+        app.element();
 
-				AttachmentStack.pop(); // Card
-				AttachmentStack.pop(); // App
+        assertEquals(3, reconciler.activeComponents().size());
+        ItemRow row1 = reconciler.activeComponents().get("k1");
+        ItemRow row2 = reconciler.activeComponents().get("k2");
+        ItemRow row3 = reconciler.activeComponents().get("k3");
 
-				return appTable;
-			}
-		};
-		app.element();
+        itemKeys.set(new ArrayList<>(Arrays.asList("k3", "k1", "k2")));
+        reconciler.reconcile(
+                itemKeys.get(),
+                k -> k,
+                k -> new ItemRow(k, "Item " + k, () -> deleted.add(k)));
 
-		assertEquals(3, reconciler.activeComponents().size());
-		ItemRow row1 = reconciler.activeComponents().get("k1");
-		ItemRow row2 = reconciler.activeComponents().get("k2");
-		ItemRow row3 = reconciler.activeComponents().get("k3");
+        assertEquals(3, reconciler.activeComponents().size());
+        assertSame(row3, reconciler.activeComponents().get("k3"));
+        assertSame(row1, reconciler.activeComponents().get("k1"));
+        assertSame(row2, reconciler.activeComponents().get("k2"));
+        assertFalse(row1.isDisposed());
 
-		// 2. Reorder items: k3, k1, k2
-		itemKeys.set(new ArrayList<>(Arrays.asList("k3", "k1", "k2")));
-		reconciler.reconcile(
-				itemKeys.get(),
-				k -> k,
-				k -> new ItemRow(k, "Item " + k, () -> deleted.add(k))
-		);
+        itemKeys.set(new ArrayList<>(Arrays.asList("k3", "k1")));
+        count.set(2);
+        TestScheduler.flush();
+        reconciler.reconcile(
+                itemKeys.get(),
+                k -> k,
+                k -> new ItemRow(k, "Item " + k, () -> deleted.add(k)));
 
-		assertEquals(3, reconciler.activeComponents().size());
-		assertSame(row3, reconciler.activeComponents().get("k3"));
-		assertSame(row1, reconciler.activeComponents().get("k1"));
-		assertSame(row2, reconciler.activeComponents().get("k2"));
-		assertFalse(row1.isDisposed());
+        assertEquals(2, reconciler.activeComponents().size());
+        assertTrue(row2.isDisposed(), "Removed row k2 must be disposed");
+        assertFalse(row1.isDisposed());
+        assertFalse(row3.isDisposed());
 
-		// 3. Remove k2
-		itemKeys.set(new ArrayList<>(Arrays.asList("k3", "k1")));
-		count.set(2);
-		TestScheduler.flush();
-		reconciler.reconcile(
-				itemKeys.get(),
-				k -> k,
-				k -> new ItemRow(k, "Item " + k, () -> deleted.add(k))
-		);
+        reconciler.dispose();
+        app.dispose();
+        TestScheduler.flush();
 
-		assertEquals(2, reconciler.activeComponents().size());
-		assertTrue(row2.isDisposed(), "Removed row k2 must be disposed");
-		assertFalse(row1.isDisposed());
-		assertFalse(row3.isDisposed());
+        assertTrue(reconciler.isDisposed());
+        assertTrue(row1.isDisposed());
+        assertTrue(row3.isDisposed());
+        assertEquals(0, count.observerCount());
+    }
 
-		// 4. Dispose entire tree
-		reconciler.dispose();
-		app.dispose();
-		TestScheduler.flush();
+    @Test
+    void oneHundredMountAndDisposeCyclesLeavesZeroResidualListeners() {
+        Signal<Integer> sharedState = Signal.of(42);
 
-		assertTrue(reconciler.isDisposed());
-		assertTrue(row1.isDisposed());
-		assertTrue(row3.isDisposed());
-		assertEquals(0, count.observerCount());
-	}
+        for (int i = 0; i < 100; i++) {
+            final int index = i;
+            Component comp = new Component() {
+                @Override
+                protected Element build() {
+                    Effect.of(() -> {
+                        sharedState.get();
+                    });
+                    Text text = Text.of(sharedState.map(v -> "State: " + v + " (cycle " + index + ")"));
+                    return text.element();
+                }
+            };
 
-	// ==========================================
-	// Phase 21: Leak & Stress Testing (100+ Cycles)
-	// ==========================================
+            comp.element();
+            assertEquals(2, sharedState.observerCount(),
+                    "Each cycle registers an effect and a mapped computed observer");
 
-	@Test
-	void oneHundredMountAndDisposeCyclesLeavesZeroResidualListeners() {
-		Signal<Integer> sharedState = Signal.of(42);
+            comp.dispose();
+            TestScheduler.flush();
 
-		for (int i = 0; i < 100; i++) {
-			final int index = i;
-			BaseComponent comp = new BaseComponent() {
-				@Override
-				protected Element build() {
-					Effect.of(() -> {
-						sharedState.get();
-					});
-					Text text = Text.of(sharedState.map(v -> "State: " + v + " (cycle " + index + ")"));
-					return text.element();
-				}
-			};
+            assertEquals(0, sharedState.observerCount(), "Disposal must remove all observers registered in cycle " + i);
+        }
 
-			comp.element();
-			assertEquals(2, sharedState.observerCount(), "Each cycle registers an effect and a mapped computed observer");
-
-			comp.dispose();
-			TestScheduler.flush();
-
-			assertEquals(0, sharedState.observerCount(), "Disposal must remove all observers registered in cycle " + i);
-		}
-
-		// Verify that sharedState continues to function cleanly with no residual leaks
-		sharedState.set(999);
-		TestScheduler.flush();
-		assertEquals(0, sharedState.observerCount());
-		assertEquals(0, sharedState.listenerCount());
-	}
+        sharedState.set(999);
+        TestScheduler.flush();
+        assertEquals(0, sharedState.observerCount());
+    }
 }

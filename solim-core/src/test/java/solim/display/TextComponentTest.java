@@ -1,6 +1,12 @@
 package solim.display;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static solim.modifier.Values.position;
+import static solim.modifier.Values.visible;
+import static solim.modifier.Values.x;
+import static solim.modifier.Values.y;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -68,7 +74,7 @@ class TextComponentTest extends SolimEnv {
 	@Test
 	void colorModifierUpdatesLabelColor() {
 		Text t = new Text("Hello");
-		t.color(Color.red);
+		t.props(color(Color.red));
 		assertEquals(Color.red, t.label().color);
 		t.dispose();
 	}
@@ -76,7 +82,7 @@ class TextComponentTest extends SolimEnv {
 	@Test
 	void reactiveColorUpdatesLabelColor() {
 		Signal<Color> colorSig = Signal.of(Color.green);
-		Text t = new Text("Hello").color(colorSig);
+		Text t = new Text("Hello").props(color(colorSig));
 		assertEquals(Color.green, t.label().color);
 
 		colorSig.set(Color.blue);
@@ -88,10 +94,10 @@ class TextComponentTest extends SolimEnv {
 	void visibleModifierChangesLabelVisibility() {
 		Text t = new Text("Hello");
 
-		t.visible(false);
+		t.props(visible(false));
 		assertFalse(t.label().visible);
 
-		t.visible(true);
+		t.props(visible(true));
 		assertTrue(t.label().visible);
 		t.dispose();
 	}
@@ -99,7 +105,7 @@ class TextComponentTest extends SolimEnv {
 	@Test
 	void reactiveVisibleUpdatesLabelVisibility() {
 		Signal<Boolean> vis = Signal.of(true);
-		Text t = new Text("Hello").visible(vis);
+		Text t = new Text("Hello").props(visible(vis));
 		assertTrue(t.label().visible);
 
 		vis.set(false);
@@ -114,13 +120,13 @@ class TextComponentTest extends SolimEnv {
 	void positionSetsLabelCoordinates() {
 		Text t = new Text("Hello");
 
-		t.x(10f);
+		t.props(x(10f));
 		assertEquals(10f, t.label().x, 0.01f);
 
-		t.y(20f);
+		t.props(y(20f));
 		assertEquals(20f, t.label().y, 0.01f);
 
-		t.position(30f, 40f);
+		t.props(position(30f, 40f));
 		assertEquals(30f, t.label().x, 0.01f);
 		assertEquals(40f, t.label().y, 0.01f);
 		t.dispose();

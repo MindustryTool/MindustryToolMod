@@ -1,236 +1,369 @@
 package solim.display;
 
-import arc.graphics.Color;
+import arc.files.Fi;
+import arc.graphics.g2d.TextureRegion;
 import arc.scene.style.Drawable;
+import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.Image;
-import arc.scene.ui.layout.Cell;
-import arc.scene.ui.layout.Table;
+import arc.util.Nullable;
 import arc.util.Scaling;
-import solim.core.LeafComponent;
-import solim.core.SpacingAware;
-import solim.reactive.Effect;
+import java.util.Objects;
+import solim.core.Component;
+import solim.core.SolimToken;
+import solim.modifier.Configurable;
+import solim.modifier.ImageCapability;
+import solim.modifier.PendingCellConfig;
+import solim.modifier.Prop;
+import solim.modifier.Props;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/** Display widget for drawable content. */
-public final class SolimImage extends LeafComponent<Image, SolimImage> implements SpacingAware {
+public final class SolimImage extends Component
+        implements Configurable<SolimImage>, ImageCapability {
 
+    private final Image element;
+    private final PendingCellConfig constraints = new PendingCellConfig();
+    private @Nullable Props<SolimImage> pending;
+    private @Nullable ImageSource source;
+    private @Nullable Drawable placeholder;
+    private @Nullable Drawable fallback;
     private Scaling scaling = Scaling.fit;
-
-    private float padTop;
-    private float padLeft;
-    private float padBottom;
-    private float padRight;
-
-    private float marginTop;
-    private float marginLeft;
-    private float marginBottom;
-    private float marginRight;
+    private int cornerRadius;
+    private long loadGeneration;
+    private boolean failed;
 
     public SolimImage() {
-        this((Drawable) null);
+        this((Drawable) null, Scaling.fit);
     }
 
-    public SolimImage(Drawable d) {
-        this(d, Scaling.fit);
+    public SolimImage(@Nullable Drawable drawable) {
+        this(drawable, Scaling.fit);
     }
 
-    public SolimImage(Drawable d, Scaling scaling) {
-        super(new Image(d, scaling));
+    public SolimImage(@Nullable Drawable drawable, Scaling scaling) {
+        this(new Image(drawable, scaling), scaling);
+    }
+
+    public SolimImage(@Nullable String url) {
+        this();
+        src(url);
+    }
+
+    public SolimImage(@Nullable ImageSource source) {
+        this();
+        src(source);
+    }
+
+    public SolimImage(@Nullable Readable<ImageSource> source) {
+        this();
+        props(Prop.elementSource(ImageCapability.class, "src", source, (element, v) -> applySourceIfChanged(v)));
+    }
+
+    private SolimImage(Image element, Scaling scaling) {
+        super(element);
+        this.element = element;
         this.scaling = scaling;
+        SolimToken.bind(element, this, constraints);
     }
 
-    public static SolimImage of(Drawable d) {
-        return new SolimImage(d);
+    public static SolimImage of(Drawable drawable) {
+        return new SolimImage(drawable);
     }
 
-    public static SolimImage of(Signal<Drawable> s) {
-        SolimImage img = new SolimImage();
-        Effect.of(() -> img.element.setDrawable(s.get()));
-        return img;
+    public static SolimImage of(Signal<Drawable> drawable) {
+        SolimImage image = new SolimImage();
+        image.props(Prop.elementSource(ImageCapability.class, "src", drawable.map(ImageSource::of),
+                (element, v) -> image.applySourceIfChanged(v)));
+        return image;
     }
 
-    public SolimImage drawable(Drawable d) {
-        element.setDrawable(d);
+    public static void setImageLoader(@Nullable ImageLoader loader) {
+        ImageCache.setLoader(loader);
+    }
+
+    public static void clearCache() {
+        ImageCache.clearCache();
+    }
+
+    public static String cacheKey(@Nullable String url, int radius) {
+        return ImageCache.cacheKey(url, radius);
+    }
+
+    public static String cacheKey(@Nullable String url, int radius, float targetW) {
+        return ImageCache.cacheKey(url, radius, targetW);
+    }
+
+    public static boolean isCached(String url) {
+        return ImageCache.isCached(url);
+    }
+
+    public static boolean isCached(String url, int radius) {
+        return ImageCache.isCached(url, radius);
+    }
+
+    public static boolean isCached(String url, int radius, float targetW) {
+        return ImageCache.isCached(url, radius, targetW);
+    }
+
+    public static @Nullable TextureRegionDrawable getCached(String url) {
+        return ImageCache.getCached(url);
+    }
+
+    public static @Nullable TextureRegionDrawable getCached(String url, int radius) {
+        return ImageCache.getCached(url, radius);
+    }
+
+    public static @Nullable TextureRegionDrawable getCached(String url, int radius, float targetW) {
+        return ImageCache.getCached(url, radius, targetW);
+    }
+
+    public static void putCache(String url, TextureRegion region) {
+        ImageCache.putCache(url, region);
+    }
+
+    public static void putCache(String url, int radius, TextureRegion region) {
+        ImageCache.putCache(url, radius, region);
+    }
+
+    public static void putCache(String url, int radius, float targetW, TextureRegion region) {
+        ImageCache.putCache(url, radius, targetW, region);
+    }
+
+    public SolimImage src(@Nullable ImageSource source) {
+        applySource(source);
         return this;
     }
 
-    public SolimImage drawable(Readable<Drawable> d) {
-        if (d != null) {
-            Effect.of(() -> element.setDrawable(d.get()));
+    public void applySourceIfChanged(@Nullable ImageSource next) {
+        if (!Objects.equals(next, source)) {
+            applySource(next);
+        }
+    }
+
+    public SolimImage src(@Nullable String url) {
+        return src(ImageSource.of(url));
+    }
+
+    public SolimImage src(@Nullable Drawable drawable) {
+        return src(ImageSource.of(drawable));
+    }
+
+    public SolimImage drawable(@Nullable Drawable drawable) {
+        source = null;
+        failed = false;
+        loadGeneration++;
+        applyDrawable(drawable);
+        return this;
+    }
+
+    public SolimImage icon(@Nullable Drawable drawable) {
+        return drawable(drawable);
+    }
+
+    public SolimImage placeholder(@Nullable Drawable placeholder) {
+        this.placeholder = placeholder;
+        if (element.getDrawable() == null && placeholder != null) {
+            applyDrawable(placeholder);
         }
         return this;
     }
 
-    public SolimImage scaling(Scaling scaling) {
+    public SolimImage fallback(@Nullable Drawable fallback) {
+        this.fallback = fallback;
+        if (failed && fallback != null) {
+            applyDrawable(fallback);
+        }
+        return this;
+    }
+
+    public SolimImage rounded(int radius) {
+        setRounded(radius);
+        return this;
+    }
+
+    public void setRounded(int radius) {
+        int next = Math.max(0, radius);
+        if (cornerRadius != next) {
+            cornerRadius = next;
+            if (source != null) {
+                applySource(source);
+            }
+        }
+    }
+
+    public int getCornerRadius() {
+        return cornerRadius;
+    }
+
+    public void setPlaceholder(@Nullable Drawable placeholder) {
+        placeholder(placeholder);
+    }
+
+    public void setFallback(@Nullable Drawable fallback) {
+        fallback(fallback);
+    }
+
+    public void setScaling(Scaling scaling) {
         this.scaling = scaling;
         element.setScaling(scaling);
-        return this;
     }
 
     public Scaling getScaling() {
         return scaling;
     }
 
-    public SolimImage color(Color color) {
-        if (color != null) {
-            element.setColor(color);
-        }
-        return this;
+    public Image image() {
+        return element;
     }
 
-    public SolimImage color(Readable<Color> color) {
-        if (color != null) {
-            Effect.of(() -> {
-                Color c = color.get();
-                if (c != null) {
-                    element.setColor(c);
-                }
-            });
-        }
-        return this;
+    @Override
+    public PendingCellConfig cellConfig() {
+        return constraints;
     }
 
-    public SolimImage padding(float p) {
-        this.padTop = this.padLeft = this.padBottom = this.padRight = p;
-        applySpacing();
-        return this;
-    }
-
-    public SolimImage padding(float top, float left, float bottom, float right) {
-        this.padTop = top;
-        this.padLeft = left;
-        this.padBottom = bottom;
-        this.padRight = right;
-        applySpacing();
-        return this;
-    }
-
-    public SolimImage paddingTop(float top) {
-        this.padTop = top;
-        applySpacing();
-        return this;
-    }
-
-    public SolimImage paddingBottom(float bottom) {
-        this.padBottom = bottom;
-        applySpacing();
-        return this;
-    }
-
-    public SolimImage paddingLeft(float left) {
-        this.padLeft = left;
-        applySpacing();
-        return this;
-    }
-
-    public SolimImage paddingRight(float right) {
-        this.padRight = right;
-        applySpacing();
-        return this;
-    }
-
-    public SolimImage paddingX(float x) {
-        this.padLeft = this.padRight = x;
-        applySpacing();
-        return this;
-    }
-
-    public SolimImage paddingY(float y) {
-        this.padTop = this.padBottom = y;
-        applySpacing();
-        return this;
-    }
-
-    public SolimImage margin(float m) {
-        this.marginTop = this.marginLeft = this.marginBottom = this.marginRight = m;
-        applySpacing();
-        return this;
-    }
-
-    public SolimImage margin(float top, float left, float bottom, float right) {
-        this.marginTop = top;
-        this.marginLeft = left;
-        this.marginBottom = bottom;
-        this.marginRight = right;
-        applySpacing();
-        return this;
-    }
-
-    public SolimImage marginTop(float top) {
-        this.marginTop = top;
-        applySpacing();
-        return this;
-    }
-
-    public SolimImage marginBottom(float bottom) {
-        this.marginBottom = bottom;
-        applySpacing();
-        return this;
-    }
-
-    public SolimImage marginLeft(float left) {
-        this.marginLeft = left;
-        applySpacing();
-        return this;
-    }
-
-    public SolimImage marginRight(float right) {
-        this.marginRight = right;
-        applySpacing();
-        return this;
-    }
-
-    public SolimImage marginX(float x) {
-        this.marginLeft = this.marginRight = x;
-        applySpacing();
-        return this;
-    }
-
-    public SolimImage marginY(float y) {
-        this.marginTop = this.marginBottom = y;
-        applySpacing();
+    @Override
+    public SolimImage name(@Nullable String name) {
+        setName(name);
         return this;
     }
 
     @Override
-    public void applySpacing() {
-        if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
-            if (cell != null) {
-                cell.pad(padTop + marginTop, padLeft + marginLeft, padBottom + marginBottom, padRight + marginRight);
-            }
-        }
-    }
-
-    public Image image() {
-        return element();
-    }
-
-    public SolimImage top() {
-        if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
-            if (cell != null)
-                cell.top();
-        }
+    public SolimImage self() {
         return this;
     }
 
-    public SolimImage left() {
-        if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
-            if (cell != null)
-                cell.left();
-        }
-        return this;
+    @Override
+    public @Nullable Props<SolimImage> pendingProps() {
+        return pending;
     }
 
-    public SolimImage center() {
-        if (element.parent instanceof Table) {
-            Cell<?> cell = ((Table) element.parent).getCell(element);
-            if (cell != null)
-                cell.center();
+    @Override
+    public void setPendingProps(@Nullable Props<SolimImage> props) {
+        this.pending = props;
+    }
+
+    @Override
+    protected void onDispose() {
+        loadGeneration++;
+    }
+
+    private void applySource(@Nullable ImageSource source) {
+        this.source = source;
+        this.failed = false;
+        final long gen = ++loadGeneration;
+
+        if (source == null) {
+            fail(gen);
+            return;
         }
-        return this;
+
+        Drawable immediate = source.drawable();
+        if (immediate != null) {
+            applyDrawable(immediate);
+            return;
+        }
+
+        String url = source.url();
+        Fi file = source.file();
+        if (file == null && (url == null || url.trim().isEmpty())) {
+            fail(gen);
+            return;
+        }
+
+        final String key = file != null ? file.path() : url;
+        final int radius = cornerRadius;
+        final float targetW = prefWidth();
+        final float targetH = prefHeight();
+
+        TextureRegionDrawable cached = ImageCache.getCached(key, radius, targetW);
+        if (cached != null) {
+            applyDrawable(cached);
+            return;
+        }
+
+        if (placeholder != null) {
+            applyDrawable(placeholder);
+        }
+
+        if (file != null) {
+            ImageCache.decodeFile(file, radius, targetW, targetH,
+                    region -> applyResult(key, radius, targetW, gen, region),
+                    error -> fail(gen));
+            return;
+        }
+
+        ImageCache.scheduleCleanup();
+        if (ImageCache.loadCached(url, radius, targetW, targetH,
+                region -> applyResult(key, radius, targetW, gen, region),
+                () -> {
+                    if (isCurrent(gen, key)) {
+                        httpLoad(url, radius, targetW, targetH, gen);
+                    }
+                })) {
+            return;
+        }
+        httpLoad(url, radius, targetW, targetH, gen);
+    }
+
+    private void httpLoad(String url, int radius, float targetW, float targetH, long gen) {
+        ImageCache.loader().load(url, radius, targetW, targetH,
+                region -> applyResult(url, radius, targetW, gen, region),
+                error -> fail(gen));
+    }
+
+    private void applyResult(String key, int radius, float targetW, long gen, TextureRegion region) {
+        TextureRegionDrawable drawable = new TextureRegionDrawable(region);
+        ImageCache.putCache(key, radius, targetW, drawable);
+        if (isCurrent(gen, key)) {
+            failed = false;
+            applyDrawable(drawable);
+        }
+    }
+
+    private void fail(long gen) {
+        if (gen != loadGeneration) {
+            return;
+        }
+        failed = true;
+        applyDrawable(fallback != null ? fallback : placeholder);
+    }
+
+    private boolean isCurrent(long gen, String key) {
+        String current = currentKey();
+        return gen == loadGeneration && current != null && current.equals(key);
+    }
+
+    private @Nullable String currentKey() {
+        ImageSource current = source;
+        if (current == null) {
+            return null;
+        }
+        Fi file = current.file();
+        return file != null ? file.path() : current.url();
+    }
+
+    private float prefWidth() {
+        Readable<Float> width = constraints.prefWidth;
+        if (width == null) {
+            return 0f;
+        }
+        Float value = width.get();
+        return value != null ? value : 0f;
+    }
+
+    private float prefHeight() {
+        Readable<Float> height = constraints.prefHeight;
+        if (height == null) {
+            return 0f;
+        }
+        Float value = height.get();
+        return value != null ? value : 0f;
+    }
+
+    private void applyDrawable(@Nullable Drawable drawable) {
+        if (drawable != null) {
+            element.setDrawable(drawable);
+        }
+        element.invalidateHierarchy();
     }
 }

@@ -12,6 +12,7 @@ public class FeatureManager {
 	private static final Signal<Seq<Feature>> features = Signal.of(new Seq<>());
 
 	public static void reenable() {
+		// Arc's Settings.getJson(String, Class<T>, Class<?>, Prov<T>) derives T from the container Class, so Seq.class can only yield a raw Seq.
 		@SuppressWarnings("unchecked")
 		Seq<String> enableds =
 				Core.settings.getJson("mindustrytool.enabled-features", Seq.class, String.class, Seq::new);
@@ -83,6 +84,7 @@ public class FeatureManager {
 		}
 	}
 
+	// Arc's Settings.getJson(String, Class<T>, Class<?>, Prov<T>) derives T from the container Class, so Seq.class can only yield a raw Seq.
 	@SuppressWarnings("unchecked")
     public static void normalizeAndApplyOrder() {
 		String key = ModSettings.featureOrder.getKey();

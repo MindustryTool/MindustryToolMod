@@ -6,11 +6,6 @@ import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import solim.modifier.PendingCellConfig;
 
-/**
- * Structured envelope stored on {@link Element#userObject} to hold Solim metadata
- * (component reference, cell configuration, expansion flags) without bare string or
- * raw object collisions, while preserving any external user payload.
- */
 public final class SolimToken {
 
     public @Nullable Component component;

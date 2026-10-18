@@ -10,12 +10,11 @@ import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import mindustrytool.features.playerconnect.models.JoinRequest;
-import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.overlay.Hud;
 import solim.core.Units;
 
-public class JoinApprovalHudView extends BaseComponent {
+public class JoinApprovalHudView extends Component {
 
     private final PlayerConnectFeature feature;
     private @Nullable Hud hud;
@@ -30,13 +29,10 @@ public class JoinApprovalHudView extends BaseComponent {
             dynamic(feature.currentRequestSignal(), this::buildRequestBanner);
         });
 
-        hud.background(Styles.black8);
-        hud.visible(feature.currentRequestSignal().map(r -> r != null));
-
-        // Center at top of screen
-        hud.position(
-                Units.screenWidth() / 2f,
-                Units.screenHeight() - 50f);
+        hud.props(
+                background(Styles.black8),
+                visible(feature.currentRequestSignal().map(r -> r != null)),
+                position(Units.screenWidth() / 2f, Units.screenHeight() - 50f));
 
         return hud.element();
     }
@@ -51,21 +47,15 @@ public class JoinApprovalHudView extends BaseComponent {
                 request.player != null ? request.player.name : "Unknown");
 
         return row()
-                .gap(unit(3))
-                .margin(unit(2), unit(4), unit(2), unit(4))
-                .center()
+                .props(margin(unit(2), unit(4), unit(2), unit(4)), gap(unit(3)), center())
                 .children(() -> {
-                    text(msg).color(Color.white);
+                    text(msg).props(color(Color.white));
 
                     button(Core.bundle.get("feature.player-connect.accept", "Accept"), () -> feature.accept(request))
-                            .style(Styles.defaultb)
-                            .color(Pal.accent)
-                            .height(unit(8));
+                            .props(style(Styles.defaultb), color(Pal.accent), height(unit(8)), prefHeight(unit(8)));
 
                     button(Core.bundle.get("feature.player-connect.reject", "Reject"), () -> feature.reject(request))
-                            .style(Styles.defaultb)
-                            .color(Color.scarlet)
-                            .height(unit(8));
+                            .props(style(Styles.defaultb), color(Color.scarlet), height(unit(8)), prefHeight(unit(8)));
                 });
     }
 }

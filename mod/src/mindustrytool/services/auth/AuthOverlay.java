@@ -76,30 +76,18 @@ public class AuthOverlay {
 
     private Component buildOverlay() {
         return column()
-                .fillParent()
-                .top()
-                .right()
-                .touchable(Touchable.childrenOnly)
+                .props(fillParent(true), top(), right(), touchable(Touchable.childrenOnly))
                 .children(() -> {
                     dynamic(state, s -> {
                         if (s.isLoading) {
                             row()
-                                    .top()
-                                    .right()
-                                    .margin(8f)
-                                    .background(Styles.black6)
-                                    .padding(unit(2))
+                                    .props(top(), right(), margin(8f), background(Styles.black6), padding(unit(2)))
                                     .children(() -> {
                                         text(Core.bundle.get("auth.session.loading"));
                                     });
                         } else if (s.error != null) {
                             row()
-                                    .top()
-                                    .right()
-                                    .margin(8f)
-                                    .background(Styles.black6)
-                                    .gap(unit(2))
-                                    .padding(unit(2))
+                                    .props(top(), right(), margin(8f), background(Styles.black6), gap(unit(2)), padding(unit(2)))
                                     .children(() -> {
                                         text(Core.bundle.get("auth.session.error"));
                                         String errText = s.error.getLocalizedMessage() != null
@@ -113,11 +101,7 @@ public class AuthOverlay {
                                     });
                         } else if (s.user == null) {
                             row()
-                                    .top()
-                                    .right()
-                                    .margin(8f)
-                                    .background(Styles.black6)
-                                    .padding(unit(2))
+                                    .props(top(), right(), margin(8f), background(Styles.black6), padding(unit(2)))
                                     .children(() -> {
                                         button(Core.bundle.get("auth.login"), this::startLoginUI);
                                     });
@@ -125,27 +109,25 @@ public class AuthOverlay {
                             UserSession user = s.user;
 
                             card()
-                                    .top()
-                                    .right()
-                                    .children(() -> {
-                                        row().padding(unit(2)).background(Styles.black6).gap(unit(2)).center()
-                                                .children(() -> {
-                                                    if (user.getImageUrl() != null && !user.getImageUrl().isEmpty()) {
-                                                        networkImage(user.getImageUrl()).size(64f);
-                                                    }
-                                                    if (!Vars.mobile && user.getName() != null) {
-                                                        text(user.getName()).marginLeft(unit(2));
-                                                    }
-                                                });
-                                    })
-                                    .onClick(() -> {
+                                    .props(top(), right(), onClick(() -> {
                                         Vars.ui.showConfirm(
                                                 Core.bundle.get("auth.logout.confirm-title"),
                                                 Core.bundle.format("auth.logout.confirm-message", user.getName()),
                                                 MindustryAuthProvider.getInstance()::logout);
+                                    }))
+                                    .children(() -> {
+                                        row().props(padding(unit(2)), background(Styles.black6), gap(unit(2)), center())
+                                                .children(() -> {
+                                                    if (user.getImageUrl() != null && !user.getImageUrl().isEmpty()) {
+                                                        image(user.getImageUrl()).props(size(64f), prefWidth(64f), prefHeight(64f));
+                                                    }
+                                                    if (!Vars.mobile && user.getName() != null) {
+                                                        text(user.getName()).props(marginLeft(unit(2)));
+                                                    }
+                                                });
                                     });
                         }
-                    }).top().right();
+                    }).props(top(), right());
                 });
     }
 

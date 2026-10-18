@@ -16,14 +16,10 @@ import mindustrytool.features.browser.common.BrowserLayout;
 import mindustrytool.features.browser.common.BrowserStatsBadge;
 import mindustrytool.components.WebStyles;
 import mindustrytool.models.response.SchematicData;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Readable;
 
-/**
- * Image-first card layout showing a dedicated preview card with a centered
- * title strip and a compact row of interactive stat action buttons.
- */
-public class SchematicCard extends BaseComponent {
+public class SchematicCard extends Component {
 
     public static final float CARD_SIZE = BrowserLayout.CARD_SIZE;
 
@@ -71,40 +67,33 @@ public class SchematicCard extends BaseComponent {
 
         return column()
                 .name("SchematicCard-" + schematic.getItemId())
-                .width(size)
-                .gap(unit(2))
+                .props(prefWidth(size), gap(unit(2)))
                 .children(() -> {
                     card(WebStyles.previewCardBackground())
                             .name("SchematicCard-preview-" + schematic.getItemId())
-                            .size(size)
-                            .onClick(onClick)
+                            .props(prefWidth(size), prefHeight(size), onClick(onClick))
                             .children(() -> {
-                                stack().grow()
-                                        .layer(() -> networkImage()
-                                                .rounded(8)
-                                                .scaling(Scaling.fit)
-                                                .grow()
-                                                .url(imageUrl)
-                                                .placeholder(Icon.image)
-                                                .fallback(Icon.image))
-                                        .layer(() -> column().grow().children(() -> {
+                                stack().props(grow())
+                                        .layer(() -> image()
+                                                .props(
+                                                        grow(),
+                                                        imageRounded(8),
+                                                        scaling(Scaling.fit),
+                                                        src(imageUrl),
+                                                        placeholder(Icon.image),
+                                                        fallback(Icon.image)
+                                                ))
+                                        .layer(() -> column().props(grow()).children(() -> {
                                             spacer();
-                                            row().growX()
-                                                    .background(Styles.black8)
-                                                    .padding(unit(1.5f), unit(2f), unit(1.5f), unit(2f))
-                                                    .center()
+                                            row().props(growX(), background(Styles.black8), padding(unit(1.5f), unit(2f), unit(1.5f), unit(2f)), center())
                                                     .children(() -> {
                                                         text(title)
-                                                                .style(Styles.defaultLabel)
-                                                                .color(Color.white)
-                                                                .ellipsis(true)
-                                                                .center()
-                                                                .growX();
+                                                                .props(style(Styles.defaultLabel), color(Color.white), ellipsis(true), center(), growX());
                                                     });
                                         }));
                             });
 
-                    row().width(size).gap(unit(1.5f)).children(() -> {
+                    row().props(prefWidth(size), gap(unit(1.5f))).children(() -> {
                         statButton(
                                 likesText,
                                 FileIcon.of("heart.png", Icon.upOpenSmall),
@@ -126,25 +115,18 @@ public class SchematicCard extends BaseComponent {
                                 Core.bundle.get("browser.schematic.save"));
 
                         button(onCopy)
-                                .style(WebStyles.cardActionText())
-                                .growX()
-                                .height(unit(9))
-                                .tooltip(Core.bundle.get("browser.schematic.copy"))
-                                .children(() -> icon(Icon.copy).size(unit(4.5f)).color(Color.white));
+                                .props(style(WebStyles.actionCardText()), growX(), prefHeight(unit(9)), tooltip(Core.bundle.get("browser.schematic.copy")))
+                                .children(() -> icon(Icon.copy).props(color(Color.white), prefWidth(unit(4.5f)), prefHeight(unit(4.5f))));
                     });
                 }).element();
     }
 
     private void statButton(String count, Drawable iconDrawable, Color textColor, Runnable action, String tooltip) {
         button(action)
-                .style(WebStyles.cardActionText())
-                .growX()
-                .height(unit(9))
-                .gap(unit(1))
-                .tooltip(tooltip)
+                .props(style(WebStyles.actionCardText()), growX(), prefHeight(unit(9)), gap(unit(1)), tooltip(tooltip))
                 .children(() -> {
-                    icon(iconDrawable).size(unit(4.5f)).color(Color.white).marginRight(unit(1));
-                    text(count).style(Styles.defaultLabel).fontScale(0.85f).color(textColor);
+                    icon(iconDrawable).props(color(Color.white), prefWidth(unit(4.5f)), prefHeight(unit(4.5f)), marginRight(unit(1)));
+                    text(count).props(style(Styles.defaultLabel), color(textColor), fontScale(0.85f));
                 });
     }
 }

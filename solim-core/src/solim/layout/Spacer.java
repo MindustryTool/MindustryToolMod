@@ -1,44 +1,63 @@
 package solim.layout;
 
-import arc.scene.Element;
 import arc.scene.ui.layout.Table;
+import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.SolimToken;
-import solim.runtime.OwnershipContext;
+import solim.modifier.Configurable;
+import solim.modifier.PendingCellConfig;
+import solim.modifier.TableCapability;
+import solim.modifier.Props;
 
-/** Spacer that consumes remaining space in a row/column. */
-public final class Spacer implements Component {
-	private final Table table = new Table();
-	private boolean disposed = false;
+public final class Spacer extends Component
+        implements Configurable<Spacer>, TableCapability {
 
-	public Spacer() {
-		table.name = "solim-spacer-table";
-		SolimToken.bind(table, this);
-		SolimToken.setExpanding(table, true);
-		table.add().growX().growY();
-		OwnershipContext.register(this);
-	}
+    private final Table table;
+    private final PendingCellConfig constraints = new PendingCellConfig();
+    private @Nullable Props<Spacer> pending;
 
-	@Override
-	public Element element() {
-		return table;
-	}
+    public Spacer() {
+        this(new Table());
+    }
 
-	public Spacer name(String name) {
-		table.name = name;
-		return this;
-	}
+    private Spacer(Table table) {
+        super(table);
+        this.table = table;
+        table.name = "solim-spacer-table";
+        constraints.growX = true;
+        constraints.growY = true;
+        SolimToken.bind(table, this, constraints);
+        SolimToken.setExpanding(table, true);
+        table.add().growX().growY();
+    }
 
-	@Override
-	public void dispose() {
-		if (disposed) {
-			return;
-		}
-		disposed = true;
-	}
+    public Spacer name(String name) {
+        table.name = name;
+        return this;
+    }
 
-	@Override
-	public boolean isDisposed() {
-		return disposed;
-	}
+    @Override
+    public Spacer self() {
+        return this;
+    }
+
+    @Override
+    public Table table() {
+        return table;
+    }
+
+    @Override
+    public PendingCellConfig cellConfig() {
+        return constraints;
+    }
+
+    @Override
+    public @Nullable Props<Spacer> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<Spacer> props) {
+        this.pending = props;
+    }
 }

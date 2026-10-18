@@ -22,10 +22,6 @@ import mindustry.gen.Groups;
 
 import java.util.Comparator;
 
-/**
- * Encapsulates game logic and state for tracking team resources, flow rates, units, and power grids.
- * Provides reactive signals for Solim UI bindings.
- */
 public class TeamResourceState {
     private final ObjectSet<Item> usedItems = new ObjectSet<>();
     private final ObjectSet<UnitType> usedUnits = new ObjectSet<>();
@@ -40,6 +36,11 @@ public class TeamResourceState {
     private boolean viewingStats = false;
     private boolean holdingForStats = false;
     private final Seq<PowerGraph> teamGraphs = new Seq<>();
+    private final ObjectIntMap<UnitType> lastUnitCounts = new ObjectIntMap<>();
+    private int lastBuildingCount = -1;
+    private float lastTotalBalance = 0f;
+    private float lastTotalStored = 0f;
+    private float lastTotalCapacity = 0f;
 
     private final Seq<Team> tempTeams = new Seq<>();
     private final ObjectSet<PowerGraph> tempPowerGraphs = new ObjectSet<>();
@@ -107,6 +108,11 @@ public class TeamResourceState {
         usedUnitsSignal.set(new Seq<>());
         lastSnapshot.clear();
         rateDisplay.clear();
+        lastUnitCounts.clear();
+        lastBuildingCount = -1;
+        lastTotalBalance = 0f;
+        lastTotalStored = 0f;
+        lastTotalCapacity = 0f;
         if (Vars.player != null && Vars.player.team() != null) {
             selectedTeam = Vars.player.team();
             selectedTeamSignal.set(selectedTeam);
@@ -138,7 +144,9 @@ public class TeamResourceState {
             updateValidTeams();
         }
 
-        coreItems = (selectedTeam != null && Vars.state != null && selectedTeam.core() != null) ? selectedTeam.core().items : null;
+        coreItems = (selectedTeam != null && Vars.state != null && selectedTeam.core() != null)
+                ? selectedTeam.core().items
+                : null;
         if (coreItems != null && Vars.content != null) {
             boolean hideZeroItems = feature != null && Boolean.TRUE.equals(feature.hideZeroItemsConfig.get());
             boolean itemsChanged = false;
@@ -173,6 +181,11 @@ public class TeamResourceState {
             for (UnitType unit : Vars.content.units()) {
                 try {
                     int count = selectedTeam.data() != null ? selectedTeam.data().countType(unit) : 0;
+                    int prev = lastUnitCounts.get(unit, -1);
+                    if (count != prev) {
+                        lastUnitCounts.put(unit, count);
+                        changed = true;
+                    }
                     if (count > 0) {
                         if (usedUnits.add(unit)) {
                             unitsChanged = true;
@@ -199,7 +212,9 @@ public class TeamResourceState {
         }
 
         if (timer.get(0, 30f)) {
-            updateRates();
+            if (updateRates()) {
+                changed = true;
+            }
 
             boolean showPower = feature == null || Boolean.TRUE.equals(feature.showPowerConfig.get());
             if (showPower) {
@@ -207,7 +222,6 @@ public class TeamResourceState {
                     changed = true;
                 }
             }
-            changed = true;
         }
 
         if (changed) {
@@ -395,19 +409,34 @@ public class TeamResourceState {
         }
     }
 
-    private void updateRates() {
+    private boolean updateRates() {
         if (coreItems == null || Vars.content == null) {
-            return;
+            if (rateDisplay.size > 0) {
+                rateDisplay.clear();
+                return true;
+            }
+            return false;
         }
 
+        boolean ratesOrAmountsChanged = false;
         if (lastSnapshot.size > 0) {
             for (Item item : Vars.content.items()) {
                 if (item != null) {
                     int amount = coreItems.get(item);
                     int previous = lastSnapshot.get(item, amount);
-                    rateDisplay.put(item, (amount - previous) * 2);
+                    if (amount != previous) {
+                        ratesOrAmountsChanged = true;
+                    }
+                    int newRate = (amount - previous) * 2;
+                    int oldRate = rateDisplay.get(item, 0);
+                    if (newRate != oldRate) {
+                        ratesOrAmountsChanged = true;
+                        rateDisplay.put(item, newRate);
+                    }
                 }
             }
+        } else {
+            ratesOrAmountsChanged = true;
         }
         lastSnapshot.clear();
         for (Item item : Vars.content.items()) {
@@ -415,6 +444,7 @@ public class TeamResourceState {
                 lastSnapshot.put(item, coreItems.get(item));
             }
         }
+        return ratesOrAmountsChanged;
     }
 
     private boolean updatePowerStats() {
@@ -422,19 +452,40 @@ public class TeamResourceState {
             return false;
         }
 
-        tempPowerGraphs.clear();
-        if (Groups.build != null) {
-            Groups.build.each(powerGraphCollector);
+        boolean graphsChanged = false;
+        int currentBuildCount = Groups.build != null ? Groups.build.size() : 0;
+        if (currentBuildCount != lastBuildingCount) {
+            lastBuildingCount = currentBuildCount;
+            tempPowerGraphs.clear();
+            if (Groups.build != null) {
+                Groups.build.each(powerGraphCollector);
+            }
+
+            tempGraphSeq.clear();
+            for (PowerGraph graph : tempPowerGraphs) {
+                tempGraphSeq.add(graph);
+            }
+            tempGraphSeq.sort(GRAPH_COMPARATOR);
+
+            if (!tempGraphSeq.equals(teamGraphs)) {
+                teamGraphs.set(new Seq<>(tempGraphSeq));
+                graphsChanged = true;
+            }
         }
 
-        tempGraphSeq.clear();
-        for (PowerGraph graph : tempPowerGraphs) {
-            tempGraphSeq.add(graph);
-        }
-        tempGraphSeq.sort(GRAPH_COMPARATOR);
+        float balance = getTotalPowerBalance();
+        float stored = getTotalStoredPower();
+        float cap = getTotalPowerCapacity();
 
-        if (!tempGraphSeq.equals(teamGraphs)) {
-            teamGraphs.set(new Seq<>(tempGraphSeq));
+        boolean statsChanged = graphsChanged
+                || Math.abs(balance - lastTotalBalance) > 0.01f
+                || (long) stored != (long) lastTotalStored
+                || (long) cap != (long) lastTotalCapacity;
+
+        if (statsChanged) {
+            lastTotalBalance = balance;
+            lastTotalStored = stored;
+            lastTotalCapacity = cap;
             return true;
         }
         return false;

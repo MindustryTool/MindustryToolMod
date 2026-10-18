@@ -20,13 +20,10 @@ import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
 import arc.scene.ui.layout.Scl;
+import solim.reactive.Effect;
 import solim.reactive.Signal;
 import solim.reactive.Signals;
 
-/**
- * Feature responsible for registering and managing the Team Resource Tracker
- * overlay. Follows Solim architecture and ConfigGroup reactive configuration.
- */
 public class TeamResourceFeature extends Feature {
 
     public final ConfigGroup config;
@@ -63,7 +60,8 @@ public class TeamResourceFeature extends Feature {
                 .icon(getFeatureIcon())
                 .order(0)
                 .enabledByDefault(true)
-                .quickAccess(true)
+                .quickAccess(false)
+                .displayGroup(true)
                 .build());
 
         config = configGroup();
@@ -146,7 +144,7 @@ public class TeamResourceFeature extends Feature {
 
         this.state = new TeamResourceState(this);
 
-        Signals.isPortrait().subscribe(p -> {
+        Effect.of(Signals.isPortrait(), p -> {
             if (hudView != null) {
                 Core.app.post(hudView::keepInScreen);
             }

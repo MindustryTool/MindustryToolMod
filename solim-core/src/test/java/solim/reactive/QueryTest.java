@@ -1,23 +1,23 @@
 package solim.reactive;
 
+import solim.test.CollectingOwner;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.core.Disposable;
-import solim.runtime.OwnershipContext;
+import solim.core.OwnershipContext;
 import solim.runtime.SignalDispatcher;
 
 import static org.junit.jupiter.api.Assertions.*;
-import solim.test.SolimEnv;
+import solim.test.OwnershipEnv;
 
-class QueryTest extends SolimEnv {
+class QueryTest extends OwnershipEnv {
 
     private QueryCache cache;
 
@@ -83,7 +83,6 @@ class QueryTest extends SolimEnv {
         assertEquals("Page 1", query.data().get());
         assertEquals(1, callCount.get());
 
-        // Mutating page should invalidate the query's effect
         page.set(2);
         SignalDispatcher.flush();
 
@@ -107,7 +106,6 @@ class QueryTest extends SolimEnv {
         cache.getOrCreateEntry(key).clear();
         query.refetch();
 
-        // Previous data is retained!
         assertEquals("v1", query.data().get(), "Data should be retained during refetch");
         assertFalse(query.loading().get(), "loading() should remain false during refetch");
         assertTrue(query.fetching().get(), "fetching() should be true during refetch");
@@ -128,13 +126,11 @@ class QueryTest extends SolimEnv {
             return count.incrementAndGet() == 1 ? slow : fast;
         });
 
-        // Trigger second fetch while first is in-flight
         cache.getOrCreateEntry(key).clear();
         query.refetch();
 
         assertEquals("fast", query.data().get());
 
-        // Now slow completes - it must be discarded!
         slow.complete("slow");
         assertEquals("fast", query.data().get(), "Slow stale response should not overwrite fast response");
     }
@@ -153,14 +149,12 @@ class QueryTest extends SolimEnv {
         assertEquals(0, fetchCount.get(), "Disabled query must not fetch");
         assertNull(query.data().get());
 
-        // Enable
         enabled.set(true);
         SignalDispatcher.flush();
 
         assertEquals(1, fetchCount.get(), "Enabling query should trigger fetch");
         assertEquals("data", query.data().get());
 
-        // Disable again: data is retained
         enabled.set(false);
         SignalDispatcher.flush();
         assertEquals("data", query.data().get(), "Data should be retained when disabled");
@@ -179,7 +173,6 @@ class QueryTest extends SolimEnv {
         assertTrue(query.isDisposed());
         assertEquals(0, cache.observerCount(key));
 
-        // In-flight completing after disposal must be ignored
         inFlight.complete("ignored");
         assertNull(query.data().get());
     }
@@ -207,8 +200,8 @@ class QueryTest extends SolimEnv {
     @Test
     void queryRegistersWithAmbientOwnershipContext() {
         QueryKey key = QueryKey.of("ambient-owned");
-        List<Disposable> owned = new ArrayList<>();
-        OwnershipContext.push(owned::add);
+        CollectingOwner owner = new CollectingOwner();
+        OwnershipContext.push(owner);
         Query<String> query;
         try {
             query = Query.of(key, () -> CompletableFuture.completedFuture("x"));
@@ -216,12 +209,11 @@ class QueryTest extends SolimEnv {
             OwnershipContext.pop();
         }
 
-        assertTrue(owned.contains(query), "Query created in component scope must register for disposal");
+        assertTrue(owner.collected().contains(query),
+                "Query created in component scope must register for disposal");
         assertEquals(1, cache.observerCount(key));
 
-        for (Disposable d : owned) {
-            d.dispose();
-        }
+        owner.dispose();
         assertTrue(query.isDisposed(), "Disposing the owner must dispose the query");
         assertEquals(0, cache.observerCount(key));
     }
@@ -257,7 +249,6 @@ class QueryTest extends SolimEnv {
         futures.get(0).complete("page0");
         assertEquals("page0", query.data().get());
 
-        // Rapid navigation: request page 1 then page 2 while both are in flight
         page.set(1);
         SignalDispatcher.flush();
         page.set(2);
@@ -267,7 +258,6 @@ class QueryTest extends SolimEnv {
         futures.get(2).complete("page2");
         assertEquals("page2", query.data().get(), "Final navigation target must win");
 
-        // Late page-1 response must not overwrite page 2
         futures.get(1).complete("page1");
         assertEquals("page2", query.data().get(), "Stale response for a different parameter state must be discarded");
         assertEquals(3, callCount.get(), "Each distinct parameter state must invoke the fetcher once");
@@ -288,7 +278,6 @@ class QueryTest extends SolimEnv {
                 })
                 .build();
 
-        // Page 0 request in flight, navigate away and back
         page.set(1);
         SignalDispatcher.flush();
         page.set(0);
@@ -299,16 +288,13 @@ class QueryTest extends SolimEnv {
         futures.get(0).complete("page0");
         assertEquals("page0", query.data().get());
 
-        // The abandoned page-1 response must be discarded
         futures.get(1).complete("page1");
         assertEquals("page0", query.data().get(), "Late response for superseded parameters must not win");
     }
 
     @Test
     void dynamicKeyReactivitySurvivesInFlightJoin() {
-        // Regression: joining an in-flight request used to skip reading the
-        // parameter signals, severing effect tracking so later changes stopped
-        // triggering fetches.
+
         Signal<Integer> page = Signal.of(0);
         AtomicInteger callCount = new AtomicInteger(0);
         Map<Integer, CompletableFuture<String>> futures = new HashMap<>();
@@ -325,7 +311,7 @@ class QueryTest extends SolimEnv {
         page.set(1);
         SignalDispatcher.flush();
         page.set(0);
-        SignalDispatcher.flush(); // joins in-flight page-0 request
+        SignalDispatcher.flush();
 
         page.set(2);
         SignalDispatcher.flush();
@@ -347,17 +333,14 @@ class QueryTest extends SolimEnv {
         assertFalse(query.isStale());
         assertFalse(query.isError());
 
-        // Fresh query should not refetch on ensureFresh
         query.ensureFresh();
         assertEquals(1, fetchCount.get());
 
-        // When cache entry is invalidated or becomes stale
         cache.getOrCreateEntry(key).clear();
         assertTrue(query.isStale());
         query.ensureFresh();
         assertEquals(2, fetchCount.get());
 
-        // When query is in error state
         AtomicInteger errFetchCount = new AtomicInteger(0);
         AtomicReference<CompletableFuture<String>> futureRef = new AtomicReference<>(new CompletableFuture<>());
         Query<String> retryQuery = Query.<String>builder()
@@ -393,8 +376,7 @@ class QueryTest extends SolimEnv {
 
     @Test
     void builderAllOptionsEffectiveBeforeFirstFetch() {
-        // Retry exhausted immediately (no retries) and no stale-time grace:
-        // options must be in effect for the very first fetch, not applied late.
+
         QueryKey key = QueryKey.of("builder-options");
         cache.getOrCreateEntry(key).clear();
 
@@ -464,4 +446,132 @@ class QueryTest extends SolimEnv {
                 .key(QueryKey.of("builder-missing-fetch"))
                 .build());
     }
+
+    @Test
+    void cachedNullDoesNotSuppressInitialFetchOrEnsureFresh() {
+        QueryKey key = QueryKey.of("cached-null-key");
+        CacheEntry<String> entry = cache.getOrCreateEntry(key);
+        entry.setData(null);
+        assertTrue(entry.isFetched());
+        assertFalse(entry.hasData());
+
+        AtomicInteger fetchCount = new AtomicInteger(0);
+        Query<String> query = Query.<String>builder()
+                .key(key)
+                .fetch(() -> {
+                    fetchCount.incrementAndGet();
+                    return CompletableFuture.completedFuture("fresh-val");
+                })
+                .build();
+
+        assertEquals(1, fetchCount.get(), "Query should not suppress initial fetch on cached null");
+        assertEquals("fresh-val", query.data().get());
+
+        query.mutate(null);
+        assertEquals(1, fetchCount.get());
+
+        query.ensureFresh();
+        assertEquals(2, fetchCount.get(), "ensureFresh should fetch when cached data is null");
+    }
+
+    @Test
+    void dynamicKeySupplierRebindsObserver() {
+        Signal<String> dynamicId = Signal.of("id1");
+        AtomicInteger fetchCount = new AtomicInteger(0);
+
+        Query<String> query = Query.<String>builder()
+                .key(() -> QueryKey.of("user", dynamicId.get()))
+                .fetch(() -> {
+                    fetchCount.incrementAndGet();
+                    return CompletableFuture.completedFuture("data-" + dynamicId.peek());
+                })
+                .build();
+
+        assertEquals(1, fetchCount.get());
+        assertEquals("data-id1", query.data().get());
+
+        QueryKey key1 = QueryKey.of("user", "id1");
+        QueryKey key2 = QueryKey.of("user", "id2");
+
+        assertEquals(1, cache.observerCount(key1));
+        assertEquals(0, cache.observerCount(key2));
+
+        dynamicId.set("id2");
+        SignalDispatcher.flush();
+
+        assertEquals(2, fetchCount.get());
+        assertEquals("data-id2", query.data().get());
+        assertEquals(0, cache.observerCount(key1), "Old key must be detached");
+        assertEquals(1, cache.observerCount(key2), "New key must be attached");
+
+        cache.invalidate(key1);
+        assertEquals(2, fetchCount.get(), "Invalidating old key must not trigger refetch");
+
+        cache.invalidate(key2);
+        assertEquals(3, fetchCount.get(), "Invalidating active key must trigger refetch");
+    }
+
+    @Test
+    void querySharesCacheSchedulerForRetry() {
+        QueryKey key = QueryKey.of("shared-scheduler-retry");
+        AtomicReference<Runnable> scheduledRetry = new AtomicReference<>();
+        cache.setSchedulerForTest((runnable, delay) -> {
+            scheduledRetry.set(runnable);
+            return new Disposable() {
+                private boolean disposed = false;
+
+                @Override
+                public void dispose() {
+                    disposed = true;
+                }
+
+                @Override
+                public boolean isDisposed() {
+                    return disposed;
+                }
+            };
+        });
+
+        CompletableFuture<String> failing = new CompletableFuture<>();
+        failing.completeExceptionally(new RuntimeException("transient error"));
+
+        Query<String> query = Query.<String>builder()
+                .key(key)
+                .fetch(() -> failing)
+                .retry(1)
+                .retryDelay(Duration.ofMillis(500))
+                .build();
+
+        assertNotNull(scheduledRetry.get(), "Retry task should be scheduled using cache's scheduler");
+        assertTrue(query.fetching().get());
+        query.dispose();
+    }
+
+    @Test
+    void cancellationSkipsRetryAndPreservesSuppressedCause() {
+        QueryKey key = QueryKey.of("cancelled-no-retry");
+        AtomicInteger retryCount = new AtomicInteger(0);
+        cache.setSchedulerForTest((runnable, delay) -> {
+            retryCount.incrementAndGet();
+            return null;
+        });
+
+        CompletableFuture<String> future = new CompletableFuture<>();
+        Query<String> query = Query.<String>builder()
+                .key(key)
+                .fetch(() -> future)
+                .retry(3)
+                .retryDelay(Duration.ofMillis(100))
+                .build();
+
+        future.cancel(true);
+
+        assertEquals(0, retryCount.get(), "Cancellation must not schedule a retry");
+        assertTrue(query.isError());
+        assertTrue(query.error().get() instanceof CancellationException);
+        assertFalse(query.fetching().get());
+        assertFalse(query.loading().get());
+        query.dispose();
+    }
 }
+

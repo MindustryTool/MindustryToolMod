@@ -83,7 +83,19 @@ public class AttackTask implements AutoplayTask {
             if (unit == null) {
                 return;
             }
-            if (target == null || !target.isAdded() || (target instanceof Healthc && ((Healthc) target).dead())) {
+            if (target == null) {
+                target = null;
+                unit.isShooting(false);
+                return;
+            }
+            if (target instanceof Building) {
+                Building building = (Building) target;
+                if (!building.isValid() || building.dead()) {
+                    target = null;
+                    unit.isShooting(false);
+                    return;
+                }
+            } else if (!target.isAdded() || (target instanceof Healthc && ((Healthc) target).dead())) {
                 target = null;
                 unit.isShooting(false);
                 return;

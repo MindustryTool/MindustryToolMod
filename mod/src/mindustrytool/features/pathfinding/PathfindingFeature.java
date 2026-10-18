@@ -15,6 +15,7 @@ import arc.math.geom.Vec2;
 import arc.scene.Element;
 import arc.struct.IntSet;
 import arc.struct.IntSet.IntSetIterator;
+import arc.struct.Seq;
 import arc.util.Interval;
 import arc.util.Nullable;
 import arc.util.Time;
@@ -38,6 +39,7 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
+import solim.reactive.Effect;
 import solim.overlay.SolimDialog;
 
 public class PathfindingFeature extends Feature {
@@ -67,7 +69,7 @@ public class PathfindingFeature extends Feature {
     public final ConfigValue<Boolean> drawAlliesConfig;
     public final ConfigValue<Float> zoomThresholdConfig;
     public final ConfigValue<Float> opacityConfig;
-    public final ConfigValue<Boolean>[] costTypeConfigs;
+    public final Seq<ConfigValue<Boolean>> costTypeConfigs;
 
     private final PathfindingCacheManager pathCache = new PathfindingCacheManager();
     private final PathfindingCacheManager spawnPathCache = new PathfindingCacheManager();
@@ -80,7 +82,6 @@ public class PathfindingFeature extends Feature {
 
     private @Nullable PathfindingSettingsDialog settingsDialog;
 
-    // Fast primitive cached configuration
     private boolean cachedDrawUnitPath = true;
     private boolean cachedDrawSpawnPath = true;
     private boolean cachedDrawAllies = false;
@@ -93,14 +94,14 @@ public class PathfindingFeature extends Feature {
     private final Cons<Unit> unitUpdateProcessor = this::updateProcessUnitPath;
     private final Cons<Unit> unitDrawProcessor = this::drawProcessUnitPath;
 
-    @SuppressWarnings("unchecked")
     public PathfindingFeature() {
         super(FeatureMetadata.builder()
                 .id("pathfinding")
                 .icon(FileIcon.of("pathfinding.png"))
                 .order(12)
                 .enabledByDefault(false)
-                .quickAccess(true)
+                .quickAccess(false)
+                .displayGroup(true)
                 .build());
 
         config = configGroup();
@@ -110,26 +111,26 @@ public class PathfindingFeature extends Feature {
         zoomThresholdConfig = config.floatValue("zoom-threshold", 0.5f);
         opacityConfig = config.floatValue("opacity", 1.0f);
 
-        costTypeConfigs = new ConfigValue[COST_COUNT];
+        costTypeConfigs = new Seq<>(COST_COUNT);
         for (int i = 0; i < COST_COUNT; i++) {
-            costTypeConfigs[i] = config.boolValue("cost-type." + i, true);
+            costTypeConfigs.add(config.boolValue("cost-type." + i, true));
         }
 
-        drawUnitPathConfig.signal().subscribe(v -> cachedDrawUnitPath = v != null ? v : true);
-        drawSpawnPathConfig.signal().subscribe(v -> cachedDrawSpawnPath = v != null ? v : true);
-        drawAlliesConfig.signal().subscribe(v -> cachedDrawAllies = v != null ? v : false);
-        zoomThresholdConfig.signal().subscribe(v -> cachedZoomThreshold = v != null ? v : 0.5f);
-        opacityConfig.signal().subscribe(v -> cachedOpacity = v != null ? v : 1.0f);
+        Effect.of(drawUnitPathConfig.signal(), v -> cachedDrawUnitPath = v != null ? v : true);
+        Effect.of(drawSpawnPathConfig.signal(), v -> cachedDrawSpawnPath = v != null ? v : true);
+        Effect.of(drawAlliesConfig.signal(), v -> cachedDrawAllies = v != null ? v : false);
+        Effect.of(zoomThresholdConfig.signal(), v -> cachedZoomThreshold = v != null ? v : 0.5f);
+        Effect.of(opacityConfig.signal(), v -> cachedOpacity = v != null ? v : 1.0f);
 
         for (int i = 0; i < COST_COUNT; i++) {
             final int index = i;
-            costTypeConfigs[i].signal().subscribe(v -> cachedCostTypes[index] = v != null ? v : true);
+            Effect.of(costTypeConfigs.get(i).signal(), v -> cachedCostTypes[index] = v != null ? v : true);
         }
 
         syncConfigCache();
 
-        bindToggle("pathfindingToggle", KeyCode.unset);
-        bindDialog("pathfindingSettings", KeyCode.unset, getSettingDialog(), false);
+        bindToggle("pathfindingtoggle", KeyCode.unset);
+        bindDialog("pathfindingsettings", KeyCode.unset, getSettingDialog(), false);
 
         Events.run(Trigger.update, this::update);
         Events.run(Trigger.draw, this::draw);
@@ -153,7 +154,7 @@ public class PathfindingFeature extends Feature {
         cachedOpacity = op != null ? op : 1.0f;
 
         for (int i = 0; i < COST_COUNT; i++) {
-            Boolean c = costTypeConfigs[i].get();
+            Boolean c = costTypeConfigs.get(i).get();
             cachedCostTypes[i] = c != null ? c : true;
         }
     }
@@ -165,7 +166,7 @@ public class PathfindingFeature extends Feature {
         zoomThresholdConfig.reset();
         opacityConfig.reset();
         for (int i = 0; i < COST_COUNT; i++) {
-            costTypeConfigs[i].reset();
+            costTypeConfigs.get(i).reset();
         }
         syncConfigCache();
     }
@@ -201,7 +202,8 @@ public class PathfindingFeature extends Feature {
     }
 
     private void update() {
-        if (!isEnabled() || Vars.state == null || !Vars.state.isGame() || Vars.world == null || Vars.world.isGenerating() || Vars.pathfinder == null) {
+        if (!isEnabled() || Vars.state == null || !Vars.state.isGame() || Vars.world == null
+                || Vars.world.isGenerating() || Vars.pathfinder == null) {
             return;
         }
 
@@ -221,7 +223,8 @@ public class PathfindingFeature extends Feature {
     }
 
     private void draw() {
-        if (!isEnabled() || Vars.state == null || !Vars.state.isGame() || Vars.world == null || Vars.world.isGenerating() || Vars.ui == null || Core.camera == null) {
+        if (!isEnabled() || Vars.state == null || !Vars.state.isGame() || Vars.world == null
+                || Vars.world.isGenerating() || Vars.ui == null || Core.camera == null) {
             return;
         }
 
@@ -291,7 +294,8 @@ public class PathfindingFeature extends Feature {
 
         long packedPos = Point2.pack(unit.tileX(), unit.tileY());
         long cacheKey = isCommanded
-                ? (((long) unit.id) << 32) | ((long) Point2.pack((int) (commandTarget.x / 8), (int) (commandTarget.y / 8)))
+                ? (((long) unit.id) << 32)
+                        | ((long) Point2.pack((int) (commandTarget.x / 8), (int) (commandTarget.y / 8)))
                 : (((long) packedPos) << 32) | ((long) costType << 8) | (long) unit.team.id;
 
         PathfindingCache cacheEntry = pathCache.get(cacheKey);
@@ -345,8 +349,8 @@ public class PathfindingFeature extends Feature {
         int totalUnits = Groups.unit.size();
         return (totalUnits > 2000) ? MAX_STEPS_VERY_HIGH
                 : (totalUnits > 1000) ? MAX_STEPS_HIGH
-                : (totalUnits > 500) ? MAX_STEPS_MEDIUM
-                : MAX_STEPS_LOW;
+                        : (totalUnits > 500) ? MAX_STEPS_MEDIUM
+                                : MAX_STEPS_LOW;
     }
 
     private void recalculateWavePath(Unit unit, PathfindingCache cacheEntry, int maxSteps) {
@@ -448,7 +452,8 @@ public class PathfindingFeature extends Feature {
 
         long packedPos = Point2.pack(unit.tileX(), unit.tileY());
         long cacheKey = isCommanded
-                ? (((long) unit.id) << 32) | ((long) Point2.pack((int) (commandTarget.x / 8), (int) (commandTarget.y / 8)))
+                ? (((long) unit.id) << 32)
+                        | ((long) Point2.pack((int) (commandTarget.x / 8), (int) (commandTarget.y / 8)))
                 : (((long) packedPos) << 32) | ((long) unit.type.flowfieldPathType << 8) | (long) unit.team.id;
 
         PathfindingCache cacheEntry = pathCache.get(cacheKey);
@@ -462,7 +467,6 @@ public class PathfindingFeature extends Feature {
         }
         cacheEntry.lastUsedTime = currentTime;
 
-        // Keep root of path attached to live unit position
         cacheEntry.data[0] = unit.x;
         cacheEntry.data[1] = unit.y;
 

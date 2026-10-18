@@ -20,12 +20,12 @@ import mindustrytool.components.FileIcon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import mindustrytool.models.response.PlayerConnectRoom;
-import solim.core.BaseComponent;
+import solim.core.Units;
 import solim.core.Component;
 import solim.reactive.Computed;
 import solim.reactive.Signal;
 
-public class RoomBrowserView extends BaseComponent {
+public class RoomBrowserView extends Component {
 
     public static class ProviderRoomGroup {
         public final String providerName;
@@ -56,15 +56,15 @@ public class RoomBrowserView extends BaseComponent {
     private final PlayerConnectFeature feature;
     private final Signal<String> searchQuery = Signal.of("");
     private final Signal<Boolean> collapsed = Signal.of(false);
-    private final Computed<Integer> columnCount = dvw(90f).map(w -> Mathf.clamp((int) (w / 550f), 1, 4));
+    private final Computed<Integer> columnCount = Units.dvw.map(w -> Mathf.clamp((int) (w * 0.9f / 550f), 1, 4));
 
     public RoomBrowserView(PlayerConnectFeature feature) {
         this.feature = feature;
     }
 
     private Component roomsLoading() {
-        return column().growX().margin(unit(3)).center().children(() -> {
-            icon(Icon.refresh).size(unit(8));
+        return column().props(growX(), margin(unit(3)), center()).children(() -> {
+            icon(Icon.refresh).props(size(unit(8)), prefWidth(unit(8)), prefHeight(unit(8)));
             text(Core.bundle.get("loading", "Loading..."));
         });
     }
@@ -115,36 +115,28 @@ public class RoomBrowserView extends BaseComponent {
         });
 
         return column()
-                .growX()
-                .margin(unit(2))
-                .gap(unit(2))
-                .left()
+                .props(growX(), margin(unit(2)), gap(unit(2)), left())
                 .children(() -> {
-                    // Header Bar
-                    row().growX().gap(unit(2)).center().children(() -> {
+
+                    row().props(growX(), gap(unit(2)), center()).children(() -> {
                         button(() -> collapsed.set(!Boolean.TRUE.equals(collapsed.get())))
-                                .style(WebStyles.outline())
-                                .size(unit(11))
+                                .props(style(WebStyles.outline()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)))
                                 .children(() -> icon(
                                         collapsed.map(c -> Boolean.TRUE.equals(c)
                                                 ? FileIcon.of("chevron-right.png", Icon.rightOpen)
                                                 : FileIcon.of("chevron-down.png", Icon.downOpen)))
-                                        .width(unit(6)));
+                                        .props(width(unit(6)), prefWidth(unit(6))));
 
-                        // Search field
-                        row().growX().height(unit(11)).border(1.5f, Color.darkGray).paddingX(unit(2)).rounded(unit(2))
+                        row().props(growX(), height(unit(11)), prefHeight(unit(11)), border(1.5f, Color.darkGray), paddingX(unit(2)), rounded(unit(2)))
                                 .children(() -> {
                                     textField(searchQuery)
-                                            .grow()
-                                            .style(WebStyles.clearInput());
+                                            .props(style(WebStyles.clearInput()), grow());
 
                                 });
-                        // Refresh button
+
                         button(feature.getRoomsQuery()::refetch)
-                                .style(WebStyles.outline())
-                                .size(unit(11))
-                                .children(() -> icon(Icon.refresh).size(unit(6))
-                                        .update((element) -> {
+                                .props(style(WebStyles.outline()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)))
+                                .children(() -> icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), update((element) -> {
                                             element.setOrigin(Align.center);
 
                                             if (feature.isFetching().peek()) {
@@ -161,66 +153,59 @@ public class RoomBrowserView extends BaseComponent {
                                                     element.rotation = 0f;
                                                 }
                                             }
-                                        }));
+                                        })));
 
-                        // Join via Link button
                         button(Core.bundle.get("feature.player-connect.join-link-title", "Join via Link"), () -> {
                             feature.getJoinRoomDialog().show();
                         })
-                                .style(WebStyles.outline())
-                                .height(unit(11))
-                                .paddingX(unit(3));
+                                .props(style(WebStyles.outline()), height(unit(11)), prefHeight(unit(11)), paddingX(unit(3)));
                     });
 
                     divider();
 
-                    // Collapsible room list
                     when(collapsed)
                             .thenDo(() -> row())
-                            .elseDo(() -> column().growX().children(() -> {
+                            .elseDo(() -> column().props(growX()).children(() -> {
                                 query(feature.getRoomsQuery())
-                                        .grow()
+                                        .props(grow())
                                         .loading(this::roomsLoading)
-                                        .error(err -> column().growX().margin(unit(3)).center().children(() -> {
+                                        .error(err -> column().props(growX(), margin(unit(3)), center()).children(() -> {
                                             text(err != null ? err.getMessage() : Core.bundle.get("error", "Error"))
-                                                    .color(Color.scarlet);
+                                                    .props(color(Color.scarlet));
                                             button(Core.bundle.get("retry", "Retry"), feature.getRoomsQuery()::refetch)
-                                                    .style(WebStyles.outline())
-                                                    .height(unit(10));
+                                                    .props(style(WebStyles.outline()), height(unit(10)), prefHeight(unit(10)));
                                         }))
                                         .data((allRooms, fetching) -> Boolean.TRUE.equals(fetching)
                                                 ? roomsLoading()
-                                                : column().growX().children(() -> {
+                                                : column().props(growX()).children(() -> {
                                                     dynamic(groupedRooms, groups -> {
                                                         if (groups == null || groups.isEmpty()) {
-                                                            column().growX().margin(unit(3)).center()
+                                                            column().props(growX(), margin(unit(3)), center())
                                                                     .children(() -> {
                                                                         text(Core.bundle.get(
                                                                                 "feature.player-connect.no-rooms",
                                                                                 "No active PlayerConnect rooms found."))
-                                                                                .color(Color.lightGray);
+                                                                                .props(color(Color.lightGray));
                                                                     });
 
                                                         } else {
-                                                            column().growX().gap(unit(3.5f)).children(() -> {
+                                                            column().props(growX(), gap(unit(3.5f))).children(() -> {
                                                                 for (ProviderRoomGroup group : groups) {
-                                                                    column().growX().gap(unit(2)).left()
+                                                                    column().props(growX(), gap(unit(2)), left())
                                                                             .children(() -> {
-                                                                                // Provider group header
-                                                                                row().growX().gap(unit(2))
+
+                                                                                row().props(growX(), gap(unit(2)))
                                                                                         .children(() -> {
-                                                                                            text(group.providerName)
-                                                                                                    .left();
+                                                                                            text(group.providerName).props(left());
                                                                                             text("(" + group.rooms
                                                                                                     .size() + ")");
                                                                                         });
 
-                                                                                // Grid of rooms for this provider
                                                                                 reactiveGrid(group.rooms)
+                                                                                        .props(gap(unit(2)))
                                                                                         .columns(columnCount)
                                                                                         .key(PlayerConnectRoom::getLink)
-                                                                                        .gap(unit(2))
-                                                                                        .children((
+                                                                                        .items((
                                                                                                 PlayerConnectRoom r) -> new RoomCard(
                                                                                                         r));
                                                                             });
@@ -228,9 +213,9 @@ public class RoomBrowserView extends BaseComponent {
                                                             });
 
                                                         }
-                                                    }).growX();
+                                                    }).props(growX());
                                                 }));
-                            })).growX();
+                            })).props(growX());
 
                     divider();
                 }).element();

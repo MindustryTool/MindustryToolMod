@@ -4,67 +4,112 @@ import static solim.UI.*;
 
 import arc.Core;
 import arc.files.Fi;
+import arc.graphics.Color;
 import arc.scene.Element;
 import arc.util.Log;
 import arc.util.Nullable;
+import arc.struct.Seq;
 import mindustry.Vars;
 import mindustry.gen.Icon;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingKeybindCard;
+import mindustrytool.components.SettingScaffold;
+import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
+import mindustrytool.features.Feature;
+import mindustrytool.features.FeatureKeybind;
+import mindustrytool.features.FeatureManager;
 import mindustrytool.services.crash.CrashTimestampParser;
-import solim.core.BaseComponent;
+    import solim.core.Component;
 
-/**
- * Settings view for mod-wide preferences and diagnostics.
- * Includes toggles for beta updates, game presence, and free camera,
- * as well as one-tap buttons to copy recent logs and crash reports.
- */
-public class GeneralSettingsView extends BaseComponent {
+public class GeneralSettingsView extends Component {
 
     @Override
     protected Element build() {
-        return column().grow().center().children(() -> {
-            scroll().growY().scrollX(false).children(() -> {
-                column().growX().gap(unit(2)).padding(unit(2)).children(() -> {
-                    checkbox(
-                            Core.bundle.get("setting.beta.participate"),
-                            ModSettings.betaParticipate.signal())
-                            .growX()
-                            .tooltip(Core.bundle.get("setting.beta.participate.tooltip"));
+        return SettingScaffold.build(() -> {
+            headerCard();
+            preferencesCard();
+            diagnosticsCard();
+            keybindsCard();
+        });
+    }
 
-                    checkbox(
-                            Core.bundle.get("setting.share-presence"),
-                            ModSettings.sharePresence.signal())
-                            .growX()
-                            .tooltip(Core.bundle.get("setting.share-presence.description"));
+    private void keybindsCard() {
+        Seq<FeatureKeybind> allBinds = new Seq<>();
+        for (Feature f : FeatureManager.getFeatures()) {
+            allBinds.addAll(f.getKeybinds());
+        }
+        SettingKeybindCard.of(Core.bundle.get("setting.section.keybinds", "Keybinds"), allBinds);
+    }
 
-                    divider();
+    private Component headerCard() {
+        return SettingCard.header(
+                Icon.settings,
+                Core.bundle.get("dialog.general-settings.title"),
+                "PREFERENCES",
+                Core.bundle.get("dialog.general-settings.description"));
+    }
 
-                    column().growX().gap(unit(2)).children(() -> {
-                        button(this::copyLastLog)
-                                .style(WebStyles.outline())
-                                .growX()
-                                .height(unit(10))
-                                .tooltip(Core.bundle.get("setting.button.copy-log.tooltip"))
-                                .gap(unit(2))
-                                .children(() -> {
-                                    icon(Icon.copy);
-                                    text(Core.bundle.get("setting.button.copy-log"));
-                                });
+    private Component preferencesCard() {
+        return SettingCard.section(Icon.settings, Core.bundle.get("setting.section.preferences"), () -> {
 
-                        button(this::copyLastCrash)
-                                .style(WebStyles.outline())
-                                .growX()
-                                .height(unit(10))
-                                .tooltip(Core.bundle.get("setting.button.copy-crash.tooltip"))
-                                .gap(unit(2))
-                                .children(() -> {
-                                    icon(Icon.warning);
-                                    text(Core.bundle.get("setting.button.copy-crash"));
-                                });
-                    });
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
+                column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
+                    text(Core.bundle.get("setting.beta.participate"))
+                            .props(color(Color.white), left());
+                    text(Core.bundle.get("setting.beta.participate.tooltip"))
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(true), growX());
                 });
+                spacer();
+                checkbox("", ModSettings.betaParticipate.signal());
             });
-        }).element();
+
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
+
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
+                column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
+                    text(Core.bundle.get("setting.share-presence"))
+                            .props(color(Color.white), left());
+                    text(Core.bundle.get("setting.share-presence.description"))
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(true), growX());
+                });
+                spacer();
+                checkbox("", ModSettings.sharePresence.signal());
+            });
+
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
+
+            SettingSlider.of(
+                    Core.bundle.get("setting.universal-scale"),
+                    ModSettings.universalScale.signal(),
+                    0.5f, 1.5f, 0.05f,
+                    ModSettings.universalScale.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
+        });
+    }
+
+    private Component diagnosticsCard() {
+        return SettingCard.section(Icon.infoCircle, Core.bundle.get("setting.section.diagnostics"), () -> {
+            button(this::copyLastLog)
+                    .props(style(WebStyles.outline()), growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)), tooltip(Core.bundle.get("setting.button.copy-log.tooltip")))
+                    .children(() -> {
+                        icon(Icon.copy).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
+                        text(Core.bundle.get("setting.button.copy-log"));
+                    });
+
+            button(this::copyLastCrash)
+                    .props(style(WebStyles.outline()), growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)), tooltip(Core.bundle.get("setting.button.copy-crash.tooltip")))
+                    .children(() -> {
+                        icon(Icon.warning).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
+                        text(Core.bundle.get("setting.button.copy-crash"));
+                    });
+
+            button(() -> new SolimDemoDialog().show())
+                    .props(style(WebStyles.primary()), growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)), tooltip("Open a dialog demonstrating Solim UI framework features."))
+                    .children(() -> {
+                        icon(Icon.box).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
+                        text("Solim Demo");
+                    });
+        });
     }
 
     private void copyLastLog() {
@@ -99,7 +144,8 @@ public class GeneralSettingsView extends BaseComponent {
 
             String content = latest.readString();
             Core.app.setClipboardText(content);
-            Vars.ui.showInfoFade(Core.bundle.format("setting.crash.copied", latest.name()));
+            Vars.ui.showInfoFade(Core.bundle.format("setting.crash.copied", latest.name()) + latest.name()
+                    + ") copied to clipboard.");
         } catch (Exception e) {
             Log.err("Failed to read latest crash report", e);
             Vars.ui.showException(e);
@@ -108,7 +154,8 @@ public class GeneralSettingsView extends BaseComponent {
 
     private @Nullable Fi findLatestCrash(Fi crashesDir) {
         Fi[] files = crashesDir.list();
-        if (files == null || files.length == 0) return null;
+        if (files == null || files.length == 0)
+            return null;
 
         Fi latest = null;
         long latestTime = -1;

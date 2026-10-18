@@ -110,6 +110,9 @@ jobs:
 
       - name: Determine Version and Release Tag
         id: version
+        env:
+          REF: ${{ github.ref }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
           VERSION=$(grep -E '^[[:space:]]*version:' mod.hjson | sed -E 's/^[[:space:]]*version:[[:space:]]*"?([^"[:space:]]+)"?.*/\1/')
           if [ -z "$VERSION" ]; then
@@ -117,7 +120,15 @@ jobs:
             exit 1
           fi
           echo "Extracted version: $VERSION"
-          if [[ "${{ github.ref_name }}" == "main" ]]; then
+          if [[ "$REF" == refs/tags/* ]]; then
+            # Tag push: respect the pushed tag so beta/stable channels stay isolated.
+            TAG="$REF_NAME"
+            if [[ "$REF_NAME" == *"-beta"* ]]; then
+              PRERELEASE="true"
+            else
+              PRERELEASE="false"
+            fi
+          elif [[ "$REF_NAME" == "main" ]]; then
             TAG="${VERSION}"
             PRERELEASE="false"
           else
@@ -132,9 +143,46 @@ jobs:
         id: notes
         env:
           TAG: ${{ steps.version.outputs.tag }}
+          PRERELEASE: ${{ steps.version.outputs.prerelease }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git fetch --tags --force
-          PREV_TAG=$(git describe --tags --abbrev=0 "${TAG}^" 2>/dev/null || git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+          # Resolve the previous release on the SAME channel (stable vs beta isolated).
+          # The old `git describe HEAD` fallback was branch-dependent: main's tags are
+          # unreachable from dev (branches diverged), so beta notes fell back to an
+          # ancient tag and re-listed ~200 already-shipped commits.
+          PREV_TAG=""
+          if [ "$PRERELEASE" = "true" ]; then
+            PREV_TAG=$(gh release list --exclude-drafts --limit 100 --json tagName,isPrerelease \
+              -q '.[] | select(.isPrerelease == true) | .tagName' 2>/dev/null | grep -vxF -- "$TAG" | head -n 1 || true)
+            if [ -z "$PREV_TAG" ]; then
+              PREV_TAG=$(git tag --list '*-beta' --sort=-creatordate 2>/dev/null | grep -vxF -- "$TAG" | head -n 1 || true)
+            fi
+          else
+            PREV_TAG=$(gh release list --exclude-drafts --limit 100 --json tagName,isPrerelease \
+              -q '.[] | select(.isPrerelease == false) | .tagName' 2>/dev/null | grep -vxF -- "$TAG" | head -n 1 || true)
+            if [ -z "$PREV_TAG" ]; then
+              PREV_TAG=$(git tag --list --sort=-creatordate 2>/dev/null | grep -v '\-beta$' | grep -vxF -- "$TAG" | head -n 1 || true)
+            fi
+          fi
+          # The current TAG is excluded above so re-pushes without a version bump
+          # still diff against the last *different* release instead of themselves.
+          if [ -n "$PREV_TAG" ] && ! git cat-file -e "${PREV_TAG}^{commit}" 2>/dev/null; then
+            echo "Previous tag $PREV_TAG not found locally, ignoring."
+            PREV_TAG=""
+          fi
+          if [ -n "$PREV_TAG" ]; then
+            PREV_VER="${PREV_TAG%-beta}"
+            TAG_VER=$(git show "${PREV_TAG}:mod.hjson" 2>/dev/null | grep -E '^[[:space:]]*version:' | sed -E 's/^[[:space:]]*version:[[:space:]]*"?([^"[:space:]]+)"?.*/\1/' || true)
+            if [ -n "$TAG_VER" ] && [ "$TAG_VER" != "$PREV_VER" ]; then
+              echo "Tag $PREV_TAG points to version $TAG_VER instead of $PREV_VER; resolving from mod.hjson history."
+              PREV_COMMIT=$(git log --format=%H -S "$PREV_VER" HEAD -- mod.hjson | tail -n 1 || true)
+              if [ -n "$PREV_COMMIT" ]; then
+                PREV_TAG="$PREV_COMMIT"
+              fi
+            fi
+          fi
           echo "Previous tag resolved: $PREV_TAG"
 
           if [ -n "$PREV_TAG" ]; then
@@ -153,10 +201,19 @@ jobs:
           echo "$COMMITS" >> "$GITHUB_OUTPUT"
           echo "$EOF" >> "$GITHUB_OUTPUT"
 
+      - name: Sync Release Tag Reference
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          git tag -f "$TAG" "$GITHUB_SHA"
+          git push origin "refs/tags/$TAG" --force
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
           name: ${{ steps.version.outputs.tag }}
           prerelease: ${{ steps.version.outputs.prerelease == 'true' }}
           body: ${{ steps.notes.outputs.changelog }}

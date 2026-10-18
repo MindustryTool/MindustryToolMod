@@ -16,13 +16,9 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
-
+import solim.reactive.Effect;
 import solim.overlay.SolimDialog;
 
-/**
- * Wave Preview feature providing upcoming wave unit compositions directly
- * inside the HUD waves panel.
- */
 public class WavePreviewFeature extends Feature {
 
     public static final int MIN_DEPTH = 1;
@@ -43,8 +39,9 @@ public class WavePreviewFeature extends Feature {
                 .id("wave-preview")
                 .icon(FileIcon.of("swords.png"))
                 .order(1)
-                .quickAccess(true)
+                .quickAccess(false)
                 .enabledByDefault(true)
+                .displayGroup(true)
                 .build());
 
         config = configGroup();
@@ -64,18 +61,25 @@ public class WavePreviewFeature extends Feature {
             }
         }));
 
-        depthConfig.signal().subscribe(d -> {
+        Effect.of(depthConfig.signal(), d -> {
             if (isEnabled()) {
                 recompute();
             }
         });
 
-        bindToggle("wavePreview", KeyCode.unset);
-        bindDialog("wavePreviewSettings", KeyCode.unset, getSettingDialog(), false);
+        bindToggle("wavepreview", KeyCode.unset);
+        bindDialog("wavepreviewsettings", KeyCode.unset, getSettingDialog(), false);
     }
 
     public WavePreviewState getState() {
         return state;
+    }
+
+    public void resetToDefaults() {
+        opacityConfig.reset();
+        scaleConfig.reset();
+        depthConfig.reset();
+        recompute();
     }
 
     @Override

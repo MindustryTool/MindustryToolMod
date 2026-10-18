@@ -66,7 +66,7 @@ class ChangelogFormatterTest extends ArcTestEnv {
             list.add(new ChangelogFormatter.ReleaseInfo("v" + i, "body " + i, "", i));
         }
         String out = ChangelogFormatter.formatReleases(list);
-        // Should contain v0..v19 but not v20+
+
         assertTrue(out.contains("[accent]v0[white]"));
         assertTrue(out.contains("[accent]v19[white]"));
         assertFalse(out.contains("[accent]v20[white]"));
@@ -78,7 +78,7 @@ class ChangelogFormatterTest extends ArcTestEnv {
         String json = "[{\"tag_name\":\"v1.0\",\"body\":\"hello\",\"published_at\":\"2024-01-01T12:00:00Z\",\"assets\":[{\"download_count\":3},{\"download_count\":2}]}]";
         String out = ChangelogFormatter.format(json);
         assertTrue(out.contains("[accent]v1.0[white]"));
-        assertTrue(out.contains("5")); // 3+2
+        assertTrue(out.contains("5"));
     }
 
     @Test

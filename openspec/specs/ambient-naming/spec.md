@@ -3,9 +3,7 @@
 ## Purpose
 
 Defines canonical naming and responsibilities for Solim's visual attachment stack (`AttachmentStack`) and lifecycle ownership scope (`OwnershipContext`), replacing legacy `ParentStack` and `ComponentContext`.
-
 ## Requirements
-
 ### Requirement: AttachmentStack is the canonical visual-attachment stack
 
 The system SHALL provide `solim.runtime.AttachmentStack` as the single ambient stack answering WHERE a child `Element` attaches, owning the `Table` + `Attacher` + pending-components state with `push/pop/current/isolate/capture/attachToParent` semantics identical to the former `ParentStack`.
@@ -22,17 +20,22 @@ The system SHALL provide `solim.runtime.AttachmentStack` as the single ambient s
 
 ### Requirement: OwnershipContext is the canonical lifecycle-ownership scope
 
-The system SHALL provide `solim.runtime.OwnershipContext` as the single ambient scope answering WHO disposes a `Disposable`, with `push/pop/current/register/registerChild/withoutAutoOwnership` semantics identical to the former `ComponentContext`, including capture filtering to `Component` roots only.
+The system SHALL provide `solim.core.OwnershipContext` as the single ambient scope answering WHO disposes a `Disposable`, with `push/pop/current/register/registerChild` semantics. `OwnershipContext` SHALL reside in the same module as `Component` so a component can install itself as owner. It SHALL NOT filter registrations by type: every registered `Disposable` is collected by the active scope. Suspension of ambient collection SHALL be expressed by `OwnershipScope`, not by clearing the stack.
 
 #### Scenario: Build-time resources are owned automatically
 
-- **WHEN** an `Effect`, `Binding`, or child `Component` is created inside `BaseComponent.element()`
-- **THEN** it is registered with the active `OwnershipContext` owner and disposed LIFO with that owner
+- **WHEN** an `Effect`, `Binding`, `Computed`, or child `Component` is created inside a component's build
+- **THEN** it is registered with that component and disposed with it
 
-#### Scenario: Reconciler orphans are independent of the ambient owner
+#### Scenario: Non-Component resources are no longer filtered out of captures
 
-- **WHEN** `StructuralReconciler` creates a new keyed component inside `OwnershipContext.withoutAutoOwnership` + `AttachmentStack.isolate`
-- **THEN** the new component is neither attached to the ambient parent nor owned by the ambient component
+- **WHEN** a capture or factory scope collects resources
+- **THEN** `Computed`, `Effect`, `Query`, and `Subscription` instances are collected alongside components, rather than being dropped
+
+#### Scenario: Reconciler output is owned by the reconciled component
+
+- **WHEN** a keyed collection creates a component through a factory that also constructs a `Computed`
+- **THEN** both the component and the `Computed` are owned by the created component, and neither is attached to the component whose collection triggered reconciliation
 
 ### Requirement: DebugAttachmentStack owns all attachment profiling state
 
@@ -47,3 +50,4 @@ The system SHALL provide `solim.runtime.DebugAttachmentStack` as the profiling-e
 
 - **WHEN** a container subtree exceeds the slow threshold
 - **THEN** the recorded `PerfSpan` component label is `AttachmentStack`
+

@@ -22,13 +22,13 @@ public class AuthLoginDialog extends SolimDialog {
 		Readable<Boolean> hasUrl = loginUrlSignal.map(url -> url != null && !url.trim().isEmpty());
 
 		children(() -> {
-			column().grow().padding(unit(4)).center().children(() -> {
+			column().props(grow(), padding(unit(4)), center()).children(() -> {
 				when(hasUrl)
 						.thenDo(() -> UI.button(() -> {
 							Core.app.setClipboardText(loginUrlSignal.peek());
 							Vars.ui.showInfoFade(Core.bundle.get("auth.login.copied"));
 						}).children(() -> {
-							text(loginUrlSignal).fontScale(0.7f).wrap();
+							text(loginUrlSignal).props(fontScale(0.7f), textWrap());
 						}))
 						.elseDo(() -> new Loader(unit(8)));
 			});

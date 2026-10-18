@@ -1,5 +1,7 @@
 package solim.reactive;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -8,11 +10,15 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.right;
+import static solim.modifier.Values.top;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
 
@@ -21,17 +27,19 @@ import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
 import arc.scene.ui.layout.Table;
-import solim.core.BaseComponent;
+import arc.util.Align;
+import solim.core.Component;
 import solim.layout.Card;
 import solim.layout.Column;
 import solim.layout.Row;
+import solim.modifier.Values;
 import solim.runtime.AttachmentStack;
 import solim.runtime.SignalDispatcher;
-import solim.test.SolimEnv;
+import solim.test.SolimCoreEnv;
 
-class DynamicComponentTest extends SolimEnv {
+class DynamicComponentTest extends SolimCoreEnv {
 
-    static class TestComponent extends BaseComponent {
+    static class TestComponent extends Component {
         final String id;
         boolean wasDisposed = false;
 
@@ -268,11 +276,11 @@ class DynamicComponentTest extends SolimEnv {
             Row row = new Row();
             row.cellConfig().prefWidth = Readable.of(100f);
             row.cellConfig().prefHeight = Readable.of(40f);
-        }).top().right();
+        }).props(top(), right());
 
         assertFalse(dyn.cellConfig().growX, "Dynamic must not growX by default");
 
-        Column col = new Column().fillParent().top().right().children(() -> {
+        Column col = new Column().props(fillParent(), top(), right()).children(() -> {
             AttachmentStack.add(dyn);
         });
 
@@ -513,10 +521,8 @@ class DynamicComponentTest extends SolimEnv {
     void dynamicSupportsElementAndTableConfig() {
         Signal<String> text = Signal.of("initial");
         Dynamic<String> dyn = Dynamic.of(text, val -> new TestComponent(val))
-                .width(250f)
-                .height(150f)
-                .visible(false)
-                .padding(10f);
+                .props(Values.width(250f), Values.prefWidth(250f), Values.height(150f),
+                        Values.prefHeight(150f), Values.visible(false), Values.padding(10f));
 
         Element el = dyn.element();
         assertEquals(250f, el.getWidth());
@@ -559,7 +565,8 @@ class DynamicComponentTest extends SolimEnv {
         parent.add(dyn.element());
         parent.pack();
 
-        assertTrue(dyn.container().visible, "Container must be visible when factory returns a fallback component for null source");
+        assertTrue(dyn.container().visible,
+                "Container must be visible when factory returns a fallback component for null source");
         assertEquals(1, dyn.container().getChildren().size, "Fallback component must be added to container");
         TestComponent fallbackComp = instances.get("fallback");
         assertNotNull(fallbackComp, "Fallback component instance must exist");
@@ -648,11 +655,12 @@ class DynamicComponentTest extends SolimEnv {
         Signal<String> source = Signal.of("go");
 
         Dynamic<String> dyn = Dynamic.of(source, val -> {
-            new Row().growX();
+            new Row().props(growX());
             new TestComponent("fluid");
         });
 
         dyn.element();
+        // Arc's Table.getCells() is declared as Seq<Cell>, with a raw Cell argument that cannot be recovered from that API.
         @SuppressWarnings("rawtypes")
         Seq<Cell> cells = dyn.container().getCells();
         assertEquals(2, cells.size);
@@ -683,7 +691,10 @@ class DynamicComponentTest extends SolimEnv {
 
         boomPhase[0] = 1;
         source.set("next");
-        SignalDispatcher.flush();
+
+        IllegalStateException thrown = assertThrows(IllegalStateException.class, SignalDispatcher::flush);
+        assertEquals("boom", thrown.getMessage());
+        assertFalse(SignalDispatcher.isFlushing(), "Dispatcher must not stay marked as flushing");
 
         assertTrue(created.get(1).wasDisposed,
                 "Root created before the exception must be disposed");
@@ -719,12 +730,11 @@ class DynamicComponentTest extends SolimEnv {
         dyn.dispose();
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void dynamicInsideColumnAttachesChildToDynamicContainerNotParentColumn() {
         Signal<String> source = Signal.of("item");
         Card[] cardHolder = new Card[1];
-        Dynamic<String>[] dynHolder = new Dynamic[1];
+        AtomicReference<Dynamic<String>> dynHolder = new AtomicReference<>();
 
         Column column = new Column();
         column.children(() -> {
@@ -732,17 +742,17 @@ class DynamicComponentTest extends SolimEnv {
                 Card card = new Card();
                 card.name("pc-card");
                 card.children(() -> {
-                    // child content
+
                 });
                 cardHolder[0] = card;
             });
             d.name("pc-card-wrapper");
             AttachmentStack.attachToParent(d.element());
-            dynHolder[0] = d;
+            dynHolder.set(d);
         });
 
         Element colEl = column.element();
-        Element dynEl = dynHolder[0].element();
+        Element dynEl = dynHolder.get().element();
         Element cardEl = cardHolder[0].element();
 
         assertNotNull(cardEl);
@@ -750,9 +760,43 @@ class DynamicComponentTest extends SolimEnv {
         assertEquals("pc-card-wrapper", dynEl.name);
         assertSame(dynEl, cardEl.parent, "Card must be attached to Dynamic container");
         assertNotSame(colEl, cardEl.parent, "Card must NOT be attached to outer column");
-        assertTrue(dynHolder[0].container().getChildren().contains(cardEl, true));
+        assertTrue(dynHolder.get().container().getChildren().contains(cardEl, true));
         assertFalse(((Table) colEl).getChildren().contains(cardEl, true));
 
         column.dispose();
+    }
+
+    @Test
+    void dynamicCenterPropagatesAlignmentToParentCellAndChildren() {
+        Signal<String> source = Signal.of("hello");
+        AtomicReference<Dynamic<String>> dynHolder = new AtomicReference<>();
+
+        Column col = new Column().children(() -> {
+            Dynamic<String> dyn = Dynamic.of(source, val -> new TestComponent(val)).center();
+            AttachmentStack.attachToParent(dyn.element());
+            dynHolder.set(dyn);
+        });
+
+        Dynamic<String> dyn = dynHolder.get();
+        Table colTable = col.table();
+        Cell<?> dynCell = colTable.getCell(dyn.element());
+        colTable.setSize(200f, 200f);
+        colTable.validate();
+        colTable.layout();
+
+        assertEquals(Align.center, CellAccess.align(dynCell));
+        assertEquals(Align.center, dyn.container().getAlign());
+        assertEquals(Align.center, CellAccess.align(dyn.container().getCells().first()));
+
+        source.set("world");
+        SignalDispatcher.flush();
+        colTable.layout();
+
+        assertEquals(Align.center, CellAccess.align(dynCell));
+        assertEquals(Align.center, dyn.container().getAlign());
+        assertEquals(Align.center, CellAccess.align(dyn.container().getCells().first()));
+
+        dyn.dispose();
+        col.dispose();
     }
 }

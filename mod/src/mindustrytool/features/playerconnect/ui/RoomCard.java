@@ -19,11 +19,11 @@ import mindustrytool.features.playerconnect.net.PlayerConnectLink;
 import mindustrytool.models.response.PlayerConnectRoom;
 import mindustrytool.models.response.PlayerConnectRoom.PlayerConnectRoomData;
 import mindustrytool.models.response.PlayerConnectRoom.PlayerConnectRoomPlayer;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Signal;
 import mindustrytool.components.WebStyles;
 
-public class RoomCard extends BaseComponent {
+public class RoomCard extends Component {
 
     private final PlayerConnectRoom room;
     private final boolean displayPlayerList;
@@ -53,7 +53,6 @@ public class RoomCard extends BaseComponent {
         String playerInfo = Iconc.players + " " + playerCount
                 + (data != null && data.getLocale() != null ? " (" + data.getLocale() + ")" : "");
 
-        // Mod difference calculations
         List<String> roomMods = data != null && data.getMods() != null ? data.getMods() : new ArrayList<>();
         Seq<String> localMods = Vars.mods != null ? Vars.mods.getModStrings() : new Seq<>();
         List<String> missingMods = new ArrayList<>();
@@ -71,21 +70,12 @@ public class RoomCard extends BaseComponent {
 
         return card()
                 .name("pc-card")
-                .background(Styles.black8)
-                .border(1.5f, Color.darkGray)
-                .gap(unit(1.5f))
-                .padding(unit(2))
-                .left()
-                .grow()
+                .props(background(Styles.black8), border(1.5f, Color.darkGray), padding(unit(2)), gap(unit(1.5f)), left(), grow())
                 .children(() -> {
-                    // Header row: Title + Copy link button
-                    row().growX().height(unit(6)).gap(unit(2)).children(() -> {
+
+                    row().props(growX(), height(unit(6)), prefHeight(unit(6)), gap(unit(2))).children(() -> {
                         text(title)
-                                .style(Styles.outlineLabel)
-                                .fontScale(displayPlayerList ? 1.1f : 0.95f)
-                                .ellipsis()
-                                .growX()
-                                .left();
+                                .props(style(Styles.outlineLabel), fontScale(displayPlayerList ? 1.1f : 0.95f), ellipsis(true), growX(), left());
                         spacer();
 
                         if (displayPlayerList) {
@@ -93,52 +83,48 @@ public class RoomCard extends BaseComponent {
                                 Core.app.setClipboardText(room.getLink());
                                 Vars.ui.showInfoFade("@copied");
                             })
-                                    .style(WebStyles.ghost())
-                                    .size(unit(11))
-                                    .children(() -> icon(Icon.copy).size(unit(6)));
+                                    .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)))
+                                    .children(() -> icon(Icon.copy).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
                         }
                     });
 
                     if (!displayPlayerList) {
-                        // Fixed Row 2: Map and mode
-                        row().growX().height(unit(4.5f)).children(() -> {
+
+                        row().props(growX(), height(unit(4.5f)), prefHeight(unit(4.5f))).children(() -> {
                             text(!mapMode.isEmpty() ? mapMode : Core.bundle.get("none", "None"))
-                                    .growX().ellipsis().left();
+                                    .props(growX(), ellipsis(true), left());
                         });
 
-                        // Fixed Row 3: Mindustry Version (always allocated for invariant height)
-                        row().growX().height(unit(4.5f)).children(() -> {
+                        row().props(growX(), height(unit(4.5f)), prefHeight(unit(4.5f))).children(() -> {
                             String verStr = room.getData() != null && room.getData().getVersion() != null
                                     ? room.getData().getVersion()
                                     : Version.combined();
-                            text(verStr).color(Color.lightGray).fontScale(0.9f).growX().ellipsis().left();
+                            text(verStr).props(color(Color.lightGray), fontScale(0.9f), growX(), ellipsis(true), left());
                         });
 
-                        // Fixed Row 4: Compatibility and players
                         String compatBadge = !protocolMatch
                                 ? "[scarlet]" + Core.bundle.get("feature.chat.ui.incompatible-protocol", "Incompatible")
                                 : (!missingMods.isEmpty() || !unneededMods.isEmpty()
                                         ? "[orange]" + Core.bundle.get("feature.chat.ui.mods-required", "Mods Required")
                                         : "");
-                        row().growX().height(unit(4.5f)).children(() -> {
-                            text(playerInfo).color(Color.lightGray).ellipsis().growX().left();
+                        row().props(growX(), height(unit(4.5f)), prefHeight(unit(4.5f))).children(() -> {
+                            text(playerInfo).props(color(Color.lightGray), ellipsis(true), growX(), left());
                             if (!compatBadge.isEmpty()) {
-                                text(compatBadge).fontScale(0.85f).right();
+                                text(compatBadge).props(fontScale(0.85f), right());
                             }
                         });
                     } else {
-                        // Map and mode
+
                         if (!mapMode.isEmpty()) {
-                            text(mapMode).growX().ellipsis().left();
+                            text(mapMode).props(growX(), ellipsis(true), left());
                         }
 
                         if (room.getData() != null && room.getData().getVersion() != null
                                 && !Version.combined().equals(room.getData().getVersion())) {
-                            text(room.getData().getVersion()).growX().ellipsis();
+                            text(room.getData().getVersion()).props(growX(), ellipsis(true));
                         }
 
-                        // Players
-                        text(playerInfo).color(Color.lightGray).left();
+                        text(playerInfo).props(color(Color.lightGray), left());
 
                         if (room.getData() != null && room.getData().getPlayers() != null) {
                             column(() -> {
@@ -148,45 +134,37 @@ public class RoomCard extends BaseComponent {
                             });
                         }
 
-                        // Mod conflicts indicator
                         if (!missingMods.isEmpty()) {
-                            text("[scarlet]Missing mods: " + String.join(", ", missingMods)).wrap().growX().left();
+                            text("[scarlet]Missing mods: " + String.join(", ", missingMods)).props(textWrap(true), growX(), left());
                         }
                         if (!unneededMods.isEmpty()) {
-                            text("[orange]Unneeded mods: " + String.join(", ", unneededMods)).wrap().growX().left();
+                            text("[orange]Unneeded mods: " + String.join(", ", unneededMods)).props(textWrap(true), growX(), left());
                         }
 
                         if (!protocolMatch) {
-                            text("[scarlet]Protocol mismatch: expected v" + NetworkProxy.PROTOCOL_VERSION).left();
+                            text("[scarlet]Protocol mismatch: expected v" + NetworkProxy.PROTOCOL_VERSION).props(left());
                         }
 
                         spacer();
                     }
 
-                    // Row 5: Action buttons row
                     if (!protocolMatch) {
                         button(Core.bundle.get("feature.player-connect.incompatible", "Incompatible"), () -> {
                         })
-                                .style(WebStyles.outline())
-                                .growX()
-                                .height(unit(11))
-                                .enabled(Signal.of(false));
+                                .props(style(WebStyles.outline()), growX(), height(unit(11)), prefHeight(unit(11)), enabled(Signal.of(false)));
                     } else {
-                        row().gap(unit(1)).growX().height(unit(11)).children(() -> {
+                        row().props(growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(1))).children(() -> {
                             button(Core.bundle.get("join", "Join"),
                                     () -> promptJoin(secured, missingMods, unneededMods))
-                                            .style(displayPlayerList ? WebStyles.secondary() : WebStyles.primary())
-                                            .growX()
-                                            .height(unit(11));
+                                    .props(style(displayPlayerList ? WebStyles.secondary() : WebStyles.primary()), growX(), height(unit(11)), prefHeight(unit(11)));
 
                             if (!displayPlayerList) {
                                 button(() -> {
                                     Core.app.setClipboardText(room.getLink());
                                     Vars.ui.showInfoFade("@copied");
                                 })
-                                        .style(WebStyles.outline())
-                                        .size(unit(11))
-                                        .children(() -> icon(Icon.copy).size(unit(5)));
+                                        .props(style(WebStyles.outline()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)))
+                                        .children(() -> icon(Icon.copy).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))));
                             }
                         });
                     }

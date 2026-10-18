@@ -1,0 +1,135 @@
+## Purpose
+
+Behavior contract for `solim.display.video.SolimVideo` — the declarative video component with pluggable loader, shared disk caching, pure-Java H.264/AAC decoding, audio-mastered texture streaming, and auto-hide overlay controls. Established as a behavior baseline by change `solim-video-component`.
+## Requirements
+### Requirement: Video Loading and Disk Caching
+The video subsystem SHALL load MP4 video files through an injectable `VideoLoader` interface (`load(String url, Cons<Fi> onSuccess, Cons<Throwable> onError)`). The default loader SHALL download the file over HTTP and store it in the shared Solim disk cache directory at `Vars.dataDirectory/solim/cache/networkImage/` using SHA-256 URL hashing (`<hash>.mp4`). Subsequent loads of the same URL SHALL be served directly from disk. `SolimVideo.setVideoLoader(loader)` SHALL allow injecting a custom loader, and passing `null` SHALL reset to the default loader.
+
+#### Scenario: Remote video is downloaded and cached
+- **WHEN** a video URL is requested and no local cache entry exists
+- **THEN** the loader SHALL download the file, persist it to `Vars.dataDirectory/solim/cache/networkImage/<hash>.mp4`, and notify the success callback with the cached `Fi`
+
+#### Scenario: Cached video bypasses network
+- **WHEN** a video URL is requested whose file already exists and is non-empty in the disk cache
+- **THEN** the loader SHALL immediately return the cached file without performing a network request
+
+#### Scenario: Custom loader receives load requests
+- **WHEN** a custom `VideoLoader` is registered via `SolimVideo.setVideoLoader`
+- **THEN** all subsequent video load requests SHALL be dispatched to the custom loader
+
+### Requirement: Cross-Platform Video Decoding Engine
+The video playback engine (`VideoPlayer`) SHALL decode MP4 (ISO BMFF container) and H.264 baseline video streams using pure Java without depending on `java.awt`. Decoding SHALL run asynchronously on a background worker thread. The engine SHALL maintain a reusable double-buffered frame pipeline, converting decoded YUV420p frames directly into an Arc `Pixmap` backed by a direct `ByteBuffer` with zero heap allocations per frame during playback.
+
+#### Scenario: Asynchronous background frame decoding
+- **WHEN** the video engine is playing a loaded clip
+- **THEN** bitstream parsing and pixel conversion SHALL execute on a background worker thread without blocking the Mindustry render thread
+
+#### Scenario: In-place GPU texture updates
+- **WHEN** the next frame is ready for presentation
+- **THEN** the front buffer SHALL be uploaded to the reusable OpenGL texture via `glTexSubImage2D`
+
+#### Scenario: Seamless playback looping
+- **WHEN** playback reaches the end of the video stream and `loop(true)` is enabled
+- **THEN** the decoder and audio playhead SHALL seek back to the beginning and continue playback continuously
+
+### Requirement: Audio Decoding and Synchronization
+The video engine SHALL extract the AAC audio track from the MP4 container and decode it into 16-bit PCM WAV audio using pure Java without `java.awt` (JCodec core's bundled AAC decoder). The decoded audio SHALL be persisted as `<hash>.wav` in the shared disk cache directory. Audio playback SHALL be driven by `arc.audio.Music`. When an audio track is present, `music.getPosition()` SHALL serve as the master clock for video frame presentation; if no audio track exists, the engine SHALL automatically fall back to game delta-time pacing. Audio volume SHALL be unmuted by default and scaled by Mindustry's SFX volume setting (`sfxvol`).
+
+#### Scenario: AAC audio is decoded and cached as WAV
+- **WHEN** an MP4 containing an AAC audio track is loaded for the first time
+- **THEN** the audio track SHALL be decoded to PCM, saved as `<hash>.wav` in `Vars.dataDirectory/solim/cache/networkImage/`, and loaded into `arc.audio.Music`
+
+#### Scenario: Cached WAV skips audio decoding
+- **WHEN** a video is loaded whose `<hash>.wav` already exists in the disk cache
+- **THEN** audio decoding SHALL be bypassed and the existing `.wav` file SHALL be loaded directly
+
+#### Scenario: Video frames synchronize to audio master clock
+- **WHEN** audio is playing
+- **THEN** video frame presentation timestamps SHALL align with `music.getPosition()`, dropping lagging frames and holding early frames
+
+#### Scenario: Audio volume scales with SFX settings
+- **WHEN** the player adjusts the game's SFX volume in Mindustry settings
+- **THEN** video playback volume SHALL scale proportionally with `sfxvol`
+
+#### Scenario: Silent video fallback
+- **WHEN** the MP4 contains no audio track
+- **THEN** the engine SHALL advance frames using game delta time without throwing errors
+
+### Requirement: Declarative SolimVideo Component
+
+`SolimVideo` SHALL be a declarative Solim component created via `solim.ui.video(...)` supporting static and reactive source properties (`Readable<String>` and `Readable<VideoSource>`), and declaring its configuration through `.props(...)`: sizing, rounded corner masking, and the media properties `autoplay`, `loop`, `volume`, `muted`, and `controls`. `autoplay`, `duration`-equivalent timing, and the overlay icons SHALL take plain values because they are read once; `loop`, `volume`, `muted`, and `controls` SHALL accept reactive sources. `muted` SHALL accept a `Signal<Boolean>` and bind two-way, so the overlay's mute toggle writes back to the caller's signal, and SHALL route through the component's internal mute state so there is a single source of truth. The component SHALL NOT hold a binding field for its source or its controls: the reactive binding SHALL be created by property application and owned by the component, and a source that changes over time SHALL be declared once as a `Readable` rather than re-declared. The chained setters `autoplay(boolean)`, `loop(boolean)`, `volume(float)`, `muted(boolean)`, `controls(...)`, `url(...)`, `placeholder(...)`, `fallback(...)`, `scaling(...)`, and the overlay-icon methods SHALL NOT exist, including their `Readable` overloads. When the component is disposed, all allocated GL textures, pixel buffers, `Music` instances, and decode worker tasks SHALL be released immediately.
+
+#### Scenario: Declarative creation and playback
+
+- **WHEN** `solim.ui.video("https://.../demo.mp4").props(autoplay(true))` is constructed in a Solim tree
+- **THEN** the component SHALL initiate loading and display frames upon download completion
+
+#### Scenario: Reactive URL update
+
+- **WHEN** a reactive source property declared from a `Readable` changes to a new video source
+- **THEN** the current playback SHALL stop, previous resources SHALL be cleaned, and the new source SHALL begin loading
+
+#### Scenario: The source binding is owned by the component
+
+- **WHEN** a video is disposed while a reactive source property is still live
+- **THEN** the source binding is disposed with the component, and no component-held binding field survives disposal
+
+#### Scenario: Mute toggle writes back
+
+- **WHEN** the video's mute property is bound to a `Signal<Boolean>` and the user clicks the overlay mute button
+- **THEN** the signal's value updates to reflect the new mute state
+
+#### Scenario: Component disposal releases resources
+
+- **WHEN** a `SolimVideo` component is removed from the active UI hierarchy and disposed
+- **THEN** the underlying `VideoPlayer`, `Music`, GL texture, and background decode threads SHALL be cleanly stopped and disposed
+
+### Requirement: Interactive Auto-Hide Overlay Controls with Lucide Icons
+`SolimVideo` SHALL provide an interactive control overlay using Lucide icons (`play.png`, `pause.png`, `volume-2.png`, `volume-x.png`, `rotate-ccw.png` loaded via `FileIcon`), featuring a play/pause toggle button, an interactive progress scrub bar, an elapsed and total timestamp readout (`mm:ss / mm:ss`), a replay button, and a mute/unmute volume toggle. The overlay SHALL display upon cursor hover or touch input and SHALL automatically fade out after 2.5 seconds of user inactivity while the video is playing.
+
+#### Scenario: Play and pause toggle
+- **WHEN** the user clicks the play/pause button on the overlay
+- **THEN** video and audio playback SHALL alternate between paused and playing states, and the button icon SHALL switch between `play.png` and `pause.png`
+
+#### Scenario: Seeking via scrub bar
+- **WHEN** the user interacts with the progress scrub bar
+- **THEN** both video and audio playheads SHALL seek to the corresponding normalized position in the video
+
+#### Scenario: Volume mute toggle
+- **WHEN** the user clicks the volume button
+- **THEN** audio playback SHALL toggle between muted and unmuted states, and the icon SHALL toggle between `volume-2.png` and `volume-x.png`
+
+#### Scenario: Auto-hide after inactivity
+- **WHEN** the video is playing and no hover or input events occur for 2.5 seconds
+- **THEN** the control overlay SHALL smoothly fade out from view
+
+### Requirement: Configurable Controls Toggle
+
+`SolimVideo` SHALL support disabling the control overlay through the `controls` property declared in `.props(...)`, taking a plain `boolean` or a `Readable<Boolean>`. When controls are disabled (`false`), the control overlay elements and hover listeners SHALL NOT be displayed, allowing the component to function as an uncluttered looping motion graphic or banner. The reactive form SHALL bind through the property application path and be owned by the component; the component SHALL NOT retain a controls binding field, and the chained `controls(...)` methods, including the `Readable` overload, SHALL NOT exist.
+
+#### Scenario: Disabling controls hides all overlay elements
+
+- **WHEN** `video(url).props(controls(false))` is declared
+- **THEN** no play/pause button, scrub bar, volume toggle, or hover overlay SHALL be rendered over the video
+
+#### Scenario: Reactive control visibility toggle
+
+- **WHEN** a reactive `Readable<Boolean>` controls property switches from `true` to `false`
+- **THEN** the control overlay SHALL be removed from display immediately
+
+#### Scenario: Controls binding is owned by the component
+
+- **WHEN** a video with a reactive controls property is disposed
+- **THEN** the controls binding is disposed with the component, and no controls binding field remains referenced
+
+### Requirement: Video Source Configuration
+`SolimVideo` SHALL accept a `VideoSource` representing the source of the video stream, via constructor (`new SolimVideo(VideoSource)`), builder method (`src(VideoSource)`), and declarative property (`Values.src(VideoSource)` or `Values.src(Readable<VideoSource>)`), with convenience overloads for URL strings.
+
+#### Scenario: Video initialized with VideoSource
+- **WHEN** a `SolimVideo` is created with `VideoSource.of("http://example.com/test.mp4")`
+- **THEN** it SHALL extract the URL and begin loading the video stream
+
+#### Scenario: Video source configured via props
+- **WHEN** a `SolimVideo` is configured via `.props(src(VideoSource.of(url)))`
+- **THEN** the video component SHALL load and present the specified video source
+

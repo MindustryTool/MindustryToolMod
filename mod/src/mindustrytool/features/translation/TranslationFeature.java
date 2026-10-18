@@ -17,6 +17,8 @@ import java.util.concurrent.CompletableFuture;
 import mindustry.Vars;
 import mindustry.ui.dialogs.LanguageDialog;
 import mindustry.core.NetClient;
+import arc.input.KeyCode;
+import mindustry.game.EventType.ClientLoadEvent;
 import mindustry.game.EventType.Trigger;
 import mindustry.gen.Call;
 import mindustry.gen.Icon;
@@ -26,6 +28,7 @@ import mindustry.input.Binding;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
+import mindustrytool.features.translation.ui.ChatTranslationPill;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import mindustrytool.features.translation.providers.DeepLTranslationProvider;
@@ -39,43 +42,35 @@ import mindustrytool.features.prettychat.PrettyChatFeature;
 import mindustrytool.services.PacketReplacer;
 import solim.reactive.Signal;
 
-/**
- * Feature that provides in-game multiplayer chat translation.
- */
 public class TranslationFeature extends Feature {
 
     public final ConfigGroup config;
 
-    // Provider selection
     public final ConfigValue<String> providerConfig;
     public final ConfigValue<Boolean> showOriginalConfig;
+    public final ConfigValue<String> translationColorConfig;
+    public final ConfigValue<Boolean> showPillConfig;
 
-    // Gemini configs
     public final ConfigValue<String> geminiApiKeyConfig;
     public final ConfigValue<String> geminiModelConfig;
     public final ConfigValue<Integer> geminiTimeoutConfig;
     public final ConfigValue<Integer> geminiMaxHistoryConfig;
 
-    // DeepL configs
     public final ConfigValue<String> deeplApiKeyConfig;
     public final ConfigValue<Integer> deeplTimeoutConfig;
 
-    // MindustryTool configs
     public final ConfigValue<Integer> mindustryToolTimeoutConfig;
 
-    // DevXconfigs
     public final ConfigValue<String> devxApiKeyConfig;
     public final ConfigValue<String> devxModelConfig;
     public final ConfigValue<Integer> devxTimeoutConfig;
     public final ConfigValue<Integer> devxMaxHistoryConfig;
 
-    // Outgoing translation (Dịch ngược) configs
     public final ConfigValue<Boolean> outgoingEnabledConfig;
     public final ConfigValue<String> outgoingTargetLangConfig;
     public final ConfigValue<String> outgoingFormatConfig;
     public final ConfigValue<Boolean> outgoingShowOriginalConfig;
 
-    // Diagnostic state
     public final Signal<String> lastError = Signal.of(null);
     private long lastIncomingErrorToastTime = 0L;
     private static final long INCOMING_ERROR_TOAST_COOLDOWN_MS = 20_000L;
@@ -84,9 +79,7 @@ public class TranslationFeature extends Feature {
         long now = System.currentTimeMillis();
         if (now - lastIncomingErrorToastTime >= INCOMING_ERROR_TOAST_COOLDOWN_MS) {
             lastIncomingErrorToastTime = now;
-            String toastMsg = Core.bundle != null
-                    ? Core.bundle.format("feature.translation.error.incoming-failed", errorMsg)
-                    : "Chat translation failed: " + errorMsg;
+            String toastMsg = Core.bundle.format("feature.translation.error.incoming-failed", errorMsg) + errorMsg;
             Core.app.post(() -> {
                 if (Vars.ui != null && Vars.ui.hudfrag != null) {
                     Vars.ui.hudfrag.showToast(Icon.warning, "[scarlet]" + toastMsg);
@@ -131,8 +124,9 @@ public class TranslationFeature extends Feature {
 
         providerConfig = config.stringValue("provider", GoogleWebTranslationProvider.ID);
         showOriginalConfig = config.boolValue("show-original", true);
+        translationColorConfig = config.stringValue("color", "#00ff00");
+        showPillConfig = config.boolValue("show-pill", true);
 
-        // Outgoing translation configs
         outgoingEnabledConfig = config.boolValue("outgoing.enabled", true);
         outgoingTargetLangConfig = config.stringValue("outgoing.target-lang", "English");
         outgoingFormatConfig = config.stringValue("outgoing.format", "both");
@@ -164,12 +158,16 @@ public class TranslationFeature extends Feature {
         providers.add(new DevXTranslationProvider(this));
         providers.add(new DeepLTranslationProvider(this));
 
-        // Register packet replacements for incoming translation
         PacketReplacer.register(SendMessageCallPacket.class, SendTranslatedMessageCallPacket::new);
         PacketReplacer.register(SendMessageCallPacket2.class, SendTranslatedMessageCallPacket2::new);
 
-        // Register outgoing chat hook
         Events.run(Trigger.update, this::updateChatHook);
+
+        Events.on(ClientLoadEvent.class, e -> {
+            if (isEnabled()) {
+                initPill();
+            }
+        });
     }
 
     public Seq<TranslationProvider> getProviders() {
@@ -183,7 +181,7 @@ public class TranslationFeature extends Feature {
     }
 
     public String getTargetLanguage() {
-        Locale locale = Core.bundle != null ? Core.bundle.getLocale() : Locale.getDefault();
+        Locale locale = Core.bundle.getLocale();
         String display = locale.getDisplayLanguage(Locale.ENGLISH);
         return (display != null && !display.trim().isEmpty()) ? display : "English";
     }
@@ -237,29 +235,15 @@ public class TranslationFeature extends Feature {
         if (text.isEmpty()) {
             return false;
         }
-        // Escape prefix: //message bypasses translation
-        if (text.startsWith("//")) {
-            return false;
-        }
-        // Fast command prefixes: /tr <text> or /dich <text>
-        if (text.startsWith("/tr ") || text.startsWith("/dich ")) {
-            return true;
-        }
-        // If outgoing translation is disabled or target language is none, do not
-        // translate
         if (!Boolean.TRUE.equals(outgoingEnabledConfig.get())
                 || "none".equalsIgnoreCase(outgoingTargetLangConfig.get())) {
+
+            if (text.startsWith("/tr ") || text.startsWith("/dich ")) {
+                return ChatFilter.shouldTranslateOutgoing(text);
+            }
             return false;
         }
-        // Allow /t (team chat) and /a (admin chat) to be translated
-        if (text.startsWith("/t ") || text.startsWith("/a ")) {
-            return true;
-        }
-        // Other commands starting with / are game commands (e.g. /vote, /help)
-        if (text.startsWith("/")) {
-            return false;
-        }
-        return true;
+        return ChatFilter.shouldTranslateOutgoing(raw);
     }
 
     public static class OutgoingParts {
@@ -327,9 +311,8 @@ public class TranslationFeature extends Feature {
         TranslationProvider provider = getActiveProvider();
         if (!provider.isConfigured()) {
             String providerName = provider.getName();
-            String warnMsg = Core.bundle != null
-                    ? Core.bundle.format("feature.translation.error.not-configured", providerName)
-                    : "Translation provider \"" + providerName + "\" is not configured. Please enter an API key in settings.";
+            String warnMsg = Core.bundle.format("feature.translation.error.not-configured", providerName) + providerName
+                    + "\" is not configured. Please enter an API key in settings.";
             lastError.set(warnMsg);
             Core.app.post(() -> {
                 if (Vars.ui != null && Vars.ui.hudfrag != null) {
@@ -352,15 +335,14 @@ public class TranslationFeature extends Feature {
                     String errorMsg = cause.getMessage() != null ? cause.getMessage() : "Unknown error";
                     lastError.set(errorMsg);
                     Log.warn("Outgoing translation failed: @", errorMsg);
-                    String toastMsg = Core.bundle != null
-                            ? Core.bundle.format("feature.translation.error.outgoing-failed", errorMsg)
-                            : "Translation failed: " + errorMsg;
+                    String toastMsg = Core.bundle.format("feature.translation.error.outgoing-failed", errorMsg)
+                            + errorMsg;
                     Core.app.post(() -> {
                         if (Vars.ui != null && Vars.ui.hudfrag != null) {
                             Vars.ui.hudfrag.showToast(Icon.warning, "[scarlet]" + toastMsg);
                         }
                     });
-                    // Never drop outgoing message on error
+
                     onDeliver.get(rawMessage);
                     return null;
                 });
@@ -384,7 +366,12 @@ public class TranslationFeature extends Feature {
             }
             String text = raw.trim();
 
-            // Escape prefix: //message sends "message" directly without translation or prettifying
+            boolean isShiftHeld = Core.input != null
+                    && (Core.input.keyDown(KeyCode.shiftLeft) || Core.input.keyDown(KeyCode.shiftRight));
+            if (isShiftHeld) {
+                return;
+            }
+
             if (text.startsWith("//")) {
                 return;
             }
@@ -393,8 +380,6 @@ public class TranslationFeature extends Feature {
                 return;
             }
 
-            // Clear the field immediately so Mindustry's scheduled sendMessage() will see
-            // empty text and do nothing!
             chatfield.setText("");
 
             handleOutgoingMessage(text, translatedMsg -> {
@@ -421,16 +406,15 @@ public class TranslationFeature extends Feature {
         }
 
         String cleanText = Strings.stripColors(message).trim();
-        if (cleanText.isEmpty()) {
+        if (cleanText.isEmpty() || !ChatFilter.shouldTranslateIncoming(message)) {
             onDeliver.get(message);
             return;
         }
 
         TranslationProvider provider = getActiveProvider();
         if (!provider.isConfigured()) {
-            String errorMsg = Core.bundle != null
-                    ? Core.bundle.format("feature.translation.error.not-configured", provider.getName())
-                    : "Translation provider \"" + provider.getName() + "\" is not configured. Please enter an API key in settings.";
+            String errorMsg = Core.bundle.format("feature.translation.error.not-configured", provider.getName())
+                    + provider.getName() + "\" is not configured. Please enter an API key in settings.";
             lastError.set(errorMsg);
             notifyIncomingErrorThrottled(errorMsg);
             onDeliver.get(message);
@@ -445,12 +429,10 @@ public class TranslationFeature extends Feature {
                                 || translated.equalsIgnoreCase(cleanText)) {
                             onDeliver.get(message);
                         } else {
-                            String formatted;
-                            if (Boolean.TRUE.equals(showOriginalConfig.get())) {
-                                formatted = message + " [#00ff00](" + translated + ")[white]";
-                            } else {
-                                formatted = "[#00ff00][" + translated + "][white]";
-                            }
+                            String colorTag = "[" + getTranslationColor() + "]";
+                            String formatted = Boolean.TRUE.equals(showOriginalConfig.get())
+                                    ? message + " " + colorTag + "(" + translated + ")[white]"
+                                    : colorTag + "[" + translated + "][white]";
                             onDeliver.get(formatted);
                         }
                     });
@@ -462,11 +444,20 @@ public class TranslationFeature extends Feature {
                     Log.warn("Translation failed: @", errorMsg);
                     notifyIncomingErrorThrottled(errorMsg);
                     Core.app.post(() -> {
-                        // Never drop messages on error
+
                         onDeliver.get(message);
                     });
                     return null;
                 });
+    }
+
+    public String getTranslationColor() {
+        String color = translationColorConfig.get();
+        if (color == null || color.trim().isEmpty()) {
+            return "#00ff00";
+        }
+        String c = color.trim();
+        return c.startsWith("#") ? c : "#" + c;
     }
 
     public CompletableFuture<String> testTranslate(String text) {
@@ -481,8 +472,7 @@ public class TranslationFeature extends Feature {
         if (!provider.isConfigured()) {
             return CompletableFuture.completedFuture(text);
         }
-        // Network-only by contract: translation keys are unbounded per sentence,
-        // so no long-term QueryCache retention. Callers guard duplicate taps.
+
         String cleanText = text.trim();
         return provider.translate(cleanText, targetLanguage);
     }
@@ -490,6 +480,8 @@ public class TranslationFeature extends Feature {
     public void resetToDefaults() {
         providerConfig.reset();
         showOriginalConfig.reset();
+        translationColorConfig.reset();
+        showPillConfig.reset();
         outgoingEnabledConfig.reset();
         outgoingTargetLangConfig.reset();
         outgoingFormatConfig.reset();
@@ -520,5 +512,40 @@ public class TranslationFeature extends Feature {
             languageDialog = new OutgoingLanguageDialog(this);
         }
         languageDialog.show();
+    }
+
+    private @Nullable ChatTranslationPill chatPill;
+
+    public void initPill() {
+        if (chatPill != null) {
+            chatPill.element().remove();
+            chatPill.dispose();
+            chatPill = null;
+        }
+        if (Core.scene != null && Vars.ui != null && Vars.ui.chatfrag != null) {
+            chatPill = new ChatTranslationPill(this);
+            chatPill.element();
+        }
+    }
+
+    public void disposePill() {
+        if (chatPill != null) {
+            ChatTranslationPill pill = chatPill;
+            chatPill = null;
+            pill.element().remove();
+            pill.dispose();
+        }
+    }
+
+    @Override
+    public void onEnable() {
+        super.onEnable();
+        initPill();
+    }
+
+    @Override
+    public void onDisable() {
+        super.onDisable();
+        disposePill();
     }
 }

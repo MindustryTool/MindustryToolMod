@@ -7,7 +7,7 @@
 # Format: <key> [optional comment]
 
 # Brand & Project Names
-section.MindustryTool.name
+category.mindustrytool.name
 web-feature.wiki.name
 web-feature.content-patches.name
 pretty-chat.prettier.uwu.name
@@ -28,5 +28,11 @@ feature.time-control.settings.display-mode.hud
 feature.god-mode.settings.display-mode.hud
 feature.autoplay.settings.display-mode.hud
 feature.quick-schematic-grid.settings.display-mode.hud
+feature.army-control.settings.display-mode.hud
 feature.god-mode.settings.provider.js
 
+feature.pathfinding.badge.navigation
+feature.background.badge.graphics
+feature.chat.badge.communication
+feature.joystick.badge.controls
+feature.god-mode.badge.sandbox

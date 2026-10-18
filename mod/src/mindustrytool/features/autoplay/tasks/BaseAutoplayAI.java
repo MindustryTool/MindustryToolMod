@@ -6,10 +6,6 @@ import arc.util.Nullable;
 import mindustry.entities.units.AIController;
 import mindustry.gen.Teamc;
 
-/**
- * Base AI controller for autoplay tasks.
- * Tracks target positions for overhead indicator rendering.
- */
 public abstract class BaseAutoplayAI extends AIController {
 
     public final Vec2 targetPos = new Vec2();
@@ -35,11 +31,12 @@ public abstract class BaseAutoplayAI extends AIController {
 
     @Override
     public void updateTargeting() {
-        // Targeted by specific task logic
+
     }
 
     @Override
-    public void moveTo(Position target, float circleLength, float smooth, boolean keepDistance, @Nullable Vec2 offset, boolean arrive) {
+    public void moveTo(Position target, float circleLength, float smooth, boolean keepDistance, @Nullable Vec2 offset,
+            boolean arrive) {
         if (unit == null || target == null) {
             return;
         }

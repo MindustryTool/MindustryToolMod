@@ -54,9 +54,9 @@ The Repair task MUST detect healing capabilities and repair damaged friendly str
 - The task MUST focus exclusively on damaged completed buildings, leaving mobile unit healing to dedicated unit healing tasks.
 - The task MUST calculate engagement range (`healRange`) strictly from building-healing capabilities (the maximum range among weapons with healing projectiles or repair beams where `targetBuildings == true`, falling back to `unit.type.range` if `unit.type.canHeal` is true). Unit-only abilities such as `RepairFieldAbility` MUST NOT be included in `healRange`.
 - WHEN a target building is farther than 65% of engagement range (`0.65f * healRange`) THEN the task MUST navigate toward the building via `moveTo(target, healRange * 0.65f)`.
-- WHEN a target building is within 65% of engagement range THEN the task MUST cease calling `moveTo` to prevent deceleration oscillation, while setting `targetPos` to maintain visual connected lines.
+- WHEN a target building is within 65% of engagement range THEN the task MUST cease calling `moveTo` to prevent deceleration oscillation, while setting `targetPos` to maintain visual connected lines, EXCEPT when the unit is closer than the minimum standoff gap (near-zero distance over the building center) — in that case the task MUST navigate outward to the hold ring via `moveTo(target, healRange * 0.65f)` so the aim direction stays defined.
 - The task MUST continuously rotate the unit to face the target building via `unit.lookAt(target)` every frame while a target is assigned, enabling fixed-mount weapons with narrow firing cones to aim accurately.
-- WHEN a target building is within weapon engagement range (`target.within(unit, healRange)`) THEN the task MUST aim at the target and enable weapon control via `unit.controlWeapons(true)`.
+- WHEN a target building is within weapon engagement range (`target.within(unit, healRange)`) THEN the task MUST aim at the target and enable weapon control via `unit.controlWeapons(true)`, including while backing off from the too-close zone.
 - WHEN the target is fully repaired, destroyed, or out of range THEN the task MUST reset weapon firing via `unit.controlWeapons(false)`.
 
 #### Scenario: Damaged buildings exist alongside construction sites
@@ -75,6 +75,10 @@ The Repair task MUST detect healing capabilities and repair damaged friendly str
 - **WHEN** a unit has a building-healing weapon and a longer-ranged unit-only repair field ability (such as RepairFieldAbility)
 - **THEN** RepairTask calculates healRange strictly using the building-healing weapon range, navigating to within 65% of the weapon range so the weapon can fire and repair the damaged building
 
+#### Scenario: Unit parked on top of damaged building backs off and heals
+- **WHEN** the healer unit is within the minimum standoff gap of the target building center (near-zero distance)
+- **THEN** RepairTask navigates outward to the 65%-of-range hold ring while keeping the repair beam enabled whenever the target is within weapon engagement range, and resumes the normal hold once at ring distance
+
 ### Requirement: Task 5 - Follow & Assist
 The Follow & Assist task MUST follow designated teammates in multiplayer and mirror their actions without polluting the unit build queue.
 - In singleplayer, the task MUST yield cleanly.
@@ -90,6 +94,10 @@ Self-Build and Rebuild tasks MUST construct structures efficiently while remaini
 - `RebuildTask` MUST identify destroyed structures from team block plans and manage their reconstruction to completion.
 - `RebuildTask` build plans MUST be isolated such that `SelfBuildTask` does not hijack execution on subsequent frames.
 - `SelfBuildTask` MUST only evaluate and construct plans initiated by the player.
+- `SelfBuildTask` settings MUST provide one-shot action buttons stacked vertically to **Reclaim All Derelicts** and **Deconstruct All Derelicts**.
+- WHEN the player clicks **Reclaim All Derelicts** while `Vars.state.rules.derelictRepair` is enabled THEN `SelfBuildTask` MUST queue non-breaking `BuildPlan(b.tileX(), b.tileY(), b.rotation, b.block, b.config())` entries for all derelict buildings (`Team.derelict`) that allow derelict repair (`b.block.allowDerelictRepair`) and pass placement validation (`Build.validPlaceIgnoreUnits`).
+- WHEN queuing derelict reclaim or deconstruct plans THEN `SelfBuildTask` MUST replace any existing non-rebuild `BuildPlan` in `unit.plans` at the same `(tileX, tileY)` coordinate to prevent duplicate plans and allow switching between reclaim and deconstruct actions.
+- WHEN `SelfBuildTask` evaluates whether a `BuildPlan` is affordable THEN it MUST treat derelict repair plans (`plan.isDerelictRepair()`) and rotation plans (`plan.isRotation(unit.team)`) as requiring no core items, allowing the unit to reclaim derelict blocks regardless of core inventory.
 
 #### Scenario: Rebuilding destroyed structures
 - **WHEN** team rebuild plans are present in `unit.team.data().plans`
@@ -99,6 +107,14 @@ Self-Build and Rebuild tasks MUST construct structures efficiently while remaini
 - **WHEN** the player manually queues construction plans
 - **THEN** SelfBuildTask executes the player's queued plans in order of nearest distance
 
+#### Scenario: Reclaiming derelict blocks via settings button
+- **WHEN** the player clicks **Reclaim All Derelicts** in `SelfBuildTask` settings on a map with `derelictRepair` enabled
+- **THEN** non-breaking `BuildPlan` entries matching each eligible derelict building's block, rotation, and config are queued on `unit.plans` and `SelfBuildTask` navigates to reclaim them even if the core lacks materials to build those blocks from scratch
+
+#### Scenario: Switching between Deconstruct and Reclaim Derelicts replaces existing plans
+- **WHEN** derelict tiles already have breaking or non-breaking plans in `unit.plans` and the player clicks **Reclaim All Derelicts** or **Deconstruct All Derelicts**
+- **THEN** the existing plans at those derelict tile coordinates are replaced without creating duplicate `BuildPlan` entries
+
 ### Requirement: Task 8 - Mining
 The Mining task MUST mine the lowest-stock selected resources safely and deposit them into the core without attempting to mine conflicting resources while carrying cargo.
 - The task MUST search for candidate ore tiles relative to the friendly Core.
@@ -107,7 +123,9 @@ The Mining task MUST mine the lowest-stock selected resources safely and deposit
 - The task MUST verify that candidate ore tiles are valid to mine before selecting them, accepting uncovered floor ores (`tile.drop() == item && tile.block() == Blocks.air`) and valid wall ores (`tile.wallDrop() == item || (tile.block() != null && tile.block().itemDrop == item)`).
 - The task MUST throttle candidate ore evaluation using a tick timer to prevent searching all content items across the indexer every frame.
 - WHEN the unit is transporting collected ore to the core (`mining == false`) THEN `unit.mineTile` MUST NOT be set or re-assigned until deposit completes.
-- WHEN the unit is within core transfer range (`unit.within(core, unit.type.range)`) and is carrying cargo (`unit.stack.amount > 0`) that the core accepts THEN the task MUST deposit its carried items into the core immediately via `Call.transferInventory`.
+- All inventory transfer RPC calls (`Call.transferInventory`) MUST be coordinated exclusively through `MinerAI`, and MUST NOT be called independently in `MiningTask.update`.
+- Inventory transfers MUST be rate-limited with a minimum cooldown timer (at least 20 ticks) and MUST guard against duplicate RPC packets while an in-flight transfer is pending until cargo is acknowledged as empty (`unit.stack.amount == 0`) or a fallback timeout expires.
+- WHEN the unit is mining near the core, it MUST continue mining until reaching full item capacity (`unit.stack.amount >= unit.type.itemCapacity`) before triggering an inventory transfer, unless the current carried item cannot be accepted or mined.
 - WHEN the unit is already carrying a resource (`unit.stack.amount > 0`) AND that resource is still valid to mine and accept in the core THEN the task MUST continue mining that resource until capacity is reached before switching to another resource.
 - WHEN the unit is carrying a resource (`unit.stack.amount > 0`) that cannot be mined or is full in the core THEN the task MUST immediately switch to deposit mode (`mining = false`, `unit.mineTile = null`) to empty its inventory before selecting another resource.
 - The task MUST NEVER assign `unit.mineTile` to an ore type that differs from the item currently carried in `unit.stack.item` when `unit.stack.amount > 0`.
@@ -126,9 +144,13 @@ The Mining task MUST mine the lowest-stock selected resources safely and deposit
 - **WHEN** the player unit is mining an ore tile within core transfer range (`Vars.mineTransferRange`) where items beam directly into the core
 - **THEN** MiningTask continues mining the current target item until an alternative selected resource in the core is lower by at least the hysteresis threshold, at which point it switches target items
 
-#### Scenario: Carrying items while near core deposits immediately
-- **WHEN** the unit holds cargo (`unit.stack.amount > 0`) while within interaction range of the core
-- **THEN** carried items are transferred to the core so the unit can evaluate and switch to lower-stock resources without getting stuck
+#### Scenario: Transferring items to core rate-limited
+- **WHEN** the unit reaches full capacity or must deposit carried cargo within interaction range of the core
+- **THEN** `Call.transferInventory` is invoked by `MinerAI` subject to the transfer cooldown and in-flight guard, preventing duplicate packet dispatch while inventory emptying is pending
+
+#### Scenario: Carrying items while near core fills to capacity before depositing
+- **WHEN** the unit holds cargo (`unit.stack.amount > 0`) while mining within interaction range of the core and can still mine the resource
+- **THEN** the unit continues mining until full capacity is reached rather than issuing micro-transfers on every single mined item
 
 #### Scenario: Immediate switch when core is full of current resource
 - **WHEN** the core reaches maximum capacity for the current target resource (`core.acceptStack <= 0`)
@@ -149,6 +171,37 @@ The Mining task MUST mine the lowest-stock selected resources safely and deposit
 #### Scenario: Immediate deposit when carried resource is unmineable
 - **WHEN** a unit is carrying an item that cannot be mined further or is full in the core
 - **THEN** MiningTask transitions to `mining = false`, clears `unit.mineTile`, and deposits the cargo at the core before selecting a new resource
+
+### Requirement: Task 9 - Factory Supply
+The Factory Supply task (`FactorySupplyTask`) MUST transfer required input items from nearby Cores or Containers into eligible production factories within drop range and collect produced output items from those factories back into Cores or Containers using round-robin scheduling and server-safe rate limiting.
+- The task MUST be positioned by default above `MiningTask` (`RebuildTask` → `FactorySupplyTask` → `MiningTask`) in `AutoplayFeature.DEFAULT_ORDER`.
+- The task MUST support eligible production buildings across `GenericCrafter`, `Separator`, `UnitFactory`, `Reconstructor`, `UnitAssembler`, item-consuming `PowerGenerator`, `Drill`, `BeamDrill`, and `WallCrafter`.
+- When selecting a storage building to withdraw input items from or deposit produced output items into, the task MUST prioritize allied `CoreBuild`s (and core-linked `StorageBuild`s) over standalone `StorageBuild`s (Containers/Vaults), falling back to the nearest standalone `StorageBuild` only when no `CoreBuild` is in range or the `CoreBuild` lacks the required item / capacity.
+- The task MUST only service production factories that are within drop range (`Vars.itemTransferRange`) of a candidate Core or Container (such that the unit can position itself within `Vars.itemTransferRange` of the storage and factory), and MUST respect `build.allowDeposit()` when depositing items.
+- The task MUST cycle through eligible in-range factories in round-robin order; for each factory, it MUST supply missing input items (`factory.acceptStack(item, 1, unit) > 0`) in round-robin order and immediately withdraw available produced output items (`GenericCrafter.outputItems`, `Separator.results`, `WallCrafter.output`, or non-consumed drill outputs) to return to the prioritized Core or Container.
+- The task MUST NEVER withdraw input ingredients from a production factory unless that item is explicitly an output product of that factory.
+- All item transfer RPC calls (`Call.requestItem`, `Call.transferInventory`, `Call.dropItem`) MUST be coordinated exclusively through `FactorySupplyAI` with a shared cooldown timer (`>= Math.max(24f, Vars.state.rules.itemDepositCooldown * 40f + 2f)`) and an in-flight pending state guard with 150-tick timeout fallback (over the 2s double-error disconnect window) so the client never exceeds multiplayer server `itemDepositRate` or `Administration` block interaction rate limits.
+- The task MUST provide settings displaying all eligible production blocks as filter chips alongside **Select All** and **Clear All** actions.
+
+#### Scenario: Prioritizing Core over Container within drop range
+- **WHEN** both a friendly `CoreBuild` and a standalone `StorageBuild` (Container/Vault) are within drop range of a production factory and both contain the required input item (or have space for the factory's output item)
+- **THEN** `FactorySupplyTask` withdraws the input item from (and deposits the output product into) the `CoreBuild` rather than the Container
+
+#### Scenario: Falling back to nearest Container when Core is out of range or lacks item
+- **WHEN** no `CoreBuild` is within drop range of a production factory (or the `CoreBuild` lacks the required input item / is full for the output product) and a standalone `StorageBuild` within drop range has the item (or space)
+- **THEN** `FactorySupplyTask` uses the nearest standalone `StorageBuild` to supply the factory or store its output product
+
+#### Scenario: Round-robin input supply and product collection across factories
+- **WHEN** multiple production factories within drop range require input items and produce output items
+- **THEN** `FactorySupplyTask` cycles through the factories in round-robin order, drops needed input items in round-robin order, and collects produced output items back into the Core or Container without starving sibling factories or pulling input ingredients back out of the factory
+
+#### Scenario: Rate-limited item transfers prevent multiplayer server kicks
+- **WHEN** `FactorySupplyAI` executes consecutive `Call.requestItem` and `Call.transferInventory` operations
+- **THEN** each RPC call waits for the in-flight state acknowledgment (or fallback timeout) and enforces at least `max(24 ticks, Rules.itemDepositCooldown * 40f + 2f)` cooldown between actions so server interaction and deposit rate limits are never exceeded
+
+#### Scenario: Selecting and clearing production blocks in task settings
+- **WHEN** the player clicks **Clear All** or **Select All** or toggles individual production block chips in the Factory Supply task settings
+- **THEN** the persisted block filter updates reactively and `FactorySupplyTask` only services buildings whose block type is currently selected
 
 ### Requirement: Camera & Visuals
 The Autoplay feature MUST render visual status indicators overhead and connect to valid target coordinates, and MUST respect `FreeCameraFeature` when updating camera position.
@@ -221,10 +274,12 @@ The settings view MUST provide intuitive controls for configuring task prioritie
 - **THEN** the exception is caught silently and `null` is returned without crashing the game
 
 ### Requirement: Shared task strip quick surface
-The system SHALL provide a shared horizontal task strip used by both the standalone HUD and the QuickAccess popup. The strip SHALL contain a master autoplay on/off cell at the far left followed by 8 task icon toggles in priority order laid out in a grid with 5 columns per row, SHALL highlight the currently active task via icon color, SHALL keep default touch targets, and SHALL remain editable even while autoplay is disabled. The strip SHALL be toggle-only; reprioritizing tasks SHALL remain available only through the settings dialog reorder controls.
+The system SHALL provide a shared horizontal task strip used by both the standalone HUD and the QuickAccess popup. The strip SHALL contain a master autoplay on/off cell at the far left followed by task icon toggles for all visible (non-hidden) tasks in priority order laid out in a grid with up to 5 columns per row, SHALL highlight the currently active task via icon color, SHALL keep default touch targets, and SHALL remain editable even while autoplay is disabled. The strip SHALL be toggle-only for task ordering; reprioritizing tasks SHALL remain available only through the settings dialog reorder controls. Tasks marked as hidden by the player SHALL be excluded from the strip while remaining accessible and manageable in the settings dialog.
+
+Long-pressing (>= 300ms) any button in the strip (the master autoplay button or any individual task button) SHALL close the QuickAccess popup if currently open and display the Autoplay settings dialog.
 
 #### Scenario: Toggle task from strip
-- **WHEN** the player taps a task icon in the HUD or popup strip
+- **WHEN** the player taps a visible task icon in the HUD or popup strip
 - **THEN** that task's enabled state flips via `disabledTasks` and the strip icon color reflects the new state without rebuilding
 
 #### Scenario: Strip toggle binding stays reactive
@@ -238,6 +293,29 @@ The system SHALL provide a shared horizontal task strip used by both the standal
 #### Scenario: Master switch toggles autoplay
 - **WHEN** the player taps the master cell in the HUD or popup strip
 - **THEN** autoplay enables or disables without affecting per-task toggle states
+
+#### Scenario: Hidden task excluded from strip
+- **WHEN** a player hides a task in the autoplay settings dialog
+- **THEN** that task's icon button is removed from the HUD and popup strips, and the remaining visible buttons adjust layout dynamically
+
+#### Scenario: Long-pressing master button opens settings dialog
+- **WHEN** the player long-presss the master autoplay button in the HUD or popup strip for >= 300ms
+- **THEN** the QuickAccess popup is closed if open and the Autoplay settings dialog is displayed
+
+#### Scenario: Long-pressing task button opens settings dialog
+- **WHEN** the player long-presses any task button in the HUD or popup strip for >= 300ms
+- **THEN** the QuickAccess popup is closed if open and the Autoplay settings dialog is displayed
+
+### Requirement: Task Visibility Configuration
+The system SHALL allow players to individually toggle the visibility of each autoplay task from the settings dialog.
+- The visibility setting for tasks SHALL be stored in a persistent configuration list (`hidden-tasks`).
+- The settings dialog MUST display all registered tasks regardless of visibility state.
+- Each task in the settings dialog MUST include a visibility toggle button displaying an eye icon indicating whether the task is visible in the HUD strip.
+- Toggling task visibility SHALL update the `visibleTasks` reactive list without affecting whether the task is enabled for execution.
+
+#### Scenario: Player toggles task visibility in settings
+- **WHEN** the player taps the visibility toggle button for a task in the autoplay settings dialog
+- **THEN** the task ID is added to or removed from `hiddenTasks`, the eye icon changes between visible and hidden states, and the HUD strip updates reactively
 
 ### Requirement: QuickAccess tap semantics and fallback
 The system SHALL override `onQuickAccessClick` so HUD mode taps toggle autoplay enabled while popup mode taps open the popup when closed and hide it when already showing without changing enabled state. Long-press SHALL open the settings entry. The standalone HUD SHALL be fully suppressed while popup mode is active with QuickAccess on, and SHALL silently render per remaining HUD rules when popup mode is set but QuickAccess is off.

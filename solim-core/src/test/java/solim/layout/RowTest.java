@@ -5,6 +5,21 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.bottom;
+import static solim.modifier.Values.center;
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.left;
+import static solim.modifier.Values.minWidth;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.position;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.right;
+import static solim.modifier.Values.top;
+import static solim.modifier.Values.visible;
+import static solim.modifier.Values.width;
+import static solim.modifier.Values.x;
+import static solim.modifier.Values.y;
 
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +34,6 @@ import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
 class RowTest extends SolimEnv {
-
 
     @Test
     void createsTableWithDefaultName() {
@@ -46,7 +60,7 @@ class RowTest extends SolimEnv {
     @Test
     void gapSetsCellSpacing() {
         Row row = new Row();
-        row.gap(8f);
+        row.props(gap(8f));
 
         Element a = new Element();
         Element b = new Element();
@@ -59,7 +73,7 @@ class RowTest extends SolimEnv {
     @Test
     void gapAppliesDirectionalSpacingToCells() {
         Row row = new Row();
-        row.gap(8f);
+        row.props(gap(8f));
         Element a = new Element();
         Element b = new Element();
         row.add(a);
@@ -76,8 +90,8 @@ class RowTest extends SolimEnv {
         Element child = new Element();
         row.add(child);
 
-        assertSame(row, row.padding(12f));
-        assertSame(row, row.padding(1f, 2f, 3f, 4f));
+        assertSame(row, row.props(padding(12f)));
+        assertSame(row, row.props(padding(1f, 2f, 3f, 4f)));
         assertEquals(1, row.table().getChildren().size);
         assertSame(child, row.table().getChildren().get(0));
     }
@@ -86,10 +100,10 @@ class RowTest extends SolimEnv {
     void visibleModifierChangesTableVisibility() {
         Row row = new Row();
 
-        row.visible(false);
+        row.props(visible(false));
         assertFalse(row.table().visible);
 
-        row.visible(true);
+        row.props(visible(true));
         assertTrue(row.table().visible);
     }
 
@@ -97,7 +111,7 @@ class RowTest extends SolimEnv {
     void reactiveVisibleUpdatesTableVisibility() {
         Signal<Boolean> vis = Signal.of(true);
         Row row = new Row();
-        row.visible(vis);
+        row.props(visible(vis));
 
         assertTrue(row.table().visible);
 
@@ -114,13 +128,13 @@ class RowTest extends SolimEnv {
     void positionSetsTableCoordinates() {
         Row row = new Row();
 
-        row.x(10f);
+        row.props(x(10f));
         assertEquals(10f, row.table().x, 0.01f);
 
-        row.y(20f);
+        row.props(y(20f));
         assertEquals(20f, row.table().y, 0.01f);
 
-        row.position(30f, 40f);
+        row.props(position(30f, 40f));
         assertEquals(30f, row.table().x, 0.01f);
         assertEquals(40f, row.table().y, 0.01f);
     }
@@ -162,7 +176,7 @@ class RowTest extends SolimEnv {
         Row parent = new Row();
         Row child = new Row();
         parent.children(() -> {
-            child.width(40f).minWidth(40f).children(() -> {
+            child.props(width(40f), prefWidth(40f), minWidth(40f)).children(() -> {
             });
         });
 
@@ -176,7 +190,7 @@ class RowTest extends SolimEnv {
     @Test
     void rowTopLeftAlignsChildrenToTopAndLeft() {
         Row row = new Row();
-        row.top().left();
+        row.props(top(), left());
         Element e1 = new Element() {
             @Override
             public float getPrefWidth() {
@@ -209,15 +223,12 @@ class RowTest extends SolimEnv {
         Cell<?> c1 = row.table().getCell(e1);
         Cell<?> c2 = row.table().getCell(e2);
 
-        // Both cell alignments must include Align.top and Align.left
         assertEquals(Align.top | Align.left, CellAccess.align(c1) & (Align.top | Align.left));
         assertEquals(Align.top | Align.left, CellAccess.align(c2) & (Align.top | Align.left));
 
-        // Both children must be flush with the top edge of the row (y + height == 200)
         assertEquals(200f, e1.y + e1.getHeight(), 0.01f, "Child 1 must be aligned to top of row");
         assertEquals(200f, e2.y + e2.getHeight(), 0.01f, "Child 2 must be aligned to top of row");
 
-        // Left alignment: e1 at left (0), e2 immediately following (50)
         assertEquals(0f, e1.x, 0.01f, "Child 1 must be at left edge");
         assertEquals(50f, e2.x, 0.01f, "Child 2 must follow Child 1");
     }
@@ -225,7 +236,7 @@ class RowTest extends SolimEnv {
     @Test
     void rowBottomRightAlignsChildrenToBottomAndRight() {
         Row row = new Row();
-        row.bottom().right();
+        row.props(bottom(), right());
         Element e1 = new Element() {
             @Override
             public float getPrefWidth() {
@@ -255,11 +266,9 @@ class RowTest extends SolimEnv {
         row.table().setSize(300f, 200f);
         row.table().layout();
 
-        // Both children must be flush with the bottom edge of the row (y == 0)
         assertEquals(0f, e1.y, 0.01f, "Child 1 must be aligned to bottom");
         assertEquals(0f, e2.y, 0.01f, "Child 2 must be aligned to bottom");
 
-        // Right alignment: e2 ends at 300, e1 before it
         assertEquals(300f, e2.x + e2.getWidth(), 0.01f, "Child 2 must be at right edge");
         assertEquals(200f, e1.x + e1.getWidth(), 0.01f, "Child 1 must precede Child 2");
     }
@@ -280,8 +289,7 @@ class RowTest extends SolimEnv {
         };
         row.children(() -> AttachmentStack.add(e1));
 
-        // Call top() after children are added
-        row.top();
+        row.props(top());
         row.table().setSize(300f, 200f);
         row.table().layout();
 
@@ -317,8 +325,8 @@ class RowTest extends SolimEnv {
 
         Scroll scroll = new Scroll();
         AttachmentStack.attachToParent(scroll.element());
-        scroll.grow().children(() -> {
-            new Row().grow().top().left().gap(8f).children(() -> {
+        scroll.props(grow()).children(() -> {
+            new Row().props(grow(), top(), left(), gap(8f)).children(() -> {
                 AttachmentStack.add(img);
                 AttachmentStack.add(det);
             });
@@ -335,11 +343,9 @@ class RowTest extends SolimEnv {
         Row row = (Row) SolimToken.getComponent(scroll.content().getChildren().first());
         row.table().layout();
 
-        // Both img and det must be flush with the top of the row table (400)
         assertEquals(400f, img.y + img.getHeight(), 0.01f, "Image must align to the top");
         assertEquals(400f, det.y + det.getHeight(), 0.01f, "Details must align to the top");
 
-        // Left alignment with gap
         assertEquals(0f, img.x, 0.01f, "Image starts at left edge");
         assertEquals(128f, det.x, 0.01f, "Details starts after image + gap");
     }
@@ -390,7 +396,7 @@ class RowTest extends SolimEnv {
     @Test
     void explicitCenterOverridesTopLeftDefault() {
         Row row = new Row();
-        row.center();
+        row.props(center());
         Element e1 = new Element();
         row.children(() -> {
             AttachmentStack.add(e1);

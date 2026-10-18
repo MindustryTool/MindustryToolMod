@@ -2,9 +2,6 @@ package mindustrytool.features.wavepreview;
 
 import arc.struct.Seq;
 
-/**
- * Composition data for a single wave, grouped by domain and sorted by unit health.
- */
 public class WaveSectionData {
     public final int waveNumber;
     public final Seq<WaveUnitEntry> ground;

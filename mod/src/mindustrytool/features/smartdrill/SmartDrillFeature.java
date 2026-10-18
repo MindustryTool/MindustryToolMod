@@ -37,13 +37,6 @@ import solim.overlay.SolimDialog;
 
 import java.util.HashMap;
 
-/**
- * Smart Drill feature: calculates and places optimized drill configurations on
- * tapped ore tiles with connected distribution bridges or ducts.
- * <p>
- * Activated exclusively through Quick Access toggle so that normal touch/drag
- * building (such as conveyor placement) remains completely unaffected when off.
- */
 public class SmartDrillFeature extends Feature {
 
     public enum Direction {
@@ -127,7 +120,7 @@ public class SmartDrillFeature extends Feature {
 
     @Override
     public void onEnable() {
-        if (Vars.ui != null && Vars.ui.hudfrag != null && Core.bundle != null) {
+        if (Vars.ui != null && Vars.ui.hudfrag != null) {
             Vars.ui.hudfrag.showToast(Core.bundle.get("feature.smart-drill.active-hint",
                     "Smart Drill active: Tap an ore patch to plan drills."));
         }
@@ -194,17 +187,15 @@ public class SmartDrillFeature extends Feature {
 
         Table directionTable = new Table();
 
-        // Up
         directionTable.add().size(44f);
         directionTable.button(Icon.up, () -> showDrillMenu(tile, drop, Direction.UP, isBeam)).size(44f).pad(2);
         directionTable.add().size(44f).row();
 
-        // Left, Cancel, Right
         directionTable.button(Icon.left, () -> showDrillMenu(tile, drop, Direction.LEFT, isBeam)).size(44f).pad(2);
         directionTable.button(Icon.cancel, this::closeMenu).size(44f).pad(2);
-        directionTable.button(Icon.right, () -> showDrillMenu(tile, drop, Direction.RIGHT, isBeam)).size(44f).pad(2).row();
+        directionTable.button(Icon.right, () -> showDrillMenu(tile, drop, Direction.RIGHT, isBeam)).size(44f).pad(2)
+                .row();
 
-        // Down
         directionTable.add().size(44f);
         directionTable.button(Icon.down, () -> showDrillMenu(tile, drop, Direction.DOWN, isBeam)).size(44f).pad(2);
         directionTable.add().size(44f);
@@ -224,7 +215,7 @@ public class SmartDrillFeature extends Feature {
                 .select(b -> isBeam ? isValidBeamDrill(b, drop) : isValidDrill(b, drop));
 
         if (drills.isEmpty()) {
-            if (Vars.ui != null && Vars.ui.hudfrag != null && Core.bundle != null) {
+            if (Vars.ui != null && Vars.ui.hudfrag != null) {
                 Vars.ui.hudfrag.showToast(Core.bundle.get("feature.smart-drill.no-drills",
                         "No suitable unlocked drills for this ore."));
             }
@@ -293,7 +284,7 @@ public class SmartDrillFeature extends Feature {
             count = placeFloorDrill(tile, direction, (Drill) drill, drop);
         }
 
-        if (count > 0 && Vars.ui != null && Vars.ui.hudfrag != null && Core.bundle != null) {
+        if (count > 0 && Vars.ui != null && Vars.ui.hudfrag != null) {
             Vars.ui.hudfrag.showToast(Core.bundle.format("feature.smart-drill.placed",
                     count, drill.localizedName));
         }
@@ -332,7 +323,7 @@ public class SmartDrillFeature extends Feature {
 
     private int placeFloorDrill(Tile tile, Direction direction, Drill drill, Item drop) {
         if (drill.size != 2) {
-            if (Vars.ui != null && Vars.ui.hudfrag != null && Core.bundle != null) {
+            if (Vars.ui != null && Vars.ui.hudfrag != null) {
                 Vars.ui.hudfrag.showToast(Core.bundle.get("feature.smart-drill.unsupported-size",
                         "Auto-placement for this drill size is not supported yet."));
             }
@@ -451,7 +442,8 @@ public class SmartDrillFeature extends Feature {
                 int ductOffX = nodeOffX == 0 ? 1 : 0;
                 int ductOffY = nodeOffY == 0 ? 1 : 0;
 
-                BuildPlan powerNodePlan = new BuildPlan(x + nodeOffX, y + nodeOffY, direction.rotation, Blocks.beamNode);
+                BuildPlan powerNodePlan = new BuildPlan(x + nodeOffX, y + nodeOffY, direction.rotation,
+                        Blocks.beamNode);
                 BuildPlan drillDuctPlan = new BuildPlan(x + nodeOffX + ductOffX, y + nodeOffY + ductOffY,
                         opposite.rotation, Blocks.duct);
 

@@ -10,7 +10,8 @@ import mindustry.graphics.Pal;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import mindustrytool.features.playerconnect.net.PlayerConnectLink;
-import solim.core.BaseComponent;
+import solim.core.Units;
+import solim.core.Component;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
 import solim.reactive.Signal;
@@ -28,7 +29,7 @@ public class ManageRoomDialog extends SolimDialog {
         children(() -> new ManageRoomView(feature, this));
     }
 
-    private static class ManageRoomView extends BaseComponent {
+    private static class ManageRoomView extends Component {
         private final PlayerConnectFeature feature;
         private final ManageRoomDialog dialog;
 
@@ -48,42 +49,29 @@ public class ManageRoomDialog extends SolimDialog {
             Computed<String> pingText = feature.pingSignal().map(p -> (p != null ? p : 0) + "ms");
 
             return column()
-                    .growX()
-                    .maxWidth(dvw(90f).map(w -> Math.min(w, 900f)))
-                    .maxHeight(dvh(85f).map(h -> Math.min(h, 800f)))
-                    .margin(unit(5))
-                    .gap(unit(4))
-                    .center()
+                    .props(growX(), solim.UI.maxWidth(Units.dvw.map(w -> Math.min(w * 0.9f, 900f))), maxHeight(Units.dvh.map(h -> Math.min(h * 0.85f, 800f))), margin(unit(5)), gap(unit(4)), center())
                     .children(() -> {
                         text(Core.bundle.get("feature.player-connect.room-active",
                                 "Your room is live on the relay network!"))
-                                        .color(Color.green);
+                                        .props(color(Color.green));
 
-                        row().gap(unit(3)).center().children(() -> {
+                        row().props(gap(unit(3)), center()).children(() -> {
                             text(Core.bundle.get("feature.player-connect.relay-ping", "Relay Ping: "))
-                                    .color(Color.lightGray);
-                            text(pingText).color(Pal.accent);
+                                    .props(color(Color.lightGray));
+                            text(pingText).props(color(Pal.accent));
                         });
 
-                        row().gap(unit(3)).center().children(() -> {
-                            text(Core.bundle.get("feature.player-connect.join-link", "Link: ")).color(Color.lightGray);
-                            text(linkText).color(Color.white);
+                        row().props(gap(unit(3)), center()).children(() -> {
+                            text(Core.bundle.get("feature.player-connect.join-link", "Link: ")).props(color(Color.lightGray));
+                            text(linkText).props(color(Color.white));
                         });
 
-                        row().gap(unit(3)).center().children(() -> {
+                        row().props(gap(unit(3)), center()).children(() -> {
                             button(Core.bundle.get("feature.player-connect.copy-link", "Copy Join Link"), this::copyLink)
-                                    .style(WebStyles.outline())
-                                    .height(unit(11))
-                                    .paddingX(unit(6))
-                                    .paddingY(unit(2.5f))
-                                    .minWidth(unit(36));
+                                    .props(style(WebStyles.outline()), height(unit(11)), prefHeight(unit(11)), paddingX(unit(6)), paddingY(unit(2.5f)), minWidth(unit(36)));
 
                             button(Core.bundle.get("feature.player-connect.close-room", "Close Room"), this::closeRoom)
-                                    .style(WebStyles.danger())
-                                    .height(unit(11))
-                                    .paddingX(unit(6))
-                                    .paddingY(unit(2.5f))
-                                    .minWidth(unit(36));
+                                    .props(style(WebStyles.danger()), height(unit(11)), prefHeight(unit(11)), paddingX(unit(6)), paddingY(unit(2.5f)), minWidth(unit(36)));
                         });
                     }).element();
         }

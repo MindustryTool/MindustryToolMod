@@ -18,15 +18,11 @@ import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
 
 import solim.overlay.SolimDialog;
+import solim.reactive.Effect;
 import solim.reactive.Signal;
 import solim.reactive.Signals;
 import solim.core.Units;
 
-/**
- * Controls game speed with a standalone draggable HUD. Applies only while
- * hosting or in single-player; speed is ephemeral and resets to 1x on disable,
- * world exit, client sessions, and interaction-mode switches.
- */
 public class TimeControlFeature extends Feature {
 
     public static final float[] SPEEDS = { 0.125f, 0.5f, 1f, 2f, 8f };
@@ -35,10 +31,7 @@ public class TimeControlFeature extends Feature {
     public static final float SLIDER_STEP_U = 0.1f;
     public static final float SLIDER_MIN_SPEED = 0.125f;
     public static final float SLIDER_MAX_SPEED = 8f;
-    /**
-     * Clamp applied after multiplication; 4x the top-preset nominal frame,
-     * mirroring vanilla headroom.
-     */
+
     public static final float MAX_STEP = 32f;
     public static final String MODE_PRESETS = "presets";
     public static final String MODE_SLIDER = "slider";
@@ -105,60 +98,47 @@ public class TimeControlFeature extends Feature {
         xSignal = xConfig.signal();
         ySignal = yConfig.signal();
 
-        speed.subscribe(value -> {
+        Effect.of(speed, value -> {
             if (canApply()) {
                 applyProvider(value != null ? value : 1f);
             }
         });
 
-        sliderPosition.subscribe(position -> {
+        Effect.of(sliderPosition, position -> {
             if (canApply()) {
                 speed.set(speedFromSlider(position != null ? position : 0f));
             }
         });
 
-        Signals.netClient().subscribe(client -> {
+        Effect.of(Signals.netClient(), client -> {
             if (Boolean.TRUE.equals(client)) {
                 resetSpeed();
             }
         });
 
-        modeConfig.signal().subscribe(mode -> resetSpeed());
-        displayModeConfig.signal().subscribe(mode -> updateHud());
+        Effect.of(modeConfig.signal(), mode -> resetSpeed());
+        Effect.of(displayModeConfig.signal(), mode -> updateHud());
 
-        bindAction("timecontrolPause", KeyCode.unset, this::togglePause);
-        bindAction("timecontrolSpeedUp", KeyCode.unset, this::speedUp);
-        bindAction("timecontrolSpeedDown", KeyCode.unset, this::speedDown);
+        bindAction("timecontrolpause", KeyCode.unset, this::togglePause);
+        bindAction("timecontrolspeedup", KeyCode.unset, this::speedUp);
+        bindAction("timecontrolspeeddown", KeyCode.unset, this::speedDown);
     }
 
-    /**
-     * Effective multiplier for a preset with the legacy double-tap boost; 1x never
-     * boosts.
-     */
     public static float effectiveSpeed(float preset, boolean isBoosted) {
         return !isBoosted || Float.compare(preset, 1f) == 0 ? preset : preset >= 1f ? preset * 2f : preset / 2f;
     }
 
-    /**
-     * Two-sided-quadratic slider map around 1x; ratio-symmetric with u = 0 exactly
-     * 1x.
-     */
     public static float speedFromSlider(float position) {
         float squared = position * position;
         return position >= 0f ? 1f + squared * (SLIDER_MAX_SPEED - 1f)
                 : 1f / (1f + squared * (1f / SLIDER_MIN_SPEED - 1f));
     }
 
-    /**
-     * Inverse of {@link #speedFromSlider(float)}; maps a speed back to slider
-     * position.
-     */
     public static float sliderFromSpeed(float value) {
         return value >= 1f ? Mathf.sqrt((value - 1f) / (SLIDER_MAX_SPEED - 1f))
                 : -Mathf.sqrt((1f / value - 1f) / (1f / SLIDER_MIN_SPEED - 1f));
     }
 
-    /** Short display form such as 8x or 0.25x. */
     public static String formatSpeed(float value) {
         float rounded = Math.round(value * 100f) / 100f;
         return rounded == (int) rounded ? String.valueOf((int) rounded) : String.valueOf(rounded);
@@ -176,10 +156,6 @@ public class TimeControlFeature extends Feature {
         return boosted;
     }
 
-    /**
-     * Returns the intermediate slider position signal (u in [-1, 1]); use this to
-     * bind the slider widget.
-     */
     public Signal<Float> sliderPositionSignal() {
         return sliderPosition;
     }
@@ -193,13 +169,12 @@ public class TimeControlFeature extends Feature {
             return;
         }
         if (Float.compare(preset, 1f) == 0) {
-            // 1x is boost-locked: always resets to 1x and clears boost; double-tap is a
-            // no-op.
+
             selectedPreset.set(1f);
             boosted.set(false);
             speed.set(1f);
         } else if (Float.compare(preset, selectedPreset.peek()) == 0) {
-            // Same non-1x preset tapped again: toggle boost.
+
             boosted.set(!Boolean.TRUE.equals(boosted.peek()));
             speed.set(effectiveSpeed(preset, Boolean.TRUE.equals(boosted.peek())));
         } else {
@@ -209,13 +184,9 @@ public class TimeControlFeature extends Feature {
         }
     }
 
-    /**
-     * Resets slider position to 0 (exactly 1x), routing through position signal so
-     * widget and speed never desync. Use this for all slider-mode resets.
-     */
     public void resetSlider() {
         sliderPosition.set(0f);
-        // speed will be updated reactively via the sliderPosition subscriber.
+
     }
 
     public void togglePause() {
@@ -275,7 +246,7 @@ public class TimeControlFeature extends Feature {
     public void resetSpeed() {
         selectedPreset.set(1f);
         boosted.set(false);
-        // Route through sliderPosition so slider widget stays in sync in slider mode.
+
         sliderPosition.set(0f);
         speed.set(1f);
         restoreDefaultProvider();
@@ -365,7 +336,7 @@ public class TimeControlFeature extends Feature {
                 return;
             }
             quickAccessHooked = true;
-            quickAccess.enabled().subscribe(value -> updateHud());
+            Effect.of(quickAccess.enabled(), value -> updateHud());
         } catch (Exception ignored) {
         }
     }
@@ -410,7 +381,7 @@ public class TimeControlFeature extends Feature {
     }
 
     private boolean canApply() {
-        return Boolean.FALSE.equals(Signals.netClient().peek()) && !Vars.net.client();
+        return Boolean.FALSE.equals(Signals.netClient().peek()) && (Vars.net == null || !Vars.net.client());
     }
 
     private void applyProvider(float multiplier) {
@@ -422,8 +393,7 @@ public class TimeControlFeature extends Feature {
     }
 
     private void restoreDefaultProvider() {
-        // Time exposes no getter or reset; restate the vanilla ClientLauncher form
-        // verbatim.
+
         Time.setDeltaProvider(() -> {
             float result = Core.graphics.getDeltaTime() * 60f;
             return (Float.isNaN(result) || Float.isInfinite(result)) ? 1f

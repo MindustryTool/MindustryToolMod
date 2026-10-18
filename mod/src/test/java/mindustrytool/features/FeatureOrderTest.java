@@ -81,15 +81,14 @@ class FeatureOrderTest extends MindustryTestEnv {
         Feature d = new TestFeature("feat-d", 1, false);
         Seq<Feature> all = Seq.with(a, b, c, d);
 
-        // Stored only has 'd'
         Seq<String> stored = Seq.with("feat-d");
         Seq<String> normalized = FeatureManager.normalizeOrder(all, stored);
 
         assertEquals(4, normalized.size);
         assertEquals("feat-d", normalized.get(0));
-        assertEquals("feat-b", normalized.get(1)); // order 5
-        assertEquals("feat-a", normalized.get(2)); // order 10, id 'a' < 'c'
-        assertEquals("feat-c", normalized.get(3)); // order 10, id 'c'
+        assertEquals("feat-b", normalized.get(1));
+        assertEquals("feat-a", normalized.get(2));
+        assertEquals("feat-c", normalized.get(3));
     }
 
     @Test
@@ -101,8 +100,8 @@ class FeatureOrderTest extends MindustryTestEnv {
         Seq<String> normalized = FeatureManager.normalizeOrder(all, null);
 
         assertEquals(2, normalized.size);
-        assertEquals("feat-b", normalized.get(0)); // order 5
-        assertEquals("feat-a", normalized.get(1)); // order 10
+        assertEquals("feat-b", normalized.get(0));
+        assertEquals("feat-a", normalized.get(1));
     }
 
     @Test
@@ -111,11 +110,9 @@ class FeatureOrderTest extends MindustryTestEnv {
         Feature b = new TestFeature("feat-b", 2, false);
         FeatureManager.register(a, b);
 
-        // Pre-save clean normalized order into settings
         Seq<String> cleanOrder = Seq.with("feat-b", "feat-a");
         ModSettings.featureOrder.set(cleanOrder);
 
-        // Spy on settings write by checking settings value before and after init
         FeatureManager.init();
 
         assertEquals(cleanOrder, ModSettings.featureOrder.get());
@@ -130,7 +127,6 @@ class FeatureOrderTest extends MindustryTestEnv {
         Feature b = new TestFeature("feat-b", 5, false);
         FeatureManager.register(a, b);
 
-        // Corrupt storage payload
         Core.settings.put(ModSettings.featureOrder.getKey(), "{not valid json");
 
         FeatureManager.init();
@@ -157,7 +153,7 @@ class FeatureOrderTest extends MindustryTestEnv {
         assertEquals(4, list.size);
         assertEquals(normalB, list.get(0));
         assertEquals(normalA, list.get(1));
-        assertEquals(devA, list.get(2)); // dev block sorted by id
+        assertEquals(devA, list.get(2));
         assertEquals(devZ, list.get(3));
     }
 
@@ -171,14 +167,12 @@ class FeatureOrderTest extends MindustryTestEnv {
         ModSettings.featureOrder.set(Seq.with("feat-a", "feat-b", "feat-c"));
         FeatureManager.init();
 
-        // Move b left
         assertTrue(FeatureManager.moveLeft(b));
 
         assertEquals(Seq.with("feat-b", "feat-a", "feat-c"), ModSettings.featureOrder.get());
         assertEquals(b, FeatureManager.getFeatures().get(0));
         assertEquals(a, FeatureManager.getFeatures().get(1));
 
-        // Move b right
         assertTrue(FeatureManager.moveRight(b));
         assertEquals(Seq.with("feat-a", "feat-b", "feat-c"), ModSettings.featureOrder.get());
         assertEquals(a, FeatureManager.getFeatures().get(0));
@@ -195,21 +189,17 @@ class FeatureOrderTest extends MindustryTestEnv {
         ModSettings.featureOrder.set(Seq.with("feat-a", "feat-b"));
         FeatureManager.init();
 
-        // First item cannot move left
         assertFalse(FeatureManager.canMoveLeft(a));
         assertFalse(FeatureManager.moveLeft(a));
         assertFalse(FeatureManager.canMoveLeftSignal(a).get());
 
-        // First item can move right
         assertTrue(FeatureManager.canMoveRight(a));
         assertTrue(FeatureManager.canMoveRightSignal(a).get());
 
-        // Last non-dev item cannot move right
         assertFalse(FeatureManager.canMoveRight(b));
         assertFalse(FeatureManager.moveRight(b));
         assertFalse(FeatureManager.canMoveRightSignal(b).get());
 
-        // Last non-dev item can move left
         assertTrue(FeatureManager.canMoveLeft(b));
         assertTrue(FeatureManager.canMoveLeftSignal(b).get());
     }

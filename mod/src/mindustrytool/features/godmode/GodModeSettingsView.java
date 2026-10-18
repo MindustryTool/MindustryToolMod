@@ -4,10 +4,14 @@ import static solim.UI.*;
 
 import arc.Core;
 import arc.scene.Element;
+import mindustry.gen.Icon;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingScaffold;
+import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
+import solim.core.Component;
 
-public class GodModeSettingsView extends BaseComponent {
+public class GodModeSettingsView extends Component {
 
     private final GodModeFeature feature;
 
@@ -17,94 +21,115 @@ public class GodModeSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().grow().center().children(() -> {
-            scroll().center().children(() -> {
-                column().growX().gap(unit(2.5f)).padding(unit(3)).children(() -> {
-                    row().growX().gap(unit(2)).center().children(() -> {
-                        row().growX().center().children(() -> {
+        return SettingScaffold.build(() -> {
+            headerCard();
+            displayLayoutCard();
+            providerCard();
+            actionsCard();
+        });
+    }
 
-                            text(Core.bundle.get("feature.god-mode.settings.display-mode")).left()
-                                    .color(WebStyles.Colors.GHOST_FG);
+    private Component headerCard() {
+        return SettingCard.header(feature, Core.bundle.get("feature.god-mode.badge.sandbox", "SANDBOX"));
+    }
 
-                            spacer();
-                            row().gap(unit(1.5f)).children(() -> {
-                                button(() -> feature.displayModeConfig.set(GodModeFeature.DISPLAY_HUD))
-                                        .style(WebStyles.filterChip())
-                                        .checked(feature.displayModeConfig.signal()
-                                                .map(GodModeFeature.DISPLAY_HUD::equals))
-                                        .padding(unit(1.5f))
-                                        .children(() -> text(
-                                                Core.bundle.get("feature.god-mode.settings.display-mode.hud")));
+    private Component displayLayoutCard() {
+        return SettingCard.section(Icon.layers,
+                Core.bundle.get("feature.god-mode.settings.display-layout", "Display & Layout"), () -> {
 
-                                button(() -> feature.displayModeConfig.set(GodModeFeature.DISPLAY_POPUP))
-                                        .style(WebStyles.filterChip())
-                                        .checked(feature.displayModeConfig.signal()
-                                                .map(GodModeFeature.DISPLAY_POPUP::equals))
-                                        .padding(unit(1.5f))
-                                        .children(() -> text(
-                                                Core.bundle.get("feature.god-mode.settings.display-mode.popup")));
-                            });
-                        });
-                    });
-
-                    divider();
-
-                    row().growX().gap(unit(2)).center().children(() -> {
-                        text(Core.bundle.get("feature.god-mode.settings.scale")).left()
-                                .color(WebStyles.Colors.GHOST_FG);
-
+                    row().props(growX(), center()).children(() -> {
+                        text(Core.bundle.get("feature.god-mode.settings.display-mode", "Display Mode"))
+                                .props(color(WebStyles.Colors.GHOST_FG), left());
                         spacer();
-                        slider(feature.scaleConfig.signal(), 0.5f, 1.5f, 0.1f);
+                        row().props(gap(unit(1.5f))).children(() -> {
+                            button(Core.bundle.get("feature.god-mode.settings.display-mode.hud", "HUD"),
+                                    () -> feature.displayModeConfig.set(GodModeFeature.DISPLAY_HUD))
+                                    .props(
+                                            style(WebStyles.filterChipText()),
+                                            checked(feature.displayModeConfig.signal()
+                                                    .map(GodModeFeature.DISPLAY_HUD::equals)),
+                                            height(unit(8)),
+                                            prefHeight(unit(8)),
+                                            paddingX(unit(2.5f)));
 
-                        row().width(unit(14)).children(() -> {
-                            text(feature.scaleConfig.signal()
-                                    .map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100)));
+                            button(Core.bundle.get("feature.god-mode.settings.display-mode.popup", "Popup"),
+                                    () -> feature.displayModeConfig.set(GodModeFeature.DISPLAY_POPUP))
+                                    .props(
+                                            style(WebStyles.filterChipText()),
+                                            checked(feature.displayModeConfig.signal()
+                                                    .map(GodModeFeature.DISPLAY_POPUP::equals)),
+                                            height(unit(8)),
+                                            prefHeight(unit(8)),
+                                            paddingX(unit(2.5f)));
                         });
                     });
 
-                    checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle"),
-                            feature.hideDragHandleConfig.signal()).growX();
+                    divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
-                    divider();
+                    SettingSlider.of(
+                            Core.bundle.get("feature.god-mode.settings.scale", "HUD Scale"),
+                            feature.scaleConfig.signal(),
+                            0.5f,
+                            1.5f,
+                            0.1f,
+                            feature.scaleConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100)));
 
-                    column().growX().gap(unit(1.5f)).children(() -> {
-                        text(Core.bundle.get("feature.god-mode.settings.provider")).left()
-                                .color(WebStyles.Colors.GHOST_FG);
+                    divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
-                        wrap().gap(unit(1.5f)).children(() -> {
-                            button(() -> feature.providerModeConfig.set(GodModeFeature.PROVIDER_AUTO))
-                                    .style(WebStyles.filterChip())
-                                    .checked(feature.providerModeConfig.signal()
-                                            .map(GodModeFeature.PROVIDER_AUTO::equals))
-                                    .padding(unit(1.5f))
-                                    .children(() -> text(Core.bundle.get("feature.god-mode.settings.provider.auto")));
-
-                            button(() -> feature.providerModeConfig.set(GodModeFeature.PROVIDER_INTERNAL))
-                                    .style(WebStyles.filterChip())
-                                    .checked(feature.providerModeConfig.signal()
-                                            .map(GodModeFeature.PROVIDER_INTERNAL::equals))
-                                    .padding(unit(1.5f))
-                                    .children(
-                                            () -> text(Core.bundle.get("feature.god-mode.settings.provider.internal")));
-
-                            button(() -> feature.providerModeConfig.set(GodModeFeature.PROVIDER_JS))
-                                    .style(WebStyles.filterChip())
-                                    .checked(feature.providerModeConfig.signal()
-                                            .map(GodModeFeature.PROVIDER_JS::equals))
-                                    .padding(unit(1.5f))
-                                    .children(() -> text(Core.bundle.get("feature.god-mode.settings.provider.js")));
-                        });
-                    });
-
-                    divider();
-
-                    button(feature::resetPosition)
-                            .style(WebStyles.secondary())
-                            .growX()
-                            .padding(unit(2))
-                            .children(() -> text(Core.bundle.get("feature.god-mode.settings.reset-position")));
+                    checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle", "Hide Drag Handle"),
+                            feature.hideDragHandleConfig.signal()).props(growX());
                 });
-            });
-        }).element();
+    }
+
+    private Component providerCard() {
+        return SettingCard.section(Icon.settings,
+                Core.bundle.get("feature.god-mode.settings.provider", "Execution Provider"), () -> {
+                    text(Core.bundle.get("feature.god-mode.settings.provider-desc",
+                            "Select how sandbox commands and actions are executed in the game."))
+                            .props(color(WebStyles.Colors.GHOST_FG), textWrap(true), growX(), left());
+
+                    row().props(gap(unit(1.5f))).children(() -> {
+                        button(Core.bundle.get("feature.god-mode.settings.provider.auto", "Auto"),
+                                () -> feature.providerModeConfig.set(GodModeFeature.PROVIDER_AUTO))
+                                .props(
+                                        style(WebStyles.filterChipText()),
+                                        checked(feature.providerModeConfig.signal()
+                                                .map(GodModeFeature.PROVIDER_AUTO::equals)),
+                                        height(unit(8)),
+                                        prefHeight(unit(8)),
+                                        paddingX(unit(2f)));
+
+                        button(Core.bundle.get("feature.god-mode.settings.provider.internal", "Internal"),
+                                () -> feature.providerModeConfig.set(GodModeFeature.PROVIDER_INTERNAL))
+                                .props(
+                                        style(WebStyles.filterChipText()),
+                                        checked(feature.providerModeConfig.signal()
+                                                .map(GodModeFeature.PROVIDER_INTERNAL::equals)),
+                                        height(unit(8)),
+                                        prefHeight(unit(8)),
+                                        paddingX(unit(2f)));
+
+                        button(Core.bundle.get("feature.god-mode.settings.provider.js", "JS (/js)"),
+                                () -> feature.providerModeConfig.set(GodModeFeature.PROVIDER_JS))
+                                .props(
+                                        style(WebStyles.filterChipText()),
+                                        checked(feature.providerModeConfig.signal()
+                                                .map(GodModeFeature.PROVIDER_JS::equals)),
+                                        height(unit(8)),
+                                        prefHeight(unit(8)),
+                                        paddingX(unit(2f)));
+                    });
+                });
+    }
+
+    private Component actionsCard() {
+        return SettingCard.card().children(() -> {
+            button(feature::resetPosition)
+                    .props(style(WebStyles.outline()), growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
+                    .children(() -> {
+                        icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
+                        text(Core.bundle.get("feature.god-mode.settings.reset-position", "Reset HUD Position"));
+                    });
+        });
     }
 }

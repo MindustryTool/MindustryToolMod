@@ -9,14 +9,10 @@ import mindustry.gen.Icon;
 import mindustry.ui.dialogs.SchematicsDialog.SchematicImage;
 import mindustrytool.components.WebStyles;
 import solim.overlay.SolimDialog;
+import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Per-slot edit dialog with live thumbnail (tap re-picks the schematic), custom
- * label field, and custom icon pick/clear actions. All edits persist
- * immediately to the feature.
- */
 public class QuickSchematicGridSlotDialog extends SolimDialog {
 
     private final QuickSchematicGridFeature feature;
@@ -39,9 +35,6 @@ public class QuickSchematicGridSlotDialog extends SolimDialog {
         schematicFile = Signal.of(entry != null ? entry.schematicFile : null);
         iconText = Signal.of(entry != null ? entry.customIcon : null);
 
-        labelText.subscribe(value -> persist());
-        iconText.subscribe(value -> persist());
-
         Readable<Schematic> resolved = Signal.computed(
                 () -> feature.resolveSchematic(schematicFile.get(), schematicName.get()));
 
@@ -51,86 +44,71 @@ public class QuickSchematicGridSlotDialog extends SolimDialog {
         maxWidth(500f);
 
         children(() -> {
-            column().grow().gap(unit(2.5f)).padding(unit(3)).center().children(() -> {
+            Effect.of(labelText, value -> persist());
+            Effect.of(iconText, value -> persist());
+
+            column().props(grow(), padding(unit(3)), center(), gap(unit(2.5f))).children(() -> {
                 text(Core.bundle.get("feature.quick-schematic-grid.edit.schematic"))
-                        .growX()
-                        .left()
-                        .color(WebStyles.Colors.GHOST_FG);
+                        .props(color(WebStyles.Colors.GHOST_FG), growX(), left());
 
                 card(WebStyles.previewCardBackground())
-                        .growX()
-                        .height(unit(42f))
-                        .onClick(this::repickSchematic)
+                        .props(growX(), height(unit(42f)), prefHeight(unit(42f)), onClick(this::repickSchematic))
                         .children(() -> {
                             dynamic(resolved, schematic -> {
                                 if (schematic == null) {
-                                    row().grow().center().children(() -> {
-                                        icon(Icon.warning).size(unit(10)).color(Color.scarlet);
+                                    row().props(grow(), center()).children(() -> {
+                                        icon(Icon.warning).props(size(unit(10)), prefWidth(unit(10)), prefHeight(unit(10)), color(Color.scarlet));
                                     });
                                 } else {
-                                    row().grow().children(() -> {
+                                    row().props(grow()).children(() -> {
                                         arc(new SchematicImage(schematic));
                                     });
                                 }
-                            }).grow();
+                            }).props(grow());
                         });
 
                 text(Core.bundle.get("feature.quick-schematic-grid.edit.label"))
-                        .growX()
-                        .left()
-                        .color(WebStyles.Colors.GHOST_FG);
+                        .props(color(WebStyles.Colors.GHOST_FG), growX(), left());
 
-                row().growX().gap(unit(1.5f))
-                        .padding(unit(1.5f))
-                        .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
-                        .border(1.5f, WebStyles.Colors.BORDER_INPUT)
-                        .center()
+                row().props(growX(), gap(unit(1.5f)),
+                        padding(unit(1.5f)), rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1.5f, WebStyles.Colors.BORDER_INPUT),
+                        center())
                         .children(() -> {
                             textField(labelText)
-                                    .growX()
-                                    .height(unit(8))
-                                    .style(WebStyles.clearInput())
-                                    .placeholder(Core.bundle.get("feature.quick-schematic-grid.edit.label.hint"));
+                                    .props(style(WebStyles.clearInput()), growX(), height(unit(8)), prefHeight(unit(8)),
+                                            placeholder(Core.bundle.get("feature.quick-schematic-grid.edit.label.hint")));
                         });
 
                 text(Core.bundle.get("feature.quick-schematic-grid.edit.icon"))
-                        .growX()
-                        .left()
-                        .color(WebStyles.Colors.GHOST_FG);
+                        .props(color(WebStyles.Colors.GHOST_FG), growX(), left());
 
-                row().growX().gap(unit(2)).center().children(() -> {
+                row().props(growX(), gap(unit(2)), center()).children(() -> {
                     dynamic(iconText, icon -> {
                         if (icon == null || icon.trim().isEmpty()) {
                             text(Core.bundle.get("feature.quick-schematic-grid.edit.icon.none"))
-                                    .growX()
-                                    .left()
-                                    .color(Color.gray);
+                                    .props(color(Color.gray), growX(), left());
                         } else {
-                            text(icon).fontScale(1.5f).growX().left();
+                            text(icon).props(fontScale(1.5f), growX(), left());
                         }
-                    }).growX();
+                    }).props(growX());
 
                     spacer();
 
                     button(Core.bundle.get("feature.quick-schematic-grid.edit.icon.pick"), this::pickIcon)
-                            .style(WebStyles.secondary())
-                            .height(unit(9));
+                            .props(style(WebStyles.secondary()), height(unit(9)), prefHeight(unit(9)));
 
                     button(Core.bundle.get("feature.quick-schematic-grid.edit.icon.clear"), this::clearIcon)
-                            .style(WebStyles.ghost())
-                            .height(unit(9));
+                            .props(style(WebStyles.ghost()), height(unit(9)), prefHeight(unit(9)));
                 });
 
                 divider();
 
                 button(this::clearSlot)
-                        .style(WebStyles.ghost())
+                        .props(style(WebStyles.ghost()), growX(), height(unit(9)), prefHeight(unit(9)))
                         .children(() -> {
-                            icon(Icon.cancel).size(unit(5)).color(Color.scarlet);
-                            text(Core.bundle.get("feature.quick-schematic-grid.edit.clear-slot")).color(Color.scarlet);
-                        })
-                        .growX()
-                        .height(unit(9));
+                            icon(Icon.cancel).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)), color(Color.scarlet));
+                            text(Core.bundle.get("feature.quick-schematic-grid.edit.clear-slot")).props(color(Color.scarlet));
+                        });
             });
         });
     }

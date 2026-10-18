@@ -4,10 +4,6 @@ import arc.struct.Seq;
 import java.lang.reflect.Field;
 import mindustry.gen.Iconc;
 
-/**
- * Cached source of {@link Iconc} font glyphs for the Emoji dialog. Reflects
- * once at class load and pairs each character field with its field name.
- */
 public final class EmojiIcons {
 
     private static final Seq<Entry> ENTRIES = load();

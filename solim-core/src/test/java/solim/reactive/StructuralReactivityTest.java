@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.growX;
 import solim.layout.Card;
 
 import java.util.Arrays;
@@ -16,223 +17,213 @@ import org.junit.jupiter.api.Test;
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.layout.ReactiveGrid;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
 class StructuralReactivityTest extends SolimEnv {
 
+    static class TestComponent extends Component {
+        final String id;
+        boolean wasDisposed = false;
 
-	static class TestComponent extends BaseComponent {
-		final String id;
-		boolean wasDisposed = false;
+        TestComponent(String id) {
+            this.id = id;
+        }
 
-		TestComponent(String id) {
-			this.id = id;
-		}
+        @Override
+        protected Element build() {
+            return new Element();
+        }
 
-		@Override
-		protected Element build() {
-			return new Element();
-		}
+        @Override
+        protected void onDispose() {
+            wasDisposed = true;
+        }
+    }
 
-		@Override
-		protected void onDispose() {
-			wasDisposed = true;
-		}
-	}
+    @Test
+    void testDynamicSubtreeReplacementAndDisposal() {
+        Signal<Boolean> toggle = Signal.of(true);
+        Map<String, TestComponent> instances = new HashMap<>();
 
-	@Test
-	void testDynamicSubtreeReplacementAndDisposal() {
-		Signal<Boolean> toggle = Signal.of(true);
-		Map<String, TestComponent> instances = new HashMap<>();
+        Dynamic<Boolean> dyn = Dynamic.of(toggle, val -> {
+            TestComponent tc = new TestComponent(val ? "A" : "B");
+            instances.put(tc.id, tc);
+        });
 
-		Dynamic<Boolean> dyn = Dynamic.of(toggle, val -> {
-			TestComponent tc = new TestComponent(val ? "A" : "B");
-			instances.put(tc.id, tc);
-		});
+        Element el = dyn.element();
+        assertSame(dyn.container(), el);
+        assertEquals(1, dyn.container().getChildren().size);
+        TestComponent compA = instances.get("A");
+        assertEquals("A", compA.id);
+        assertFalse(compA.wasDisposed);
 
-		Element el = dyn.element();
-		assertSame(dyn.container(), el);
-		assertEquals(1, dyn.container().getChildren().size);
-		TestComponent compA = instances.get("A");
-		assertEquals("A", compA.id);
-		assertFalse(compA.wasDisposed);
+        toggle.set(false);
+        SignalDispatcher.flush();
+        assertTrue(compA.wasDisposed, "Previous component must be disposed on change");
+        TestComponent compB = instances.get("B");
+        assertEquals("B", compB.id);
+        assertFalse(compB.wasDisposed);
+        assertEquals(1, dyn.container().getChildren().size);
 
-		// Switch dynamic subtree
-		toggle.set(false);
-		SignalDispatcher.flush();
-		assertTrue(compA.wasDisposed, "Previous component must be disposed on change");
-		TestComponent compB = instances.get("B");
-		assertEquals("B", compB.id);
-		assertFalse(compB.wasDisposed);
-		assertEquals(1, dyn.container().getChildren().size);
+        dyn.dispose();
+        assertTrue(compB.wasDisposed, "Active component must be disposed when Dynamic is disposed");
+    }
 
-		// Dispose dynamic component
-		dyn.dispose();
-		assertTrue(compB.wasDisposed, "Active component must be disposed when Dynamic is disposed");
-	}
+    @Test
+    void testForEachKeyedReuseAndDisposal() {
+        Signal<List<String>> items = Signal.of(Arrays.asList("A", "B", "C"));
+        Map<String, TestComponent> created = new HashMap<>();
 
-	@Test
-	void testForEachKeyedReuseAndDisposal() {
-		Signal<List<String>> items = Signal.of(Arrays.asList("A", "B", "C"));
-		Map<String, TestComponent> created = new HashMap<>();
+        ForEach<String> fe = new ForEach<>(items);
+        fe.key(id -> id);
+        fe.items(id -> {
+            TestComponent tc = new TestComponent(id);
+            created.put(id, tc);
+            return tc;
+        });
 
-		ForEach<String> fe = new ForEach<>(items);
-		fe.key(id -> id);
-		fe.children(id -> {
-			TestComponent tc = new TestComponent(id);
-			created.put(id, tc);
-			return tc;
-		});
+        assertSame(fe.container(), fe.element());
+        assertEquals(3, fe.container().getChildren().size);
 
-		assertSame(fe.container(), fe.element());
-		assertEquals(3, fe.container().getChildren().size);
+        TestComponent a = created.get("A");
+        TestComponent b = created.get("B");
+        TestComponent c = created.get("C");
+        assertEquals("A", a.id);
+        assertEquals("B", b.id);
+        assertEquals("C", c.id);
 
-		TestComponent a = created.get("A");
-		TestComponent b = created.get("B");
-		TestComponent c = created.get("C");
-		assertEquals("A", a.id);
-		assertEquals("B", b.id);
-		assertEquals("C", c.id);
+        items.set(Arrays.asList("B", "C", "D"));
+        SignalDispatcher.flush();
 
-		// Update items to [B, C, D]
-		items.set(Arrays.asList("B", "C", "D"));
-		SignalDispatcher.flush();
+        assertTrue(a.wasDisposed, "Removed item A must be disposed");
+        assertFalse(b.wasDisposed, "Retained item B must not be disposed");
+        assertFalse(c.wasDisposed, "Retained item C must not be disposed");
 
-		assertTrue(a.wasDisposed, "Removed item A must be disposed");
-		assertFalse(b.wasDisposed, "Retained item B must not be disposed");
-		assertFalse(c.wasDisposed, "Retained item C must not be disposed");
+        TestComponent d = created.get("D");
+        assertEquals("D", d.id, "New item D must be created");
+        assertFalse(d.wasDisposed);
 
-		TestComponent d = created.get("D");
-		assertEquals("D", d.id, "New item D must be created");
-		assertFalse(d.wasDisposed);
+        assertEquals(3, fe.container().getChildren().size);
 
-		// Total children should now be 3
-		assertEquals(3, fe.container().getChildren().size);
+        fe.dispose();
+        assertTrue(b.wasDisposed);
+        assertTrue(c.wasDisposed);
+        assertTrue(d.wasDisposed);
+    }
 
-		// Dispose ForEach
-		fe.dispose();
-		assertTrue(b.wasDisposed);
-		assertTrue(c.wasDisposed);
-		assertTrue(d.wasDisposed);
-	}
+    @Test
+    void testReactiveGridReflowsWithoutRecreatingComponents() {
+        Signal<Integer> cols = Signal.of(3);
+        Signal<List<String>> items = Signal.of(Arrays.asList("A", "B", "C", "D", "E"));
+        Map<String, Integer> factoryCallCount = new HashMap<>();
 
-	@Test
-	void testReactiveGridReflowsWithoutRecreatingComponents() {
-		Signal<Integer> cols = Signal.of(3);
-		Signal<List<String>> items = Signal.of(Arrays.asList("A", "B", "C", "D", "E"));
-		Map<String, Integer> factoryCallCount = new HashMap<>();
+        ReactiveGrid<String> grid = new ReactiveGrid<>(items);
+        grid.columns(cols).key(id -> id);
+        grid.items(id -> {
+            factoryCallCount.put(id, factoryCallCount.getOrDefault(id, 0) + 1);
+            return new TestComponent(id);
+        });
 
-		ReactiveGrid<String> grid = new ReactiveGrid<>(items);
-		grid.columns(cols).key(id -> id);
-		grid.children(id -> {
-			factoryCallCount.put(id, factoryCallCount.getOrDefault(id, 0) + 1);
-			return new TestComponent(id);
-		});
+        assertSame(grid.table(), grid.element());
+        assertEquals(5, grid.table().getChildren().size);
+        assertEquals(1, factoryCallCount.get("A"));
+        assertEquals(1, factoryCallCount.get("B"));
+        assertEquals(1, factoryCallCount.get("C"));
+        assertEquals(1, factoryCallCount.get("D"));
+        assertEquals(1, factoryCallCount.get("E"));
 
-		assertSame(grid.table(), grid.element());
-		assertEquals(5, grid.table().getChildren().size);
-		assertEquals(1, factoryCallCount.get("A"));
-		assertEquals(1, factoryCallCount.get("B"));
-		assertEquals(1, factoryCallCount.get("C"));
-		assertEquals(1, factoryCallCount.get("D"));
-		assertEquals(1, factoryCallCount.get("E"));
+        cols.set(2);
 
-		// Change column count: 3 -> 2
-		cols.set(2);
+        assertEquals(1, factoryCallCount.get("A"), "Component A must be reused without factory re-invocation");
+        assertEquals(1, factoryCallCount.get("B"), "Component B must be reused without factory re-invocation");
+        assertEquals(1, factoryCallCount.get("C"), "Component C must be reused without factory re-invocation");
+        assertEquals(1, factoryCallCount.get("D"), "Component D must be reused without factory re-invocation");
+        assertEquals(1, factoryCallCount.get("E"), "Component E must be reused without factory re-invocation");
 
-		// Columns changed, but factory must NOT have been called again!
-		assertEquals(1, factoryCallCount.get("A"), "Component A must be reused without factory re-invocation");
-		assertEquals(1, factoryCallCount.get("B"), "Component B must be reused without factory re-invocation");
-		assertEquals(1, factoryCallCount.get("C"), "Component C must be reused without factory re-invocation");
-		assertEquals(1, factoryCallCount.get("D"), "Component D must be reused without factory re-invocation");
-		assertEquals(1, factoryCallCount.get("E"), "Component E must be reused without factory re-invocation");
+        assertEquals(5, grid.table().getChildren().size);
 
-		// Table still has 5 children reflowed
-		assertEquals(5, grid.table().getChildren().size);
+        SignalDispatcher.flush();
+        grid.dispose();
+        assertTrue(grid.isDisposed());
+    }
 
-		SignalDispatcher.flush();
-		grid.dispose();
-		assertTrue(grid.isDisposed());
-	}
+    @Test
+    void testForEachChildrenDoNotGrowByDefault() {
+        Signal<List<String>> items = Signal.of(Arrays.asList("A"));
+        ForEach<String> fe = new ForEach<>(items);
+        fe.key(id -> id);
+        fe.items(id -> new TestComponent(id));
+        fe.element();
+        Cell<?> cell = fe.container().getCells().first();
+        assertEquals(0, CellAccess.expandX(cell), "ForEach item must not growX by default");
+        assertEquals(0, CellAccess.expandY(cell), "ForEach item must not growY by default");
+        fe.dispose();
+    }
 
-	@Test
-	void testForEachChildrenDoNotGrowByDefault() {
-		Signal<List<String>> items = Signal.of(Arrays.asList("A"));
-		ForEach<String> fe = new ForEach<>(items);
-		fe.key(id -> id);
-		fe.children(id -> new TestComponent(id));
-		fe.element();
-		Cell<?> cell = fe.container().getCells().first();
-		assertEquals(0, CellAccess.expandX(cell), "ForEach item must not growX by default");
-		assertEquals(0, CellAccess.expandY(cell), "ForEach item must not growY by default");
-		fe.dispose();
-	}
+    @Test
+    void testDynamicChildDoesNotGrowByDefault() {
+        Signal<String> source = Signal.of("A");
+        Dynamic<String> dyn = Dynamic.of(source, val -> new TestComponent(val));
+        dyn.element();
+        Cell<?> cell = dyn.container().getCells().first();
+        assertEquals(0, CellAccess.expandX(cell), "Dynamic item must not grow by default");
+        assertEquals(0, CellAccess.expandY(cell), "Dynamic item must not grow by default");
+        dyn.dispose();
+    }
 
-	@Test
-	void testDynamicChildDoesNotGrowByDefault() {
-		Signal<String> source = Signal.of("A");
-		Dynamic<String> dyn = Dynamic.of(source, val -> new TestComponent(val));
-		dyn.element();
-		Cell<?> cell = dyn.container().getCells().first();
-		assertEquals(0, CellAccess.expandX(cell), "Dynamic item must not grow by default");
-		assertEquals(0, CellAccess.expandY(cell), "Dynamic item must not grow by default");
-		dyn.dispose();
-	}
+    @Test
+    void testConstrainedChildGrowsInForEachAndDynamic() {
+        class ConstrainedComp extends Component {
+            @Override
+            protected Element build() {
+                return new Card().props(growX()).element();
+            }
+        }
 
-	@Test
-	void testConstrainedChildGrowsInForEachAndDynamic() {
-		class ConstrainedComp extends BaseComponent {
-			@Override
-			protected Element build() {
-				return new Card().growX().element();
-			}
-		}
+        Signal<List<String>> items = Signal.of(Arrays.asList("A"));
+        ForEach<String> fe = new ForEach<>(items);
+        fe.key(id -> id);
+        fe.items(id -> new ConstrainedComp());
+        fe.element();
+        Cell<?> cell = fe.container().getCells().first();
+        assertEquals(1, CellAccess.expandX(cell), "Constrained child in ForEach must growX");
+        fe.dispose();
 
-		Signal<List<String>> items = Signal.of(Arrays.asList("A"));
-		ForEach<String> fe = new ForEach<>(items);
-		fe.key(id -> id);
-		fe.children(id -> new ConstrainedComp());
-		fe.element();
-		Cell<?> cell = fe.container().getCells().first();
-		assertEquals(1, CellAccess.expandX(cell), "Constrained child in ForEach must growX");
-		fe.dispose();
+        Signal<String> source = Signal.of("A");
+        Dynamic<String> dyn = Dynamic.of(source, val -> new ConstrainedComp());
+        dyn.element();
+        Cell<?> dynCell = dyn.container().getCells().first();
+        assertEquals(1, CellAccess.expandX(dynCell), "Constrained child in Dynamic must growX");
+        dyn.dispose();
+    }
 
-		Signal<String> source = Signal.of("A");
-		Dynamic<String> dyn = Dynamic.of(source, val -> new ConstrainedComp());
-		dyn.element();
-		Cell<?> dynCell = dyn.container().getCells().first();
-		assertEquals(1, CellAccess.expandX(dynCell), "Constrained child in Dynamic must growX");
-		dyn.dispose();
-	}
+    @Test
+    void testDynamicFactoryDoesNotTrackSignalsEvaluatedDuringChildBuild() {
+        Signal<Boolean> switcher = Signal.of(true);
+        Signal<String> internalChildSignal = Signal.of("initial");
+        int[] factoryBuildCount = new int[] { 0 };
 
-	@Test
-	void testDynamicFactoryDoesNotTrackSignalsEvaluatedDuringChildBuild() {
-		Signal<Boolean> switcher = Signal.of(true);
-		Signal<String> internalChildSignal = Signal.of("initial");
-		int[] factoryBuildCount = new int[]{0};
+        Dynamic<Boolean> dyn = Dynamic.of(switcher, val -> {
+            factoryBuildCount[0]++;
+            String text = internalChildSignal.get();
+            new TestComponent(val + "-" + text);
+        });
 
-		Dynamic<Boolean> dyn = Dynamic.of(switcher, val -> {
-			factoryBuildCount[0]++;
-			String text = internalChildSignal.get();
-			new TestComponent(val + "-" + text);
-		});
+        dyn.element();
+        assertEquals(1, factoryBuildCount[0], "Dynamic factory must run once initially");
 
-		dyn.element();
-		assertEquals(1, factoryBuildCount[0], "Dynamic factory must run once initially");
+        internalChildSignal.set("updated");
+        SignalDispatcher.flush();
+        assertEquals(1, factoryBuildCount[0],
+                "Updating signal read during child build must not re-run Dynamic factory");
 
-		// Changing internalChildSignal must NOT trigger the Dynamic switcher!
-		internalChildSignal.set("updated");
-		SignalDispatcher.flush();
-		assertEquals(1, factoryBuildCount[0], "Updating signal read during child build must not re-run Dynamic factory");
+        switcher.set(false);
+        SignalDispatcher.flush();
+        assertEquals(2, factoryBuildCount[0], "Updating switcher source must trigger Dynamic factory");
 
-		// Changing switcher MUST trigger the Dynamic switcher
-		switcher.set(false);
-		SignalDispatcher.flush();
-		assertEquals(2, factoryBuildCount[0], "Updating switcher source must trigger Dynamic factory");
-
-		dyn.dispose();
-	}
+        dyn.dispose();
+    }
 }

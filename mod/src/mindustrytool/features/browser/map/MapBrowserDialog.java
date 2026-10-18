@@ -20,15 +20,12 @@ import mindustrytool.features.browser.common.BrowserSearchHeader;
 import mindustrytool.features.browser.common.BrowserState;
 import mindustrytool.models.response.MapData;
 import mindustrytool.services.MindustryTool;
-import solim.core.BaseComponent;
+import solim.core.Units;
+import solim.core.Component;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
 import solim.reactive.Signal;
 
-/**
- * Main map browser dialog with reactive column reflow and a keyed reactive grid
- * of map cards.
- */
 public class MapBrowserDialog extends SolimDialog {
 
     private final BrowserState<MapData> state;
@@ -37,11 +34,10 @@ public class MapBrowserDialog extends SolimDialog {
     public MapBrowserDialog() {
         super(Core.bundle.get("browser.map.title"));
 
-        state = new BrowserState<>(MapBrowserDialog::fetchMaps);
+        state = new BrowserState<>(MapBrowserDialog::fetchMaps, "maps");
         filterDialog = new BrowserFilterDialog(state, "maps", false, true);
 
         closeOnBack();
-        fillParent(true);
         children(() -> new BrowserContent(state, filterDialog, this::hide));
         cont().background(Styles.black);
         shown(() -> state.start());
@@ -64,41 +60,45 @@ public class MapBrowserDialog extends SolimDialog {
                 state.verification().peek());
     }
 
-    private static class BrowserContent extends BaseComponent {
+    private static class BrowserContent extends Component {
         private final BrowserState<MapData> state;
         private final BrowserFilterDialog filterDialog;
         private final Runnable onClose;
-        private final Computed<Float> viewportWidth = dvw(100f);
-        private final Computed<Float> viewportHeight = dvh(100f);
-        private final Computed<Integer> columnCount = new Computed<>(() -> {
-            Float width = viewportWidth.get();
-            return BrowserLayout.calculateColumns(width != null ? width : 800f);
-        });
-        private final Computed<Float> cardsWidth = new Computed<>(() -> {
-            Float width = viewportWidth.get();
-            return BrowserLayout.calculateCardsWidth(width != null ? width : 800f);
-        });
-        private final Computed<Float> contentWidth = new Computed<>(() -> {
-            Float width = viewportWidth.get();
-            return BrowserLayout.calculateContentWidth(width != null ? width : 800f);
-        });
-        private final Computed<Float> cardSize = cardsWidth.map(w -> Math.min(BrowserLayout.CARD_SIZE, w));
-        private final Computed<Integer> calculatedPageSize = new Computed<>(() -> {
-            Float width = viewportWidth.get();
-            Float height = viewportHeight.get();
-            return BrowserLayout.calculatePageSize(
-                    width != null ? width : 800f,
-                    height != null ? height : 600f);
-        });
-        private final Signal<Integer> visibleCount;
-        private final Computed<Seq<MapData>> visibleItems;
 
         BrowserContent(BrowserState<MapData> state, BrowserFilterDialog filterDialog, Runnable onClose) {
             this.state = state;
             this.filterDialog = filterDialog;
             this.onClose = onClose;
-            this.visibleCount = Signal.of(BrowserLayout.RENDER_CHUNK_SIZE);
-            this.visibleItems = new Computed<>(() -> {
+        }
+
+        @Override
+        protected Element build() {
+
+            Signal<Float> viewportWidth = Units.dvw;
+            Signal<Float> viewportHeight = Units.dvh;
+            Computed<Integer> columnCount = new Computed<>(() -> {
+                Float width = viewportWidth.get();
+                return BrowserLayout.calculateColumns(width != null ? width : 800f);
+            });
+            Computed<Float> cardsWidth = new Computed<>(() -> {
+                Float width = viewportWidth.get();
+                return BrowserLayout.calculateCardsWidth(width != null ? width : 800f);
+            });
+            Computed<Float> contentWidth = new Computed<>(() -> {
+                Float width = viewportWidth.get();
+                return BrowserLayout.calculateContentWidth(width != null ? width : 800f);
+            });
+            Computed<Float> cardSize = cardsWidth.map(w -> Math.min(BrowserLayout.CARD_SIZE, w));
+            Computed<Integer> calculatedPageSize = new Computed<>(() -> {
+                Float width = viewportWidth.get();
+                Float height = viewportHeight.get();
+                return BrowserLayout.calculatePageSize(
+                        width != null ? width : 800f,
+                        height != null ? height : 600f);
+            });
+
+            Signal<Integer> visibleCount = Signal.of(BrowserLayout.RENDER_CHUNK_SIZE);
+            Computed<Seq<MapData>> visibleItems = new Computed<>(() -> {
                 Seq<MapData> all = state.items().get();
                 Integer limit = visibleCount.get();
                 return BrowserState.firstItems(all, limit != null ? limit : 0);
@@ -116,11 +116,52 @@ public class MapBrowserDialog extends SolimDialog {
                 int total = all != null ? all.size : 0;
                 Integer page = state.page().get();
                 visibleCount.set(Math.min(BrowserLayout.RENDER_CHUNK_SIZE, total));
-                expandVisible(total, page != null ? page : 0);
+                expandVisible(visibleCount, total, page != null ? page : 0);
             });
+
+            return column().props(grow(), paddingX(BrowserLayout.HORIZONTAL_PADDING), paddingY(unit(2)), center())
+                    .children(() -> {
+                        column().props(width(contentWidth), prefWidth(contentWidth), growY(), gap(unit(2))).children(() -> {
+                            new BrowserSearchHeader(state, () -> filterDialog.show());
+
+                            query(state.query())
+                                    .props(grow())
+                                    .loading(Loader::centered)
+                                    .error(err -> row().props(grow(), gap(unit(1))).children(() -> {
+                                        Throwable cause = err != null && err.getCause() != null ? err.getCause() : err;
+                                        String msg = cause != null && cause.getMessage() != null ? cause.getMessage()
+                                                : (cause != null ? cause.toString() : "");
+                                         text(msg).props(color(Color.scarlet), textWrap(true), growX());
+                                        button(Core.bundle.get("browser.retry"), () -> state.refresh())
+                                                .props(style(WebStyles.outlineText()), height(unit(10)), prefHeight(unit(10)));
+                                    }))
+                                    .data((list, fecthing) -> fecthing ? Loader.centered()
+                                            : scroll().props(style(Styles.noBarPane), grow(), paddingLeft(BrowserLayout.SCROLLBAR_GUTTER)).children(() -> {
+                                                        reactiveGrid(visibleItems).columns(columnCount)
+                                                                .key(MapData::getItemId)
+                                                                .props(gap(BrowserLayout.CARD_GAP))
+                                                                .empty(() -> {
+                                                                    text(Core.bundle
+                                                                            .get("browser.empty"))
+                                                                            .props(color(Color.gray), margin(unit(4)));
+                                                                })
+                                                                .items(item -> new MapCard(
+                                                                        item,
+                                                                        cardSize,
+                                                                        () -> showDetails(item),
+                                                                        () -> MapActions
+                                                                                .downloadAndImport(item.getItemId()),
+                                                                        () -> showDetails(item),
+                                                                        () -> MapActions.playMap(item.getItemId())));
+                                                    }))
+                                    .props(grow());
+
+                            new BrowserFooter(state, Config.UPLOAD_MAP_URL, onClose);
+                        });
+                    }).element();
         }
 
-        private void expandVisible(int total, int page) {
+        private void expandVisible(Signal<Integer> visibleCount, int total, int page) {
             Integer current = visibleCount.peek();
             if (current == null || current >= total) {
                 return;
@@ -136,55 +177,8 @@ public class MapBrowserDialog extends SolimDialog {
                 Integer shown = visibleCount.peek();
                 int next = Math.min(total, (shown != null ? shown : 0) + BrowserLayout.RENDER_CHUNK_SIZE);
                 visibleCount.set(next);
-                expandVisible(total, page);
+                expandVisible(visibleCount, total, page);
             });
-        }
-
-        @Override
-        protected Element build() {
-            return column().grow().center().paddingX(BrowserLayout.HORIZONTAL_PADDING).paddingY(unit(2))
-                    .children(() -> {
-                        column().width(contentWidth).growY().gap(unit(2)).children(() -> {
-                            new BrowserSearchHeader(state, () -> filterDialog.show());
-
-                            query(state.query())
-                                    .grow()
-                                    .loading(Loader::centered)
-                                    .error(err -> row().grow().gap(unit(1)).children(() -> {
-                                        Throwable cause = err != null && err.getCause() != null ? err.getCause() : err;
-                                        String msg = cause != null && cause.getMessage() != null ? cause.getMessage()
-                                                : (cause != null ? cause.toString() : "");
-                                        text(msg).color(Color.scarlet).wrap(true).growX();
-                                        button(Core.bundle.get("browser.retry"), () -> state.refresh())
-                                                .style(WebStyles.outlineText())
-                                                .height(unit(10));
-                                    }))
-                                    .data((list, fecthing) -> fecthing ? Loader.centered()
-                                            : scroll().style(Styles.noBarPane).grow()
-                                                    .paddingLeft(BrowserLayout.SCROLLBAR_GUTTER).children(() -> {
-                                                        reactiveGrid(visibleItems).columns(columnCount)
-                                                                .key(MapData::getItemId)
-                                                                .empty(() -> {
-                                                                    text(Core.bundle
-                                                                            .get("browser.empty"))
-                                                                                    .color(Color.gray)
-                                                                                    .padding(unit(4));
-                                                                                })
-                                                                .gap(BrowserLayout.CARD_GAP)
-                                                                .children(item -> new MapCard(
-                                                                        item,
-                                                                        cardSize,
-                                                                        () -> showDetails(item),
-                                                                        () -> MapActions
-                                                                                .downloadAndImport(item.getItemId()),
-                                                                        () -> showDetails(item),
-                                                                        () -> MapActions.playMap(item.getItemId())));
-                                                    }))
-                                    .grow();
-
-                            new BrowserFooter(state, Config.UPLOAD_MAP_URL, onClose);
-                        });
-                    }).element();
         }
 
         private void showDetails(MapData item) {

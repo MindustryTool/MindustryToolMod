@@ -17,14 +17,14 @@ import mindustrytool.models.response.ChatMessage;
 import mindustrytool.models.response.UserData;
 import mindustrytool.services.auth.AuthOverlay;
 import mindustrytool.services.auth.MindustryAuthProvider;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.input.SolimTextField;
 import solim.reactive.Computed;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 import mindustrytool.components.FileIcon;
 
-public class ChatInputView extends BaseComponent {
+public class ChatInputView extends Component {
 
     private final ChatStore store;
     private final ChatService service;
@@ -52,75 +52,67 @@ public class ChatInputView extends BaseComponent {
             }
         });
 
-        return column().growX().gap(unit(1)).padding(unit(2)).children(() -> {
-            // Login banner when not logged in
+        return column().props(growX(), padding(unit(2)), gap(unit(1))).children(() -> {
+
             when(isNotLoggedIn)
-                    .thenDo(() -> row().growX().padding(unit(1)).children(() -> {
+                    .thenDo(() -> row().props(growX(), padding(unit(1))).children(() -> {
                         button(Core.bundle.get("auth.login", "Login"), () -> AuthOverlay.getInstance().startLoginUI())
-                                .style(Styles.defaultt)
-                                .growX()
-                                .height(unit(8));
+                                .props(style(Styles.defaultt), growX(), height(unit(8)), prefHeight(unit(8)));
                     }))
-                .elseDo(() -> {
-                    // Composer area when logged in
-                    column().growX().gap(unit(1)).children(() -> {
-                    dynamic(store.ui().replyTarget(), target -> {
-                        if (target != null) {
-                            String authorId = target.getCreatedBy();
-                        UserData cachedUser = authorId != null ? store.users().getDirect(authorId) : null;
-                        String targetName = (cachedUser != null && cachedUser.getName() != null)
-                                ? cachedUser.getName()
-                                : (authorId != null ? authorId : "message");
+                    .elseDo(() -> {
 
-                        row().growX().padding(unit(1)).height(unit(12)).gap(unit(1)).children(() -> {
-                            text(Core.bundle.format("feature.chat.ui.replying", targetName)).color(Color.lightGray)
-                                    .fontScale(0.85f).left();
-                            spacer();
-                            button(() -> store.ui().setReplyTarget(null))
-                                    .style(Styles.clearNonei)
-                                    .size(unit(6), unit(6))
-                                    .children(() -> icon(Icon.cancel).size(unit(4), unit(4)));
-                        });
-                        }
-                    }).growX();
+                        column().props(growX(), gap(unit(1))).children(() -> {
+                            dynamic(store.ui().replyTarget(), target -> {
+                                if (target != null) {
+                                    String authorId = target.getCreatedBy();
+                                    UserData cachedUser = authorId != null ? store.users().getDirect(authorId) : null;
+                                    String targetName = (cachedUser != null && cachedUser.getName() != null)
+                                            ? cachedUser.getName()
+                                            : (authorId != null ? authorId : "message");
 
-                    row().growX().gap(unit(1)).children(() -> {
-                        card(Styles.black5).growX().children(() -> {
-                            row().growX().gap(unit(1))
-                                    .paddingLeft(unit(3))
-                                    .paddingRight(unit(2))
-                                    .paddingTop(unit(1))
-                                    .paddingBottom(unit(1))
-                                    .rounded(unit(3), Color.clear)
-                                    .border(1.5f, Color.darkGray)
-                                    .center()
-                                    .children(() -> {
-                                        chatInput = textField(messageText)
-                                                .style(WebStyles.clearInput())
-                                                .placeholder(
-                                                        Core.bundle.get("feature.chat.ui.placeholder", "Message..."))
-                                                .validator(this::isValidInput)
-                                                .onEnter(this::onSend)
-                                                .disabled(isSending)
-                                                .growX();
-
-                                        button(() -> new AttachContentDialog(this::handleAttachContent).show())
-                                                .style(WebStyles.ghost())
-                                                .size(unit(10))
-                                                .children(
-                                                        () -> image(FileIcon.of("upload.png")).size(unit(6), unit(6)));
-
-                                        button(this::onSend)
-                                                .style(WebStyles.ghost())
-                                                .enabled(canSend)
-                                                .size(unit(10))
-                                                .children(() -> image(FileIcon.of("send.png")).size(unit(6), unit(6))
-                                                        .color(Pal.accent));
+                                    row().props(growX(), padding(unit(1)), height(unit(12)), prefHeight(unit(12)), gap(unit(1))).children(() -> {
+                                        text(Core.bundle.format("feature.chat.ui.replying", targetName))
+                                                .props(color(Color.lightGray), fontScale(0.85f), left());
+                                        spacer();
+                                        button(() -> store.ui().setReplyTarget(null))
+                                                .props(style(Styles.clearNonei), size(unit(6), unit(6)), prefWidth(unit(6)), prefHeight(unit(6)))
+                                                .children(() -> icon(Icon.cancel).props(size(unit(4), unit(4)), prefWidth(unit(4)), prefHeight(unit(4))));
                                     });
+                                }
+                            }).props(growX());
+
+                            row().props(growX(), gap(unit(1))).children(() -> {
+                                card(Styles.black5).props(growX()).children(() -> {
+                                    row().props(growX(), gap(unit(1)),
+                                            paddingLeft(unit(3)), paddingRight(unit(2)), paddingTop(unit(1)), paddingBottom(unit(1)), rounded(unit(3), Color.clear), border(1.5f, Color.darkGray),
+                                            center())
+                                            .children(() -> {
+                                                chatInput = textField(messageText)
+                                                        .validator(this::isValidInput)
+                                                        .onEnter(this::onSend)
+                                                        .props(
+                                                                style(WebStyles.clearInput()),
+                                                                growX(),
+                                                                placeholder(
+                                                                        Core.bundle.get("feature.chat.ui.placeholder",
+                                                                                "Message...")),
+                                                                disabled(isSending)
+                                                        );
+
+                                                button(() -> new AttachContentDialog(this::handleAttachContent).show())
+                                                        .props(style(WebStyles.ghost()), size(unit(10)), prefWidth(unit(10)), prefHeight(unit(10)))
+                                                        .children(
+                                                                () -> image(FileIcon.of("upload.png")).props(size(unit(6), unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
+
+                                                button(this::onSend)
+                                                        .props(style(WebStyles.ghost()), enabled(canSend), size(unit(10)), prefWidth(unit(10)), prefHeight(unit(10)))
+                                                        .children(() -> image(FileIcon.of("send.png"))
+                                                                .props(size(unit(6), unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(Pal.accent)));
+                                            });
+                                });
+                            });
                         });
-                    });
-                    });
-                }).grow();
+                    }).props(grow());
         }).element();
     }
 

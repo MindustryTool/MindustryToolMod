@@ -4,8 +4,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import arc.func.Prov;
+import arc.graphics.g2d.Font;
+import arc.graphics.g2d.TextureRegion;
+import arc.mock.MockAudio;
 import arc.scene.Element;
+import arc.scene.Group;
+import arc.scene.ui.Button;
+import arc.scene.ui.Dialog;
+import arc.scene.ui.Label;
+import arc.scene.ui.TextButton;
 import arc.util.Nullable;
+import java.lang.reflect.Field;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
 import mindustry.Vars;
 import mindustry.gen.Player;
 import mindustry.gen.Unit;
@@ -13,14 +27,17 @@ import mindustrytool.features.FeatureManager;
 import mindustrytool.features.quickaccess.QuickAccessFeature;
 import mindustrytool.test.MindustryTestEnv;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import solim.core.Component;
 import solim.reactive.Readable;
 
 class AutoplayHudPopupTest extends MindustryTestEnv {
 
     static class PopupSpyFeature extends AutoplayFeature {
         boolean popupToggled;
-        @Nullable Element receivedBar;
+        @Nullable
+        Element receivedBar;
 
         @Override
         public void togglePopup(@Nullable Element quickAccessBar) {
@@ -158,4 +175,156 @@ class AutoplayHudPopupTest extends MindustryTestEnv {
         }
     }
 
+    @Test
+    void taskVisibility_togglesAndUpdatesVisibleTasksReactively() {
+        AutoplayFeature feature = new AutoplayFeature();
+        try {
+            String firstId = AutoplayFeature.DEFAULT_ORDER.get(0);
+            assertTrue(feature.isTaskVisible(firstId));
+            int initialVisibleCount = feature.visibleTasks().peek().size;
+            assertEquals(feature.tasks().peek().size, initialVisibleCount);
+
+            feature.setTaskVisible(firstId, false);
+            flushEffects();
+            assertFalse(feature.isTaskVisible(firstId));
+            assertEquals(initialVisibleCount - 1, feature.visibleTasks().peek().size);
+            assertFalse(feature.visibleTasks().peek().contains(t -> t.getId().equals(firstId)));
+
+            assertEquals(initialVisibleCount, feature.tasks().peek().size);
+
+            feature.setTaskVisible(firstId, true);
+            flushEffects();
+            assertTrue(feature.isTaskVisible(firstId));
+            assertEquals(initialVisibleCount, feature.visibleTasks().peek().size);
+            assertTrue(feature.visibleTasks().peek().contains(t -> t.getId().equals(firstId)));
+        } finally {
+            feature.disable();
+            flushEffects();
+        }
+    }
+
+    private static List<Button> findAllButtons(Element root) {
+        List<Button> list = new ArrayList<>();
+        Deque<Element> queue = new ArrayDeque<>();
+        queue.add(root);
+        while (!queue.isEmpty()) {
+            Element current = queue.poll();
+            if (current instanceof Button) {
+                list.add((Button) current);
+            }
+            if (current instanceof Group) {
+                for (Element child : ((Group) current).getChildren()) {
+                    queue.add(child);
+                }
+            }
+        }
+        return list;
+    }
+
+    private static void fireLongClick(Button button) throws Exception {
+        Component comp = componentOf(button);
+        assertTrue(comp instanceof solim.input.Button, "Controls strip button must be Solim button");
+        Field field = solim.input.Button.class.getDeclaredField("onLongClick");
+        field.setAccessible(true);
+        Runnable action = (Runnable) field.get(comp);
+        Assertions.assertNotNull(action, "Button must have onLongClick handler");
+        action.run();
+    }
+
+    private static void setupTestScene() {
+        if (arc.Core.audio == null) {
+            arc.Core.audio = new MockAudio();
+        }
+        newScene();
+        Font.FontData fontData = new Font.FontData() {
+            @Override
+            public boolean hasGlyph(char ch) {
+                return true;
+            }
+        };
+        Font font = new Font(fontData, new TextureRegion(), false);
+        arc.Core.scene.addStyle(Button.ButtonStyle.class, new Button.ButtonStyle());
+        Dialog.DialogStyle dialogStyle = new Dialog.DialogStyle();
+        dialogStyle.titleFont = font;
+        arc.Core.scene.addStyle(Dialog.DialogStyle.class, dialogStyle);
+        TextButton.TextButtonStyle textButtonStyle = new TextButton.TextButtonStyle();
+        textButtonStyle.font = font;
+        arc.Core.scene.addStyle(TextButton.TextButtonStyle.class, textButtonStyle);
+        arc.Core.scene.addStyle(Label.LabelStyle.class, new Label.LabelStyle(font, null));
+    }
+
+    @Test
+    void masterButtonLongClick_hidesPopupAndOpensSettingsDialog() throws Exception {
+        setupTestScene();
+        boolean[] settingsOpened = { false };
+        AutoplayFeature feature = new AutoplayFeature() {
+            @Override
+            public @Nullable Prov<solim.overlay.SolimDialog> getSettingDialog() {
+                return () -> new solim.overlay.SolimDialog("") {
+                    @Override
+                    public solim.overlay.SolimDialog show() {
+                        settingsOpened[0] = true;
+                        return this;
+                    }
+                };
+            }
+        };
+
+        try {
+            AutoplayPopup.show(feature, null);
+            assertTrue(AutoplayPopup.isShowing());
+
+            solim.core.Component controls = AutoplayHudView.buildControls(feature, null);
+            List<Button> buttons = findAllButtons(controls.element());
+            assertFalse(buttons.isEmpty());
+
+            Button masterBtn = buttons.get(0);
+            fireLongClick(masterBtn);
+
+            assertFalse(AutoplayPopup.isShowing(), "Popup must be hidden after long-click");
+            assertTrue(settingsOpened[0], "Settings dialog must be shown after long-click");
+        } finally {
+            AutoplayPopup.hide();
+            feature.disable();
+            flushEffects();
+        }
+    }
+
+    @Test
+    void taskButtonLongClick_hidesPopupAndOpensSettingsDialog() throws Exception {
+        setupTestScene();
+        boolean[] settingsOpened = { false };
+        AutoplayFeature feature = new AutoplayFeature() {
+            @Override
+            public @Nullable Prov<solim.overlay.SolimDialog> getSettingDialog() {
+                return () -> new solim.overlay.SolimDialog("") {
+                    @Override
+                    public solim.overlay.SolimDialog show() {
+                        settingsOpened[0] = true;
+                        return this;
+                    }
+                };
+            }
+        };
+
+        try {
+            AutoplayPopup.show(feature, null);
+            assertTrue(AutoplayPopup.isShowing());
+
+            solim.core.Component controls = AutoplayHudView.buildControls(feature, null);
+            flushEffects();
+            List<Button> buttons = findAllButtons(controls.element());
+            assertTrue(buttons.size() > 1, "Must have master button and at least one task button");
+
+            Button taskBtn = buttons.get(1);
+            fireLongClick(taskBtn);
+
+            assertFalse(AutoplayPopup.isShowing(), "Popup must be hidden after long-click");
+            assertTrue(settingsOpened[0], "Settings dialog must be shown after long-click");
+        } finally {
+            AutoplayPopup.hide();
+            feature.disable();
+            flushEffects();
+        }
+    }
 }

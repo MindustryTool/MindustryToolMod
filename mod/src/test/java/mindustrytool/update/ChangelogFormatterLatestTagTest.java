@@ -6,7 +6,6 @@ import mindustrytool.services.update.ChangelogFormatter;
 import org.junit.jupiter.api.Test;
 import solim.test.ArcTestEnv;
 
-/** Pure tests for {@link ChangelogFormatter#findLatestTag(String)}. No network. */
 class ChangelogFormatterLatestTagTest extends ArcTestEnv {
 
     @Test

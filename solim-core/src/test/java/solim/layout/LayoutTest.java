@@ -1,12 +1,33 @@
 package solim.layout;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.center;
+import static solim.modifier.Values.draggable;
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.growX;
+import static solim.modifier.Values.growY;
+import static solim.modifier.Values.height;
+import static solim.modifier.Values.left;
+import static solim.modifier.Values.margin;
+import static solim.modifier.Values.maxWidth;
+import static solim.modifier.Values.onClick;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.prefHeight;
+import static solim.modifier.Values.prefWidth;
+import static solim.modifier.Values.right;
+import static solim.modifier.Values.size;
+import static solim.modifier.Values.top;
+import static solim.modifier.Values.width;
 
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
@@ -17,6 +38,7 @@ import arc.graphics.g2d.Font;
 import arc.graphics.g2d.Font.FontData;
 import arc.graphics.g2d.TextureRegion;
 import arc.scene.Element;
+import arc.scene.Scene;
 import arc.scene.event.ClickListener;
 import arc.scene.event.EventListener;
 import arc.scene.event.InputEvent;
@@ -40,14 +62,12 @@ import solim.test.SolimEnv;
 
 class LayoutTest extends SolimEnv {
 
-
     @Test
     void rowAlignAndGap() {
         Table root = new Table();
         AttachmentStack.push(root);
         Row r = new Row();
-        r.gap(8f);
-        r.align(Align.CENTER);
+        r.props(gap(8f), center());
         Element a = new Element();
         a.name = "a";
         Element b = new Element();
@@ -63,8 +83,7 @@ class LayoutTest extends SolimEnv {
     @Test
     void columnGapAndPadding() {
         Column c = new Column();
-        c.gap(16f);
-        c.padding(24f);
+        c.props(gap(16f), padding(24f));
         Element e1 = new Element();
         Element e2 = new Element();
         c.add(e1).row();
@@ -90,7 +109,7 @@ class LayoutTest extends SolimEnv {
 
     @Test
     void gridColumnsWrapping() {
-        Grid g = new Grid(3).gap(8f);
+        Grid g = new Grid(3).props(gap(8f));
         for (int i = 0; i < 4; i++) {
             g.add(new Element());
         }
@@ -122,7 +141,7 @@ class LayoutTest extends SolimEnv {
 
     @Test
     void rowDraggableRegistersListener() {
-        Row r = new Row().draggable();
+        Row r = new Row().props(draggable());
         assertEquals(Touchable.enabled, r.table().touchable,
                 "Row drag handle must use enabled so entire surface is draggable");
 
@@ -153,7 +172,7 @@ class LayoutTest extends SolimEnv {
 
     @Test
     void wrapAddsChildren() {
-        Wrap w = new Wrap().gap(4f);
+        Wrap w = new Wrap().props(gap(4f));
         for (int i = 0; i < 3; i++) {
             w.add(new Element());
         }
@@ -166,23 +185,25 @@ class LayoutTest extends SolimEnv {
         Element child = new Element();
         c.add(child);
 
-        assertSame(c, c.align(Align.CENTER));
-        assertSame(c, c.align(Align.START));
-        assertSame(c, c.align(Align.END));
+        assertSame(c, c.props(center()));
+        assertSame(c, c.props(top()));
+        assertSame(c, c.props(solim.modifier.Values.bottom()));
         assertEquals(1, c.table().getChildren().size);
         assertSame(child, c.table().getChildren().get(0));
     }
 
     @Test
     void rowAlignPreservesChildrenAndReturnsSelf() {
-        for (Align a : Align.values()) {
-            Row r = new Row();
-            Element child = new Element();
-            r.add(child);
-            assertSame(r, r.align(a));
-            assertEquals(1, r.table().getChildren().size);
-            assertSame(child, r.table().getChildren().get(0));
-        }
+        Row r = new Row();
+        Element child = new Element();
+        r.add(child);
+        assertSame(r, r.props(center()));
+        assertSame(r, r.props(top()));
+        assertSame(r, r.props(solim.modifier.Values.bottom()));
+        assertSame(r, r.props(left()));
+        assertSame(r, r.props(right()));
+        assertEquals(1, r.table().getChildren().size);
+        assertSame(child, r.table().getChildren().get(0));
     }
 
     @Test
@@ -204,7 +225,7 @@ class LayoutTest extends SolimEnv {
             });
             Scroll scroll = new Scroll();
             AttachmentStack.attachToParent(scroll.element());
-            scroll.grow().children(() -> {
+            scroll.props(grow()).children(() -> {
                 Element e2 = new Element() {
                     @Override
                     public float getPrefWidth() {
@@ -241,10 +262,9 @@ class LayoutTest extends SolimEnv {
         Signal<Color> colorSignal = Signal.of(Color.scarlet);
 
         Card c = new Card()
-                .height(180f)
-                .width(widthSignal)
-                .color(colorSignal)
-                .margin(12f)
+                .props(height(180f), prefHeight(180f), width(widthSignal), prefWidth(widthSignal))
+                .props(color(colorSignal))
+                .props(margin(12f))
                 .children(() -> {
                     AttachmentStack.add(new Element());
                     AttachmentStack.add(new Element());
@@ -267,7 +287,7 @@ class LayoutTest extends SolimEnv {
     @Test
     void cardClickAndChildEventIsolation() {
         boolean[] cardClicked = { false };
-        Card c = new Card().onClick(() -> cardClicked[0] = true);
+        Card c = new Card().props(onClick(() -> cardClicked[0] = true));
 
         InputEvent stoppedEvent = new InputEvent();
         stoppedEvent.stop();
@@ -306,7 +326,7 @@ class LayoutTest extends SolimEnv {
 
     @Test
     void childrenDoNotGrowByDefault() {
-        // Column
+
         Column col = new Column().children(() -> {
             new Row().children(() -> {
             });
@@ -315,7 +335,6 @@ class LayoutTest extends SolimEnv {
         assertEquals(0, CellAccess.expandX(colCell), "Column child must not growX by default");
         assertEquals(0, CellAccess.expandY(colCell), "Column child must not growY by default");
 
-        // Row
         Row row = new Row().children(() -> {
             new Row().children(() -> {
             });
@@ -328,7 +347,6 @@ class LayoutTest extends SolimEnv {
         assertEquals(0, CellAccess.expandX(rowElementCell), "Row element must not growX by default");
         assertEquals(0, CellAccess.expandY(rowElementCell), "Row element must not growY by default");
 
-        // Card
         Card card = new Card().children(() -> {
             new Row().children(() -> {
             });
@@ -338,7 +356,6 @@ class LayoutTest extends SolimEnv {
         assertEquals(0, CellAccess.expandY(cardCell), "Card child must not growY by default");
         card.dispose();
 
-        // Scroll
         Scroll scroll = new Scroll();
         scroll.children(() -> {
             new Row().children(() -> {
@@ -352,11 +369,11 @@ class LayoutTest extends SolimEnv {
     @Test
     void explicitGrowExpandsCells() {
         Column col = new Column().children(() -> {
-            new Row().growX().children(() -> {
+            new Row().props(growX()).children(() -> {
             });
-            new Row().growY().children(() -> {
+            new Row().props(growY()).children(() -> {
             });
-            new Row().grow().children(() -> {
+            new Row().props(grow()).children(() -> {
             });
         });
         Cell<?> cellGrowX = col.table().getCells().get(0);
@@ -376,15 +393,15 @@ class LayoutTest extends SolimEnv {
     @Test
     void chainedGrowAfterAttachment() {
         Column col = new Column().children(() -> {
-            // SizedImage with growX() chained
-            new SolimImage().growX();
-            // Button with growX() chained
+
+            new SolimImage().props(growX());
+
             Button chainedButton = new Button();
             AttachmentStack.attachToParent(chainedButton.element());
-            chainedButton.growX();
-            // Row with growX() chained AFTER children()
+            chainedButton.props(growX());
+
             new Row().children(() -> {
-            }).growX();
+            }).props(growX());
         });
 
         Cell<?> imgCell = col.table().getCells().get(0);
@@ -410,19 +427,19 @@ class LayoutTest extends SolimEnv {
         Signal<Seq<String>> items = Signal.of(Seq.with("feat1", "feat2"));
         Scroll[] scrollRef = new Scroll[1];
 
-        Column col = new Column().grow().children(() -> {
-            new Row().growX().gap(8f).children(() -> {
-                new SolimImage().size(24, 24);
+        Column col = new Column().props(grow()).children(() -> {
+            new Row().props(growX(), gap(8f)).children(() -> {
+                new SolimImage().props(size(24, 24), prefWidth(24), prefHeight(24));
                 Button actionButton = new Button();
                 AttachmentStack.attachToParent(actionButton.element());
-                actionButton.height(40).width(200);
+                actionButton.props(height(40), prefHeight(40), width(200), prefWidth(200));
             });
             scrollRef[0] = new Scroll();
             AttachmentStack.attachToParent(scrollRef[0].element());
-            scrollRef[0].grow().children(() -> {
+            scrollRef[0].props(grow()).children(() -> {
                 ReactiveGrid<String> grid = new ReactiveGrid<>(items);
                 grid.columns(Signal.of(2)).key(x -> x);
-                grid.children(x -> new Card().height(160).width(300).children(() -> {
+                grid.items(x -> new Card().props(height(160), prefHeight(160), width(300), prefWidth(300)).children(() -> {
                 }));
             });
         });
@@ -437,6 +454,38 @@ class LayoutTest extends SolimEnv {
         Table gridTable = (Table) content.getChildren().first();
         assertSame(gridTable, content.getCells().first().get(),
                 "First and only cell in scroll content must be the grid table");
+
+        Scene scene = newScene();
+        Table attachedRoot = new Table();
+        scene.add(attachedRoot);
+        attachedRoot.add(gridTable).grow().expand();
+        attachedRoot.validate();
+
+        ReactiveGrid<String> grid2 = new ReactiveGrid<>(items);
+        grid2.columns(Signal.of(2)).key(x -> x);
+        grid2.items(x -> new Card().props(height(160), prefHeight(160), width(300), prefWidth(300)));
+        attachedRoot.add(grid2.element()).row();
+
+        assertEquals(2, filledCells(grid2.table()),
+                "An attached grid must reconcile synchronously during its first build");
+
+        items.set(Seq.with("feat1"));
+        SignalDispatcher.flush();
+
+        assertEquals(1, filledCells(grid2.table()),
+                "An attached grid must reconcile within the same flush, not a posted callback");
+        grid2.dispose();
+    }
+
+    private static int filledCells(Table table) {
+        int filled = 0;
+        for (int i = 0; i < table.getCells().size; i++) {
+            Cell<?> cell = table.getCells().get(i);
+            if (cell != null && cell.get() != null) {
+                filled++;
+            }
+        }
+        return filled;
     }
 
     @Test
@@ -448,7 +497,7 @@ class LayoutTest extends SolimEnv {
         Cell<?> cell = parent.getCell(field.element());
         assertEquals(0, CellAccess.expandX(cell));
 
-        field.growX();
+        field.props(growX());
         assertTrue(CellAccess.expandX(cell) > 0, "field.growX() after attach must expand horizontally");
         assertEquals(1f, CellAccess.fillX(cell), 0.001f, "field.growX() after attach must fill horizontally");
     }
@@ -463,12 +512,12 @@ class LayoutTest extends SolimEnv {
         assertEquals(0, CellAccess.expandX(cell));
         assertEquals(0, CellAccess.expandY(cell));
 
-        cb.growX();
+        cb.props(growX());
         assertTrue(CellAccess.expandX(cell) > 0, "cb.growX() must expand horizontally");
         assertEquals(1f, CellAccess.fillX(cell), 0.001f, "cb.growX() must fill horizontally");
         assertEquals(0, CellAccess.expandY(cell));
 
-        cb.growY();
+        cb.props(growY());
         assertTrue(CellAccess.expandY(cell) > 0, "cb.growY() must expand vertically");
         assertEquals(1f, CellAccess.fillY(cell), 0.001f, "cb.growY() must fill vertically");
 
@@ -476,7 +525,7 @@ class LayoutTest extends SolimEnv {
         Checkbox checkbox = new Checkbox("Test", Signal.of(false));
         parent2.add(checkbox.element());
         Cell<?> cell2 = parent2.getCell(checkbox.element());
-        checkbox.grow();
+        checkbox.props(grow());
         assertTrue(CellAccess.expandX(cell2) > 0, "checkbox.grow() must expand horizontally");
         assertTrue(CellAccess.expandY(cell2) > 0, "checkbox.grow() must expand vertically");
     }
@@ -487,13 +536,10 @@ class LayoutTest extends SolimEnv {
         root.setSize(1000, 800);
 
         Scroll scroll = new Scroll()
-                .grow()
-                .center()
+                .props(grow(), center())
                 .children(() -> {
                     new Column()
-                            .growX()
-                            .center()
-                            .maxWidth(400f)
+                            .props(growX(), center(), maxWidth(400f))
                             .children(() -> {
                                 Element child = new Element();
                                 child.setSize(100, 50);
@@ -520,12 +566,10 @@ class LayoutTest extends SolimEnv {
         root.setSize(1000, 800);
 
         Scroll scroll = new Scroll()
-                .grow()
+                .props(grow())
                 .children(() -> {
                     new Column()
-                            .growX()
-                            .center()
-                            .maxWidth(400f)
+                            .props(growX(), center(), maxWidth(400f))
                             .children(() -> {
                                 Element child = new Element();
                                 child.setSize(100, 50);
@@ -551,12 +595,10 @@ class LayoutTest extends SolimEnv {
         root.setSize(1000, 800);
 
         Scroll scroll = new Scroll()
-                .grow()
-                .center()
+                .props(grow(), center())
                 .children(() -> {
                     new Column()
-                            .growX()
-                            .maxWidth(400f)
+                            .props(growX(), maxWidth(400f))
                             .children(() -> {
                                 Element child = new Element();
                                 child.setSize(100, 50);
@@ -581,11 +623,9 @@ class LayoutTest extends SolimEnv {
         Table root = new Table();
         root.setSize(1000, 800);
 
-        Column parentCol = new Column().grow().children(() -> {
+        Column parentCol = new Column().props(grow()).children(() -> {
             new Column()
-                    .growX()
-                    .center()
-                    .maxWidth(400f)
+                    .props(growX(), center(), maxWidth(400f))
                     .children(() -> {
                         Element child = new Element();
                         child.setSize(100, 50);
@@ -608,13 +648,10 @@ class LayoutTest extends SolimEnv {
         Table root = new Table();
         root.setSize(1000, 800);
 
-        Column parentCol = new Column().grow().children(() -> {
-            // Column children default to top-left: centering a constrained card
-            // requires explicit self-alignment via its cell config.
+        Column parentCol = new Column().props(grow()).children(() -> {
+
             Card card = new Card()
-                    .growX()
-                    .center()
-                    .maxWidth(400f);
+                    .props(growX(), center(), maxWidth(400f));
             card.cellConfig().alignCenter();
             card.children(() -> {
             });
@@ -632,7 +669,7 @@ class LayoutTest extends SolimEnv {
     @Test
     void gridGapBeforeChildren() {
         Grid g = new Grid(2)
-                .gap(16f)
+                .props(gap(16f))
                 .children(() -> {
                     new Row().children(() -> {
                     });
@@ -658,7 +695,7 @@ class LayoutTest extends SolimEnv {
                     new Row().children(() -> {
                     });
                 })
-                .gap(20f);
+                .props(gap(20f));
 
         assertEquals(2, g.table().getCells().size);
         Cell<?> cell0 = g.table().getCells().get(0);
@@ -670,7 +707,7 @@ class LayoutTest extends SolimEnv {
     @Test
     void gridGapZeroArgConstructor() {
         Grid g = new Grid()
-                .gap(12f)
+                .props(gap(12f))
                 .children(() -> {
                     new Row().children(() -> {
                     });
@@ -684,7 +721,7 @@ class LayoutTest extends SolimEnv {
     void gridGapReactiveSignal() {
         Signal<Float> gapSig = Signal.of(10f);
         Grid g = new Grid(2)
-                .gap(gapSig)
+                .props(gap(gapSig))
                 .children(() -> {
                     new Row().children(() -> {
                     });
@@ -707,8 +744,8 @@ class LayoutTest extends SolimEnv {
     void reactiveGridGapUpdatesRenderedCells() {
         Signal<Float> gapSig = Signal.of(0f);
         ReactiveGrid<String> rg = new ReactiveGrid<>(Signal.of(Arrays.asList("A", "B")));
-        rg.columns(Signal.of(2)).key(s -> s).gap(gapSig);
-        rg.children(s -> new Row());
+        rg.columns(Signal.of(2)).key(s -> s).props(gap(gapSig));
+        rg.items(s -> new Row());
         rg.element();
 
         assertEquals(2, rg.table().getCells().size);
@@ -724,23 +761,22 @@ class LayoutTest extends SolimEnv {
         assertEquals(16f, CellAccess.padLeft(cell1), 0.01f);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void featureCardGrowXInReactiveGrid() {
         Table root = new Table();
         root.setSize(1024, 768);
 
         Signal<Seq<String>> items = Signal.of(Seq.with("feat1", "feat2"));
-        ReactiveGrid<String>[] gridRef = new ReactiveGrid[1];
+        AtomicReference<ReactiveGrid<String>> gridRef = new AtomicReference<>();
 
-        Column col = new Column().grow().children(() -> {
+        Column col = new Column().props(grow()).children(() -> {
             Scroll scroll = new Scroll();
             AttachmentStack.attachToParent(scroll.element());
-            scroll.grow().children(() -> {
-                gridRef[0] = new ReactiveGrid<>(items);
-                gridRef[0].columns(Signal.of(2)).key(x -> x);
-                gridRef[0].children(x -> {
-                    return new Card().height(160).growX().children(() -> {
+            scroll.props(grow()).children(() -> {
+                gridRef.set(new ReactiveGrid<>(items));
+                gridRef.get().columns(Signal.of(2)).key(x -> x);
+                gridRef.get().items(x -> {
+                    return new Card().props(height(160), prefHeight(160), growX()).children(() -> {
                     });
                 });
             });
@@ -750,7 +786,7 @@ class LayoutTest extends SolimEnv {
         root.validate();
         root.layout();
 
-        Table gridTable = gridRef[0].table();
+        Table gridTable = gridRef.get().table();
         System.out.println("Actual cells size: " + gridTable.getCells().size);
         for (int i = 0; i < gridTable.getCells().size; i++) {
             System.out.println("Cell " + i + ": " + gridTable.getCells().get(i).get());
@@ -769,23 +805,22 @@ class LayoutTest extends SolimEnv {
                 "Card must expand to fill grid column (was " + cell0.get().getWidth() + ")");
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void featureCardSingleItemInMultiColumnReactiveGrid() {
         Table root = new Table();
         root.setSize(1024, 768);
 
         Signal<Seq<String>> items = Signal.of(Seq.with("feat1"));
-        ReactiveGrid<String>[] gridRef = new ReactiveGrid[1];
+        AtomicReference<ReactiveGrid<String>> gridRef = new AtomicReference<>();
 
-        Column col = new Column().grow().children(() -> {
+        Column col = new Column().props(grow()).children(() -> {
             Scroll scroll = new Scroll();
             AttachmentStack.attachToParent(scroll.element());
-            scroll.grow().children(() -> {
-                gridRef[0] = new ReactiveGrid<>(items);
-                gridRef[0].columns(Signal.of(3)).key(x -> x);
-                gridRef[0].children(x -> {
-                    return new Card().height(160).growX().children(() -> {
+            scroll.props(grow()).children(() -> {
+                gridRef.set(new ReactiveGrid<>(items));
+                gridRef.get().columns(Signal.of(3)).key(x -> x);
+                gridRef.get().items(x -> {
+                    return new Card().props(height(160), prefHeight(160), growX()).children(() -> {
                     });
                 });
             });
@@ -795,7 +830,7 @@ class LayoutTest extends SolimEnv {
         root.validate();
         root.layout();
 
-        Table gridTable = gridRef[0].table();
+        Table gridTable = gridRef.get().table();
         assertEquals(3, gridTable.getCells().size, "Grid table must have 3 cells (1 card + 2 padding cells)");
         Cell<?> cell0 = gridTable.getCells().get(0);
         assertTrue(cell0.get().getWidth() < 400f,
@@ -814,7 +849,7 @@ class LayoutTest extends SolimEnv {
 
         Text text = new Text("A very long message string that wraps across multiple lines", style);
         table.add(text.element());
-        text.wrap();
+        text.props(wrap(true));
 
         Cell<?> cell = table.getCell(text.element());
         assertNotNull(cell, "Cell must exist in parent table");
@@ -831,23 +866,24 @@ class LayoutTest extends SolimEnv {
         AttachmentStack.push(root);
 
         Column mainCol = new Column();
-        mainCol.grow().padding(16f).gap(16f);
+        mainCol.props(grow(), padding(16f), gap(16f));
         mainCol.children(() -> {
             Row searchRow = new Row();
-            searchRow.growX().height(44f);
-            searchRow.children(() -> {});
+            searchRow.props(growX(), height(44f), prefHeight(44f));
+            searchRow.children(() -> {
+            });
 
             Scroll scroll = new Scroll();
-            scroll.grow();
+            scroll.props(grow());
             scroll.children(() -> {
                 Column innerCol = new Column();
-                innerCol.growX().left().gap(16f);
+                innerCol.props(growX(), left(), gap(16f));
                 innerCol.children(() -> {
                     Column section = new Column();
-                    section.growX().left().padding(12f).gap(8f);
+                    section.props(growX(), left(), padding(12f), gap(8f));
                     section.children(() -> {
                         Wrap wrap = new Wrap();
-                        wrap.growX().left().gap(4f);
+                        wrap.props(growX(), left(), gap(4f));
                         wrap.children(() -> {
                             for (int i = 0; i < 30; i++) {
                                 Element item = new Element() {
@@ -855,6 +891,7 @@ class LayoutTest extends SolimEnv {
                                     public float getPrefWidth() {
                                         return 80f;
                                     }
+
                                     @Override
                                     public float getPrefHeight() {
                                         return 36f;
@@ -899,7 +936,8 @@ class LayoutTest extends SolimEnv {
         Assumptions.assumeTrue(Core.scene != null, "Arc Core.scene is null; skipping scene-dependent tests");
         Scroll scroll = new Scroll();
         ScrollPane pane = scroll.pane();
-        if (pane == null) return;
+        if (pane == null)
+            return;
 
         Core.scene.setScrollFocus(pane);
         assertTrue(Core.scene.hasScroll(), "pane should initially have scroll focus");

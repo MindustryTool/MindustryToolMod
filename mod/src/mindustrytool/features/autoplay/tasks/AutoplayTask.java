@@ -7,9 +7,6 @@ import mindustry.gen.Unit;
 import mindustrytool.features.autoplay.AutoplayFeature;
 import solim.reactive.Readable;
 
-/**
- * Common interface for all autonomous gameplay tasks.
- */
 public interface AutoplayTask {
 
     String getId();

@@ -30,7 +30,7 @@ import solim.reactive.Effect;
 public class ChatService {
 
     public static final int PAGE_SIZE = 50;
-    public static final long WATCHDOG_TIMEOUT_MS = 5 * 60 * 1000L;
+    public static final long WATCHDOG_TIMEOUT_MS = 30 * 60 * 1000L;
     public static final float WATCHDOG_INTERVAL_SECONDS = 5f;
 
     private final ChatStore store;
@@ -51,7 +51,8 @@ public class ChatService {
     private final Seq<CompletableFuture<?>> activeRequests = new Seq<>();
 
     public ChatService(ChatStore store, Prov<Boolean> windowOpenSupplier) {
-        this(store, channelId -> windowOpenSupplier.get() && Objects.equals(store.channels().currentActiveId(), channelId));
+        this(store,
+                channelId -> windowOpenSupplier.get() && Objects.equals(store.channels().currentActiveId(), channelId));
     }
 
     public ChatService(ChatStore store, Boolf<String> feedVisiblePredicate) {
@@ -133,12 +134,6 @@ public class ChatService {
         Core.app.post(() -> store.session().setConnected(false));
     }
 
-    /**
-     * Releases the reactive effects owned by this service. Terminal: the
-     * service must not be started again afterwards. Production instances live
-     * for the application lifetime; tests call this in teardown so leaked
-     * effects do not pollute the shared dispatcher across tests.
-     */
     public void dispose() {
         autoLoadEffect.dispose();
         unreadEffect.dispose();
@@ -509,7 +504,8 @@ public class ChatService {
                         Core.app.post(() -> {
                             store.session().setConnected(true);
                             store.messages().remove(del.getChannelId(), del.getId());
-                            if (store.ui().currentReplyTarget() != null && Objects.equals(store.ui().currentReplyTarget().getId(), del.getId())) {
+                            if (store.ui().currentReplyTarget() != null
+                                    && Objects.equals(store.ui().currentReplyTarget().getId(), del.getId())) {
                                 store.ui().setReplyTarget(null);
                             }
                             if (del.getChannelId() != null && del.getLastMessageId() != null) {
@@ -538,9 +534,7 @@ public class ChatService {
             }
         }
         if (!missing.isEmpty()) {
-            // Network-only by contract: user profiles are fetched directly per
-            // batch with no long-term QueryCache retention. The store itself
-            // dedupes repeat authors within the session.
+
             MindustryTool.getUserBatch(missing).thenAccept(userDataList -> {
                 if (userDataList != null) {
                     Core.app.post(() -> store.users().putAll(userDataList));

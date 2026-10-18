@@ -13,10 +13,11 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import mindustrytool.features.playerconnect.net.PlayerConnectClient;
 import mindustrytool.models.response.PlayerConnectProvider;
-import solim.core.BaseComponent;
 import solim.core.Component;
+import solim.core.Units;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
+import solim.reactive.Effect;
 import solim.reactive.Signal;
 
 public class HostRoomDialog extends SolimDialog {
@@ -31,7 +32,7 @@ public class HostRoomDialog extends SolimDialog {
         children(() -> new HostRoomView(feature, this));
     }
 
-    private static class HostRoomView extends BaseComponent {
+    private static class HostRoomView extends Component {
         private static enum Step {
             CONFIG, PROVIDER
         }
@@ -57,11 +58,7 @@ public class HostRoomDialog extends SolimDialog {
         @Override
         protected Element build() {
             return column()
-                    .growX()
-                    .maxWidth(dvw(90f).map(w -> Math.min(w, 1100f)))
-                    .maxHeight(dvh(85f).map(h -> Math.min(h, 1200f)))
-                    .gap(unit(3))
-                    .center()
+                    .props(growX(), solim.UI.maxWidth(Units.dvw.map(w -> Math.min(w * 0.9f, 1100f))), maxHeight(Units.dvh.map(h -> Math.min(h * 0.85f, 1200f))), gap(unit(3)), center())
                     .children(() -> {
                         dynamic(step, currentStep -> {
                             if (currentStep == Step.CONFIG) {
@@ -69,46 +66,37 @@ public class HostRoomDialog extends SolimDialog {
                             } else {
                                 buildProvider();
                             }
-                        }).growX();
+                        }).props(growX());
                     }).element();
         }
 
         private Component buildConfig() {
             return column()
-                    .growX()
-                    .gap(unit(3.5f))
-                    .center()
+                    .props(growX(), gap(unit(3.5f)), center())
                     .children(() -> {
                         text(Core.bundle.get("feature.player-connect.step1-title", "Room Settings"))
-                                .color(Pal.accent);
+                                .props(color(Pal.accent));
 
-                        // Room Name
-                        column().growX().gap(unit(1.5f)).left().children(() -> {
-                            text(Core.bundle.get("feature.player-connect.room-name", "Room Name:")).left();
-                            row().growX().height(unit(11)).border(1.5f, Color.darkGray).paddingX(unit(2))
-                                    .rounded(unit(2))
+                        column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
+                            text(Core.bundle.get("feature.player-connect.room-name", "Room Name:")).props(left());
+                            row().props(growX(), height(unit(11)), prefHeight(unit(11)), border(1.5f, Color.darkGray), paddingX(unit(2)), rounded(unit(2)))
                                     .children(() -> {
                                         textField(feature.roomNameConfig.signal())
-                                                .grow()
-                                                .style(WebStyles.clearInput());
+                                                .props(style(WebStyles.clearInput()), grow());
                                     });
                         });
 
-                        // Password
-                        column().growX().gap(unit(1.5f)).left().children(() -> {
-                            text(Core.bundle.get("feature.player-connect.password", "Password:")).left();
-                            row().growX().height(unit(11)).border(1.5f, Color.darkGray).paddingX(unit(2))
-                                    .rounded(unit(2))
+                        column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
+                            text(Core.bundle.get("feature.player-connect.password", "Password:")).props(left());
+                            row().props(growX(), height(unit(11)), prefHeight(unit(11)), border(1.5f, Color.darkGray), paddingX(unit(2)), rounded(unit(2)))
                                     .children(() -> {
                                         textField(feature.passwordConfig.signal())
-                                                .grow()
-                                                .style(WebStyles.clearInput());
+                                                .props(style(WebStyles.clearInput()), grow());
                                     });
                         });
 
-                        // Max Players
                         Signal<String> maxPlayersSig = Signal.of(String.valueOf(feature.maxPlayerConfig.get()));
-                        maxPlayersSig.subscribe(str -> {
+                        Effect.of(maxPlayersSig, str -> {
                             try {
                                 if (str != null) {
                                     feature.maxPlayerConfig.set(Math.max(0, Integer.parseInt(str.trim())));
@@ -116,88 +104,61 @@ public class HostRoomDialog extends SolimDialog {
                             } catch (NumberFormatException ignored) {
                             }
                         });
-                        column().growX().gap(unit(1.5f)).left().children(() -> {
-                            text(Core.bundle.get("feature.player-connect.max-players", "Max Players (0=unlimited):"))
-                                    .left();
-                            row().growX().height(unit(11)).border(1.5f, Color.darkGray).paddingX(unit(2))
-                                    .rounded(unit(2))
+                        column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
+                            text(Core.bundle.get("feature.player-connect.max-players", "Max Players (0=unlimited):")).props(left());
+                            row().props(growX(), height(unit(11)), prefHeight(unit(11)), border(1.5f, Color.darkGray), paddingX(unit(2)), rounded(unit(2)))
                                     .children(() -> {
                                         textField(maxPlayersSig)
-                                                .grow()
-                                                .style(WebStyles.clearInput());
+                                                .props(style(WebStyles.clearInput()), grow());
                                     });
                         });
 
-                        // Auto Accept
-                        column().growX().gap(unit(1.5f)).left().children(() -> {
-                            text(Core.bundle.get("feature.player-connect.auto-accept", "Auto-accept players:"))
-                                    .left();
+                        column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
+                            text(Core.bundle.get("feature.player-connect.auto-accept", "Auto-accept players:")).props(left());
                             button(feature.autoAcceptConfig.signal().map(v -> Boolean.TRUE.equals(v)
                                     ? Core.bundle.get("yes", "Yes")
                                     : Core.bundle.get("no", "No")), () -> {
                                         feature.autoAcceptConfig
                                                 .set(!Boolean.TRUE.equals(feature.autoAcceptConfig.get()));
                                     })
-                                    .style(WebStyles.outline())
-                                    .height(unit(10))
-                                    .paddingX(unit(4))
-                                    .paddingY(unit(2))
-                                    .minWidth(unit(24));
+                                    .props(style(WebStyles.outline()), height(unit(10)), prefHeight(unit(10)), paddingX(unit(4)), paddingY(unit(2)), minWidth(unit(24)));
                         });
 
-                        row().gap(unit(2)).children(() -> {
+                        row().props(gap(unit(2))).children(() -> {
                             button(Core.bundle.get("cancel", "Cancel"), dialog::hide)
-                                    .style(WebStyles.outline())
-                                    .height(unit(11))
-                                    .paddingX(unit(6))
-                                    .paddingY(unit(2.5f))
-                                    .minWidth(unit(28));
+                                    .props(style(WebStyles.outline()), height(unit(11)), prefHeight(unit(11)), paddingX(unit(6)), paddingY(unit(2.5f)), minWidth(unit(28)));
 
                             button(Core.bundle.get("next", "Next"), () -> {
                                 step.set(Step.PROVIDER);
                                 pingAllProviders();
                             })
-                                    .style(WebStyles.primary())
-                                    .height(unit(11))
-                                    .paddingX(unit(8))
-                                    .paddingY(unit(2.5f))
-                                    .minWidth(unit(36));
+                                    .props(style(WebStyles.primary()), height(unit(11)), prefHeight(unit(11)), paddingX(unit(8)), paddingY(unit(2.5f)), minWidth(unit(36)));
                         });
                     });
         }
 
         private Component buildProvider() {
             return column()
-                    .growX()
-                    .gap(unit(3))
-                    .center()
+                    .props(growX(), gap(unit(3)), center())
                     .children(() -> {
-                        row().growX().gap(unit(2)).center().children(() -> {
+                        row().props(growX(), gap(unit(2)), center()).children(() -> {
                             text(Core.bundle.get("feature.player-connect.select-provider", "Select Relay Provider"))
-                                    .ellipsis()
-                                    .growX()
-                                    .color(Pal.accent);
+                                    .props(color(Pal.accent), ellipsis(true), growX());
                             spacer();
                             button(Core.bundle.get("refresh", "Refresh"), () -> {
                                 feature.refreshProviders();
                                 pingAllProviders();
                             })
-                                    .style(WebStyles.outline())
-                                    .height(unit(9))
-                                    .paddingX(unit(4))
-                                    .paddingY(unit(2));
+                                    .props(style(WebStyles.outline()), height(unit(9)), prefHeight(unit(9)), paddingX(unit(4)), paddingY(unit(2)));
 
                             button("+ " + Core.bundle.get("custom", "Custom"), this::showAddCustomDialog)
-                                    .style(WebStyles.outline())
-                                    .height(unit(9))
-                                    .paddingX(unit(4))
-                                    .paddingY(unit(2));
+                                    .props(style(WebStyles.outline()), height(unit(9)), prefHeight(unit(9)), paddingX(unit(4)), paddingY(unit(2)));
                         });
 
                         divider();
 
-                        scroll().height(unit(80)).growX().scrollX(false).children(() -> {
-                            column().growX().gap(unit(2)).children(() -> {
+                        scroll().props(height(unit(80)), prefHeight(unit(80)), growX(), scrollX(false)).children(() -> {
+                            column().props(growX(), gap(unit(2))).children(() -> {
                                 for (PlayerConnectProvider p : feature.providersSignal().get()) {
                                     providerCard(p);
                                 }
@@ -206,22 +167,13 @@ public class HostRoomDialog extends SolimDialog {
 
                         divider();
 
-                        row().gap(unit(4)).center().children(() -> {
+                        row().props(gap(unit(4)), center()).children(() -> {
                             button(Core.bundle.get("back", "Back"), () -> step.set(Step.CONFIG))
-                                    .style(WebStyles.outline())
-                                    .height(unit(11))
-                                    .paddingX(unit(6))
-                                    .paddingY(unit(2.5f))
-                                    .minWidth(unit(28));
+                                    .props(style(WebStyles.outline()), height(unit(11)), prefHeight(unit(11)), paddingX(unit(6)), paddingY(unit(2.5f)), minWidth(unit(28)));
 
                             button(Core.bundle.get("feature.player-connect.start-hosting", "Start Hosting"),
                                     this::startHosting)
-                                    .style(WebStyles.primary())
-                                    .height(unit(11))
-                                    .paddingX(unit(8))
-                                    .paddingY(unit(2.5f))
-                                    .minWidth(unit(36))
-                                    .enabled(selectedProvider.map(p -> p != null));
+                                    .props(style(WebStyles.primary()), enabled(selectedProvider.map(p -> p != null)), height(unit(11)), prefHeight(unit(11)), paddingX(unit(8)), paddingY(unit(2.5f)), minWidth(unit(36)));
                         });
                     });
         }
@@ -230,25 +182,18 @@ public class HostRoomDialog extends SolimDialog {
             Signal<String> pingSignal = getOrCreatePingSignal(provider.getAddress());
             Computed<Boolean> isSelected = selectedProvider
                     .map(sel -> sel != null && sel.getAddress().equals(provider.getAddress()));
-            Computed<Boolean> showAddress = dvw(100f).map(w -> w != null && w >= 700f);
+            Computed<Boolean> showAddress = Units.dvw.map(w -> w >= 700f);
 
             return card()
-                    .background(WebStyles.Colors.SECONDARY)
-                    .border(1.5f, isSelected.map(s -> s ? Pal.accent : WebStyles.Colors.BORDER_INPUT))
-                    .growX()
-                    .minHeight(unit(12))
-                    .padding(unit(2), unit(3), unit(2), unit(3))
-                    .onClick(() -> selectedProvider.set(provider))
+                    .props(background(WebStyles.Colors.SECONDARY), border(1.5f, isSelected.map(s -> s ? Pal.accent : WebStyles.Colors.BORDER_INPUT)), growX(), minHeight(unit(12)), padding(unit(2), unit(3), unit(2), unit(3)), onClick(() -> selectedProvider.set(provider)))
                     .children(() -> {
-                        row().growX().gap(unit(2)).center().children(() -> {
-                            text(provider.getName()).color(isSelected.map(s -> s ? Pal.accent : Color.white)).left();
+                        row().props(growX(), gap(unit(2)), center()).children(() -> {
+                            text(provider.getName()).props(color(isSelected.map(s -> s ? Pal.accent : Color.white)), left());
                             spacer();
                             when(showAddress)
-                                    .thenDo(() -> text(provider.getAddress()).color(Color.lightGray));
+                                    .thenDo(() -> text(provider.getAddress()).props(color(Color.lightGray)));
                             text(pingSignal)
-                                    .color(pingSignal.map(this::getPingColor))
-                                    .width(unit(22))
-                                    .right();
+                                    .props(color(pingSignal.map(this::getPingColor)), width(unit(22)), prefWidth(unit(22)), right());
                         });
                     });
         }

@@ -53,7 +53,7 @@ class BindingTest extends SolimEnv {
 	void reactiveTextImmediateApply() {
 		Signal<String> s = Signal.of("Alice");
 		TestElement target = new TestElement();
-		Effect b = Binding.of((Cons<String>) t -> target.setText(t), s);
+		Effect b = Effect.of(s, (Cons<String>) t -> target.setText(t));
 		assertEquals("Alice", target.text, "Immediate apply on create");
 		s.set("Bob");
 		SignalDispatcher.flush();
@@ -69,7 +69,7 @@ class BindingTest extends SolimEnv {
 		Signal<Integer> count = Signal.of(1);
 		Computed<String> text = count.map(v -> "Count: " + v);
 		TestElement target = new TestElement();
-		Effect b = Binding.of((Cons<String>) t -> target.setText(t), text);
+		Effect b = Effect.of(text, (Cons<String>) t -> target.setText(t));
 		assertEquals("Count: 1", target.text);
 		count.set(2);
 		SignalDispatcher.flush();
@@ -81,7 +81,7 @@ class BindingTest extends SolimEnv {
 	void noRebuildOnChange() {
 		Signal<String> s = Signal.of("a");
 		TestElement target = new TestElement();
-		Effect b = Binding.bind(s, t -> target.setText(t));
+		Effect b = Effect.of(s, t -> target.setText(t));
 		TestElement ref = target;
 		s.set("b");
 		SignalDispatcher.flush();
@@ -93,7 +93,7 @@ class BindingTest extends SolimEnv {
 	void visibleAndEnabledBinding() {
 		Signal<Boolean> isLoggedIn = Signal.of(false);
 		TestElement target = new TestElement();
-		Effect visible = Binding.of((Cons<Boolean>) t -> target.setVisible(t), isLoggedIn);
+		Effect visible = Effect.of(isLoggedIn, (Cons<Boolean>) t -> target.setVisible(t));
 		assertFalse(target.visible);
 		isLoggedIn.set(true);
 		SignalDispatcher.flush();
@@ -101,7 +101,7 @@ class BindingTest extends SolimEnv {
 		visible.dispose();
 
 		Signal<Boolean> canSave = Signal.of(true);
-		Effect enabled = Binding.of((Cons<Boolean>) t -> target.setEnabled(t), canSave);
+		Effect enabled = Effect.of(canSave, (Cons<Boolean>) t -> target.setEnabled(t));
 		assertTrue(target.enabled);
 		canSave.set(false);
 		SignalDispatcher.flush();
@@ -113,7 +113,7 @@ class BindingTest extends SolimEnv {
 	void disposeStopsUpdates() {
 		Signal<String> s = Signal.of("a");
 		AtomicReference<String> target = new AtomicReference<>("");
-		Effect b = Binding.of(target::set, s);
+		Effect b = Effect.of(s, target::set);
 		assertEquals("a", target.get());
 		b.dispose();
 		s.set("b");
@@ -127,8 +127,8 @@ class BindingTest extends SolimEnv {
 		Signal<Float> width = Signal.of(100f);
 		Signal<Color> color = Signal.of(Color.red);
 
-		Effect bWidth = Binding.bindWidth(el, width);
-		Effect bColor = Binding.bindColor(el, color);
+		Effect bWidth = Effect.of(width, w -> el.setWidth(w != null ? w : 0f));
+		Effect bColor = Effect.of(color, c -> { if (c != null) el.setColor(c); });
 
 		assertEquals(100f, el.getWidth());
 		assertEquals(Color.red, el.color);
@@ -154,7 +154,7 @@ class BindingTest extends SolimEnv {
 	void directElementVisibleAndDisabledBinding() {
 		Element el = new Element();
 		Signal<Boolean> vis = Signal.of(false);
-		Effect bVis = Binding.bindVisible(el, vis);
+		Effect bVis = Effect.of(vis, v -> el.visible = Boolean.TRUE.equals(v));
 		assertFalse(el.visible);
 		vis.set(true);
 		SignalDispatcher.flush();
@@ -164,7 +164,7 @@ class BindingTest extends SolimEnv {
 		if (Core.scene != null) {
 			Button btn = new Button();
 			Signal<Boolean> dis = Signal.of(false);
-			Effect bDis = Binding.bindDisabled(btn, dis);
+			Effect bDis = Effect.of(dis, d -> btn.setDisabled(Boolean.TRUE.equals(d)));
 			assertFalse(btn.isDisabled());
 			dis.set(true);
 			SignalDispatcher.flush();

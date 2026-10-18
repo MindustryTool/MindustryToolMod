@@ -13,11 +13,6 @@ import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.reactive.Signals;
 
-/**
- * QuickAccess popup for TimeControl, opened from QuickAccess in popup display
- * mode. Reuses the shared horizontal control row layout from TimeControlHudView
- * inside a black rounded container.
- */
 public final class TimeControlPopup {
 
     private static @Nullable Popup<TimeControlFeature> menu;
@@ -43,7 +38,7 @@ public final class TimeControlPopup {
         }
         if (menu == null) {
             menu = popup();
-            menu.children(TimeControlPopup::buildContent);
+            menu.items(TimeControlPopup::buildContent);
         }
         QuickAccessPopupHelper.show(menu, feature, quickAccessBar);
     }
@@ -63,11 +58,7 @@ public final class TimeControlPopup {
                 && Boolean.FALSE.equals(Signals.netClient().get()));
 
         return row()
-                .rounded(unit(2), WebStyles.Colors.SECTION_BG)
-                .border(1.5f, WebStyles.Colors.BORDER)
-                .padding(unit(1))
-                .gap(unit(1))
-                .center()
+                .props(rounded(unit(2), WebStyles.Colors.SECTION_BG), border(1.5f, WebStyles.Colors.BORDER), padding(unit(1)), gap(unit(1)), center())
                 .children(() -> TimeControlHudView.buildControls(feature, canEdit));
     }
 }

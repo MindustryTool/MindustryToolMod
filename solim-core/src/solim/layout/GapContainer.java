@@ -8,23 +8,16 @@ import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.SolimToken;
 import solim.modifier.PendingCellConfig;
+import solim.modifier.TableCapability;
 
-/**
- * Interface implemented by layout containers that support sibling-aware,
- * directional gap spacing along their primary axis.
- */
-public interface GapContainer {
+public interface GapContainer extends GapHost, TableCapability {
 
-    /** Primary direction of the container. */
     Direction direction();
 
-    /** Current gap spacing in pixels. */
     float gap();
 
-    /** Re-evaluates and applies directional spacing across all children. */
     void respace();
 
-    /** Resolves the GapContainer instance associated with the table, if any. */
     static @Nullable GapContainer find(@Nullable Table table) {
         if (table == null)
             return null;
@@ -32,12 +25,10 @@ public interface GapContainer {
         return comp instanceof GapContainer ? (GapContainer) comp : null;
     }
 
-    /** Returns whether the given table belongs to a GapContainer. */
     static boolean isGapContainer(@Nullable Table table) {
         return find(table) != null;
     }
 
-    /** Re-evaluates spacing on the given table if it belongs to a GapContainer. */
     static void respace(@Nullable Table table) {
         GapContainer gc = find(table);
         if (gc != null) {
@@ -45,17 +36,13 @@ public interface GapContainer {
         }
     }
 
-    /**
-     * Incrementally spaces a newly attached cell along the given direction. Only
-     * subsequent visible cells receive leading gap; first visible cell receives 0.
-     * Avoids full O(N) rescans on every element attachment.
-     */
     static void spaceAttachedCell(@Nullable Table table, @Nullable Cell<?> cell, Direction direction, float gap) {
         if (table == null || cell == null || gap <= 0f)
             return;
         Element el = cell.get();
         if (el == null || !el.visible)
             return;
+        // Arc's Table.getCells() is declared as Seq<Cell>, with a raw Cell argument that cannot be recovered from that API.
         @SuppressWarnings("rawtypes")
         Seq<Cell> cells = table.getCells();
         if (cells == null || cells.size <= 1)
@@ -79,12 +66,7 @@ public interface GapContainer {
         }
     }
 
-    /**
-     * Applies directional spacing to all cells of a Table along the given
-     * direction. The first visible element receives 0 gap padding; subsequent
-     * visible elements receive gap. Cross-axis padding and outer boundaries remain
-     * untouched.
-     */
+    // Arc's Table.getCells() is declared as Seq<Cell>, with a raw Cell argument that cannot be recovered from that API.
     @SuppressWarnings("rawtypes")
     static void applySpacing(@Nullable Table table, Direction direction, float gap) {
         if (table == null)
@@ -130,10 +112,7 @@ public interface GapContainer {
         table.invalidate();
     }
 
-    /**
-     * Applies 2D directional spacing to all cells in a Grid layout. Columns after
-     * the first receive horizontal gap; rows after the first receive vertical gap.
-     */
+    // Arc's Table.getCells() is declared as Seq<Cell>, with a raw Cell argument that cannot be recovered from that API.
     @SuppressWarnings("rawtypes")
     static void applyGridSpacing(@Nullable Table table, int columns, float gap) {
         if (table == null)

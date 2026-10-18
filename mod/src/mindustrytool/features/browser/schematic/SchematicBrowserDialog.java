@@ -6,6 +6,7 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.struct.Seq;
+
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import mindustry.Vars;
@@ -20,17 +21,13 @@ import mindustrytool.features.browser.common.BrowserSearchHeader;
 import mindustrytool.features.browser.common.BrowserState;
 import mindustrytool.models.response.SchematicData;
 import mindustrytool.services.MindustryTool;
-import solim.core.BaseComponent;
+import solim.core.Units;
 import solim.core.Component;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
 import solim.reactive.Signal;
 import java.util.Collections;
 
-/**
- * Main schematic browser dialog with reactive column reflow and a keyed
- * reactive grid of schematic cards.
- */
 public class SchematicBrowserDialog extends SolimDialog {
 
     private final BrowserState<SchematicData> state;
@@ -39,11 +36,10 @@ public class SchematicBrowserDialog extends SolimDialog {
     public SchematicBrowserDialog() {
         super(Core.bundle.get("browser.schematic.title"));
 
-        state = new BrowserState<>(SchematicBrowserDialog::fetchSchematics);
+        state = new BrowserState<>(SchematicBrowserDialog::fetchSchematics, "schematics");
         filterDialog = new BrowserFilterDialog(state, "schematics", true, false);
 
         closeOnBack();
-        fillParent(true);
         children(() -> new BrowserContent(this, state, filterDialog, this::hide));
         cont().background(Styles.black);
         shown(() -> state.start());
@@ -69,38 +65,11 @@ public class SchematicBrowserDialog extends SolimDialog {
                 state.verification().peek());
     }
 
-    private static class BrowserContent extends BaseComponent {
+    private static class BrowserContent extends Component {
         private final SchematicBrowserDialog dialog;
         private final BrowserState<SchematicData> state;
         private final BrowserFilterDialog filterDialog;
         private final Runnable onClose;
-        private final Computed<Float> viewportWidth = dvw(100f);
-        private final Computed<Float> viewportHeight = dvh(100f);
-        private final Computed<Integer> columnCount = new Computed<>(() -> {
-            Float width = viewportWidth.get();
-            return BrowserLayout.calculateColumns(width != null ? width : 800f);
-        });
-
-        private final Computed<Float> cardsWidth = new Computed<>(() -> {
-            Float width = viewportWidth.get();
-            return BrowserLayout.calculateCardsWidth(width != null ? width : 800f);
-        });
-
-        private final Computed<Float> contentWidth = new Computed<>(() -> {
-            Float width = viewportWidth.get();
-            return BrowserLayout.calculateContentWidth(width != null ? width : 800f);
-        });
-
-        private final Computed<Float> cardSize = cardsWidth.map(w -> Math.min(BrowserLayout.CARD_SIZE, w));
-        private final Computed<Integer> calculatedPageSize = new Computed<>(() -> {
-            Float width = viewportWidth.get();
-            Float height = viewportHeight.get();
-            return BrowserLayout.calculatePageSize(
-                    width != null ? width : 800f,
-                    height != null ? height : 600f);
-        });
-        private final Signal<Integer> visibleCount;
-        private final Computed<Seq<SchematicData>> visibleItems;
 
         BrowserContent(SchematicBrowserDialog dialog, BrowserState<SchematicData> state,
                 BrowserFilterDialog filterDialog, Runnable onClose) {
@@ -108,8 +77,38 @@ public class SchematicBrowserDialog extends SolimDialog {
             this.state = state;
             this.filterDialog = filterDialog;
             this.onClose = onClose;
-            this.visibleCount = Signal.of(BrowserLayout.RENDER_CHUNK_SIZE);
-            this.visibleItems = new Computed<>(() -> {
+        }
+
+        @Override
+        protected Element build() {
+
+            Signal<Float> viewportWidth = Units.dvw;
+            Signal<Float> viewportHeight = Units.dvh;
+            Computed<Integer> columnCount = new Computed<>(() -> {
+                Float width = viewportWidth.get();
+                return BrowserLayout.calculateColumns(width != null ? width : 800f);
+            });
+
+            Computed<Float> cardsWidth = new Computed<>(() -> {
+                Float width = viewportWidth.get();
+                return BrowserLayout.calculateCardsWidth(width != null ? width : 800f);
+            });
+
+            Computed<Float> contentWidth = viewportWidth
+                    .map(width -> BrowserLayout.calculateContentWidth(width != null ? width : 800f));
+
+            Computed<Float> cardSize = cardsWidth.map(w -> Math.min(BrowserLayout.CARD_SIZE, w));
+
+            Computed<Integer> calculatedPageSize = new Computed<>(() -> {
+                Float width = viewportWidth.get();
+                Float height = viewportHeight.get();
+                return BrowserLayout.calculatePageSize(
+                        width != null ? width : 800f,
+                        height != null ? height : 600f);
+            });
+
+            Signal<Integer> visibleCount = Signal.of(BrowserLayout.RENDER_CHUNK_SIZE);
+            Computed<Seq<SchematicData>> visibleItems = new Computed<>(() -> {
                 Seq<SchematicData> all = state.items().get();
                 Integer limit = visibleCount.get();
                 return BrowserState.firstItems(all, limit != null ? limit : 0);
@@ -127,70 +126,75 @@ public class SchematicBrowserDialog extends SolimDialog {
                 int total = all != null ? all.size : 0;
                 Integer page = state.page().get();
                 visibleCount.set(Math.min(BrowserLayout.RENDER_CHUNK_SIZE, total));
-                expandVisible(total, page != null ? page : 0);
+                expandVisible(visibleCount, total, page != null ? page : 0);
             });
+
+            return column()
+                    .props(grow(), paddingX(BrowserLayout.HORIZONTAL_PADDING), paddingY(unit(2)), center())
+                    .children(() -> {
+                        column()
+                                .props(width(contentWidth), prefWidth(contentWidth), growY(), gap(unit(2)))
+                                .children(() -> {
+                                    new BrowserSearchHeader(state, () -> filterDialog.show());
+                                    body(columnCount, cardSize, visibleItems);
+                                    new BrowserFooter(state, Config.UPLOAD_SCHEMATIC_URL, onClose);
+                                });
+                    }).element();
         }
 
-        private void expandVisible(int total, int page) {
+        private void expandVisible(Signal<Integer> visibleCount, int total, int page) {
             Integer current = visibleCount.peek();
             if (current == null || current >= total) {
                 return;
             }
+
             Core.app.post(() -> {
                 if (isDisposed()) {
                     return;
                 }
+
                 Integer currentPage = state.page().peek();
                 if (currentPage == null || currentPage != page) {
                     return;
                 }
+                
                 Integer shown = visibleCount.peek();
                 int next = Math.min(total, (shown != null ? shown : 0) + BrowserLayout.RENDER_CHUNK_SIZE);
                 visibleCount.set(next);
-                expandVisible(total, page);
+                expandVisible(visibleCount, total, page);
             });
         }
 
-        @Override
-        protected Element build() {
-            return column().grow().center().paddingX(BrowserLayout.HORIZONTAL_PADDING).paddingY(unit(2))
-                    .children(() -> {
-                        column().width(contentWidth).growY().gap(unit(2)).children(() -> {
-                            new BrowserSearchHeader(state, () -> filterDialog.show());
-                            body();
-                            new BrowserFooter(state, Config.UPLOAD_SCHEMATIC_URL, onClose);
-                        });
-                    }).element();
-        }
-
-        private void body() {
+        private void body(Computed<Integer> columnCount, Computed<Float> cardSize,
+                Computed<Seq<SchematicData>> visibleItems) {
             query(state.query())
-                    .grow()
+                    .props(grow())
                     .loading(Loader::centered)
-                    .error(err -> row().grow().gap(unit(1)).children(() -> {
+                    .error(err -> row().props(grow(), gap(unit(1))).children(() -> {
                         Throwable cause = err != null && err.getCause() != null ? err.getCause() : err;
                         String msg = cause != null && cause.getMessage() != null ? cause.getMessage()
                                 : (cause != null ? cause.toString() : "");
 
-                        text(msg).color(Color.scarlet).wrap(true).growX();
+                        text(msg).props(color(Color.scarlet), textWrap(true), growX());
                         button(Core.bundle.get("browser.retry"), () -> state.refresh())
-                                .style(WebStyles.outlineText())
-                                .height(unit(10));
+                                .props(style(WebStyles.outlineText()), height(unit(10)), prefHeight(unit(10)));
                     }))
-                    .data((list, fetching) -> fetching ? Loader.centered() : items())
-                    .grow();
+                    .data((list, fetching) -> fetching ? Loader.centered()
+                            : items(columnCount, cardSize, visibleItems))
+                    .props(grow());
         }
 
-        private Component items() {
-            return scroll().style(Styles.noBarPane).grow().paddingLeft(BrowserLayout.SCROLLBAR_GUTTER)
+        private Component items(Computed<Integer> columnCount, Computed<Float> cardSize,
+                Computed<Seq<SchematicData>> visibleItems) {
+            return scroll().props(style(Styles.noBarPane), grow(), paddingLeft(BrowserLayout.SCROLLBAR_GUTTER))
                     .children(() -> {
                         reactiveGrid(visibleItems)
                                 .columns(columnCount)
                                 .key(SchematicData::getItemId)
-                                .empty(() -> text(Core.bundle.get("browser.empty")).color(Color.gray)
-                                        .padding(unit(4)))
-                                .gap(BrowserLayout.CARD_GAP)
-                                .children(item -> new SchematicCard(item, cardSize,
+                                .props(gap(BrowserLayout.CARD_GAP))
+                                .empty(() -> text(Core.bundle.get("browser.empty"))
+                                        .props(color(Color.gray), margin(unit(4))))
+                                .items(item -> new SchematicCard(item, cardSize,
                                         () -> onCardClick(item),
                                         () -> SchematicActions.copyToClipboard(item.getItemId()),
                                         () -> SchematicActions.saveToLocal(item.getItemId()),

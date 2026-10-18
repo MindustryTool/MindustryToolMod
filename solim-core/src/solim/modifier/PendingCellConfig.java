@@ -1,40 +1,45 @@
 package solim.modifier;
 
+import solim.runtime.ReactiveContext;
+
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
+import arc.scene.ui.layout.Scl;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import solim.core.Disposable;
+import solim.core.OwnershipContext;
 import solim.core.SolimToken;
-import solim.runtime.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.layout.GapContainer;
 import arc.util.Align;
 
-/**
- * Deferred configuration buffer for parent Cell settings.
- *
- * <p>
- * Holds pending values that will be applied to a parent Cell when the element
- * is attached to a parent Table via {@link AttachmentStack}.
- */
 public final class PendingCellConfig {
 
     public static final AttachmentStack.CellConfigurator DEFAULT_CONFIGURATOR = (cell, child, comp) -> {
         PendingCellConfig config = comp != null ? find(comp) : null;
+
         if (config == null) {
             config = find(child);
         }
+
         if (config != null) {
-            List<Disposable> effects = config.applyToCell(cell);
-            for (Disposable effect : effects) {
-                OwnershipContext.register(effect);
+            if (comp != null) {
+                OwnershipContext.push(comp);
+                try {
+                    config.applyToCell(cell);
+                } finally {
+                    OwnershipContext.pop(comp);
+                }
+            } else {
+                config.applyToCell(cell);
             }
         }
+
         GapContainer.respace(cell.getTable());
     };
 
@@ -46,54 +51,52 @@ public final class PendingCellConfig {
         AttachmentStack.setCellConfigurator(DEFAULT_CONFIGURATOR);
     }
 
-    /** Preferred width. Null means "no constraint — use natural size". */
     public @Nullable Readable<Float> prefWidth;
 
-    /** Preferred height. Null means "no constraint — use natural size". */
     public @Nullable Readable<Float> prefHeight;
 
-    /** Minimum width. Applied as cell.minWidth(). */
     public @Nullable Readable<Float> minWidth;
 
-    /** Minimum height. Applied as cell.minHeight(). */
     public @Nullable Readable<Float> minHeight;
 
-    /** Maximum width. Applied as cell.maxWidth(). */
     public @Nullable Readable<Float> maxWidth;
 
-    /** Maximum height. Applied as cell.maxHeight(). */
     public @Nullable Readable<Float> maxHeight;
 
-    /** Whether the parent cell should grow this element on the X axis. */
     public boolean growX = false;
 
-    /** Whether the parent cell should grow this element on the Y axis. */
     public boolean growY = false;
 
-    /** Outer margins (applied as cell.pad()). Null means use container default. */
     public @Nullable Readable<Float> padTop;
     public @Nullable Readable<Float> padLeft;
     public @Nullable Readable<Float> padBottom;
     public @Nullable Readable<Float> padRight;
 
-    /**
-     * Alignment of this element within its parent cell. Null means use container
-     * default.
-     */
     public @Nullable Integer align;
 
-    /**
-     * Returns true if any explicit preferred or bounded width constraint is set.
-     */
+    private @Nullable List<Disposable> appliedBindings;
+
     public boolean hasExplicitWidth() {
         return prefWidth != null || minWidth != null || maxWidth != null;
     }
 
-    /**
-     * Returns true if any explicit preferred or bounded height constraint is set.
-     */
     public boolean hasExplicitHeight() {
         return prefHeight != null || minHeight != null || maxHeight != null;
+    }
+
+    public void align(int named) {
+        if (named == 0) {
+            this.align = null;
+            return;
+        }
+        if (named == Align.center) {
+            this.align = Align.center;
+            return;
+        }
+        int current = this.align != null ? this.align : 0;
+        int opposite = named == Align.top ? Align.bottom : named == Align.bottom ? Align.top
+                : named == Align.left ? Align.right : Align.left;
+        this.align = (current | named) & ~opposite;
     }
 
     public void alignCenter() {
@@ -101,34 +104,34 @@ public final class PendingCellConfig {
     }
 
     public void alignTop() {
-        int current = this.align != null ? this.align : 0;
-        this.align = (current | Align.top) & ~Align.bottom;
+        align(Align.top);
     }
 
     public void alignBottom() {
-        int current = this.align != null ? this.align : 0;
-        this.align = (current | Align.bottom) & ~Align.top;
+        align(Align.bottom);
     }
 
     public void alignLeft() {
-        int current = this.align != null ? this.align : 0;
-        this.align = (current | Align.left) & ~Align.right;
+        align(Align.left);
     }
 
     public void alignRight() {
-        int current = this.align != null ? this.align : 0;
-        this.align = (current | Align.right) & ~Align.left;
+        align(Align.right);
     }
 
     public static @Nullable PendingCellConfig find(@Nullable Object target) {
-        if (target == null)
+        if (target == null) {
             return null;
-        if (target instanceof CellConfig) {
-            return ((CellConfig<?>) target).cellConfig();
         }
+
+        if (target instanceof Configurable) {
+            return ((ElementCapability) target).cellConfig();
+        }
+
         if (target instanceof PendingCellConfig) {
             return (PendingCellConfig) target;
         }
+
         if (target instanceof Element) {
             Element el = (Element) target;
             SolimToken token = SolimToken.get(el);
@@ -136,8 +139,8 @@ public final class PendingCellConfig {
                 if (token.cellConfig != null) {
                     return token.cellConfig;
                 }
-                if (token.component instanceof CellConfig) {
-                    return ((CellConfig<?>) token.component).cellConfig();
+                if (token.component instanceof Configurable) {
+                    return ((ElementCapability) token.component).cellConfig();
                 }
             }
             return null;
@@ -145,17 +148,10 @@ public final class PendingCellConfig {
         return null;
     }
 
-    /**
-     * Applies all constraints to the given cell. Static values are applied
-     * immediately. Reactive values ({@code Signal}, {@code Computed}) install an
-     * {@code Effect} that re-applies the constraint whenever the source changes.
-     *
-     * @return a list of installed {@link Effect} instances — the caller must own
-     *         and dispose them when the component is disposed.
-     */
     public List<Disposable> applyToCell(Cell<?> cell) {
+        releaseApplied();
         List<Disposable> effects = new ArrayList<>();
-
+        boolean windowed = OwnershipContext.size() > 0;
         effects.addAll(bind(cell, prefWidth, v -> applyPrefWidth(cell, v)));
         effects.addAll(bind(cell, prefHeight, v -> applyPrefHeight(cell, v)));
         effects.addAll(bind(cell, minWidth, v -> applyMinWidth(cell, v)));
@@ -195,12 +191,15 @@ public final class PendingCellConfig {
                 cell.padRight(Math.max(0f, v));
             }
         }));
+        if (!windowed) {
+            adoptAll(effects);
+        }
 
         if (growX) {
             cell.growX();
-            if (minWidth == null) {
-                cell.minWidth(0f);
-            }
+            Float floor = ReactiveContext.untracked(
+                    () -> minWidth != null ? minWidth.peek() : prefWidth != null ? prefWidth.peek() : null);
+            cell.minWidth(floor != null ? Math.max(0f, floor) : 0f);
         }
         if (growY)
             cell.growY();
@@ -209,65 +208,100 @@ public final class PendingCellConfig {
             cell.align(align);
         }
 
+        if (windowed) {
+            appliedBindings = effects;
+        }
         return effects;
     }
 
     /**
-     * Immediately applies size constraints to the element's parent cell if the
-     * element is already attached to a parent Table.
+     * Takes ownership of bindings created outside a component window, so a direct
+     * {@code applyToCell} call from application or test code still has a lifecycle.
      */
+    private void adoptAll(List<Disposable> effects) {
+        List<Disposable> owned = appliedBindings;
+        if (owned == null) {
+            owned = new ArrayList<>();
+            appliedBindings = owned;
+        }
+        owned.addAll(effects);
+    }
+
+    /**
+     * A reconciler re-attaches its items on every pass, so the bindings installed
+     * for the previous cell must be released before the new ones are created.
+     * Without this the item would accumulate one live binding per reflow.
+     */
+    private void releaseApplied() {
+        List<Disposable> stale = appliedBindings;
+        appliedBindings = null;
+        if (stale == null) {
+            return;
+        }
+        for (int i = stale.size() - 1; i >= 0; i--) {
+            try {
+                stale.get(i).dispose();
+            } catch (Throwable ignored) {
+            }
+        }
+    }
+
     public void applySizeToParentCell(@Nullable Element element) {
-        if (element != null && element.parent instanceof Table) {
-            Table parentTable = (Table) element.parent;
-            Cell<?> cell = parentTable.getCell(element);
-            if (cell != null) {
-                if (prefWidth != null && prefWidth.get() != null)
-                    cell.width(Math.max(0f, prefWidth.get()));
-                if (prefHeight != null && prefHeight.get() != null)
-                    cell.height(Math.max(0f, prefHeight.get()));
-                if (minWidth != null && minWidth.get() != null)
-                    cell.minWidth(Math.max(0f, minWidth.get()));
-                if (minHeight != null && minHeight.get() != null)
-                    cell.minHeight(Math.max(0f, minHeight.get()));
-                if (maxWidth != null && maxWidth.get() != null)
-                    cell.maxWidth(Math.max(0f, maxWidth.get()));
-                if (maxHeight != null && maxHeight.get() != null)
-                    cell.maxHeight(Math.max(0f, maxHeight.get()));
-                parentTable.invalidateHierarchy();
-            }
-        }
+        applyPrefWidth(element);
+        applyPrefHeight(element);
+        applyMinWidth(element);
+        applyMinHeight(element);
+        applyMaxWidth(element);
+        applyMaxHeight(element);
     }
 
-    /**
-     * Immediately applies margin constraints to the element's parent cell if the
-     * element is already attached to a parent Table.
-     */
+    public void applyPrefWidth(@Nullable Element element) {
+        applySize(element, prefWidth, Cell::width, (target, value) -> target.setWidth(Scl.scl(value)));
+    }
+
+    public void applyPrefHeight(@Nullable Element element) {
+        applySize(element, prefHeight, Cell::height, (target, value) -> target.setHeight(Scl.scl(value)));
+    }
+
+    public void applyMinWidth(@Nullable Element element) {
+        applySize(element, minWidth, Cell::minWidth, null);
+    }
+
+    public void applyMinHeight(@Nullable Element element) {
+        applySize(element, minHeight, Cell::minHeight, null);
+    }
+
+    public void applyMaxWidth(@Nullable Element element) {
+        applySize(element, maxWidth, Cell::maxWidth, null);
+    }
+
+    public void applyMaxHeight(@Nullable Element element) {
+        applySize(element, maxHeight, Cell::maxHeight, null);
+    }
+
     public void applyMarginToParentCell(@Nullable Element element) {
-        if (element != null && element.parent instanceof Table) {
-            Table parentTable = (Table) element.parent;
-            if (GapContainer.isGapContainer(parentTable)) {
-                GapContainer.respace(parentTable);
-                return;
-            }
-            Cell<?> cell = parentTable.getCell(element);
-            if (cell != null) {
-                if (padTop != null && padTop.get() != null)
-                    cell.padTop(Math.max(0f, padTop.get()));
-                if (padLeft != null && padLeft.get() != null)
-                    cell.padLeft(Math.max(0f, padLeft.get()));
-                if (padBottom != null && padBottom.get() != null)
-                    cell.padBottom(Math.max(0f, padBottom.get()));
-                if (padRight != null && padRight.get() != null)
-                    cell.padRight(Math.max(0f, padRight.get()));
-                parentTable.invalidate();
-            }
-        }
+        applyPadTop(element);
+        applyPadLeft(element);
+        applyPadBottom(element);
+        applyPadRight(element);
     }
 
-    /**
-     * Immediately applies grow constraints to the element's parent cell if the
-     * element is already attached to a parent Table.
-     */
+    public void applyPadTop(@Nullable Element element) {
+        applyMargin(element, padTop, Cell::padTop);
+    }
+
+    public void applyPadLeft(@Nullable Element element) {
+        applyMargin(element, padLeft, Cell::padLeft);
+    }
+
+    public void applyPadBottom(@Nullable Element element) {
+        applyMargin(element, padBottom, Cell::padBottom);
+    }
+
+    public void applyPadRight(@Nullable Element element) {
+        applyMargin(element, padRight, Cell::padRight);
+    }
+
     public void applyGrowToParentCell(@Nullable Element element) {
         if (element != null && element.parent instanceof Table) {
             Table parentTable = (Table) element.parent;
@@ -282,10 +316,6 @@ public final class PendingCellConfig {
         }
     }
 
-    /**
-     * Immediately applies alignment constraint to the element's parent cell if the
-     * element is already attached to a parent Table.
-     */
     public void applyAlignToParentCell(@Nullable Element element) {
         if (element != null && element.parent instanceof Table) {
             Table parentTable = (Table) element.parent;
@@ -297,7 +327,61 @@ public final class PendingCellConfig {
         }
     }
 
-    // ---------- private helpers ----------
+    private static void applySize(@Nullable Element element, @Nullable Readable<Float> source,
+            SizeApplier applier, @Nullable ElementSizeApplier elementApplier) {
+        if (source == null) {
+            return;
+        }
+        Float value = source.get();
+        if (value == null) {
+            return;
+        }
+        float size = Math.max(0f, value);
+        Cell<?> cell = parentCell(element);
+        if (cell != null) {
+            applier.apply(cell, size);
+            cell.getTable().invalidateHierarchy();
+            return;
+        }
+        if (element != null && elementApplier != null) {
+            elementApplier.apply(element, size);
+            element.invalidateHierarchy();
+        }
+    }
+
+    private static void applyMargin(@Nullable Element element, @Nullable Readable<Float> source,
+            EdgeApplier applier) {
+        if (source == null) {
+            return;
+        }
+        Table parentTable = parentTable(element);
+        if (parentTable == null) {
+            return;
+        }
+        if (GapContainer.isGapContainer(parentTable)) {
+            GapContainer.respace(parentTable);
+            return;
+        }
+        Cell<?> cell = parentTable.getCell(element);
+        if (cell == null) {
+            return;
+        }
+        Float value = source.get();
+        if (value == null) {
+            return;
+        }
+        applier.apply(cell, Math.max(0f, value));
+        parentTable.invalidate();
+    }
+
+    private static @Nullable Table parentTable(@Nullable Element element) {
+        return element != null && element.parent instanceof Table ? (Table) element.parent : null;
+    }
+
+    private static @Nullable Cell<?> parentCell(@Nullable Element element) {
+        Table parentTable = parentTable(element);
+        return parentTable != null ? parentTable.getCell(element) : null;
+    }
 
     private static List<Disposable> bind(Cell<?> cell, @Nullable Readable<Float> source, FloatApplier applier) {
         List<Disposable> result = new ArrayList<>();
@@ -346,5 +430,20 @@ public final class PendingCellConfig {
     @FunctionalInterface
     private interface FloatApplier {
         void apply(float value);
+    }
+
+    @FunctionalInterface
+    private interface SizeApplier {
+        void apply(Cell<?> cell, float value);
+    }
+
+    @FunctionalInterface
+    private interface ElementSizeApplier {
+        void apply(Element element, float value);
+    }
+
+    @FunctionalInterface
+    private interface EdgeApplier {
+        void apply(Cell<?> cell, float value);
     }
 }

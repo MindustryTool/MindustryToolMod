@@ -1,18 +1,18 @@
 package mindustrytool.features.togglerendering;
 
-import static solim.UI.column;
-import static solim.UI.checkbox;
-import static solim.UI.scroll;
-import static solim.UI.unit;
+import static solim.UI.*;
 
 import arc.Core;
+import arc.graphics.Color;
 import arc.scene.Element;
-import solim.core.BaseComponent;
+import mindustry.gen.Icon;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingKeybindCard;
+import mindustrytool.components.SettingScaffold;
+import mindustrytool.components.WebStyles;
+import solim.core.Component;
 
-/**
- * Declarative Solim settings view for Toggle Rendering options.
- */
-public class ToggleRenderingSettingsView extends BaseComponent {
+public class ToggleRenderingSettingsView extends Component {
 
     private final ToggleRenderingFeature feature;
 
@@ -22,25 +22,69 @@ public class ToggleRenderingSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().grow().center().children(() -> {
-            scroll().center().children(() -> {
-                column().growX().gap(unit(2)).children(() -> {
-                    checkbox(Core.bundle != null
-                                    ? Core.bundle.get("feature.toggle-rendering.settings.draw-units-allies")
-                                    : "Draw Allied Units",
-                            feature.drawUnitsAlliesConfig.signal()).growX();
+        return SettingScaffold.build(() -> {
+            headerCard();
+            layersCard();
+            keybindsCard();
+            resetButtonCard();
+        });
+    }
 
-                    checkbox(Core.bundle != null
-                                    ? Core.bundle.get("feature.toggle-rendering.settings.draw-units-enemies")
-                                    : "Draw Enemy Units",
-                            feature.drawUnitsEnemiesConfig.signal()).growX();
+    private void keybindsCard() {
+        SettingKeybindCard.forFeature(feature);
+    }
 
-                    checkbox(Core.bundle != null
-                                    ? Core.bundle.get("feature.toggle-rendering.settings.draw-blocks")
-                                    : "Draw Blocks & Buildings",
-                            feature.drawBlocksConfig.signal()).growX();
+    private Component headerCard() {
+        return SettingCard.header(feature, "GRAPHICS");
+    }
+
+    private Component layersCard() {
+        return SettingCard.section(Icon.eye, Core.bundle.get("feature.toggle-rendering.settings.layers"), () -> {
+
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
+                column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
+                    text(Core.bundle.get("feature.toggle-rendering.settings.draw-units-allies"))
+                            .props(color(Color.white), left());
+                    text(Core.bundle.get("feature.toggle-rendering.settings.draw-units-allies.desc"))
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(), growX());
                 });
+                spacer();
+                checkbox("", feature.drawUnitsAlliesConfig.signal());
             });
-        }).element();
+
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
+
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
+                column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
+                    text(Core.bundle.get("feature.toggle-rendering.settings.draw-units-enemies"))
+                            .props(color(Color.white), left());
+                    text(Core.bundle.get("feature.toggle-rendering.settings.draw-units-enemies.desc"))
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(), growX());
+                });
+                spacer();
+                checkbox("", feature.drawUnitsEnemiesConfig.signal());
+            });
+
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
+
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
+                column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
+                    text(Core.bundle.get("feature.toggle-rendering.settings.draw-blocks"))
+                            .props(color(Color.white), left());
+                    text(Core.bundle.get("feature.toggle-rendering.settings.draw-blocks.desc"))
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(), growX());
+                });
+                spacer();
+                checkbox("", feature.drawBlocksConfig.signal());
+            });
+        });
+    }
+
+    private Component resetButtonCard() {
+        return SettingCard.card().children(() -> {
+            button(Core.bundle.get("feature.toggle-rendering.settings.reset"),
+                    feature::resetToDefaults)
+                    .props(style(WebStyles.outlineText()), height(unit(11)), prefHeight(unit(11)), growX());
+        });
     }
 }

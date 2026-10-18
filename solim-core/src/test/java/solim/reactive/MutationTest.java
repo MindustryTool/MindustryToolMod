@@ -10,126 +10,158 @@ import solim.test.SolimEnv;
 
 class MutationTest extends SolimEnv {
 
-	@Test
-	void initialAndSuccessState() {
-		CompletableFuture<String> future = new CompletableFuture<>();
-		Mutation<String, String> mutation = Mutation.of(input -> future);
+    @Test
+    void initialAndSuccessState() {
+        CompletableFuture<String> future = new CompletableFuture<>();
+        Mutation<String, String> mutation = Mutation.of(input -> future);
 
-		assertFalse(mutation.isPending().get(), "Mutation should not be pending initially");
-		assertNull(mutation.error().get());
-		assertNull(mutation.result().get());
+        assertFalse(mutation.isPending().get(), "Mutation should not be pending initially");
+        assertNull(mutation.error().get());
+        assertNull(mutation.result().get());
 
-		mutation.mutate("hello");
-		assertTrue(mutation.isPending().get(), "Mutation should be pending during execution");
+        mutation.mutate("hello");
+        assertTrue(mutation.isPending().get(), "Mutation should be pending during execution");
 
-		future.complete("HELLO");
+        future.complete("HELLO");
 
-		assertFalse(mutation.isPending().get());
-		assertEquals("HELLO", mutation.result().get());
-		assertNull(mutation.error().get());
-	}
+        assertFalse(mutation.isPending().get());
+        assertEquals("HELLO", mutation.result().get());
+        assertNull(mutation.error().get());
+    }
 
-	@Test
-	void errorState() {
-		CompletableFuture<String> future = new CompletableFuture<>();
-		Mutation<String, String> mutation = Mutation.of(input -> future);
-		RuntimeException failure = new RuntimeException("Server error");
+    @Test
+    void errorState() {
+        CompletableFuture<String> future = new CompletableFuture<>();
+        Mutation<String, String> mutation = Mutation.of(input -> future);
+        RuntimeException failure = new RuntimeException("Server error");
 
-		mutation.mutate("fail");
-		future.completeExceptionally(failure);
+        mutation.mutate("fail");
+        future.completeExceptionally(failure);
 
-		assertFalse(mutation.isPending().get());
-		assertSame(failure, mutation.error().get());
-		assertNull(mutation.result().get());
-	}
+        assertFalse(mutation.isPending().get());
+        assertSame(failure, mutation.error().get());
+        assertNull(mutation.result().get());
+    }
 
-	@Test
-	void optimisticUpdateHooks() {
-		CompletableFuture<String> future = new CompletableFuture<>();
-		AtomicReference<String> optimisticContext = new AtomicReference<>();
-		AtomicReference<String> successResult = new AtomicReference<>();
-		AtomicReference<String> successContext = new AtomicReference<>();
+    @Test
+    void optimisticUpdateHooks() {
+        CompletableFuture<String> future = new CompletableFuture<>();
+        AtomicReference<String> optimisticContext = new AtomicReference<>();
+        AtomicReference<String> successResult = new AtomicReference<>();
+        AtomicReference<String> successContext = new AtomicReference<>();
 
-		Mutation<String, String> mutation = Mutation.<String, String>of(input -> future)
-				.onMutate(input -> {
-					String tempId = "temp_" + input;
-					optimisticContext.set(tempId);
-					return tempId;
-				})
-				.onSuccess((String res, String ctx) -> {
-					successResult.set(res);
-					successContext.set(ctx);
-				});
+        Mutation<String, String> mutation = Mutation.<String, String>of(input -> future)
+                .onMutate(input -> {
+                    String tempId = "temp_" + input;
+                    optimisticContext.set(tempId);
+                    return tempId;
+                })
+                .onSuccess((String res, String ctx) -> {
+                    successResult.set(res);
+                    successContext.set(ctx);
+                });
 
-		mutation.mutate("msg1");
+        mutation.mutate("msg1");
 
-		assertEquals("temp_msg1", optimisticContext.get(), "onMutate should execute synchronously");
-		assertNull(successResult.get());
+        assertEquals("temp_msg1", optimisticContext.get(), "onMutate should execute synchronously");
+        assertNull(successResult.get());
 
-		future.complete("msg1_confirmed");
+        future.complete("msg1_confirmed");
 
-		assertEquals("msg1_confirmed", successResult.get());
-		assertEquals("temp_msg1", successContext.get());
-	}
+        assertEquals("msg1_confirmed", successResult.get());
+        assertEquals("temp_msg1", successContext.get());
+    }
 
-	@Test
-	void errorRollbackHook() {
-		CompletableFuture<String> future = new CompletableFuture<>();
-		AtomicReference<String> errorContext = new AtomicReference<>();
-		AtomicReference<Throwable> caughtError = new AtomicReference<>();
+    @Test
+    void errorRollbackHook() {
+        CompletableFuture<String> future = new CompletableFuture<>();
+        AtomicReference<String> errorContext = new AtomicReference<>();
+        AtomicReference<Throwable> caughtError = new AtomicReference<>();
 
-		Mutation<String, String> mutation = Mutation.<String, String>of(input -> future)
-				.onMutate(input -> "temp_token")
-				.onError((Throwable err, String ctx) -> {
-					caughtError.set(err);
-					errorContext.set(ctx);
-				});
+        Mutation<String, String> mutation = Mutation.<String, String>of(input -> future)
+                .onMutate(input -> "temp_token")
+                .onError((Throwable err, String ctx) -> {
+                    caughtError.set(err);
+                    errorContext.set(ctx);
+                });
 
-		mutation.mutate("msg2");
-		RuntimeException ex = new RuntimeException("failed");
-		future.completeExceptionally(ex);
+        mutation.mutate("msg2");
+        RuntimeException ex = new RuntimeException("failed");
+        future.completeExceptionally(ex);
 
-		assertSame(ex, caughtError.get());
-		assertEquals("temp_token", errorContext.get());
-	}
+        assertSame(ex, caughtError.get());
+        assertEquals("temp_token", errorContext.get());
+    }
 
-	@Test
-	void concurrentMutationDiscardsEarlierResult() {
-		CompletableFuture<String> slow = new CompletableFuture<>();
-		CompletableFuture<String> fast = CompletableFuture.completedFuture("second_result");
+    @Test
+    void concurrentMutationDiscardsEarlierResult() {
+        CompletableFuture<String> slow = new CompletableFuture<>();
+        CompletableFuture<String> fast = CompletableFuture.completedFuture("second_result");
 
-		AtomicBoolean firstInvoked = new AtomicBoolean(false);
-		Mutation<String, String> mutation = Mutation.of(input -> {
-			if (!firstInvoked.getAndSet(true)) {
-				return slow;
-			}
-			return fast;
-		});
+        AtomicBoolean firstInvoked = new AtomicBoolean(false);
+        Mutation<String, String> mutation = Mutation.of(input -> {
+            if (!firstInvoked.getAndSet(true)) {
+                return slow;
+            }
+            return fast;
+        });
 
-		mutation.mutate("first");
-		assertTrue(mutation.isPending().get());
+        mutation.mutate("first");
+        assertTrue(mutation.isPending().get());
 
-		mutation.mutate("second");
-		assertEquals("second_result", mutation.result().get());
+        mutation.mutate("second");
+        assertEquals("second_result", mutation.result().get());
 
-		// Slow completes later: must not overwrite
-		slow.complete("first_result");
-		assertEquals("second_result", mutation.result().get());
-	}
+        slow.complete("first_result");
+        assertEquals("second_result", mutation.result().get());
+    }
 
-	@Test
-	void resetAndDisposal() {
-		Mutation<String, String> mutation = Mutation.of(CompletableFuture::completedFuture);
-		mutation.mutate("val");
-		assertEquals("val", mutation.result().get());
+    @Test
+    void resetAndDisposal() {
+        Mutation<String, String> mutation = Mutation.of(CompletableFuture::completedFuture);
+        mutation.mutate("val");
+        assertEquals("val", mutation.result().get());
 
-		mutation.reset();
-		assertFalse(mutation.isPending().get());
-		assertNull(mutation.result().get());
-		assertNull(mutation.error().get());
+        mutation.reset();
+        assertFalse(mutation.isPending().get());
+        assertNull(mutation.result().get());
+        assertNull(mutation.error().get());
 
-		assertFalse(mutation.isDisposed());
-		mutation.dispose();
-		assertTrue(mutation.isDisposed());
-	}
+        assertFalse(mutation.isDisposed());
+        mutation.dispose();
+        assertTrue(mutation.isDisposed());
+    }
+
+    @Test
+    void inFlightCancelledOnNewMutateResetAndDispose() {
+        CompletableFuture<String> firstFuture = new CompletableFuture<>();
+        CompletableFuture<String> secondFuture = new CompletableFuture<>();
+
+        AtomicBoolean firstCalled = new AtomicBoolean(false);
+        Mutation<String, String> mutation = Mutation.of(input -> {
+            if (!firstCalled.getAndSet(true)) {
+                return firstFuture;
+            }
+            return secondFuture;
+        });
+
+        mutation.mutate("first");
+        assertFalse(firstFuture.isCancelled());
+
+        mutation.mutate("second");
+        assertTrue(firstFuture.isCancelled(), "New mutation must cancel previous in-flight future");
+        assertFalse(secondFuture.isCancelled());
+
+        mutation.reset();
+        assertTrue(secondFuture.isCancelled(), "reset() must cancel active in-flight future");
+
+        CompletableFuture<String> thirdFuture = new CompletableFuture<>();
+        Mutation<String, String> mutation2 = Mutation.of(input -> thirdFuture);
+        mutation2.mutate("third");
+        assertFalse(thirdFuture.isCancelled());
+
+        mutation2.dispose();
+        assertTrue(thirdFuture.isCancelled(), "dispose() must cancel active in-flight future");
+    }
 }
+

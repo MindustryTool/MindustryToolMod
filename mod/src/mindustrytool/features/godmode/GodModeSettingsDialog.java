@@ -11,6 +11,7 @@ public class GodModeSettingsDialog extends SolimDialog {
         name("godModeSettingDialog");
         addCloseButton();
         closeOnBack();
+        maxWidth(500f);
 
         children(() -> new GodModeSettingsView(feature));
     }

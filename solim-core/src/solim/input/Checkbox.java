@@ -1,4 +1,5 @@
 package solim.input;
+
 import solim.reactive.TwoWayBinding;
 
 import arc.Core;
@@ -8,106 +9,120 @@ import arc.util.Nullable;
 import arc.func.Cons;
 import solim.core.Component;
 import solim.core.DisposableAction;
-import solim.modifier.ElementConfig;
-import solim.modifier.CellConfig;
+import solim.core.OwnershipContext;
+import solim.modifier.CheckableCapability;
+import solim.modifier.Configurable;
 import solim.modifier.PendingCellConfig;
-import solim.runtime.OwnershipContext;
+import solim.modifier.Props;
+import solim.modifier.WrappableCapability;
 import solim.reactive.Signal;
 
-/** Checkbox widget bound to Signal&lt;Boolean&gt;. */
-public final class Checkbox implements Component, ElementConfig<Checkbox>, CellConfig<Checkbox> {
+public final class Checkbox extends Component
+        implements Configurable<Checkbox>, CheckableCapability, WrappableCapability {
 
-	private final CheckBox checkBox;
-	private final PendingCellConfig constraints = new PendingCellConfig();
-	private @Nullable TwoWayBinding<Boolean> binding;
-	private boolean disposed = false;
+    private final CheckBox checkBox;
+    private final PendingCellConfig constraints = new PendingCellConfig();
+    private @Nullable Props<Checkbox> pending;
 
-	@Override
-	public PendingCellConfig cellConfig() {
-		return constraints;
-	}
+    @Override
+    public PendingCellConfig cellConfig() {
+        return constraints;
+    }
 
-	public Checkbox(String label, Signal<Boolean> signal) {
-		this(label, signal, Core.scene == null ? new CheckBoxStyle() : null);
-	}
+    @Override
+    public @Nullable Props<Checkbox> pendingProps() {
+        return pending;
+    }
 
-	public Checkbox(String label, Signal<Boolean> signal, @Nullable CheckBoxStyle style) {
-		this.checkBox = style != null
-				? new CheckBox(label != null ? label : "", style)
-				: new CheckBox(label != null ? label : "");
-		checkBox.top().left();
-		checkBox.name = "solim-checkbox-checkBox";
-		checkBox.setChecked(signal.peek());
-		this.binding = new TwoWayBinding<>(
-			signal,
-			checkBox::isChecked,
-			checkBox::setChecked,
-			onChange -> {
-				checkBox.changed(onChange::run);
-				// Arc CheckBox.changed() does not return a cleanup handle; cannot unregister
-				return DisposableAction.empty();
-			}
-		);
-		OwnershipContext.register(this);
-	}
+    @Override
+    public void setPendingProps(@Nullable Props<Checkbox> props) {
+        this.pending = props;
+    }
 
-	public Checkbox(String label, boolean initial, Cons<Boolean> onChanged) {
-		this(label, initial, Core.scene == null ? new CheckBoxStyle() : null, onChanged);
-	}
+    public Checkbox(String label, Signal<Boolean> signal) {
+        this(label, signal, Core.scene == null ? new CheckBoxStyle() : null);
+    }
 
-	public Checkbox(String label, boolean initial, @Nullable CheckBoxStyle style, Cons<Boolean> onChanged) {
-		this.checkBox = style != null
-				? new CheckBox(label != null ? label : "", style)
-				: new CheckBox(label != null ? label : "");
-		checkBox.top().left();
-		checkBox.name = "solim-checkbox-checkBox";
-		checkBox.setChecked(initial);
-		checkBox.changed(() -> {
-			if (onChanged != null) {
-				onChanged.get(checkBox.isChecked());
-			}
-		});
-		OwnershipContext.register(this);
-	}
+    public Checkbox(String label, Signal<Boolean> signal, @Nullable CheckBoxStyle style) {
+        this(create(label, style), signal);
+    }
 
-	public static Checkbox of(String label, Signal<Boolean> signal) {
-		return new Checkbox(label, signal);
-	}
+    private Checkbox(CheckBox checkBox, Signal<Boolean> signal) {
+        super(checkBox);
+        this.checkBox = checkBox;
+        checkBox.top().left();
+        checkBox.name = "solim-checkbox-checkBox";
+        checkBox.setChecked(signal.peek());
+        OwnershipContext.push(this);
+        try {
+            new TwoWayBinding<>(
+                    signal,
+                    checkBox::isChecked,
+                    checkBox::setChecked,
+                    onChange -> {
+                        checkBox.changed(onChange::run);
 
-	public static Checkbox of(String label, boolean initial, Cons<Boolean> onChanged) {
-		return new Checkbox(label, initial, onChanged);
-	}
+                        return DisposableAction.empty();
+                    });
+        } finally {
+            OwnershipContext.pop();
+        }
+    }
 
-	public CheckBox checkBox() {
-		return checkBox;
-	}
+    private static CheckBox create(String label, @Nullable CheckBoxStyle style) {
+        return style != null
+                ? new CheckBox(label != null ? label : "", style)
+                : new CheckBox(label != null ? label : "");
+    }
 
-	@Override
-	public CheckBox element() {
-		return checkBox;
-	}
+    public Checkbox(String label, boolean initial, Cons<Boolean> onChanged) {
+        this(label, initial, Core.scene == null ? new CheckBoxStyle() : null, onChanged);
+    }
 
-	public Checkbox name(String name) {
-		checkBox.name = name;
-		return this;
-	}
+    public Checkbox(String label, boolean initial, @Nullable CheckBoxStyle style, Cons<Boolean> onChanged) {
+        this(create(label, style), initial, onChanged);
+    }
 
-	@Override
-	public void dispose() {
-		if (disposed) {
-			return;
-		}
-		disposed = true;
-		if (binding != null) {
-			binding.dispose();
-			binding = null;
-		}
-	}
+    private Checkbox(CheckBox checkBox, boolean initial, @Nullable Cons<Boolean> onChanged) {
+        super(checkBox);
+        this.checkBox = checkBox;
+        checkBox.top().left();
+        checkBox.name = "solim-checkbox-checkBox";
+        checkBox.setChecked(initial);
+        if (onChanged != null) {
+            checkBox.changed(() -> onChanged.get(checkBox.isChecked()));
+        }
+    }
 
-	@Override
-	public boolean isDisposed() {
-		return disposed;
-	}
+    public static Checkbox of(String label, Signal<Boolean> signal) {
+        return new Checkbox(label, signal);
+    }
+
+    public static Checkbox of(String label, boolean initial, Cons<Boolean> onChanged) {
+        return new Checkbox(label, initial, onChanged);
+    }
+
+    public CheckBox checkBox() {
+        return checkBox;
+    }
+
+    public Checkbox name(String name) {
+        setName(name);
+        return this;
+    }
+
+    public void setWrap(boolean wrap) {
+        if (checkBox.getLabel() != null) {
+            checkBox.getLabel().setWrap(wrap);
+        }
+        if (checkBox.getLabelCell() != null && wrap) {
+            checkBox.getLabelCell().growX().minWidth(0f);
+        }
+    }
+
+    public boolean isChecked() {
+        return checkBox.isChecked();
+    }
 
     @Override
     public Checkbox self() {

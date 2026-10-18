@@ -5,289 +5,298 @@ import static org.junit.jupiter.api.Assertions.*;
 import arc.scene.Element;
 import arc.scene.ui.layout.Table;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import solim.core.Component;
 
 class AttachmentStackTest {
 
-	@AfterEach
-	void clear() {
-		AttachmentStack.clear();
-		AttachmentStack.setCellConfigurator((AttachmentStack.CellConfigurator) null);
-	}
+    private static final class Fixed extends Component {
+        Fixed(Element element) {
+            super(element);
+        }
+    }
 
-	@Test
-	void pushPopCurrent() {
-		Table root = new Table();
-		AttachmentStack.push(root);
-		assertEquals(root, AttachmentStack.current());
-		assertEquals(1, AttachmentStack.size());
-		AttachmentStack.pop();
-		assertNull(AttachmentStack.current());
-		assertEquals(0, AttachmentStack.size());
-	}
+    private AttachmentStack.CellConfigurator previousConfigurator;
 
-	@Test
-	void autoAttachChildren() {
-		Table root = new Table();
-		AttachmentStack.push(root);
+    @BeforeEach
+    void rememberConfigurator() {
+        previousConfigurator = AttachmentStack.cellConfigurator();
+    }
 
-		Element e1 = new Element();
-		Element e2 = new Element();
-		AttachmentStack.add(e1);
-		AttachmentStack.add(e2);
+    @AfterEach
+    void clear() {
+        AttachmentStack.clear();
+        AttachmentStack.setCellConfigurator(previousConfigurator);
+    }
 
-		AttachmentStack.pop();
+    @Test
+    void pushPopCurrent() {
+        Table root = new Table();
+        AttachmentStack.push(root);
+        assertEquals(root, AttachmentStack.current());
+        assertEquals(1, AttachmentStack.size());
+        AttachmentStack.pop();
+        assertNull(AttachmentStack.current());
+        assertEquals(0, AttachmentStack.size());
+    }
 
-		assertEquals(2, root.getChildren().size);
-		assertTrue(root.getChildren().contains(e1, true));
-		assertTrue(root.getChildren().contains(e2, true));
-	}
+    @Test
+    void autoAttachChildren() {
+        Table root = new Table();
+        AttachmentStack.push(root);
 
-	@Test
-	void nestedScopes() {
-		assertEquals(0, AttachmentStack.size());
-		AttachmentStack.push(new Table());
-		assertEquals(1, AttachmentStack.size());
-		{
-			AttachmentStack.push(new Table());
-			assertEquals(2, AttachmentStack.size());
-			{
-				AttachmentStack.push(new Table());
-				assertEquals(3, AttachmentStack.size());
-				AttachmentStack.pop();
-			}
-			assertEquals(2, AttachmentStack.size());
-			AttachmentStack.pop();
-		}
-		assertEquals(1, AttachmentStack.size());
-		AttachmentStack.pop();
-		assertEquals(0, AttachmentStack.size());
-	}
+        Element e1 = new Element();
+        Element e2 = new Element();
+        AttachmentStack.add(e1);
+        AttachmentStack.add(e2);
 
-	@Test
-	void isolateSupplier() {
-		Table outer = new Table();
-		AttachmentStack.push(outer);
+        AttachmentStack.pop();
 
-		Element inner =
-				AttachmentStack.isolate(() -> {
-					assertNull(AttachmentStack.current());
-					Table t = new Table();
-					AttachmentStack.push(t);
-					Element e = new Element();
-					AttachmentStack.add(e);
-					AttachmentStack.pop();
-					return t;
-				});
+        assertEquals(2, root.getChildren().size);
+        assertTrue(root.getChildren().contains(e1, true));
+        assertTrue(root.getChildren().contains(e2, true));
+    }
 
-		assertNotNull(inner);
-		assertEquals(outer, AttachmentStack.current());
-		assertFalse(outer.getChildren().contains(inner, true));
+    @Test
+    void nestedScopes() {
+        assertEquals(0, AttachmentStack.size());
+        AttachmentStack.push(new Table());
+        assertEquals(1, AttachmentStack.size());
+        {
+            AttachmentStack.push(new Table());
+            assertEquals(2, AttachmentStack.size());
+            {
+                AttachmentStack.push(new Table());
+                assertEquals(3, AttachmentStack.size());
+                AttachmentStack.pop();
+            }
+            assertEquals(2, AttachmentStack.size());
+            AttachmentStack.pop();
+        }
+        assertEquals(1, AttachmentStack.size());
+        AttachmentStack.pop();
+        assertEquals(0, AttachmentStack.size());
+    }
 
-		AttachmentStack.pop();
-	}
+    @Test
+    void isolateSupplier() {
+        Table outer = new Table();
+        AttachmentStack.push(outer);
 
-	@Test
-	void isolateRunnable() {
-		Table outer = new Table();
-		AttachmentStack.push(outer);
+        Element inner = AttachmentStack.isolate(() -> {
+            assertNull(AttachmentStack.current());
+            Table t = new Table();
+            AttachmentStack.push(t);
+            Element e = new Element();
+            AttachmentStack.add(e);
+            AttachmentStack.pop();
+            return t;
+        });
 
-		final Table[] held = new Table[1];
-		AttachmentStack.isolate(() -> {
-			assertNull(AttachmentStack.current());
-			Table t = new Table();
-			AttachmentStack.push(t);
-			Element e = new Element();
-			AttachmentStack.add(e);
-			AttachmentStack.pop();
-			held[0] = t;
-		});
+        assertNotNull(inner);
+        assertEquals(outer, AttachmentStack.current());
+        assertFalse(outer.getChildren().contains(inner, true));
 
-		assertNotNull(held[0]);
-		assertEquals(outer, AttachmentStack.current());
-		assertFalse(outer.getChildren().contains(held[0], true));
+        AttachmentStack.pop();
+    }
 
-		AttachmentStack.pop();
-	}
+    @Test
+    void isolateRunnable() {
+        Table outer = new Table();
+        AttachmentStack.push(outer);
 
-	@Test
-	void isolatePreservesOuterOnException() {
-		Table outer = new Table();
-		AttachmentStack.push(outer);
+        final Table[] held = new Table[1];
+        AttachmentStack.isolate(() -> {
+            assertNull(AttachmentStack.current());
+            Table t = new Table();
+            AttachmentStack.push(t);
+            Element e = new Element();
+            AttachmentStack.add(e);
+            AttachmentStack.pop();
+            held[0] = t;
+        });
 
-		assertThrows(
-				RuntimeException.class,
-				() ->
-						AttachmentStack.isolate(
-								() -> {
-									throw new RuntimeException("fail");
-								}));
+        assertNotNull(held[0]);
+        assertEquals(outer, AttachmentStack.current());
+        assertFalse(outer.getChildren().contains(held[0], true));
 
-		assertEquals(outer, AttachmentStack.current());
-		assertEquals(1, AttachmentStack.size());
+        AttachmentStack.pop();
+    }
 
-		AttachmentStack.pop();
-	}
+    @Test
+    void isolatePreservesOuterOnException() {
+        Table outer = new Table();
+        AttachmentStack.push(outer);
 
-	@Test
-	void isolateRunnablePreservesOuterOnException() {
-		Table outer = new Table();
-		AttachmentStack.push(outer);
+        assertThrows(
+                RuntimeException.class,
+                () -> AttachmentStack.isolate(
+                        () -> {
+                            throw new RuntimeException("fail");
+                        }));
 
-		assertThrows(
-				RuntimeException.class,
-				() ->
-						AttachmentStack.isolate(
-								(Runnable)
-										() -> {
-											throw new RuntimeException("fail");
-										}));
+        assertEquals(outer, AttachmentStack.current());
+        assertEquals(1, AttachmentStack.size());
 
-		assertEquals(outer, AttachmentStack.current());
-		assertEquals(1, AttachmentStack.size());
+        AttachmentStack.pop();
+    }
 
-		AttachmentStack.pop();
-	}
+    @Test
+    void isolateRunnablePreservesOuterOnException() {
+        Table outer = new Table();
+        AttachmentStack.push(outer);
 
-	@Test
-	void find() {
-		Table root = new Table();
-		root.name = "root";
-		Table mid = new Table();
-		mid.name = "mid";
+        assertThrows(
+                RuntimeException.class,
+                () -> AttachmentStack.isolate(
+                        (Runnable) () -> {
+                            throw new RuntimeException("fail");
+                        }));
 
-		AttachmentStack.push(root);
-		AttachmentStack.push(mid);
+        assertEquals(outer, AttachmentStack.current());
+        assertEquals(1, AttachmentStack.size());
 
-		assertEquals(root, AttachmentStack.find(t -> "root".equals(t.name)));
-		assertEquals(mid, AttachmentStack.find(t -> "mid".equals(t.name)));
-		assertNull(AttachmentStack.find(t -> "nonexistent".equals(t.name)));
+        AttachmentStack.pop();
+    }
 
-		AttachmentStack.pop();
-		AttachmentStack.pop();
-	}
+    @Test
+    void find() {
+        Table root = new Table();
+        root.name = "root";
+        Table mid = new Table();
+        mid.name = "mid";
 
-	@Test
-	void attacherStrategy() {
-		Table root = new Table();
-		final boolean[] customAttacherCalled = new boolean[1];
-		AttachmentStack.push(root, (table, child) -> {
-			customAttacherCalled[0] = true;
-			return table.add(child);
-		});
+        AttachmentStack.push(root);
+        AttachmentStack.push(mid);
 
-		Element e = new Element();
-		AttachmentStack.add(e);
+        assertEquals(root, AttachmentStack.find(t -> "root".equals(t.name)));
+        assertEquals(mid, AttachmentStack.find(t -> "mid".equals(t.name)));
+        assertNull(AttachmentStack.find(t -> "nonexistent".equals(t.name)));
 
-		AttachmentStack.pop();
+        AttachmentStack.pop();
+        AttachmentStack.pop();
+    }
 
-		assertEquals(1, root.getChildren().size);
-		assertTrue(customAttacherCalled[0]);
-	}
+    @Test
+    void attacherStrategy() {
+        Table root = new Table();
+        final boolean[] customAttacherCalled = new boolean[1];
+        AttachmentStack.push(root, (table, child) -> {
+            customAttacherCalled[0] = true;
+            return table.add(child);
+        });
 
-	@Test
-	void addResolvesComponent() {
-		Table root = new Table();
-		AttachmentStack.push(root);
-		Element e = new Element();
-		Component comp = () -> e;
-		AttachmentStack.add(comp);
-		AttachmentStack.add(new Element());
-		AttachmentStack.pop();
-		assertEquals(2, root.getChildren().size);
-		assertTrue(root.getChildren().contains(e, true));
-	}
+        Element e = new Element();
+        AttachmentStack.add(e);
 
-	@Test
-	void cellConfiguratorReceivesComponentDirectlyWithoutUserObject() {
-		Table root = new Table();
-		AttachmentStack.push(root);
+        AttachmentStack.pop();
 
-		Element element = new Element();
-		assertNull(element.userObject);
+        assertEquals(1, root.getChildren().size);
+        assertTrue(customAttacherCalled[0]);
+    }
 
-		Component comp = () -> element;
-		AttachmentStack.registerPendingComponent(comp, root);
+    @Test
+    void addResolvesComponent() {
+        Table root = new Table();
+        AttachmentStack.push(root);
+        Element e = new Element();
+        Component comp = new Fixed(e);
+        AttachmentStack.add(comp);
+        AttachmentStack.add(new Element());
+        AttachmentStack.pop();
+        assertEquals(2, root.getChildren().size);
+        assertTrue(root.getChildren().contains(e, true));
+    }
 
-		final Component[] receivedComp = new Component[1];
-		final Element[] receivedElement = new Element[1];
+    @Test
+    void cellConfiguratorReceivesComponentDirectlyWithoutUserObject() {
+        Table root = new Table();
+        AttachmentStack.push(root);
 
-		AttachmentStack.setCellConfigurator((cell, child, component) -> {
-			receivedElement[0] = child;
-			receivedComp[0] = component;
-		});
+        Element element = new Element();
+        assertNull(element.userObject);
 
-		AttachmentStack.pop();
+        Component comp = new Fixed(element);
+        AttachmentStack.registerPendingComponent(comp, root);
 
-		assertSame(element, receivedElement[0]);
-		assertSame(comp, receivedComp[0]);
-		assertNull(element.userObject);
-	}
+        final Component[] receivedComp = new Component[1];
+        final Element[] receivedElement = new Element[1];
 
-	@Test
-	void cellConfiguratorReceivesNullComponentForRawElement() {
-		Table root = new Table();
-		AttachmentStack.push(root);
+        AttachmentStack.setCellConfigurator((cell, child, component) -> {
+            receivedElement[0] = child;
+            receivedComp[0] = component;
+        });
 
-		Element rawElement = new Element();
-		final Component[] receivedComp = new Component[1];
-		final Element[] receivedElement = new Element[1];
+        AttachmentStack.pop();
 
-		AttachmentStack.setCellConfigurator((cell, child, component) -> {
-			receivedElement[0] = child;
-			receivedComp[0] = component;
-		});
+        assertSame(element, receivedElement[0]);
+        assertSame(comp, receivedComp[0]);
+        assertNull(element.userObject);
+    }
 
-		AttachmentStack.add(rawElement);
-		AttachmentStack.pop();
+    @Test
+    void cellConfiguratorReceivesNullComponentForRawElement() {
+        Table root = new Table();
+        AttachmentStack.push(root);
 
-		assertSame(rawElement, receivedElement[0]);
-		assertNull(receivedComp[0]);
-	}
+        Element rawElement = new Element();
+        final Component[] receivedComp = new Component[1];
+        final Element[] receivedElement = new Element[1];
 
-	@Test
-	void isolateCompleteContextIsolation() {
-		Table outer = new Table();
-		Element outerEl = new Element();
-		Component outerComp = () -> outerEl;
+        AttachmentStack.setCellConfigurator((cell, child, component) -> {
+            receivedElement[0] = child;
+            receivedComp[0] = component;
+        });
 
-		boolean[] outerAttacherCalled = new boolean[1];
-		AttachmentStack.push(outer, (table, child) -> {
-			outerAttacherCalled[0] = true;
-			return table.add(child);
-		});
-		AttachmentStack.registerPendingComponent(outerComp, outer);
+        AttachmentStack.add(rawElement);
+        AttachmentStack.pop();
 
-		Table inner = AttachmentStack.isolate(() -> {
-			assertNull(AttachmentStack.current());
-			Table innerTable = new Table();
-			boolean[] innerAttacherCalled = new boolean[1];
-			AttachmentStack.push(innerTable, (t, c) -> {
-				innerAttacherCalled[0] = true;
-				return t.add(c);
-			});
+        assertSame(rawElement, receivedElement[0]);
+        assertNull(receivedComp[0]);
+    }
 
-			Element innerEl = new Element();
-			AttachmentStack.add(innerEl);
-			AttachmentStack.pop();
+    @Test
+    void isolateCompleteContextIsolation() {
+        Table outer = new Table();
+        Element outerEl = new Element();
+        Component outerComp = new Fixed(outerEl);
 
-			assertTrue(innerAttacherCalled[0]);
-			assertFalse(outerAttacherCalled[0]);
-			assertEquals(1, innerTable.getChildren().size);
-			assertTrue(innerTable.getChildren().contains(innerEl, true));
-			return innerTable;
-		});
+        boolean[] outerAttacherCalled = new boolean[1];
+        AttachmentStack.push(outer, (table, child) -> {
+            outerAttacherCalled[0] = true;
+            return table.add(child);
+        });
+        AttachmentStack.registerPendingComponent(outerComp, outer);
 
-		assertNotNull(inner);
-		assertEquals(outer, AttachmentStack.current());
+        Table inner = AttachmentStack.isolate(() -> {
+            assertNull(AttachmentStack.current());
+            Table innerTable = new Table();
+            boolean[] innerAttacherCalled = new boolean[1];
+            AttachmentStack.push(innerTable, (t, c) -> {
+                innerAttacherCalled[0] = true;
+                return t.add(c);
+            });
 
-		// Now finish outer
-		AttachmentStack.pop();
+            Element innerEl = new Element();
+            AttachmentStack.add(innerEl);
+            AttachmentStack.pop();
 
-		assertTrue(outerAttacherCalled[0]);
-		assertEquals(1, outer.getChildren().size);
-		assertTrue(outer.getChildren().contains(outerEl, true));
-		assertFalse(outer.getChildren().contains(inner, true));
-	}
+            assertTrue(innerAttacherCalled[0]);
+            assertFalse(outerAttacherCalled[0]);
+            assertEquals(1, innerTable.getChildren().size);
+            assertTrue(innerTable.getChildren().contains(innerEl, true));
+            return innerTable;
+        });
+
+        assertNotNull(inner);
+        assertEquals(outer, AttachmentStack.current());
+
+        AttachmentStack.pop();
+
+        assertTrue(outerAttacherCalled[0]);
+        assertEquals(1, outer.getChildren().size);
+        assertTrue(outer.getChildren().contains(outerEl, true));
+        assertFalse(outer.getChildren().contains(inner, true));
+    }
 }

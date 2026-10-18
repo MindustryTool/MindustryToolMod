@@ -8,6 +8,7 @@ import arc.scene.style.TextureRegionDrawable;
 import arc.struct.Seq;
 import arc.util.Interval;
 import arc.util.Nullable;
+import arc.util.Time;
 import mindustry.Vars;
 import mindustry.content.Blocks;
 import mindustry.gen.Building;
@@ -24,6 +25,7 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.features.autoplay.AutoplayFeature;
 import solim.config.ConfigValue;
 import solim.config.OrderedSeqPersister;
+import solim.input.Button;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
@@ -138,18 +140,17 @@ public class MiningTask implements AutoplayTask {
     }
 
     public static boolean isValidOreTile(@Nullable Tile tile, Item item) {
-        return tile != null && (
-                (tile.drop() == item && (tile.block() == Blocks.air || tile.block() == null))
+        return tile != null && ((tile.drop() == item && (tile.block() == Blocks.air || tile.block() == null))
                 || tile.wallDrop() == item
-                || (tile.block() != null && tile.block().itemDrop == item)
-        );
+                || (tile.block() != null && tile.block().itemDrop == item));
     }
 
     private static @Nullable Tile findNearbyUncoveredOre(Tile center, Item item, int radius) {
         for (int r = 1; r <= radius; r++) {
             for (int dx = -r; dx <= r; dx++) {
                 for (int dy = -r; dy <= r; dy++) {
-                    if (Math.abs(dx) != r && Math.abs(dy) != r) continue;
+                    if (Math.abs(dx) != r && Math.abs(dy) != r)
+                        continue;
                     Tile neighbor = Vars.world.tile(center.x + dx, center.y + dy);
                     if (isValidOreTile(neighbor, item)) {
                         return neighbor;
@@ -184,17 +185,8 @@ public class MiningTask implements AutoplayTask {
         Tile bestTile = null;
         boolean allFull = false;
 
-        // If unit is carrying items, enforce inventory continuity:
-        // A Mindustry unit can only carry one item type. It must finish mining the carried item
-        // or deposit it at the core before mining any other resource.
         if (unit.stack.amount > 0 && unit.stack.item != null) {
             Item held = unit.stack.item;
-
-            // If the unit is within core deposit range and the core accepts the held stack,
-            // deposit immediately to avoid infinite continuity lock when mining near the core.
-            if (unit.within(core, unit.type.range) && core.acceptStack(held, unit.stack.amount, unit) > 0) {
-                Call.transferInventory(Vars.player, core);
-            }
 
             boolean canContinueMining = isSelected(held)
                     && unit.canMine(held)
@@ -202,16 +194,15 @@ public class MiningTask implements AutoplayTask {
 
             Tile heldOre = canContinueMining
                     ? ((ai.targetItem == held && ai.ore != null && isValidOreTile(ai.ore, held))
-                        ? ai.ore
-                        : findOreTile(unit, core, held))
+                            ? ai.ore
+                            : findOreTile(unit, core, held))
                     : null;
 
             if (canContinueMining && heldOre != null) {
                 bestItem = held;
                 bestTile = heldOre;
             } else {
-                // Cannot continue mining held item (core full, unmineable, or no ore).
-                // Must deposit immediately to empty inventory.
+
                 ai.mining = false;
                 unit.mineTile = null;
                 ai.targetItem = held;
@@ -255,9 +246,6 @@ public class MiningTask implements AutoplayTask {
                 }
             }
 
-            // If the current target item is still valid, only switch away if another
-            // selected candidate has fewer items in the core by at least the hysteresis threshold.
-            // This avoids 1-item ping-pong near the core and batches trips far from the core.
             if (currentTargetValid) {
                 int currentTargetAmount = core.items.get(ai.targetItem);
                 int threshold = Math.max(unit.type.itemCapacity * 2, 60);
@@ -309,40 +297,112 @@ public class MiningTask implements AutoplayTask {
         return true;
     }
 
+    public static boolean hasOreOnMap(Item item) {
+        if (!Vars.state.isGame() || Vars.indexer == null) {
+            return true;
+        }
+        return Vars.indexer.hasOre(item) || Vars.indexer.hasWallOre(item);
+    }
+
+    public static @Nullable String getUnitMiningDisabledReason(@Nullable Unit unit, Item item) {
+        if (!Vars.state.isGame() || Vars.indexer == null || unit == null) {
+            return null;
+        }
+        if (!unit.canMine()) {
+            return Core.bundle.get("feature.autoplay.settings.mining.unit-cannot-mine");
+        }
+        if (unit.type.mineTier < item.hardness) {
+            return Core.bundle.format("feature.autoplay.settings.mining.tier-too-low", item.hardness,
+                    unit.type.mineTier);
+        }
+        boolean hasFloor = Vars.indexer.hasOre(item);
+        boolean hasWall = Vars.indexer.hasWallOre(item);
+        if (hasWall && !hasFloor && !unit.type.mineWalls) {
+            return Core.bundle.get("feature.autoplay.settings.mining.no-wall-mining");
+        }
+        if (hasFloor && !hasWall && !unit.type.mineFloor) {
+            return Core.bundle.get("feature.autoplay.settings.mining.no-floor-mining");
+        }
+        return null;
+    }
+
     @Override
     public void buildSettings(AutoplayFeature feature) {
-        column().growX().gap(unit(1)).children(() -> {
-            text(Core.bundle.get("feature.autoplay.settings.mining.filter")).growX().left()
-                    .color(WebStyles.Colors.GHOST_FG);
+        column().props(growX(), gap(unit(1))).children(() -> {
+            text(Core.bundle.get("feature.autoplay.settings.mining.filter"))
+                    .props(color(WebStyles.Colors.GHOST_FG), growX(), left());
 
-            wrap().growX().gap(unit(1)).children(() -> {
+            wrap().props(growX(), gap(unit(1))).children(() -> {
+                Unit unit = Vars.player != null ? Vars.player.unit() : null;
+
                 for (Item item : Vars.content.items()) {
                     if (!item.unlockedNow()) {
                         continue;
                     }
 
+                    if (!hasOreOnMap(item)) {
+                        continue;
+                    }
+
+                    String disabledReason = getUnitMiningDisabledReason(unit, item);
+                    boolean canMine = disabledReason == null;
+
                     Readable<Boolean> checked = selectedItems.signal()
                             .map(seq -> seq == null || seq.isEmpty() || seq.contains(item.name));
 
-                    button(() -> toggleItem(item, !Boolean.TRUE.equals(checked.peek())))
-                            .style(WebStyles.filterChipText())
-                            .checked(checked)
-                            .paddingX(unit(2))
-                            .height(unit(8))
+                    Button chipButton = button(() -> {
+                        if (canMine) {
+                            toggleItem(item, !Boolean.TRUE.equals(checked.peek()));
+                        }
+                    })
+                            .props(checked(checked), style(WebStyles.filterChipText()), enabled(Readable.of(canMine)), paddingX(unit(2)), height(unit(8)), prefHeight(unit(8)))
                             .children(() -> {
-                                icon(new TextureRegionDrawable(item.uiIcon)).size(unit(4));
+                                icon(new TextureRegionDrawable(item.uiIcon)).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)));
                                 text(item.localizedName)
-                                        .color(checked.map(c -> Boolean.TRUE.equals(c) ? Color.white : Color.gray));
+                                        .props(color(checked.map(c -> Boolean.TRUE.equals(c)
+                                                ? (canMine ? Color.white : Color.lightGray)
+                                                : Color.gray)));
                             });
+
+                    if (!canMine) {
+                        chipButton.props(tooltip(disabledReason));
+                    }
                 }
             });
         });
     }
 
     public static class MinerAI extends BaseAutoplayAI {
+        public static final float TRANSFER_COOLDOWN = 25f;
+        public static final float TRANSFER_TIMEOUT = 60f;
+
         public boolean mining = true;
         public @Nullable Item targetItem;
         public @Nullable Tile ore;
+
+        private float transferCooldownTimer = 0f;
+        private float transferPendingTimer = 0f;
+        private boolean transferPending = false;
+
+        public void tryTransferInventory(Building core) {
+            if (unit == null || core == null || unit.stack.amount <= 0 || unit.stack.item == null) {
+                return;
+            }
+            if (core.acceptStack(unit.stack.item, unit.stack.amount, unit) <= 0) {
+                return;
+            }
+            if (transferPending || transferCooldownTimer > 0f) {
+                return;
+            }
+            if (!unit.within(core, unit.type.range)) {
+                return;
+            }
+
+            Call.transferInventory(Vars.player, core);
+            transferPending = true;
+            transferPendingTimer = TRANSFER_TIMEOUT;
+            transferCooldownTimer = TRANSFER_COOLDOWN;
+        }
 
         @Override
         public void updateMovement() {
@@ -354,9 +414,20 @@ public class MiningTask implements AutoplayTask {
                 return;
             }
 
+            if (transferCooldownTimer > 0f) {
+                transferCooldownTimer -= Time.delta;
+            }
 
-            if (unit.stack.amount > 0 && unit.within(core, unit.type.range) && core.acceptStack(unit.stack.item, unit.stack.amount, unit) > 0) {
-                Call.transferInventory(Vars.player, core);
+            if (transferPending) {
+                if (unit.stack.amount == 0) {
+                    transferPending = false;
+                    transferPendingTimer = 0f;
+                } else {
+                    transferPendingTimer -= Time.delta;
+                    if (transferPendingTimer <= 0f) {
+                        transferPending = false;
+                    }
+                }
             }
 
             if (!unit.validMine(unit.mineTile)) {
@@ -390,7 +461,8 @@ public class MiningTask implements AutoplayTask {
                     }
 
                     if (ore != null) {
-                        boolean canMineOre = targetItem != null && (unit.stack.amount == 0 || unit.stack.item == targetItem);
+                        boolean canMineOre = targetItem != null
+                                && (unit.stack.amount == 0 || unit.stack.item == targetItem);
                         moveTo(ore, unit.type.mineRange / 2f, 20f);
                         if (canMineOre && unit.within(ore, unit.type.mineRange) && unit.validMine(ore)) {
                             unit.mineTile = ore;
@@ -408,8 +480,10 @@ public class MiningTask implements AutoplayTask {
                 }
 
                 if (unit.within(core, unit.type.range)) {
-                    Call.transferInventory(Vars.player, core);
-                    mining = true;
+                    tryTransferInventory(core);
+                    if (unit.stack.amount == 0) {
+                        mining = true;
+                    }
                 }
 
                 circle(core, unit.type.range / 1.8f);

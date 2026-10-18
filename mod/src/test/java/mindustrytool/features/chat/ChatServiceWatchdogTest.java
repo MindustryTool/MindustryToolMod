@@ -41,9 +41,7 @@ class ChatServiceWatchdogTest extends MindustryTestEnv {
         service.dispose();
         store.dispose();
         QueryCache.getInstance().clear();
-        // Service and store own effects outside any component scope, so they
-        // are caller-managed: dispose above unsubscribes them, flush drains
-        // anything already queued so the env teardown sees an empty dispatcher.
+
         flushEffects();
     }
 
@@ -95,7 +93,8 @@ class ChatServiceWatchdogTest extends MindustryTestEnv {
     void testHandleStreamLineIncomingMessagesUpdatesStateAndConnects() {
         store.session().setConnected(false);
 
-        service.handleStreamLine("data: {\"type\":\"message\",\"data\":{\"id\":\"msg_1\",\"channelId\":\"ch1\",\"content\":\"Hello world\"}}");
+        service.handleStreamLine(
+                "data: {\"type\":\"message\",\"data\":{\"id\":\"msg_1\",\"channelId\":\"ch1\",\"content\":\"Hello world\"}}");
         service.handleStreamLine("");
 
         assertTrue(store.session().connected().get());
@@ -170,10 +169,6 @@ class ChatServiceWatchdogTest extends MindustryTestEnv {
 
         service.syncActiveChannelSilently("ch1");
 
-        // Cancel the incidental real-network request immediately: the assertions
-        // above only cover synchronous flag updates, and a late Request-Worker
-        // completion would otherwise clear flags or touch solim state during a
-        // later test's teardown window (flaky SolimEnv failures).
         service.stop();
 
         assertFalse(store.messages().isActiveLoadingInitial(),
@@ -189,8 +184,6 @@ class ChatServiceWatchdogTest extends MindustryTestEnv {
 
         service.syncActiveChannelSilently("ch1");
 
-        // Same prompt cancellation as above: keep the late async completion
-        // from racing these synchronous assertions or later tests.
         service.stop();
 
         assertTrue(store.messages().isActiveLoadingInitial(),
@@ -209,8 +202,6 @@ class ChatServiceWatchdogTest extends MindustryTestEnv {
 
         service.checkConnectionAndReconnect();
 
-        // Promptly cancel the reconnect's incidental real-network requests
-        // (stream + catch-up sync) for the same reason as above.
         service.stop();
 
         assertTrue(mockReq.isCancelled(), "Stalled stream should be cancelled by reconnect check");
@@ -231,7 +222,6 @@ class ChatServiceWatchdogTest extends MindustryTestEnv {
         msg.setCreatedBy("author_123");
         msg.setContent("Test message");
 
-        // Author already in store: no batch fetch issued, user retained
         service.fetchMissingUsers(Collections.singletonList(msg));
 
         UserData found = store.users().getDirect("author_123");
@@ -241,14 +231,13 @@ class ChatServiceWatchdogTest extends MindustryTestEnv {
 
     @Test
     void testIncomingMessageWhenFeedNotVisibleIncrementsUnread() {
-        // Feed is not visible for ch1 (e.g., viewing channel list or collapsed)
+
         ChatService unreadTrackingService = new ChatService(store, channelId -> false);
         try {
             String json = "{\"type\":\"message\",\"data\":{\"id\":\"01944800-0000-7000-8000-000000000001\",\"channelId\":\"ch1\",\"content\":\"hello\",\"createdBy\":\"u1\"}}";
             unreadTrackingService.handleStreamLine("data: " + json);
             unreadTrackingService.handleStreamLine("");
 
-            // Unread should increment so indicator dot can display
             assertEquals(1, store.unread().get("ch1"));
             assertEquals(1, store.unread().forChannel("ch1").get());
         } finally {
@@ -259,14 +248,13 @@ class ChatServiceWatchdogTest extends MindustryTestEnv {
 
     @Test
     void testIncomingMessageWhenFeedIsVisibleMarksAsRead() {
-        // Feed is visible for ch1
+
         ChatService readService = new ChatService(store, channelId -> "ch1".equals(channelId));
         try {
             String json = "{\"type\":\"message\",\"data\":{\"id\":\"01944800-0000-7000-8000-000000000002\",\"channelId\":\"ch1\",\"content\":\"hello2\",\"createdBy\":\"u1\"}}";
             readService.handleStreamLine("data: " + json);
             readService.handleStreamLine("");
 
-            // Unread should be 0 since message feed was visible
             assertEquals(0, store.unread().get("ch1"));
             assertEquals(0, store.unread().forChannel("ch1").get());
         } finally {
@@ -311,7 +299,8 @@ class ChatServiceWatchdogTest extends MindustryTestEnv {
 
         assertEquals(msg, store.ui().currentReplyTarget());
 
-        service.handleStreamLine("data: {\"type\":\"delete\",\"data\":{\"id\":\"msg_reply_target\",\"channelId\":\"ch1\"}}");
+        service.handleStreamLine(
+                "data: {\"type\":\"delete\",\"data\":{\"id\":\"msg_reply_target\",\"channelId\":\"ch1\"}}");
         service.handleStreamLine("");
 
         assertNull(store.ui().currentReplyTarget());
@@ -346,10 +335,10 @@ class ChatServiceWatchdogTest extends MindustryTestEnv {
         msg.setContent("Will be deleted");
         store.messages().append(msg);
 
-        service.handleStreamLine("data: {\"type\":\"delete\",\"data\":{\"id\":\"msg_to_delete\",\"channelId\":\"ch1\",\"lastMessageId\":\"msg_prev\"}}");
+        service.handleStreamLine(
+                "data: {\"type\":\"delete\",\"data\":{\"id\":\"msg_to_delete\",\"channelId\":\"ch1\",\"lastMessageId\":\"msg_prev\"}}");
         service.handleStreamLine("");
 
         assertEquals("msg_prev", store.unread().getLatestMessageId("ch1"));
     }
 }
-

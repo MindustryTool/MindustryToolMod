@@ -94,9 +94,9 @@ public class FleeTask implements AutoplayTask {
         Readable<String> thresholdLabel = fleeThreshold.signal().map(val ->
                 Core.bundle.format("feature.autoplay.settings.flee.threshold", Math.round((val != null ? val : 0.4f) * 100)));
 
-        column().growX().gap(unit(1)).children(() -> {
-            text(thresholdLabel).growX().left().color(WebStyles.Colors.GHOST_FG);
-            slider(fleeThreshold.signal(), 0.1f, 0.7f, 0.05f).growX();
+        column().props(growX(), gap(unit(1))).children(() -> {
+            text(thresholdLabel).props(color(WebStyles.Colors.GHOST_FG), growX(), left());
+            slider(fleeThreshold.signal(), 0.1f, 0.7f, 0.05f).props(growX());
         });
     }
 
@@ -108,7 +108,12 @@ public class FleeTask implements AutoplayTask {
             if (unit == null) {
                 return;
             }
-            if (threat instanceof Entityc && !((Entityc) threat).isAdded()) {
+            if (threat instanceof Building) {
+                Building turret = (Building) threat;
+                if (!turret.isValid() || turret.dead()) {
+                    threat = null;
+                }
+            } else if (threat instanceof Entityc && !((Entityc) threat).isAdded()) {
                 threat = null;
             } else if (threat instanceof Healthc && ((Healthc) threat).dead()) {
                 threat = null;

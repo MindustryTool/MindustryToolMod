@@ -65,14 +65,10 @@ import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
+import solim.reactive.Effect;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Smart Upgrade feature: bulk upgrades connected distribution chains
- * (conveyors, ducts), conduits, bridges, walls, and drills with an armed
- * single-click or keybind.
- */
 public class SmartUpgradeFeature extends Feature {
 
     public enum BlockGroup {
@@ -113,16 +109,16 @@ public class SmartUpgradeFeature extends Feature {
         onlySameTypeConfig = config.boolValue("only-same-type", false);
         traverseBridgesConfig = config.boolValue("traverse-bridges", true);
 
-        maxUpdatesConfig.signal().subscribe(v -> cachedMaxUpdates = v != null ? v : 500);
-        triggerModeConfig.signal().subscribe(v -> cachedTriggerMode = v != null ? v : MODE_ONE_SHOT);
-        onlySameTypeConfig.signal().subscribe(v -> cachedOnlySameType = v != null ? v : false);
-        traverseBridgesConfig.signal().subscribe(v -> cachedTraverseBridges = v != null ? v : true);
+        Effect.of(maxUpdatesConfig.signal(), v -> cachedMaxUpdates = v != null ? v : 500);
+        Effect.of(triggerModeConfig.signal(), v -> cachedTriggerMode = v != null ? v : MODE_ONE_SHOT);
+        Effect.of(onlySameTypeConfig.signal(), v -> cachedOnlySameType = v != null ? v : false);
+        Effect.of(traverseBridgesConfig.signal(), v -> cachedTraverseBridges = v != null ? v : true);
 
         syncConfigCache();
 
-        bindToggle("smartUpgradeToggle", KeyCode.unset);
-        bindAction("smartUpgradeTrigger", KeyCode.u, this::triggerHoveredUpgrade);
-        bindDialog("smartUpgradeSettings", KeyCode.unset, getSettingDialog(), false);
+        bindToggle("smartupgradetoggle", KeyCode.unset);
+        bindAction("smartupgradetrigger", KeyCode.u, this::triggerHoveredUpgrade);
+        bindDialog("smartupgradesettings", KeyCode.unset, getSettingDialog(), false);
 
         Events.run(Trigger.update, this::update);
         Events.run(Trigger.draw, this::draw);
@@ -229,7 +225,7 @@ public class SmartUpgradeFeature extends Feature {
     }
 
     private void showArmedToast() {
-        if (Vars.ui != null && Vars.ui.hudfrag != null && Core.bundle != null) {
+        if (Vars.ui != null && Vars.ui.hudfrag != null) {
             Vars.ui.hudfrag.showToast(Core.bundle.get("feature.smart-upgrade.armed",
                     "Smart Upgrade armed: tap a block to open the upgrade menu."));
         }
@@ -350,16 +346,12 @@ public class SmartUpgradeFeature extends Feature {
         if (tile == null || tile.build == null) {
             return;
         }
+        if (getGroup(tile.block()) == BlockGroup.NONE) {
+            return;
+        }
         closeMenu();
 
         Seq<Block> candidates = getUpgradeCandidates(tile.block());
-        if (candidates.isEmpty()) {
-            if (Vars.ui != null && Vars.ui.hudfrag != null && Core.bundle != null) {
-                Vars.ui.hudfrag.showToast(Core.bundle.get("feature.smart-upgrade.no-candidates",
-                        "No upgrade candidates available."));
-            }
-            return;
-        }
 
         selectedTile = tile;
         currentMenu = new Table(Styles.black8);
@@ -382,7 +374,7 @@ public class SmartUpgradeFeature extends Feature {
                 }
                 Core.app.post(() -> {
                     int count = upgradeChain(tile, targetBlock);
-                    if (count > 0 && Vars.ui != null && Vars.ui.hudfrag != null && Core.bundle != null) {
+                    if (count > 0 && Vars.ui != null && Vars.ui.hudfrag != null) {
                         Vars.ui.hudfrag.showToast(Icon.up, Core.bundle.format("feature.smart-upgrade.upgraded",
                                 count, targetBlock.localizedName));
                     }
@@ -395,6 +387,29 @@ public class SmartUpgradeFeature extends Feature {
                 currentMenu.row();
             }
         }
+
+        if (col > 0 && col % 5 == 0) {
+            currentMenu.row();
+        }
+
+        String deleteTooltip = Core.bundle.get("feature.smart-upgrade.delete", "Delete");
+        currentMenu.button(b -> {
+            if (Icon.trash != null) {
+                b.image(Icon.trash).size(32f).color(Pal.remove);
+            }
+        }, Styles.clearNonei, () -> {
+            if (Vars.control != null && Vars.control.input != null) {
+                Vars.control.input.isBuilding = false;
+            }
+            Core.app.post(() -> {
+                int count = deleteChain(tile);
+                if (count > 0 && Vars.ui != null && Vars.ui.hudfrag != null) {
+                    Vars.ui.hudfrag.showToast(Icon.trash, Core.bundle.format("feature.smart-upgrade.deleted",
+                            count));
+                }
+            });
+            closeMenu();
+        }).size(44f).pad(2).tooltip(deleteTooltip);
 
         currentMenu.update(() -> {
             if (selectedTile == null || selectedTile.build == null
@@ -501,7 +516,7 @@ public class SmartUpgradeFeature extends Feature {
             return 0;
         }
         if (Vars.player == null || Vars.player.unit() == null) {
-            if (Vars.ui != null && Vars.ui.hudfrag != null && Core.bundle != null) {
+            if (Vars.ui != null && Vars.ui.hudfrag != null) {
                 Vars.ui.hudfrag.showToast(Icon.warning, Core.bundle.get("feature.smart-upgrade.no-builder",
                         "No builder unit available."));
             }
@@ -555,7 +570,76 @@ public class SmartUpgradeFeature extends Feature {
         return updates;
     }
 
-    private void expandNeighbors(Seq<Tile> queue, ObjectSet<Tile> visited, Building build, BlockGroup group, Team team) {
+    public boolean shouldDeleteBlock(Block startBlock, BlockGroup group, @Nullable Block currentBlock) {
+        if (startBlock == null || group == null || group == BlockGroup.NONE || currentBlock == null) {
+            return false;
+        }
+        if (cachedOnlySameType) {
+            return currentBlock == startBlock;
+        }
+        if (getGroup(currentBlock) == group) {
+            return true;
+        }
+        return cachedTraverseBridges
+                && ((group == BlockGroup.CONVEYOR && isConveyorTraversable(currentBlock))
+                        || (group == BlockGroup.CONDUIT && isConduitTraversable(currentBlock)));
+    }
+
+    public int deleteChain(Tile startTile) {
+        if (startTile == null || startTile.build == null) {
+            return 0;
+        }
+        if (Vars.player == null || Vars.player.unit() == null) {
+            if (Vars.ui != null && Vars.ui.hudfrag != null) {
+                Vars.ui.hudfrag.showToast(Icon.warning, Core.bundle.get("feature.smart-upgrade.no-builder",
+                        "No builder unit available."));
+            }
+            return 0;
+        }
+
+        Team team = Vars.player.team();
+        Block startBlock = startTile.block();
+        BlockGroup group = getGroup(startBlock);
+        if (group == BlockGroup.NONE) {
+            return 0;
+        }
+
+        ObjectSet<Tile> visited = new ObjectSet<>();
+        Seq<Tile> queue = new Seq<>();
+        ObjectSet<Building> deleted = new ObjectSet<>();
+
+        queue.add(startTile);
+        visited.add(startTile);
+
+        int maxUpdates = cachedMaxUpdates;
+        int updates = 0;
+
+        while (!queue.isEmpty() && updates < maxUpdates) {
+            Tile current = queue.pop();
+            if (current == null || current.build == null || current.team() != team) {
+                continue;
+            }
+
+            Building build = current.build;
+            if (shouldDeleteBlock(startBlock, group, current.block()) && !deleted.contains(build)) {
+                deleted.add(build);
+                int bx = build.tileX();
+                int by = build.tileY();
+                if (Vars.player.unit().plans != null) {
+                    Vars.player.unit().plans.remove(p -> p != null && p.x == bx && p.y == by);
+                }
+                Vars.player.unit().addBuild(new BuildPlan(bx, by));
+                updates++;
+            }
+
+            expandNeighbors(queue, visited, build, group, team);
+        }
+
+        return updates;
+    }
+
+    private void expandNeighbors(Seq<Tile> queue, ObjectSet<Tile> visited, Building build, BlockGroup group,
+            Team team) {
         if (build == null) {
             return;
         }

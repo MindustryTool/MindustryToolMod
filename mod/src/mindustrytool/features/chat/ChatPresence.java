@@ -17,6 +17,7 @@ import mindustrytool.features.playerconnect.PcRoomClosed;
 import mindustrytool.features.playerconnect.PcRoomOpened;
 import mindustrytool.services.MindustryTool;
 import solim.config.ConfigValue;
+import solim.reactive.Effect;
 import solim.reactive.Signal;
 
 public class ChatPresence {
@@ -33,6 +34,7 @@ public class ChatPresence {
     private String lastSent = ChatSession.MENU_STATE;
     private boolean dirty;
     private @Nullable Timer.Task pendingSync;
+    private @Nullable Timer.Task heartbeatTask;
 
     public ChatPresence(ChatSession session, ConfigValue<Boolean> sharePresence, Signal<Boolean> featureEnabled) {
         this(session, sharePresence, featureEnabled, MindustryTool::updateChatState);
@@ -50,30 +52,35 @@ public class ChatPresence {
         Events.on(PcRoomOpened.class, this::onPcRoomOpened);
         Events.on(PcRoomClosed.class, event -> onPcRoomClosed());
 
-        session.loggedIn().subscribe(loggedIn -> {
+        Effect.of(session.loggedIn(), loggedIn -> {
             if (Boolean.TRUE.equals(loggedIn)) {
                 forceSync();
             }
         });
-        session.connected().subscribe(connected -> {
+        Effect.of(session.connected(), connected -> {
             if (Boolean.TRUE.equals(connected)) {
                 forceSync();
             }
         });
-        sharePresence.signal().subscribe(optIn -> {
+        Effect.of(sharePresence.signal(), optIn -> {
             if (Boolean.TRUE.equals(optIn)) {
+                scheduleHeartbeat();
                 forceSync();
             } else {
+                cancelHeartbeat();
                 cancelPendingSync();
             }
         });
-        featureEnabled.subscribe(enabled -> {
+        Effect.of(featureEnabled, enabled -> {
             if (Boolean.TRUE.equals(enabled)) {
+                scheduleHeartbeat();
                 forceSync();
+            } else {
+                cancelHeartbeat();
+                cancelPendingSync();
             }
         });
 
-        Timer.schedule(this::heartbeat, HEARTBEAT_SECONDS, HEARTBEAT_SECONDS);
         attemptSend(false);
     }
 
@@ -186,6 +193,18 @@ public class ChatPresence {
 
     private void heartbeat() {
         attemptSend(true);
+    }
+
+    private void scheduleHeartbeat() {
+        cancelHeartbeat();
+        heartbeatTask = Timer.schedule(this::heartbeat, HEARTBEAT_SECONDS, HEARTBEAT_SECONDS);
+    }
+
+    private void cancelHeartbeat() {
+        if (heartbeatTask != null) {
+            heartbeatTask.cancel();
+            heartbeatTask = null;
+        }
     }
 
     private void attemptSend(boolean force) {

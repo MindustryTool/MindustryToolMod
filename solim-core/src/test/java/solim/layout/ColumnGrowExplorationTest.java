@@ -2,6 +2,9 @@ package solim.layout;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.grow;
+import static solim.modifier.Values.padding;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -9,8 +12,8 @@ import org.junit.jupiter.api.Test;
 import arc.scene.Element;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.CellAccess;
-import solim.core.BaseComponent;
-import solim.runtime.OwnershipContext;
+import solim.core.Component;
+import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.test.SolimEnv;
 
@@ -23,12 +26,12 @@ class ColumnGrowExplorationTest extends SolimEnv {
         OwnershipContext.clear();
     }
 
-    static class ChannelListProbe extends BaseComponent {
+    static class ChannelListProbe extends Component {
         Column col;
 
         @Override
         protected Element build() {
-            col = new Column().name("channel-list").grow().gap(4f).padding(8f).children(() -> {
+            col = new Column().name("channel-list").props(grow(), gap(4f), padding(8f)).children(() -> {
                 new Element();
             });
             return col.element();
@@ -39,7 +42,7 @@ class ColumnGrowExplorationTest extends SolimEnv {
     void directColumnWithGrowInsideRow() {
         final Column[] colHolder = new Column[1];
         Row row = new Row().children(() -> {
-            colHolder[0] = new Column().name("channel-list").grow().gap(4f).padding(8f).children(() -> {
+            colHolder[0] = new Column().name("channel-list").props(grow(), gap(4f), padding(8f)).children(() -> {
                 new Element();
             });
         });
@@ -53,14 +56,14 @@ class ColumnGrowExplorationTest extends SolimEnv {
     }
 
     @Test
-    void baseComponentReturningColumnWithGrowInsideRow() {
+    void lazyComponentReturningColumnWithGrowInsideRow() {
         ChannelListProbe probe = new ChannelListProbe();
         Row row = new Row().children(() -> {
             AttachmentStack.registerPendingComponent(probe, AttachmentStack.current());
         });
 
         Cell<?> cell = row.table().getCell(probe.element());
-        assertNotNull(cell, "Cell must exist for BaseComponent element in row");
+        assertNotNull(cell, "Cell must exist for Component element in row");
         assertEquals(1, CellAccess.expandX(cell), "Cell should have expandX = 1 from column().grow()");
         assertEquals(1, CellAccess.expandY(cell), "Cell should have expandY = 1 from column().grow()");
         assertEquals(1f, CellAccess.fillX(cell), 0.01f, "Cell should have fillX = 1 from column().grow()");
@@ -71,9 +74,9 @@ class ColumnGrowExplorationTest extends SolimEnv {
     void directColumnGrowAfterChildren() {
         final Column[] colHolder = new Column[1];
         Row row = new Row().children(() -> {
-            colHolder[0] = new Column().name("channel-list").gap(4f).padding(8f).children(() -> {
+            colHolder[0] = new Column().name("channel-list").props(gap(4f), padding(8f)).children(() -> {
                 new Element();
-            }).grow();
+            }).props(grow());
         });
 
         Cell<?> cell = row.table().getCell(colHolder[0].element());

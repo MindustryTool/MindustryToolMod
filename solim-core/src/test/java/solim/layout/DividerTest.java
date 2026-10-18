@@ -1,5 +1,7 @@
 package solim.layout;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -12,7 +14,6 @@ import arc.util.Scaling;
 import solim.test.SolimEnv;
 
 class DividerTest extends SolimEnv {
-
 
     @Test
     void defaultDirectionIsX() {
@@ -56,15 +57,14 @@ class DividerTest extends SolimEnv {
     @Test
     void colorAndHeightModifiers() {
         Divider d = new Divider();
-        d.color(Color.green).height(2f);
+        d.props(color(Color.green), height(2f));
         assertEquals(Color.green, d.image().color);
         assertEquals(2f, d.cellConfig().prefHeight.get());
     }
 
     @Test
     void dividerStretchesDrawableToFillCell() {
-        // Scaling.fit would shrink the square source pixel into a centered dot
-        // instead of a line, rendering the divider effectively invisible.
+
         assertEquals(Scaling.stretch, new Divider(Direction.X).solimImage().getScaling());
         assertEquals(Scaling.stretch, new Divider(Direction.Y).solimImage().getScaling());
     }

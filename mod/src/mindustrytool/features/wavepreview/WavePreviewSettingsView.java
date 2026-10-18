@@ -4,12 +4,16 @@ import static solim.UI.*;
 
 import arc.Core;
 import arc.scene.Element;
-import solim.core.BaseComponent;
+import java.util.Locale;
+import mindustry.gen.Icon;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingKeybindCard;
+import mindustrytool.components.SettingScaffold;
+import mindustrytool.components.SettingSlider;
+import mindustrytool.components.WebStyles;
+import solim.core.Component;
 
-/**
- * Settings view for the Wave Preview feature, offering opacity, scale, and lookahead-depth rows.
- */
-public class WavePreviewSettingsView extends BaseComponent {
+public class WavePreviewSettingsView extends Component {
 
     private final WavePreviewFeature feature;
 
@@ -19,44 +23,63 @@ public class WavePreviewSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().grow().center().children(() -> {
-            scroll().center().children(() -> {
-                column().growX().gap(unit(2)).children(() -> {
-                    // Opacity setting
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.wave-preview.settings.opacity")).left();
-                        spacer();
-                        slider(feature.opacityConfig.signal(), 0.1f, 1.0f, 0.05f);
-                        row().width(unit(14)).children(() -> {
-                            text(feature.opacityConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100)));
-                        });
-                    });
+        return SettingScaffold.build(() -> {
+            headerCard();
+            settingsCard();
+            keybindsCard();
+            actionsCard();
+        });
+    }
 
-                    divider();
+    private void keybindsCard() {
+        SettingKeybindCard.forFeature(feature);
+    }
 
-                    // Scale setting
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.wave-preview.settings.scale")).left();
-                        spacer();
-                        slider(feature.scaleConfig.signal(), 0.5f, 2.0f, 0.1f);
-                        row().width(unit(14)).children(() -> {
-                            text(feature.scaleConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100)));
-                        });
-                    });
+    private Component headerCard() {
+        return SettingCard.header(feature, "TACTICAL");
+    }
 
-                    divider();
+    private Component settingsCard() {
+        return SettingCard.section(Icon.settings, Core.bundle.get("feature.wave-preview.settings.section.settings"),
+                () -> {
 
-                    // Lookahead depth setting
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.wave-preview.settings.depth")).left();
-                        spacer();
-                        slider(feature.depthConfig.signal(), WavePreviewFeature.MIN_DEPTH, WavePreviewFeature.MAX_DEPTH, 1);
-                        row().width(unit(14)).children(() -> {
-                            text(feature.depthConfig.signal().map(v -> String.valueOf(v != null ? v : WavePreviewFeature.DEFAULT_DEPTH)));
-                        });
-                    });
+                    SettingSlider.of(
+                            Core.bundle.get("feature.wave-preview.settings.opacity"),
+                            feature.opacityConfig.signal(),
+                            0.1f,
+                            1.0f,
+                            0.05f,
+                            feature.opacityConfig.signal()
+                                    .map(v -> String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100)));
+
+                    SettingSlider.of(
+                            Core.bundle.get("feature.wave-preview.settings.scale"),
+                            feature.scaleConfig.signal(),
+                            0.5f,
+                            2.0f,
+                            0.1f,
+                            feature.scaleConfig.signal()
+                                    .map(v -> String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100)));
+
+                    SettingSlider.of(
+                            Core.bundle.get("feature.wave-preview.settings.depth"),
+                            feature.depthConfig.signal(),
+                            WavePreviewFeature.MIN_DEPTH,
+                            WavePreviewFeature.MAX_DEPTH,
+                            1,
+                            feature.depthConfig.signal()
+                                    .map(v -> String.valueOf(v != null ? v : WavePreviewFeature.DEFAULT_DEPTH)));
                 });
-            });
-        }).element();
+    }
+
+    private Component actionsCard() {
+        return SettingCard.card().children(() -> {
+            button(feature::resetToDefaults)
+                    .props(style(WebStyles.outline()), growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
+                    .children(() -> {
+                        icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
+                        text(Core.bundle.get("feature.wave-preview.settings.reset"));
+                    });
+        });
     }
 }

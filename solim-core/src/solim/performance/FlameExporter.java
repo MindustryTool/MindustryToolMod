@@ -13,17 +13,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Headless flame exporter turning trace snapshots into dual-format payloads
- * and a self-contained HTML file. All filtering happens at export time; the
- * recorded span list is never modified.
- */
 public final class FlameExporter {
 
     private FlameExporter() {
     }
 
-    /** Returns a copy ordered by start time, then depth, then span id. */
     public static List<TraceSpan> ordered(@Nullable List<TraceSpan> spans) {
         List<TraceSpan> out = new ArrayList<>();
         if (spans != null) {
@@ -65,10 +59,6 @@ public final class FlameExporter {
         return out;
     }
 
-    /**
-     * Returns spans with duration at or above {@code minMs}, preserving order.
-     * A non-positive threshold keeps every span.
-     */
     public static List<TraceSpan> pruned(@Nullable List<TraceSpan> spans, double minMs) {
         List<TraceSpan> out = new ArrayList<>();
         if (spans == null) {
@@ -87,10 +77,6 @@ public final class FlameExporter {
         return out;
     }
 
-    /**
-     * Computes self-time per span id as total minus direct children totals.
-     * Only spans present in the given list contribute; missing parents are ignored.
-     */
     public static Map<Integer, Long> selfTimes(@Nullable List<TraceSpan> spans) {
         Map<Integer, Long> self = new HashMap<>();
         if (spans == null || spans.isEmpty()) {
@@ -127,7 +113,6 @@ public final class FlameExporter {
         return self;
     }
 
-    /** Prefers an explicit name, falling back to a non-blank generic label. */
     public static String label(@Nullable TraceSpan span) {
         if (span == null) {
             return "Component-element";
@@ -136,7 +121,6 @@ public final class FlameExporter {
         return name != null && !name.trim().isEmpty() ? name : "Component-element";
     }
 
-    /** Chrome Trace Events payload with X phases and ns-to-us conversion. */
     public static String chromePayload(@Nullable List<TraceSpan> spans, double minMs,
             int droppedCount, long traceId) {
         List<TraceSpan> kept = pruned(ordered(spans), minMs);
@@ -175,7 +159,6 @@ public final class FlameExporter {
         return sb.toString();
     }
 
-    /** Speedscope-native evented profile derived from the same span list. */
     public static String speedscopePayload(@Nullable List<TraceSpan> spans, double minMs,
             int droppedCount, long traceId) {
         List<TraceSpan> kept = pruned(ordered(spans), minMs);
@@ -266,7 +249,6 @@ public final class FlameExporter {
         return sb.toString();
     }
 
-    /** Self-contained HTML embedding both payloads and a simple flame render. */
     public static String exportHtml(@Nullable List<TraceSpan> spans, double minMs,
             int droppedCount, long traceId) {
         List<TraceSpan> kept = pruned(ordered(spans), minMs);
@@ -354,12 +336,10 @@ public final class FlameExporter {
         return sb.toString();
     }
 
-    /** Convenience overload defaulting dropped count and trace id. */
     public static String exportHtml(@Nullable List<TraceSpan> spans, double minMs) {
         return exportHtml(spans, minMs, 0, -1L);
     }
 
-    /** Writes the HTML export to a file using Java 8 compatible I/O. */
     public static void writeHtmlFile(@Nullable List<TraceSpan> spans, double minMs,
             int droppedCount, long traceId, File file) throws IOException {
         if (file == null) {

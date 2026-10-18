@@ -8,20 +8,21 @@ import arc.scene.Element;
 import arc.scene.ui.Button.ButtonStyle;
 import arc.scene.ui.TextButton.TextButtonStyle;
 import java.util.Objects;
+import arc.scene.style.Drawable;
 import arc.util.Nullable;
 import mindustry.gen.Icon;
 import mindustry.ui.Fonts;
 import mindustry.ui.Styles;
+import mindustrytool.components.FileIcon;
 import mindustrytool.components.Loader;
 import mindustrytool.components.WebStyles;
 import mindustrytool.models.response.ChannelDto;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.graphics.RoundedDrawable;
 import solim.reactive.Computed;
 import solim.reactive.Readable;
 
-public class ChatChannelListView extends BaseComponent {
-    // TODO: Able to turn on/off notifications for each channel
+public class ChatChannelListView extends Component {
     private final ChatStore store;
     private final @Nullable ChatService service;
 
@@ -36,22 +37,16 @@ public class ChatChannelListView extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().name("channel-list").grow().gap(unit(1)).padding(unit(2)).children(() -> {
+        return column().name("channel-list").props(grow(), padding(unit(2)), gap(unit(1))).children(() -> {
             query(store.channels().channelsQuery())
-                    .grow()
+                    .props(grow())
                     .loading(Loader::centered)
-                    .error(err -> column().grow().center().gap(unit(2)).padding(unit(2)).children(() -> {
-                        icon(Icon.warning).size(unit(6)).color(Color.scarlet);
+                    .error(err -> column().props(grow(), padding(unit(2)), center(), gap(unit(2))).children(() -> {
+                        icon(Icon.warning).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(Color.scarlet));
                         text(Core.bundle.get("feature.chat.ui.error.channels", "Failed to load channels."))
-                                .color(Color.scarlet)
-                                .fontScale(0.95f)
-                                .wrap()
-                                .center();
+                                .props(color(Color.scarlet), fontScale(0.95f), textWrap(), center());
                         text(err != null ? err.getMessage() : "")
-                                .color(Color.gray)
-                                .fontScale(0.8f)
-                                .wrap()
-                                .center();
+                                .props(color(Color.gray), fontScale(0.8f), textWrap(), center());
                         button(Core.bundle.get("feature.chat.ui.retry", "Retry"), () -> {
                             if (service != null) {
                                 service.refreshChannels();
@@ -59,49 +54,63 @@ public class ChatChannelListView extends BaseComponent {
                                 store.channels().channelsQuery().refetch();
                             }
                         })
-                                .style(WebStyles.secondary())
-                                .height(unit(9))
+                                .props(style(WebStyles.secondary()), height(unit(9)), prefHeight(unit(9)))
                                 .children(() -> {
-                                    icon(Icon.refresh).size(unit(4));
+                                    icon(Icon.refresh).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)));
                                     text(Core.bundle.get("feature.chat.ui.retry", "Retry"));
                                 });
                     }))
-                    .data(channelList -> scroll().grow().children(() -> {
-                        column().growX().gap(unit(1)).children(() -> {
+                    .data(channelList -> scroll().props(grow()).children(() -> {
+                        column().props(growX(), gap(unit(1))).children(() -> {
                             if (channelList != null && !channelList.isEmpty()) {
-                                forEach(store.channels().all()).key(ChannelDto::getId).growX()
-                                        .children(channel -> new ChannelItem(channel, store));
+                                forEach(store.channels().all())
+                                        .key(ChannelDto::getId)
+                                        .props(growX())
+                                        .items(channel -> new ChannelItem(channel, store));
                             } else {
-                                column().padding(unit(2)).children(() -> {
+                                column().props(padding(unit(2))).children(() -> {
                                     text(Core.bundle.get("feature.chat.ui.empty-channels", "No channels available."))
-                                            .color(Color.gray)
-                                            .fontScale(0.9f);
+                                            .props(color(Color.gray), fontScale(0.9f));
                                 });
                             }
                         });
-                    })).grow();
+                    })).props(grow());
         }).element();
     }
 
-    private static class ChannelItem extends BaseComponent {
+    private static class ChannelItem extends Component {
         private static final Color SELECTED_BG = new Color(0.45f, 0.35f, 0.9f, 0.8f);
-        private static final TextButtonStyle selectedStyle = new TextButtonStyle() {
-            {
-                down = new RoundedDrawable(unit(2), SELECTED_BG);
-                up = new RoundedDrawable(unit(2), SELECTED_BG);
-                over = new RoundedDrawable(unit(2), SELECTED_BG);
-                font = Fonts.def;
-                fontColor = Color.white;
-                disabledFontColor = Color.gray;
-            }
-        };
+        private static @Nullable TextButtonStyle selectedStyle;
+        private static @Nullable TextButtonStyle defaultStyle;
 
-        private static final TextButtonStyle defaultStyle = new TextButtonStyle(Styles.cleart) {
-            {
-                down = new RoundedDrawable(unit(2), Color.gray);
-                over = new RoundedDrawable(unit(2), Color.gray);
+        private static TextButtonStyle getSelectedStyle() {
+            if (selectedStyle == null) {
+                selectedStyle = new TextButtonStyle() {
+                    {
+                        down = new RoundedDrawable(unit(2), SELECTED_BG);
+                        up = new RoundedDrawable(unit(2), SELECTED_BG);
+                        over = new RoundedDrawable(unit(2), SELECTED_BG);
+                        font = Fonts.def;
+                        fontColor = Color.white;
+                        disabledFontColor = Color.gray;
+                    }
+                };
             }
-        };
+            return selectedStyle;
+        }
+
+        private static TextButtonStyle getDefaultStyle() {
+            if (defaultStyle == null) {
+                TextButtonStyle base = Styles.cleart != null ? Styles.cleart : new TextButtonStyle();
+                defaultStyle = new TextButtonStyle(base) {
+                    {
+                        down = new RoundedDrawable(unit(2), Color.gray);
+                        over = new RoundedDrawable(unit(2), Color.gray);
+                    }
+                };
+            }
+            return defaultStyle;
+        }
 
         private final ChannelDto channel;
         private final ChatStore store;
@@ -119,28 +128,47 @@ public class ChatChannelListView extends BaseComponent {
             Readable<Boolean> hasUnread = store.unread().forChannel(channel.getId())
                     .map(count -> count != null && count > 0);
 
-            Computed<ButtonStyle> style = isSelected.map(s -> s ? selectedStyle : defaultStyle);
+            Readable<Boolean> isMuted = store.notifications().isMuted(channel.getId());
+
+            Computed<Boolean> showUnreadDot = new Computed<>(
+                    () -> Boolean.TRUE.equals(hasUnread.get()) && !Boolean.TRUE.equals(isMuted.get()));
+
+            Computed<Boolean> showUnselectedMuted = new Computed<>(
+                    () -> !Boolean.TRUE.equals(isSelected.get()) && Boolean.TRUE.equals(isMuted.get()));
+
+            Readable<Drawable> bellIcon = isMuted.map(m -> Boolean.TRUE.equals(m)
+                    ? FileIcon.of("bell-off.png")
+                    : FileIcon.of("bell.png"));
+
+            Readable<String> bellTooltip = isMuted.map(m -> Boolean.TRUE.equals(m)
+                    ? Core.bundle.get("feature.chat.channel.notifications.unmute", "Unmute notifications")
+                    : Core.bundle.get("feature.chat.channel.notifications.mute", "Mute notifications"));
+
+            Computed<ButtonStyle> style = isSelected.map(s -> s ? getSelectedStyle() : getDefaultStyle());
 
             return row()
-                    .growX()
-                    .height(unit(12))
-                    .padding(unit(1))
-                    .left()
+                    .props(growX(), height(unit(12)), prefHeight(unit(12)), padding(unit(1)), left())
                     .children(() -> {
                         button(() -> store.selectChannel(channel.getId()))
-                                .style(style)
-                                .left()
-                                .grow()
-                                .paddingX(unit(1))
+                                .props(style(style), grow(), paddingX(unit(1)), left())
                                 .children(() -> {
-                                    text("# " + channel.getName()).left();
+                                    text("# " + channel.getName()).props(left());
 
                                     spacer();
 
+                                    button(() -> store.notifications().toggleMuted(channel.getId()))
+                                            .props(stopClickPropagation(true), style(WebStyles.ghost()), size(unit(8)), prefWidth(unit(8)), prefHeight(unit(8)),
+                                                    tooltip(bellTooltip), visible(isSelected))
+                                            .children(() -> icon(bellIcon)
+                                                    .props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)), color(Color.white)));
+
+                                    image(FileIcon.of("bell-off.png"))
+                                            .props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)),
+                                                    tooltip(Core.bundle.get("feature.chat.channel.notifications.muted",
+                                                            "Muted")), visible(showUnselectedMuted), color(Color.lightGray));
+
                                     image(circle())
-                                            .size(unit(3))
-                                            .color(Color.white)
-                                            .visible(hasUnread);
+                                            .props(size(unit(3)), prefWidth(unit(3)), prefHeight(unit(3)), visible(showUnreadDot), color(Color.white));
                                 });
                     })
                     .element();

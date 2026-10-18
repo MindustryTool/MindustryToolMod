@@ -1,5 +1,10 @@
 package solim.core;
 
+import static solim.modifier.Values.*;
+
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.right;
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
@@ -18,120 +23,125 @@ import solim.reactive.Readable;
 import solim.reactive.Signal;
 import solim.runtime.AttachmentStack;
 
-/** Example final API settings panel from requirement.md §16. */
-public final class SettingsPanel extends BaseComponent {
+public final class SettingsPanel extends Component {
 
-	private final Signal<Boolean> darkMode = Signal.of(false);
+    private final Signal<Boolean> darkMode = Signal.of(false);
 
-	private final Signal<Boolean> dirty = Signal.of(false);
+    private final Signal<Boolean> dirty = Signal.of(false);
 
-	private final Computed<String> saveText = dirty.map(value ->
-			value ? t("solim.settings.save-dirty", "● Save Changes") : t("solim.settings.save", "Save Changes"));
+    private Computed<String> saveText;
 
-	private Effect logger;
+    private Effect logger;
 
-	private static String t(String key, String fallback) {
-		if (Core.bundle != null && Core.bundle.has(key)) {
-			try {
-				return Core.bundle.get(key);
-			} catch (Throwable ignored) {
-				return fallback;
-			}
-		}
-		return fallback;
-	}
+    private static String t(String key, String fallback) {
+        if (Core.bundle != null && Core.bundle.has(key)) {
+            try {
+                return Core.bundle.get(key);
+            } catch (Throwable ignored) {
+                return fallback;
+            }
+        }
+        return fallback;
+    }
 
-	private static final TextButtonStyle PRIMARY_STYLE = new TextButtonStyle() {{
-		fontColor = Color.white;
-		overFontColor = Color.white;
-	}};
-	private static final TextButtonStyle GHOST_STYLE = new TextButtonStyle() {{
-		fontColor = Color.white;
-		overFontColor = Color.white;
-	}};
+    private static final TextButtonStyle PRIMARY_STYLE = new TextButtonStyle() {
+        {
+            fontColor = Color.white;
+            overFontColor = Color.white;
+        }
+    };
+    private static final TextButtonStyle GHOST_STYLE = new TextButtonStyle() {
+        {
+            fontColor = Color.white;
+            overFontColor = Color.white;
+        }
+    };
 
-	@Override
-	protected Element build() {
+    @Override
+    protected Element build() {
 
-		logger = Effect.of(() -> {
-			Log.info("Dirty state: @", dirty.get());
-		});
+        saveText = dirty
+                .map(value -> value ? t("solim.settings.save-dirty", "● Save Changes")
+                        : t("solim.settings.save", "Save Changes"));
 
-		return new Column().padding(24)
-				.gap(16)
-				.children(() -> {
-					text(t("solim.settings.title", "Settings"));
+        logger = Effect.of(() -> {
+            Log.info("Dirty state: @", dirty.get());
+        });
 
-					Divider divider = new Divider(Direction.X);
-					AttachmentStack.attachToParent(divider.element());
+        return new Column().props(padding(24), gap(16))
+                .children(() -> {
+                    text(t("solim.settings.title", "Settings"));
 
-					new Row().children(() -> {
-						text(t("solim.settings.dark-mode", "Dark Mode"));
+                    Divider divider = new Divider(Direction.X);
+                    AttachmentStack.attachToParent(divider.element());
 
-						button(() -> {
-							darkMode.set(!darkMode.get());
-							dirty.set(true);
-						})
-								.style(darkMode.get() ? PRIMARY_STYLE : GHOST_STYLE)
-								.children(() -> text(darkMode.map(value -> value
-										? t("solim.settings.dark-mode.on", "On")
-										: t("solim.settings.dark-mode.off", "Off"))));
-					});
+                    new Row().children(() -> {
+                        text(t("solim.settings.dark-mode", "Dark Mode"));
 
-					Spacer spacer = new Spacer();
-					AttachmentStack.attachToParent(spacer.element());
+                        button(() -> {
+                            darkMode.set(!darkMode.get());
+                            dirty.set(true);
+                        })
+                                .props(style(darkMode.get() ? PRIMARY_STYLE : GHOST_STYLE))
+                                .children(() -> text(darkMode.map(value -> value
+                                        ? t("solim.settings.dark-mode.on", "On")
+                                        : t("solim.settings.dark-mode.off", "Off"))));
+                    });
 
-					new Row().right().gap(8).children(() -> {
-						button(() -> {
-							dirty.set(false);
-						}).children(() -> text(t("solim.settings.discard", "Discard")));
+                    Spacer spacer = new Spacer();
+                    AttachmentStack.attachToParent(spacer.element());
 
-						button(() -> {
-									dirty.set(false);
-								})
-								.enabled(dirty)
-								.style(PRIMARY_STYLE)
-								.children(() -> text(saveText));
-					});
-				})
-				.element();
-	}
+                    new Row().props(right(), gap(8)).children(() -> {
+                        button(() -> {
+                            dirty.set(false);
+                        }).children(() -> text(t("solim.settings.discard", "Discard")));
 
-	private static void text(String value) {
-		AttachmentStack.attachToParent(Text.of(value).label());
-	}
+                        button(() -> {
+                            dirty.set(false);
+                        })
+                                .props(enabled(dirty), style(PRIMARY_STYLE))
+                                .children(() -> text(saveText));
+                    });
+                })
+                .element();
+    }
 
-	private static void text(Readable<String> value) {
-		AttachmentStack.attachToParent(Text.of(value).label());
-	}
+    private static void text(String value) {
+        AttachmentStack.attachToParent(Text.of(value).label());
+    }
 
-	private static Button button(Runnable onClick) {
-		Button button = new Button(onClick);
-		AttachmentStack.attachToParent(button.element());
-		return button;
-	}
+    private static void text(Readable<String> value) {
+        AttachmentStack.attachToParent(Text.of(value).label());
+    }
 
-	@Override
-	public void dispose() {
-		if (logger != null) {
-			logger.dispose();
-		}
-		super.dispose();
-	}
+    private static Button button(Runnable onClick) {
+        Button button = new Button(onClick);
+        AttachmentStack.attachToParent(button.element());
+        return button;
+    }
 
-	public Signal<Boolean> darkMode() {
-		return darkMode;
-	}
+    @Override
+    public void dispose() {
+        if (logger != null) {
+            logger.dispose();
+        }
+        super.dispose();
+    }
 
-	public Signal<Boolean> dirty() {
-		return dirty;
-	}
+    public Signal<Boolean> darkMode() {
+        return darkMode;
+    }
 
-	public Computed<String> saveText() {
-		return saveText;
-	}
+    public Signal<Boolean> dirty() {
+        return dirty;
+    }
 
-	public Effect logger() {
-		return logger;
-	}
+    public Computed<String> saveText() {
+        element();
+        return saveText;
+    }
+
+    public Effect logger() {
+        return logger;
+    }
 }

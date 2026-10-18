@@ -9,14 +9,9 @@ import arc.graphics.Color;
 import mindustrytool.components.WebStyles;
 import mindustrytool.models.response.TagData;
 
-
-/**
- * Layout constants and responsive capacity calculations for schematic and map
- * browsers.
- */
 public final class BrowserLayout {
 
-    public static final float CARD_SIZE = unit(58f);
+    public static final float CARD_SIZE = unit(78f);
     public static final float CARD_WIDTH = CARD_SIZE;
     public static final float CARD_INTERNAL_GAP = unit(2f);
     public static final float CARD_ACTION_ROW_HEIGHT = unit(9f);
@@ -29,11 +24,6 @@ public final class BrowserLayout {
     public static final int PAGE_SIZE_MIN = 20;
     public static final int PAGE_SIZE_MAX = 100;
 
-    /**
-     * Number of cards revealed per frame when a browser page arrives. Keeps
-     * each frame under a 60fps budget while keyed reconciliation reuses the
-     * previous chunk, so later chunks only build new cards.
-     */
     public static final int RENDER_CHUNK_SIZE = 8;
 
     private BrowserLayout() {
@@ -74,13 +64,12 @@ public final class BrowserLayout {
             return;
         }
 
-        card(WebStyles.previewCardBackground()).growX().top().left().padding(unit(4)).gap(unit(4)).children(() -> {
-            text(Core.bundle.get("browser.detail.tags")).color(Color.white).growX().left();
-            wrap().growX().left().gap(unit(2)).children(() -> {
+        card(WebStyles.previewCardBackground()).props(growX(), padding(unit(4)), top(), left(), gap(unit(4))).children(() -> {
+            text(Core.bundle.get("browser.detail.tags")).props(color(Color.white), growX(), left());
+            wrap().props(growX(), left(), gap(unit(2))).children(() -> {
                 for (TagData tag : tags) {
-                    row().rounded(12).paddingX(unit(3)).paddingY(unit(1)).border(2, Color.darkGray).children(() -> {
-                        text(tag.getName())
-                                .color(tag.color());
+                    row().props(rounded(12), paddingX(unit(3)), paddingY(unit(1)), border(2, Color.darkGray)).children(() -> {
+                        text(tag.getName()).props(color(tag.color()));
                     });
                 }
             });

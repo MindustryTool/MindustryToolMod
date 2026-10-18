@@ -2,10 +2,10 @@ package solim.config;
 
 import arc.util.Nullable;
 import arc.func.Func;
-import solim.reactive.Computed;
+import java.util.Objects;
+import solim.core.ReactiveObserver;
+import solim.core.ReactiveSource;
 import solim.reactive.Readable;
-import solim.reactive.Signal;
-import solim.reactive.Subscription;
 
 public class ContextualConfigValue<T, K> extends ConfigValue<T> {
 	private final ConfigGroup group;
@@ -13,7 +13,7 @@ public class ContextualConfigValue<T, K> extends ConfigValue<T> {
 	private final Readable<K> discriminant;
 	private final Func<K, String> keySuffix;
 	private final ConfigPersister<T> persister;
-	private final Subscription discriminantSub;
+	private final @Nullable ReactiveObserver discriminantObserver;
 	private @Nullable K currentDiscriminant;
 
 	private final @Nullable Func<K, T> defaultFactory;
@@ -42,7 +42,24 @@ public class ContextualConfigValue<T, K> extends ConfigValue<T> {
 		this.defaultFactory = defaultFactory;
 		this.persister = persister;
 		this.currentDiscriminant = discriminant != null ? discriminant.peek() : null;
-		this.discriminantSub = subscribeToDiscriminant();
+		if (this.discriminant instanceof ReactiveSource) {
+			this.discriminantObserver = new ReactiveObserver() {
+				@Override
+				public void addDependency(ReactiveSource observable) {
+				}
+
+				@Override
+				public void invalidate() {
+					K newDisc = discriminant.peek();
+					if (!Objects.equals(currentDiscriminant, newDisc)) {
+						onDiscriminantChanged(newDisc);
+					}
+				}
+			};
+			((ReactiveSource) this.discriminant).addObserver(this.discriminantObserver);
+		} else {
+			this.discriminantObserver = null;
+		}
 	}
 
 	public ContextualConfigValue(
@@ -105,15 +122,6 @@ public class ContextualConfigValue<T, K> extends ConfigValue<T> {
 		}
 	}
 
-	private Subscription subscribeToDiscriminant() {
-		if (discriminant instanceof Signal) {
-			return ((Signal<K>) discriminant).subscribe(this::onDiscriminantChanged);
-		} else if (discriminant instanceof Computed) {
-			return ((Computed<K>) discriminant).subscribe(this::onDiscriminantChanged);
-		}
-		return Subscription.EMPTY;
-	}
-
 	private void onDiscriminantChanged(K newDisc) {
 		if (updating) {
 			return;
@@ -168,8 +176,8 @@ public class ContextualConfigValue<T, K> extends ConfigValue<T> {
         if (isDisposed()) {
             return;
         }
-        if (discriminantSub != null) {
-            discriminantSub.dispose();
+        if (discriminantObserver != null && discriminant instanceof ReactiveSource) {
+            ((ReactiveSource) discriminant).removeObserver(discriminantObserver);
         }
         super.dispose();
     }

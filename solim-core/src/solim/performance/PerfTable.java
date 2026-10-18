@@ -2,10 +2,6 @@ package solim.performance;
 
 import arc.scene.ui.layout.Table;
 
-/**
- * Instrumented {@link Table} subclass that times {@link #act(float)},
- * {@link #validate()}, and {@link #draw()} when {@link UiProfiler#enabled} is true.
- */
 public class PerfTable extends Table {
 
     public PerfTable() {

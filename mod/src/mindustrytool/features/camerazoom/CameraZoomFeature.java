@@ -14,16 +14,8 @@ import mindustrytool.features.FeatureMetadata;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
+import solim.reactive.Effect;
 
-/**
- * Lets players customize how far the camera zooms out (min) and in (max)
- * while playing, including beyond vanilla limits. Vanilla derives its
- * effective in-game bounds every frame from the base {@code minZoom} /
- * {@code maxZoom} renderer fields, so this feature writes those base fields
- * (mapping through the vanilla zoom multiplier settings) and pulls the live
- * scale back into range. Disabling restores the previously observed vanilla
- * bounds.
- */
 public class CameraZoomFeature extends Feature {
 
     public static final float DEFAULT_MIN_ZOOM = 0.5f;
@@ -64,14 +56,14 @@ public class CameraZoomFeature extends Feature {
         minZoomConfig = config.floatValue("min-zoom", DEFAULT_MIN_ZOOM);
         maxZoomConfig = config.floatValue("max-zoom", DEFAULT_MAX_ZOOM);
 
-        minZoomConfig.signal().subscribe(min -> {
+        Effect.of(minZoomConfig.signal(), min -> {
             Float max = maxZoomConfig.signal().peek();
             if (min != null && max != null && min > max) {
                 maxZoomConfig.set(min);
             }
         });
 
-        maxZoomConfig.signal().subscribe(max -> {
+        Effect.of(maxZoomConfig.signal(), max -> {
             Float min = minZoomConfig.signal().peek();
             if (min != null && max != null && max < min) {
                 minZoomConfig.set(max);
@@ -121,8 +113,8 @@ public class CameraZoomFeature extends Feature {
         float hi = Math.max(minBoxed != null ? minBoxed : DEFAULT_MIN_ZOOM,
                 maxBoxed != null ? maxBoxed : DEFAULT_MAX_ZOOM);
 
-        float minMult = validMultiplier(Core.settings.getFloat(MIN_MULT_KEY, 1f));
-        float maxMult = validMultiplier(Core.settings.getFloat(MAX_MULT_KEY, 1f));
+        float minMult = validMultiplier(multiplierSetting(MIN_MULT_KEY));
+        float maxMult = validMultiplier(multiplierSetting(MAX_MULT_KEY));
 
         Vars.renderer.minZoom = lo * minMult;
         Vars.renderer.maxZoom = hi / maxMult;
@@ -148,5 +140,11 @@ public class CameraZoomFeature extends Feature {
 
     private float validMultiplier(float mult) {
         return mult > 0f && !Float.isNaN(mult) && !Float.isInfinite(mult) ? mult : 1f;
+    }
+
+    // arc.Settings.getFloat(String, float) boxes its default argument on every call.
+    private static float multiplierSetting(String key) {
+        Object stored = Core.settings.get(key, null);
+        return stored instanceof Float ? (Float) stored : 1f;
     }
 }

@@ -9,16 +9,12 @@ import arc.scene.Element;
 import arc.scene.style.Drawable;
 import mindustry.gen.Icon;
 import mindustry.ui.FileChooser;
+import mindustrytool.components.SettingCard;
 import mindustrytool.components.WebStyles;
-import solim.core.BaseComponent;
 import solim.core.Component;
 import solim.reactive.Readable;
 
-/**
- * Settings view for the Custom Music feature: Ambient, Dark, and Boss sections,
- * each listing tracks with reactive play and disable toggles.
- */
-public class MusicSettingsView extends BaseComponent {
+public class MusicSettingsView extends Component {
 
     private final MusicFeature feature;
 
@@ -32,50 +28,47 @@ public class MusicSettingsView extends BaseComponent {
                 ? Core.bundle.get("feature.music.now-playing.none")
                 : Core.bundle.format("feature.music.now-playing", music.file.nameWithoutExtension()));
 
-        return column().grow().center().children(() -> {
-            scroll().grow().children(() -> {
-                column().growX().gap(unit(3)).padding(unit(2)).children(() -> {
-                    text(nowPlaying).growX().left().color(WebStyles.Colors.GHOST_FG);
+        return column().props(grow(), maxWidth(750f), top(), center()).children(() -> {
+            scroll().props(grow(), scrollX(false)).children(() -> {
+                column().props(growX(), padding(unit(2)), top(), center(), gap(unit(3))).children(() -> {
+                    headerCard();
 
-                    MusicType[] types = MusicType.values();
-                    for (int i = 0; i < types.length; i++) {
-                        if (i > 0) {
-                            divider();
-                        }
-                        section(types[i]);
+                    text(nowPlaying).props(color(WebStyles.Colors.GHOST_FG), growX(), left());
+
+                    for (MusicType type : MusicType.values()) {
+                        section(type);
                     }
                 });
             });
         }).element();
     }
 
-    private Component section(MusicType type) {
-        return column().growX().gap(unit(1)).children(() -> {
-            row().growX().gap(unit(1)).center().children(() -> {
-                text(Core.bundle.get(type.labelKey())).growX().left().color(WebStyles.Colors.GHOST_FG);
+    private Component headerCard() {
+        return SettingCard.header(feature, "MEDIA");
+    }
 
+    private Component section(MusicType type) {
+        return SettingCard.section(Icon.play, Core.bundle.get(type.labelKey()), () -> {
+            row().props(growX(), gap(unit(1)), center()).children(() -> {
                 spacer();
 
                 button()
-                        .style(WebStyles.ghost())
-                        .size(unit(11))
-                        .tooltip(Core.bundle.get("feature.music.tooltip.add"))
+                        .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.add")))
                         .onClick(() -> openPicker(type))
-                        .children(() -> icon(Icon.add).size(unit(6)));
+                        .children(() -> icon(Icon.add).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
 
-                //slot types (menu/editor) have no original rotation to disable
                 if (!type.isSlot()) {
                     button()
-                            .style(WebStyles.ghost())
-                            .size(unit(11))
-                            .tooltip(Core.bundle.get("feature.music.tooltip.disable-originals"))
+                            .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.disable-originals")))
                             .onClick(() -> feature.disableAllOriginals(type))
-                            .children(() -> icon(Icon.trash).size(unit(6)));
+                            .children(() -> icon(Icon.trash).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
                 }
             });
 
-            reactiveGrid(feature.trackSignal(type)).key(state -> state.disabledKey()).gap(unit(2)).growX()
-                    .children(state -> new TrackRow(feature, state));
+            reactiveGrid(feature.trackSignal(type))
+                    .key(state -> state.disabledKey())
+                    .props(growX(), gap(unit(2)))
+                    .items(state -> new TrackRow(feature, state));
         });
     }
 
@@ -97,12 +90,7 @@ public class MusicSettingsView extends BaseComponent {
         });
     }
 
-    /**
-     * A single track row: name label plus custom-remove, play/pause, and disable
-     * buttons. All buttons bind to the row's {@link TrackState} signals and update
-     * reactively.
-     */
-    private static class TrackRow extends BaseComponent {
+    private static class TrackRow extends Component {
 
         private final MusicFeature feature;
         private final TrackState state;
@@ -124,50 +112,43 @@ public class MusicSettingsView extends BaseComponent {
                     ? Color.gray
                     : Color.white);
 
-            return row().growX().gap(unit(1)).center()
+            return row().props(growX(), gap(unit(1)), center())
                     .children(() -> {
-                        column().growX().gap(unit(2)).children(() -> {
-                            text(state.name).growX().left().ellipsis(true).color(labelColor);
+                        column().props(growX(), gap(unit(2))).children(() -> {
+                            text(state.name)
+                                    .props(color(labelColor), growX(), left(), ellipsis(true));
 
                             when(state.isPlaying())
-                                    .thenDo(() -> stack().growX()
-                                            .layer(() -> divider().color(Color.white).growX().height(4))
-                                            .layer(parent -> divider().color(Color.green).height(4).update(div -> {
-                                                    div.setWidth(state.music.getPosition() / state.music.getLength()
-                                                            * parent.getWidth());
-                                                })))
-                                    .growX();
+                                    .thenDo(() -> stack().props(growX())
+                                            .layer(() -> divider().props(color(Color.white), growX(), height(4f)))
+                                            .layer(parent -> divider().props(color(Color.green), height(4f), update(div -> {
+                                                div.setWidth(state.music.getPosition() / state.music.getLength()
+                                                        * parent.getWidth());
+                                            }))))
+                                    .props(growX());
                         });
 
                         if (state.isCustom) {
                             button()
-                                    .style(WebStyles.ghost())
-                                    .size(unit(11))
-                                    .tooltip(Core.bundle.get("feature.music.tooltip.rename-custom"))
+                                    .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.rename-custom")))
                                     .onClick(() -> feature.showRenameDialog(state))
-                                    .children(() -> icon(Icon.edit).size(unit(6)).color(labelColor));
+                                    .children(() -> icon(Icon.edit).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(labelColor)));
 
                             button()
-                                    .style(WebStyles.ghost())
-                                    .size(unit(11))
-                                    .tooltip(Core.bundle.get("feature.music.tooltip.remove-custom"))
+                                    .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.remove-custom")))
                                     .onClick(() -> feature.removeTrack(state.type, state))
-                                    .children(() -> icon(Icon.trash).size(unit(6)).color(labelColor));
+                                    .children(() -> icon(Icon.trash).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(labelColor)));
                         }
 
                         button()
-                                .style(WebStyles.ghost())
-                                .size(unit(11))
-                                .tooltip(Core.bundle.get("feature.music.tooltip.play-stop"))
+                                .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.play-stop")))
                                 .onClick(() -> feature.togglePlay(state))
-                                .children(() -> icon(playIcon).size(unit(6)).color(labelColor));
+                                .children(() -> icon(playIcon).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(labelColor)));
 
                         button()
-                                .style(WebStyles.ghost())
-                                .size(unit(11))
-                                .tooltip(Core.bundle.get("feature.music.tooltip.toggle-disabled"))
+                                .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.music.tooltip.toggle-disabled")))
                                 .onClick(() -> feature.toggleDisabled(state))
-                                .children(() -> icon(disableIcon).size(unit(6)).color(labelColor));
+                                .children(() -> icon(disableIcon).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(labelColor)));
                     }).element();
         }
     }

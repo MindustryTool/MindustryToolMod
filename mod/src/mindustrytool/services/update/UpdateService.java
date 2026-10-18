@@ -8,11 +8,6 @@ import mindustrytool.features.settings.ModSettings;
 import mindustrytool.services.Github;
 import mindustrytool.services.MindustryTool;
 
-/**
- * Update check orchestrator. Directly delegates to {@link Github} /
- * {@link MindustryTool} and shows
- * {@link UpdateDialog} — no indirection interfaces.
- */
 public final class UpdateService {
 
     private static volatile UpdateService instance;
@@ -41,7 +36,6 @@ public final class UpdateService {
         int[] currentVersion = VersionUtils.parseVersion(currentVersionString);
         String currentVerStr = VersionUtils.format(currentVersion);
 
-        // fire-and-forget ping
         try {
             MindustryTool.ping("mod-v8").exceptionally(e -> null);
         } catch (Exception e) {
@@ -85,10 +79,6 @@ public final class UpdateService {
         });
     }
 
-    /**
-     * Reads the beta flag defensively; any failure falls back to the stable
-     * channel.
-     */
     private static boolean isBetaParticipate() {
         try {
             return Boolean.TRUE.equals(ModSettings.betaParticipate.get());
@@ -98,11 +88,6 @@ public final class UpdateService {
         }
     }
 
-    /**
-     * Beta channel: releases-only gate, no {@code mod.hjson} fetch. Every failure
-     * (no network, request error, malformed/empty payload, nothing newer) resolves
-     * to silent — log and finish — so the game can never crash or stall here.
-     */
     private void checkForUpdateBeta(int[] currentVersion, String currentVerStr, Runnable done) {
         final int[] safeCurrent = currentVersion != null ? currentVersion : new int[0];
         final String safeCurrentStr = currentVerStr != null ? currentVerStr : "";
@@ -152,7 +137,8 @@ public final class UpdateService {
                             }
 
                             Log.info(Core.bundle.format("update.status.require-update", safeCurrentStr, latestTag));
-                            ChangelogFormatter.PartitionedReleases partitioned = ChangelogFormatter.partition(body, latestTag, true);
+                            ChangelogFormatter.PartitionedReleases partitioned = ChangelogFormatter.partition(body,
+                                    latestTag, true);
                             try {
                                 Core.app.post(() -> new UpdateDialog(safeCurrentStr, latestTag, partitioned, null,
                                         latestTag, finalDone).show());
@@ -193,7 +179,8 @@ public final class UpdateService {
             }
             try {
                 boolean includePrereleases = Boolean.TRUE.equals(ModSettings.betaParticipate.get());
-                ChangelogFormatter.PartitionedReleases partitioned = ChangelogFormatter.partition(body, latestVer, includePrereleases);
+                ChangelogFormatter.PartitionedReleases partitioned = ChangelogFormatter.partition(body, latestVer,
+                        includePrereleases);
                 Core.app.post(() -> new UpdateDialog(currentVer, latestVer, partitioned, null, null, done).show());
             } catch (Exception e) {
                 Log.err("Failed to parse releases", e);

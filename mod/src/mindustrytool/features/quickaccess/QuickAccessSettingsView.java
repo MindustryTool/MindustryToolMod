@@ -3,17 +3,18 @@ package mindustrytool.features.quickaccess;
 import static solim.UI.*;
 
 import arc.Core;
-import arc.graphics.Color;
 import arc.scene.Element;
 import java.util.List;
-import mindustry.ui.Styles;
+import mindustry.gen.Icon;
 import mindustrytool.components.FileIcon;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.Feature;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.reactive.Readable;
 
-public class QuickAccessSettingsView extends BaseComponent {
+public class QuickAccessSettingsView extends Component {
 
     private final QuickAccessFeature feature;
 
@@ -23,70 +24,73 @@ public class QuickAccessSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        feature.healDisplayOrder();
-        return column().grow().center().children(() -> {
-            scroll().growX().center()
-                    .maxWidth(dvw(90f).map(w -> Math.min(w, 750f)))
-                    .children(() -> {
-                        column().growX().gap(unit(2)).children(() -> {
-                            row().growX().gap(unit(2)).children(() -> {
-                                text(Core.bundle.get("feature.quick-access.settings.opacity")).left();
 
-                                spacer();
-                                slider(feature.opacityConfig.signal(), 0.5f, 1.0f, 0.05f);
-
-                                row().width(unit(14)).children(() -> {
-                                    text(feature.opacityConfig.signal().map(v -> String.format("%.0f%%", v * 100)));
-                                });
-                            });
-
-                            row().growX().gap(unit(2)).children(() -> {
-                                text(Core.bundle.get("feature.quick-access.settings.scale")).left();
-                                spacer();
-                                slider(feature.scaleConfig.signal(), 0.5f, 1.5f, 0.1f);
-
-                                row().width(unit(14)).children(() -> {
-                                    text(feature.scaleConfig.signal().map(v -> String.format("%.0f%%", v * 100)));
-                                });
-                            });
-
-                            row().growX().gap(unit(2)).children(() -> {
-                                text(Core.bundle.get("feature.quick-access.settings.columns")).left();
-                                spacer();
-                                slider(feature.colsConfig.signal(), 1, 9, 1);
-
-                                row().width(unit(14)).children(() -> {
-                                    text(feature.colsConfig.signal().map(String::valueOf));
-                                });
-                            });
-
-                            checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle"),
-                                    feature.hideDragHandleConfig.signal()).growX();
-
-                            checkbox(Core.bundle.get("feature.quick-access.settings.collapsible"),
-                                    feature.collapsibleConfig.signal()).growX();
-
-                            divider();
-
-                            text(Core.bundle.get("feature.quick-access.settings.visible-features")).left().growX()
-                                    .color(Color.white);
-
-                            Readable<List<Feature>> orderedRows = feature.orderedFeaturesSignal();
-
-                            reactiveGrid(orderedRows).key(f -> f.getMetadata().getId()).growX().gap(unit(2))
-                                    .children(f -> new FeatureOrderRow(feature, f));
-
-                            divider();
-
-                            button(Core.bundle.get("feature.quick-access.settings.reset-position"),
-                                    feature::resetPosition)
-                                            .style(Styles.defaultb).growX();
-                        });
-                    });
+        return column().props(grow(), maxWidth(750f), top(), center()).children(() -> {
+            scroll().props(grow(), scrollX(false)).children(() -> {
+                column().props(growX(), padding(unit(2)), top(), center(), gap(unit(3))).children(() -> {
+                    headerCard();
+                    appearanceCard();
+                    featuresCard();
+                    actionsCard();
+                });
+            });
         }).element();
     }
 
-    private static final class FeatureOrderRow extends BaseComponent {
+    private Component headerCard() {
+        return SettingCard.header(feature, "HUD OVERLAY");
+    }
+
+    private Component appearanceCard() {
+        return SettingCard.section(Icon.settings,
+                Core.bundle.get("team-resources.settings.section.appearance", "Appearance & Behavior"), () -> {
+                    SettingSlider.of(
+                            Core.bundle.get("feature.quick-access.settings.opacity"),
+                            feature.opacityConfig.signal(),
+                            0.5f, 1.0f, 0.05f,
+                            feature.opacityConfig.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
+
+                    SettingSlider.of(
+                            Core.bundle.get("feature.quick-access.settings.scale"),
+                            feature.scaleConfig.signal(),
+                            0.5f, 1.5f, 0.1f,
+                            feature.scaleConfig.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
+
+                    SettingSlider.of(
+                            Core.bundle.get("feature.quick-access.settings.columns"),
+                            feature.colsConfig.signal(),
+                            1, 9, 1,
+                            feature.colsConfig.signal().map(v -> String.valueOf(v)));
+
+                    checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle"),
+                            feature.hideDragHandleConfig.signal()).props(growX());
+
+                    checkbox(Core.bundle.get("feature.quick-access.settings.collapsible"),
+                            feature.collapsibleConfig.signal()).props(growX());
+                });
+    }
+
+    private Component featuresCard() {
+        return SettingCard.section(Icon.list,
+                Core.bundle.get("feature.quick-access.settings.visible-features"), () -> {
+                    Readable<List<Feature>> orderedRows = feature.orderedFeaturesSignal();
+
+                    reactiveGrid(orderedRows)
+                            .key(f -> f.getMetadata().getId())
+                            .props(growX(), gap(unit(2)))
+                            .items(f -> new FeatureOrderRow(feature, f));
+                });
+    }
+
+    private Component actionsCard() {
+        return SettingCard.card().children(() -> {
+            button(Core.bundle.get("feature.quick-access.settings.reset-position"),
+                    feature::resetPosition)
+                    .props(style(WebStyles.outlineText()), height(unit(11)), prefHeight(unit(11)), growX());
+        });
+    }
+
+    private static final class FeatureOrderRow extends Component {
         private final QuickAccessFeature feature;
         private final Feature f;
 
@@ -101,24 +105,32 @@ public class QuickAccessSettingsView extends BaseComponent {
             Readable<Boolean> canMoveUp = feature.canMoveUpSignal(id);
             Readable<Boolean> canMoveDown = feature.canMoveDownSignal(id);
 
-            return row().growX().gap(unit(2)).children(() -> {
+            return row().props(growX(), gap(unit(2))).children(() -> {
                 checkbox(f.getName(), feature.isFeatureVisible(id),
                         visible -> feature.setFeatureVisible(id, visible))
-                                .growX();
+                        .props(growX());
 
                 button(() -> feature.moveUp(id))
-                        .style(WebStyles.ghost())
-                        .size(unit(11))
-                        .tooltip(Core.bundle.get("feature.quick-access.settings.move-up"))
-                        .disabled(() -> !canMoveUp.peek())
-                        .children(() -> icon(FileIcon.of("chevron-up.png")));
+                        .props(
+                                style(WebStyles.ghost()),
+                                size(unit(11)),
+                                prefWidth(unit(11)),
+                                prefHeight(unit(11)),
+                                tooltip(Core.bundle.get("feature.quick-access.settings.move-up")),
+                                disabled(canMoveUp.map(can -> !can))
+                        )
+                        .children(() -> icon(FileIcon.of("chevron-up.png")).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
 
                 button(() -> feature.moveDown(id))
-                        .style(WebStyles.ghost())
-                        .size(unit(11))
-                        .tooltip(Core.bundle.get("feature.quick-access.settings.move-down"))
-                        .disabled(() -> !canMoveDown.peek())
-                        .children(() -> icon(FileIcon.of("chevron-down.png")));
+                        .props(
+                                style(WebStyles.ghost()),
+                                size(unit(11)),
+                                prefWidth(unit(11)),
+                                prefHeight(unit(11)),
+                                tooltip(Core.bundle.get("feature.quick-access.settings.move-down")),
+                                disabled(canMoveDown.map(can -> !can))
+                        )
+                        .children(() -> icon(FileIcon.of("chevron-down.png")).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
             }).element();
         }
     }

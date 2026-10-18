@@ -1,6 +1,7 @@
 package solim.performance;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.growX;
 
 import arc.Core;
 import arc.scene.Element;
@@ -15,12 +16,11 @@ import solim.test.SolimEnv;
 
 public class TabsPerformanceTest extends SolimEnv {
 
-
     private void populateLargeContent(int count) {
         Column col = new Column();
         col.children(() -> {
             for (int i = 0; i < count; i++) {
-                new Card().growX().children(() -> {
+                new Card().props(growX()).children(() -> {
                     Element el = new Element();
                     el.setSize(30f, 30f);
                 });
@@ -40,7 +40,7 @@ public class TabsPerformanceTest extends SolimEnv {
         Tabs tabs = new Tabs(activeTab);
 
         tabs.tab("Tab 0", () -> {
-            new Card().growX().children(() -> {
+            new Card().props(growX()).children(() -> {
                 Element el = new Element();
                 el.setSize(100f, 100f);
             });
@@ -49,13 +49,11 @@ public class TabsPerformanceTest extends SolimEnv {
         tabs.tab("Tab 1", () -> populateLargeContent(300));
         tabs.tab("Tab 2", () -> populateLargeContent(300));
 
-        // When inactive tabs have setLayoutEnabled(false), validate should be fast
         for (int i = 1; i < tabs.contents().size(); i++) {
             tabs.contents().get(i).setLayoutEnabled(false);
             tabs.contents().get(i).visible = false;
         }
 
-        // Warmup
         for (int i = 0; i < 10; i++) {
             tabs.root().invalidate();
             tabs.root().validate();
@@ -70,7 +68,6 @@ public class TabsPerformanceTest extends SolimEnv {
         double avgDisabledMs = ((System.nanoTime() - t0) / (double) iterations) / 1_000_000.0;
         System.out.printf("TabsPerformance [disabled inactive tabs]: avg validate = %.3f ms%n", avgDisabledMs);
 
-        // When all tabs have setLayoutEnabled(true)
         for (int i = 1; i < tabs.contents().size(); i++) {
             tabs.contents().get(i).setLayoutEnabled(true);
         }

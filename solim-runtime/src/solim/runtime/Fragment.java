@@ -7,81 +7,63 @@ import java.util.Collections;
 import java.util.List;
 import solim.core.Component;
 
-/**
- * Internal multi-root ownership unit for dynamic structural components with void factories.
- *
- * <p>Wraps a list of components captured from a void factory block into a single ownable and
- * disposable unit. A fragment with zero roots is empty and is treated by mount sites exactly
- * like a value factory returning {@code null} (collapse). A fragment with one or more roots
- * mounts every root's element, each with its own cell configuration.
- *
- * <p>This is an internal engine type: it is not part of the public Solim UI API.
- */
-public final class Fragment implements Component {
-	private List<Component> roots;
-	private boolean disposed = false;
+public final class Fragment extends Component {
+    private List<Component> roots;
 
-	private Fragment(List<Component> roots) {
-		this.roots = roots;
-	}
+    private Fragment(List<Component> roots) {
+        this.roots = roots;
+    }
 
-	/**
-	 * Captures components created inside the given block as a single fragment. Components are
-	 * captured in creation order, in an isolated parent-stack context, without being attached to
-	 * a live parent. If the block throws, all partially created components are disposed, ambient
-	 * state is restored, and the exception propagates.
-	 */
-	public static Fragment capture(Runnable block) {
-		List<Component> captured = AttachmentStack.capture(block, AttachmentStack.takeCaptureList());
-		return new Fragment(captured);
-	}
+    public static Fragment capture(Runnable block) {
+        List<Component> captured = AttachmentStack.takeCaptureList();
+        Fragment fragment = new Fragment(captured);
+        try {
+            AttachmentStack.capture(block, captured, fragment);
+        } catch (Throwable t) {
+            fragment.dispose();
+            throw t;
+        }
+        return fragment;
+    }
 
-	/** The captured root components, in creation order. Never null. */
-	public List<Component> roots() {
-		return disposed ? Collections.emptyList() : Collections.unmodifiableList(roots);
-	}
+    public List<Component> roots() {
+        return isDisposed() ? Collections.<Component>emptyList() : Collections.unmodifiableList(roots);
+    }
 
-	/** Returns whether this fragment has no captured roots (collapse case). */
-	public boolean isEmpty() {
-		return roots.isEmpty();
-	}
+    public boolean isEmpty() {
+        return roots.isEmpty();
+    }
 
-	/** Returns the number of captured roots. */
-	public int size() {
-		return roots.size();
-	}
+    public int size() {
+        return roots.size();
+    }
 
-	@Override
-	public Element element() {
-		throw new UnsupportedOperationException(
-				"Fragment is a multi-root ownership unit; mount roots individually via roots()");
-	}
+    @Override
+    protected boolean attachesToParent() {
+        return false;
+    }
 
-	@Override
-	public void dispose() {
-		if (disposed) {
-			return;
-		}
-		disposed = true;
-		List<Component> roots = this.roots;
-		this.roots = Collections.emptyList();
-		for (Component root : roots) {
-			try {
-				root.dispose();
-			} catch (Throwable t) {
-				Log.err("Error disposing fragment root", t);
-			}
-		}
-		AttachmentStack.releaseCaptureList(roots);
-	}
+    @Override
+    protected Element build() {
+        throw new UnsupportedOperationException(
+                "Fragment is a multi-root ownership unit; mount roots individually via roots()");
+    }
 
-	@Override
-	public boolean isDisposed() {
-		return disposed;
-	}
+    @Override
+    public void onDispose() {
+        List<Component> captured = this.roots;
+        this.roots = Collections.emptyList();
+        for (Component root : captured) {
+            try {
+                root.dispose();
+            } catch (Throwable t) {
+                Log.err("Error disposing fragment root", t);
+            }
+        }
+        AttachmentStack.releaseCaptureList(captured);
+    }
 
-	/** Creates a fragment over explicitly provided roots (used by tests and internal mount sites). */
-	public static Fragment of(List<Component> roots) {
-		return new Fragment(new ArrayList<>(roots));
-	}
+    public static Fragment of(List<Component> roots) {
+        return new Fragment(new ArrayList<>(roots));
+    }
 }

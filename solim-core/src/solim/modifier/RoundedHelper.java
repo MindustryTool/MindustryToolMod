@@ -11,10 +11,6 @@ import arc.graphics.g2d.Fill;
 import arc.scene.ui.Button;
 import arc.scene.ui.Button.ButtonStyle;
 
-/**
- * Helper for creating and managing {@link RoundedDrawable} instances
- * on Table-backed elements.
- */
 public final class RoundedHelper {
 
     private RoundedHelper() {
@@ -29,7 +25,8 @@ public final class RoundedHelper {
 
         @Override
         public void draw(float x, float y, float width, float height) {
-            if (Core.batch == null) return;
+            if (Core.batch == null)
+                return;
             Draw.color(color);
             Fill.crect(x, y, width, height);
         }
@@ -37,7 +34,8 @@ public final class RoundedHelper {
         @Override
         public void draw(float x, float y, float originX, float originY, float width, float height, float scaleX,
                 float scaleY, float rotation) {
-            if (Core.batch == null) return;
+            if (Core.batch == null)
+                return;
             Draw.color(color);
             if (rotation == 0f && scaleX == 1f && scaleY == 1f) {
                 Fill.crect(x, y, width, height);
@@ -48,33 +46,63 @@ public final class RoundedHelper {
         }
 
         @Override
-        public float getLeftWidth() { return 0; }
+        public float getLeftWidth() {
+            return 0;
+        }
+
         @Override
-        public void setLeftWidth(float leftWidth) {}
+        public void setLeftWidth(float leftWidth) {
+        }
+
         @Override
-        public float getRightWidth() { return 0; }
+        public float getRightWidth() {
+            return 0;
+        }
+
         @Override
-        public void setRightWidth(float rightWidth) {}
+        public void setRightWidth(float rightWidth) {
+        }
+
         @Override
-        public float getTopHeight() { return 0; }
+        public float getTopHeight() {
+            return 0;
+        }
+
         @Override
-        public void setTopHeight(float topHeight) {}
+        public void setTopHeight(float topHeight) {
+        }
+
         @Override
-        public float getBottomHeight() { return 0; }
+        public float getBottomHeight() {
+            return 0;
+        }
+
         @Override
-        public void setBottomHeight(float bottomHeight) {}
+        public void setBottomHeight(float bottomHeight) {
+        }
+
         @Override
-        public float getMinWidth() { return 0; }
+        public float getMinWidth() {
+            return 0;
+        }
+
         @Override
-        public void setMinWidth(float minWidth) {}
+        public void setMinWidth(float minWidth) {
+        }
+
         @Override
-        public float getMinHeight() { return 0; }
+        public float getMinHeight() {
+            return 0;
+        }
+
         @Override
-        public void setMinHeight(float minHeight) {}
+        public void setMinHeight(float minHeight) {
+        }
     }
 
     public static RoundedDrawable getOrCreateRounded(@Nullable Table table, int defaultRadius) {
-        if (table == null) return new RoundedDrawable(defaultRadius);
+        if (table == null)
+            return new RoundedDrawable(defaultRadius);
         if (table instanceof Button) {
             Button btn = (Button) table;
             ButtonStyle s = btn.getStyle();

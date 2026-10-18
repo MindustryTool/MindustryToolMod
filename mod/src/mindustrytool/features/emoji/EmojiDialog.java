@@ -7,17 +7,12 @@ import arc.graphics.Color;
 import arc.struct.Seq;
 import mindustry.Vars;
 import mindustry.gen.Icon;
-import mindustry.gen.Iconc;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.emoji.EmojiIcons.Entry;
 import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Searchable browser for {@link Iconc} font glyphs. Typing filters entries by
- * field name; clicking a chip copies its glyph character to the clipboard.
- */
 public class EmojiDialog extends SolimDialog {
 
     private final Signal<String> searchQuery = Signal.of("");
@@ -40,37 +35,28 @@ public class EmojiDialog extends SolimDialog {
         });
 
         children(() -> {
-            column().grow().gap(unit(2.5f)).padding(unit(3)).center().children(() -> {
-                row().growX().gap(unit(1.5f))
-                        .padding(unit(1.5f))
-                        .rounded(unit(2), WebStyles.Colors.SECONDARY_BG)
-                        .border(1.5f, WebStyles.Colors.BORDER_INPUT)
-                        .center()
+            column().props(grow(), padding(unit(3)), center(), gap(unit(2.5f))).children(() -> {
+                row().props(growX(), padding(unit(1.5f)), rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1.5f, WebStyles.Colors.BORDER_INPUT), gap(unit(1.5f)), center())
                         .children(() -> {
-                            icon(Icon.zoom).size(unit(4.5f)).color(WebStyles.Colors.GHOST_FG);
+                            icon(Icon.zoom).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f)), color(WebStyles.Colors.GHOST_FG));
                             textField(searchQuery)
-                                    .growX()
-                                    .height(unit(8))
-                                    .style(WebStyles.clearInput())
-                                    .placeholder(Core.bundle.get("feature.emoji.search"));
+                                    .props(style(WebStyles.clearInput()), growX(), height(unit(8)), prefHeight(unit(8)), placeholder(Core.bundle.get("feature.emoji.search")));
                         });
 
-                scroll().grow().children(() -> {
+                scroll().props(grow()).children(() -> {
                     dynamic(filteredEntries, entries -> {
                         if (entries == null || entries.isEmpty()) {
-                            row().growX().padding(unit(4)).center().children(() -> {
-                                text(Core.bundle.get("feature.emoji.empty")).color(Color.gray);
+                            row().props(growX(), padding(unit(4)), center()).children(() -> {
+                                text(Core.bundle.get("feature.emoji.empty")).props(color(Color.gray));
                             });
                         } else {
-                            wrap().left().gap(unit(1.5f)).children(() -> {
+                            wrap().props(left(), gap(unit(1.5f))).children(() -> {
                                 for (Entry entry : entries) {
                                     button()
-                                            .style(WebStyles.filterChip())
+                                            .props(style(WebStyles.actionChip()), padding(unit(1.5f)), tooltip(entry.name))
                                             .onClick(() -> copyGlyph(entry))
-                                            .padding(unit(1.5f))
-                                            .tooltip(entry.name)
                                             .children(() -> {
-                                                row().gap(unit(1.5f)).center().children(() -> {
+                                                row().props(gap(unit(1.5f)), center()).children(() -> {
                                                     text(String.valueOf(entry.glyph));
                                                     text(entry.name);
                                                 });
@@ -78,7 +64,7 @@ public class EmojiDialog extends SolimDialog {
                                 }
                             });
                         }
-                    }).grow();
+                    }).props(grow());
                 });
             });
         });

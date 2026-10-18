@@ -1,42 +1,41 @@
 package solim.layout;
-import solim.modifier.CellConfig;
 
-import arc.scene.Element;
-import arc.scene.ui.layout.Stack;
-import arc.util.Nullable;
-import solim.core.Component;
-import solim.core.SolimToken;
-import solim.modifier.ElementConfig;
-import arc.scene.ui.layout.Cell;
-import arc.scene.ui.layout.Table;
-import solim.modifier.PendingCellConfig;
-import solim.runtime.OwnershipContext;
-import solim.runtime.AttachmentStack;
-import solim.runtime.ReactiveContext;
-import java.util.ArrayList;
-import java.util.List;
+
 import arc.func.Func;
 import arc.func.Prov;
+import arc.scene.Element;
+import arc.scene.ui.layout.Cell;
+import arc.scene.ui.layout.Stack;
+import arc.scene.ui.layout.Table;
+import arc.util.Nullable;
+import solim.core.Component;
+import solim.core.OwnershipContext;
+import solim.core.SolimToken;
+import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.PendingCellConfig;
+import solim.modifier.Props;
+import java.util.List;
+import solim.runtime.OwnershipScope;
 
-/** Stack container: overlays children on top of each other. */
-public final class SolimStack implements Component, CellConfig<SolimStack>, ElementConfig<SolimStack> {
-    private final Stack stack = new Stack();
+public final class SolimStack extends Component
+        implements Configurable<SolimStack>, ContainerCapability<SolimStack> {
+    private final Stack stack;
     private final PendingCellConfig constraints = new PendingCellConfig();
-    private final List<Component> ownedLayers = new ArrayList<>();
-    private boolean disposed = false;
+    private @Nullable Props<SolimStack> pending;
 
     public SolimStack() {
-        SolimToken.bind(this.stack, this, constraints);
-        this.stack.name = "solim-stack-stack";
-        OwnershipContext.register(this);
+        this(new Stack());
+    }
+
+    private SolimStack(Stack stack) {
+        super(stack);
+        this.stack = stack;
+        SolimToken.bind(stack, this, constraints);
+        stack.name = "solim-stack-stack";
     }
 
     public Stack stack() {
-        return stack;
-    }
-
-    @Override
-    public Element element() {
         return stack;
     }
 
@@ -64,21 +63,18 @@ public final class SolimStack implements Component, CellConfig<SolimStack>, Elem
     }
 
     public SolimStack layer(@Nullable Prov<Component> Prov) {
-        if (disposed || Prov == null) {
+        if (isDisposed() || Prov == null) {
             return this;
         }
-        @Nullable Component component = ReactiveContext.untracked(() -> AttachmentStack.isolate(Prov));
-        attachLayer(component);
+        attachLayer(OwnershipScope.build(Prov));
         return this;
     }
 
     public SolimStack layer(@Nullable Func<Element, Component> factory) {
-        if (disposed || factory == null) {
+        if (isDisposed() || factory == null) {
             return this;
         }
-        @Nullable Component component = ReactiveContext
-                .untracked(() -> AttachmentStack.isolate(() -> factory.get(stack)));
-        attachLayer(component);
+        attachLayer(OwnershipScope.build(() -> factory.get(stack)));
         return this;
     }
 
@@ -88,9 +84,9 @@ public final class SolimStack implements Component, CellConfig<SolimStack>, Elem
         }
         try {
             Element child = component.element();
-            if (child != null && !disposed) {
+            if (child != null && !isDisposed()) {
                 stack.add(child);
-                ownedLayers.add(component);
+                adopt(component);
             } else {
                 component.dispose();
             }
@@ -103,26 +99,48 @@ public final class SolimStack implements Component, CellConfig<SolimStack>, Elem
         }
     }
 
-    @Override
     public PendingCellConfig cellConfig() {
         return constraints;
     }
 
     @Override
-    public void dispose() {
-        if (disposed) {
-            return;
+    public SolimStack children(@Nullable Runnable block) {
+        applyPendingProps();
+        int before = children().size();
+        OwnershipContext.push(this);
+        try {
+            if (block != null) {
+                block.run();
+            }
+        } finally {
+            OwnershipContext.pop();
         }
-        disposed = true;
-        for (int i = ownedLayers.size() - 1; i >= 0; i--) {
-            ownedLayers.get(i).dispose();
+        List<Component> kids = children();
+        for (int i = before; i < kids.size(); i++) {
+            Element el = kids.get(i).element();
+            if (el != null && el.parent != stack) {
+                stack.add(el);
+            }
         }
-        ownedLayers.clear();
+        return this;
     }
 
     @Override
-    public boolean isDisposed() {
-        return disposed;
+    public @Nullable Props<SolimStack> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<SolimStack> props) {
+        this.pending = props;
+    }
+
+
+
+    @Override
+    public SolimStack name(@Nullable String name) {
+        setName(name);
+        return this;
     }
 
     @Override

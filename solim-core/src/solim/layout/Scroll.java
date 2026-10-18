@@ -1,6 +1,8 @@
 package solim.layout;
 
-import solim.modifier.CellConfig;
+
+import solim.modifier.ElementCapability;
+
 
 import arc.func.Cons;
 
@@ -15,17 +17,21 @@ import arc.scene.ui.ScrollPane;
 import arc.scene.ui.ScrollPane.ScrollPaneStyle;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
+import arc.util.Align;
 import arc.util.Nullable;
 import solim.core.Component;
 import solim.core.SolimToken;
-import solim.modifier.ElementConfig;
-import solim.modifier.TableConfig;
-import solim.runtime.OwnershipContext;
+import solim.modifier.Configurable;
+import solim.modifier.ContainerCapability;
+import solim.modifier.TableCapability;
+import solim.modifier.Props;
+import solim.modifier.ScrollCapability;
+import solim.core.OwnershipContext;
 import solim.runtime.AttachmentStack;
 import solim.modifier.PendingCellConfig;
 
-/** Scroll container wrapping a Table in a ScrollPane. */
-public final class Scroll implements Component, CellConfig<Scroll>, ElementConfig<Scroll>, TableConfig<Scroll> {
+public final class Scroll extends Component
+        implements Configurable<Scroll>, TableCapability, ContainerCapability<Scroll>, ScrollCapability {
 
     public static final AttachmentStack.Attacher ATTACHER = (table, child) -> {
         Cell<?> cell = table.add(child);
@@ -41,6 +47,7 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
     private final Table content;
     private final PendingCellConfig constraints = new PendingCellConfig();
     private final ScrollPane pane;
+    private @Nullable Props<Scroll> pending;
     private boolean centered = false;
     private boolean disableX = true;
     private boolean disableY = false;
@@ -51,19 +58,24 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
     private boolean inTopZone = false;
     private boolean inBottomZone = false;
     private boolean updateHooked = false;
-    private boolean disposed = false;
 
     public Scroll() {
-        this.outer = new Table();
+        this(new Table());
+    }
+
+    private Scroll(Table outer) {
+        super(outer);
+        this.outer = outer;
         SolimToken.bind(this.outer, this, constraints);
         this.outer.name = "solim-scroll-pane-outer";
         this.outer.top().left();
         this.content = new Table();
         this.content.top().left();
+        this.content.defaults().top().left();
 
         this.content.name = "solim-scroll-pane-content";
         if (Core.scene != null) {
-            this.pane = outer.pane(content).grow().scrollX(false).scrollY(true).get();
+            this.pane = outer.pane(content).top().left().grow().scrollX(false).scrollY(true).get();
             this.pane.name = "solim-scroll-pane";
             this.pane.setScrollingDisabled(disableX, disableY);
             this.pane.update(() -> {
@@ -91,16 +103,16 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
             this.pane = null;
             outer.add(content).grow();
         }
-        OwnershipContext.register(this);
     }
 
     public Table outer() {
         return outer;
     }
 
-    public Scroll style(ScrollPaneStyle style) {
-        this.pane.setStyle(style);
-        return this;
+    public void setStyle(ScrollPaneStyle style) {
+        if (this.pane != null) {
+            this.pane.setStyle(style);
+        }
     }
 
     public Scroll outer(Cons<Table> Cons) {
@@ -126,21 +138,20 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
         return this;
     }
 
-    public Scroll scrollingDisabled(boolean disableX, boolean disableY) {
+    public void setScrollingDisabled(boolean disableX, boolean disableY) {
         this.disableX = disableX;
         this.disableY = disableY;
         if (pane != null) {
             pane.setScrollingDisabled(disableX, disableY);
         }
-        return this;
     }
 
-    public Scroll scrollX(boolean scrollX) {
-        return scrollingDisabled(!scrollX, this.disableY);
+    public void setScrollX(boolean scrollX) {
+        setScrollingDisabled(!scrollX, this.disableY);
     }
 
-    public Scroll scrollY(boolean scrollY) {
-        return scrollingDisabled(this.disableX, !scrollY);
+    public void setScrollY(boolean scrollY) {
+        setScrollingDisabled(this.disableX, !scrollY);
     }
 
     public boolean isScrollingDisabledX() {
@@ -151,18 +162,16 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
         return disableY;
     }
 
-    public Scroll scrollPercentY(float percent) {
+    public void setScrollPercentY(float percent) {
         if (pane != null) {
             pane.setScrollPercentY(percent);
         }
-        return this;
     }
 
-    public Scroll scrollPercentX(float percent) {
+    public void setScrollPercentX(float percent) {
         if (pane != null) {
             pane.setScrollPercentX(percent);
         }
-        return this;
     }
 
     public Scroll onReachTop(float thresholdPx, Runnable callback) {
@@ -240,42 +249,18 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
         return this;
     }
 
-    @Override
-    public Scroll center() {
-        this.centered = true;
-        outer.center();
-        content.center();
-        for (Cell<?> cell : content.getCells()) {
-            cell.center().top();
+    public Scroll scrollPercentX(float percent) {
+        if (pane != null) {
+            pane.setScrollPercentX(percent);
         }
         return this;
     }
 
-    @Override
-    public Scroll left() {
-        this.centered = false;
-        outer.left();
-        content.left();
-        for (Cell<?> cell : content.getCells()) {
-            cell.left().top();
+    public Scroll scrollPercentY(float percent) {
+        if (pane != null) {
+            pane.setScrollPercentY(percent);
         }
         return this;
-    }
-
-    @Override
-    public Scroll right() {
-        this.centered = false;
-        outer.right();
-        content.right();
-        for (Cell<?> cell : content.getCells()) {
-            cell.right().top();
-        }
-        return this;
-    }
-
-    @Override
-    public Element element() {
-        return outer;
     }
 
     @Override
@@ -288,43 +273,8 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
         return constraints;
     }
 
-    @Override
-    public Scroll x(float x) {
-        Element el = element();
-        if (el != null)
-            el.x = x;
-        return this;
-    }
-
-    @Override
-    public Scroll y(float y) {
-        Element el = element();
-        if (el != null)
-            el.y = y;
-        return this;
-    }
-
-    @Override
-    public Scroll position(float x, float y) {
-        Element el = element();
-        if (el != null)
-            el.setPosition(x, y);
-        return this;
-    }
-
-    @Override
-    public Scroll visible(boolean visible) {
-        Element el = element();
-        if (el == null)
-            return this;
-        el.visible = visible;
-        if (el.parent instanceof Table) {
-            GapContainer.respace((Table) el.parent);
-        }
-        return this;
-    }
-
     public Scroll children(@Nullable Runnable r) {
+        applyPendingProps();
         AttachmentStack.Attacher attacher = (table, child) -> {
             Cell<?> cell = table.add(child);
             if (centered) {
@@ -338,6 +288,7 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
             cell.row();
             return cell;
         };
+        OwnershipContext.push(this);
         AttachmentStack.push(content, attacher);
         try {
             if (r != null) {
@@ -345,6 +296,7 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
             }
         } finally {
             AttachmentStack.pop();
+            OwnershipContext.pop();
         }
         AttachmentStack.attachToParent(outer);
         return this;
@@ -362,23 +314,41 @@ public final class Scroll implements Component, CellConfig<Scroll>, ElementConfi
     }
 
     @Override
-    public void dispose() {
-        if (disposed) {
-            return;
-        }
-        disposed = true;
+    protected void onDispose() {
         reachTopListeners.clear();
         reachBottomListeners.clear();
     }
 
     @Override
-    public boolean isDisposed() {
-        return disposed;
+    public @Nullable Props<Scroll> pendingProps() {
+        return pending;
+    }
+
+    @Override
+    public void setPendingProps(@Nullable Props<Scroll> props) {
+        this.pending = props;
+    }
+
+    @Override
+    public Scroll name(@Nullable String name) {
+        setName(name);
+        return this;
+    }
+
+    @Override
+    public void alignCoordinated(@Nullable Integer explicit, int named) {
+        if (named == Align.center || (explicit != null && explicit == Align.center)) {
+            this.centered = true;
+        }
+        ElementCapability.coordinateTable(content, constraints, explicit, named);
+        int a = constraints.align != null ? constraints.align : named;
+        table().align(a);
+        outer.align(a);
+        constraints.applyAlignToParentCell(element());
     }
 
     @Override
     public Scroll self() {
         return this;
     }
-
 }

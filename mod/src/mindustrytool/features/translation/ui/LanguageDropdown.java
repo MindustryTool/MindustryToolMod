@@ -3,8 +3,13 @@ package mindustrytool.features.translation.ui;
 import static solim.UI.*;
 
 import arc.Core;
+import arc.Events;
+import arc.func.Cons;
+import arc.input.KeyCode;
 import arc.math.geom.Vec2;
 import arc.scene.Element;
+import arc.scene.event.InputEvent;
+import arc.scene.event.InputListener;
 import arc.scene.style.Drawable;
 import arc.scene.ui.ScrollPane;
 import arc.scene.ui.TextButton;
@@ -13,176 +18,186 @@ import arc.util.Align;
 import arc.util.Nullable;
 import arc.util.Tmp;
 import java.util.Locale;
+import mindustry.game.EventType.ResizeEvent;
 import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.LanguageDialog;
 import mindustrytool.features.translation.TranslationFeature;
-import solim.core.BaseComponent;
+import solim.core.Component;
 import solim.input.Button;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
-/**
- * Dropdown selector for Outgoing Translation target language.
- * Displays current language with dropdown arrow indicator, and opens
- * a native Mindustry scrollable popup menu on click.
- */
-public class LanguageDropdown extends BaseComponent {
+public class LanguageDropdown extends Component {
 
-	private final TranslationFeature feature;
-	private final Signal<Boolean> isOpen = signal(false);
-	private @Nullable Element backdrop;
-	private @Nullable Table popup;
-	private @Nullable Button triggerButton;
+    private final TranslationFeature feature;
+    private final Signal<Boolean> isOpen = signal(false);
+    private @Nullable Element backdrop;
+    private @Nullable Table popup;
+    private @Nullable Button triggerButton;
 
-	public LanguageDropdown(TranslationFeature feature) {
-		this.feature = feature;
-	}
+    private final Cons<ResizeEvent> resizeListener = e -> close();
 
-	@Override
-	protected Element build() {
-		Readable<String> targetLangName = feature.outgoingTargetLangConfig.signal()
-				.map(feature::getOutgoingTargetLanguageDisplayName);
-		Readable<Drawable> arrowIcon = isOpen
-				.map(open -> Boolean.TRUE.equals(open) ? Icon.upOpenSmall : Icon.downOpenSmall);
+    public LanguageDropdown(TranslationFeature feature) {
+        this.feature = feature;
+        Events.on(ResizeEvent.class, resizeListener);
+    }
 
-		triggerButton = button(this::toggle)
-				.style(Styles.defaultb)
-				.height(unit(10))
-				.width(unit(50))
-				.margin(unit(1), unit(3), unit(1), unit(3));
+    @Override
+    protected Element build() {
+        Readable<String> targetLangName = feature.outgoingTargetLangConfig.signal()
+                .map(feature::getOutgoingTargetLanguageDisplayName);
+        Readable<Drawable> arrowIcon = isOpen
+                .map(open -> Boolean.TRUE.equals(open) ? Icon.upOpenSmall : Icon.downOpenSmall);
 
-		triggerButton.children(() -> {
-			text(targetLangName).left();
-			spacer();
-			icon(arrowIcon).size(unit(4));
-		});
+        triggerButton = button(this::toggle)
+                .props(style(Styles.defaultb), height(unit(10)), prefHeight(unit(10)), width(unit(50)), prefWidth(unit(50)), margin(unit(1), unit(3), unit(1), unit(3)));
 
-		return triggerButton.element();
-	}
+        triggerButton.children(() -> {
+            text(targetLangName).props(left());
+            spacer();
+            icon(arrowIcon).props(size(unit(4)), prefWidth(unit(4)), prefHeight(unit(4)));
+        });
 
-	public void toggle() {
-		if (Boolean.TRUE.equals(isOpen.peek())) {
-			close();
-		} else {
-			open();
-		}
-	}
+        return triggerButton.element();
+    }
 
-	public void open() {
-		if (triggerButton == null || Core.scene == null)
-			return;
+    public void toggle() {
+        if (Boolean.TRUE.equals(isOpen.peek())) {
+            close();
+        } else {
+            open();
+        }
+    }
 
-		close();
+    public void open() {
+        if (triggerButton == null || Core.scene == null)
+            return;
 
-		Element btn = triggerButton.element();
-		Vec2 stagePos = btn.localToStageCoordinates(Tmp.v1.set(0f, 0f));
-		float btnW = btn.getWidth();
-		float btnH = btn.getHeight();
-		float menuW = Math.max(btnW, 300f);
-		float menuH = 270f;
+        close();
 
-		float posX = Math.max(10f, Math.min(stagePos.x + btnW - menuW, Core.scene.getWidth() - menuW - 10f));
-		float posY = stagePos.y - menuH;
-		if (posY < 10f) {
-			posY = stagePos.y + btnH;
-		}
+        Element btn = triggerButton.element();
+        Vec2 stagePos = btn.localToStageCoordinates(Tmp.v1.set(0f, 0f));
+        float btnW = btn.getWidth();
+        float btnH = btn.getHeight();
+        float menuW = Math.max(btnW, 300f);
+        float menuH = 270f;
 
-		backdrop = new Element();
-		backdrop.setFillParent(true);
-		backdrop.clicked(this::close);
+        float posX = Math.max(10f, Math.min(stagePos.x + btnW - menuW, Core.scene.getWidth() - menuW - 10f));
+        float posY = stagePos.y - menuH;
+        if (posY < 10f) {
+            posY = stagePos.y + btnH;
+        }
 
-		popup = new Table(Tex.paneSolid);
-		popup.setSize(menuW, menuH);
-		popup.setPosition(posX, posY);
+        backdrop = new Element();
+        backdrop.setFillParent(true);
+        backdrop.clicked(this::close);
+        backdrop.addListener(new InputListener() {
+            @Override
+            public boolean keyDown(InputEvent event, KeyCode keycode) {
+                if (keycode == KeyCode.escape || keycode == KeyCode.back) {
+                    close();
+                    return true;
+                }
+                return false;
+            }
+        });
 
-		Table list = new Table();
-		list.top().left();
+        popup = new Table(Tex.paneSolid);
+        popup.setSize(menuW, menuH);
+        popup.setPosition(posX, posY);
 
-		TextButton selectedItem = null;
+        Table list = new Table();
+        list.top().left();
 
-		String noneText = Core.bundle.get("feature.translation.outgoing.none", Core.bundle.get("none", "None"));
-		boolean isNoneSelected = !Boolean.TRUE.equals(feature.outgoingEnabledConfig.signal().peek())
-				|| "none".equalsIgnoreCase(feature.outgoingTargetLangConfig.signal().peek());
+        TextButton selectedItem = null;
 
-		TextButton noneItem = new TextButton(noneText, Styles.flatTogglet);
-		noneItem.setChecked(isNoneSelected);
-		noneItem.getLabel().setAlignment(Align.left);
-		noneItem.getLabelCell().padLeft(12f).growX();
-		noneItem.clicked(() -> {
-			feature.outgoingEnabledConfig.set(false);
-			feature.outgoingTargetLangConfig.set("none");
-			close();
-		});
-		list.add(noneItem).growX().height(38f).pad(2f, 4f, 2f, 4f).row();
-		if (isNoneSelected) {
-			selectedItem = noneItem;
-		}
+        String noneText = Core.bundle.get("feature.translation.outgoing.none", Core.bundle.get("none", "None"));
+        boolean isNoneSelected = !Boolean.TRUE.equals(feature.outgoingEnabledConfig.signal().peek())
+                || "none".equalsIgnoreCase(feature.outgoingTargetLangConfig.signal().peek());
 
-		for (Locale loc : Vars.locales) {
-			boolean isSelected = !isNoneSelected && feature.isSameLanguage(feature.getOutgoingTargetLanguage(), loc);
-			TextButton item = new TextButton(LanguageDialog.getDisplayName(loc), Styles.flatTogglet);
-			item.setChecked(isSelected);
-			item.getLabel().setAlignment(Align.left);
-			item.getLabelCell().padLeft(12f).growX();
-			item.clicked(() -> {
-				feature.outgoingEnabledConfig.set(true);
-				feature.setOutgoingTargetLocale(loc);
-				close();
-			});
-			list.add(item).growX().height(38f).pad(2f, 4f, 2f, 4f).row();
-			if (isSelected) {
-				selectedItem = item;
-			}
-		}
+        TextButton noneItem = new TextButton(noneText, Styles.flatTogglet);
+        noneItem.setChecked(isNoneSelected);
+        noneItem.getLabel().setAlignment(Align.left);
+        noneItem.getLabelCell().padLeft(12f).growX();
+        noneItem.clicked(() -> {
+            feature.outgoingEnabledConfig.set(false);
+            feature.outgoingTargetLangConfig.set("none");
+            close();
+        });
+        list.add(noneItem).growX().height(38f).pad(2f, 4f, 2f, 4f).row();
+        if (isNoneSelected) {
+            selectedItem = noneItem;
+        }
 
-		ScrollPane pane = new ScrollPane(list, Styles.defaultPane);
-		pane.setScrollingDisabled(true, false);
-		pane.setOverscroll(false, false);
-		pane.setFadeScrollBars(false);
-		pane.update(() -> {
-			if (pane.hasScroll()) {
-				Element hover = Core.scene != null ? Core.scene.getHoverElement() : null;
-				if (hover == null || !hover.isDescendantOf(pane) || (!pane.isScrollX() && !pane.isScrollY())) {
-					Core.scene.setScrollFocus(null);
-				}
-			}
-		});
-		popup.add(pane).grow();
+        for (Locale loc : Vars.locales) {
+            boolean isSelected = !isNoneSelected && feature.isSameLanguage(feature.getOutgoingTargetLanguage(), loc);
+            TextButton item = new TextButton(LanguageDialog.getDisplayName(loc), Styles.flatTogglet);
+            item.setChecked(isSelected);
+            item.getLabel().setAlignment(Align.left);
+            item.getLabelCell().padLeft(12f).growX();
+            item.clicked(() -> {
+                feature.outgoingEnabledConfig.set(true);
+                feature.setOutgoingTargetLocale(loc);
+                close();
+            });
+            list.add(item).growX().height(38f).pad(2f, 4f, 2f, 4f).row();
+            if (isSelected) {
+                selectedItem = item;
+            }
+        }
 
-		Core.scene.add(backdrop);
-		Core.scene.add(popup);
-		isOpen.set(true);
+        ScrollPane pane = new ScrollPane(list, Styles.defaultPane);
+        pane.setScrollingDisabled(true, false);
+        pane.setOverscroll(false, false);
+        pane.setFadeScrollBars(false);
+        pane.update(() -> {
+            if (pane.hasScroll()) {
+                Element hover = Core.scene != null ? Core.scene.getHoverElement() : null;
+                if (hover == null || !hover.isDescendantOf(pane) || (!pane.isScrollX() && !pane.isScrollY())) {
+                    Core.scene.setScrollFocus(null);
+                }
+            }
+        });
+        popup.add(pane).grow();
 
-		if (selectedItem != null) {
-			final TextButton target = selectedItem;
-			Core.app.post(() -> {
-				pane.layout();
-				pane.scrollTo(0f, target.y, target.getWidth(), target.getHeight());
-			});
-		}
-	}
+        Core.scene.add(backdrop);
+        Core.scene.add(popup);
+        isOpen.set(true);
 
-	public void close() {
-		if (popup != null && Core.scene != null && Core.scene.getScrollFocus() != null
-				&& Core.scene.getScrollFocus().isDescendantOf(popup)) {
-			Core.scene.setScrollFocus(null);
-		}
-		if (backdrop != null) {
-			backdrop.remove();
-			backdrop = null;
-		}
-		if (popup != null) {
-			popup.remove();
-			popup = null;
-		}
-		isOpen.set(false);
-	}
+        if (selectedItem != null) {
+            final TextButton target = selectedItem;
+            Core.app.post(() -> {
+                pane.layout();
+                pane.scrollTo(0f, target.y, target.getWidth(), target.getHeight());
+            });
+        }
+    }
 
-	@Override
-	protected void onDispose() {
-		close();
-	}
+    public void close() {
+        if (popup != null && Core.scene != null && Core.scene.getScrollFocus() != null
+                && Core.scene.getScrollFocus().isDescendantOf(popup)) {
+            Core.scene.setScrollFocus(null);
+        }
+        if (backdrop != null) {
+            backdrop.remove();
+            backdrop = null;
+        }
+        if (popup != null) {
+            popup.remove();
+            popup = null;
+        }
+        isOpen.set(false);
+    }
+
+    @Override
+    protected void onDispose() {
+        close();
+        try {
+            Events.remove(ResizeEvent.class, resizeListener);
+        } catch (Throwable ignored) {
+        }
+    }
 }

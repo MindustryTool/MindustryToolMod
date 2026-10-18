@@ -8,133 +8,131 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import solim.reactive.Effect;
 import solim.reactive.Signal;
+import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
 class ContextualConfigValueTest extends SolimEnv {
 
-	@BeforeAll
-	static void initSettings() {
-		Core.settings = new Settings();
-	}
+    @BeforeAll
+    static void initSettings() {
+        Core.settings = new Settings();
+    }
 
-	@BeforeEach
-	void clearSettings() {
-		Core.settings.clear();
-	}
+    @BeforeEach
+    void clearSettings() {
+        Core.settings.clear();
+    }
 
-	@Test
-	void testKeyDerivationAndContextSwitching() {
-		ConfigGroup group = ConfigGroup.of("hud");
-		Signal<String> mode = Signal.of("desktop");
+    @Test
+    void testKeyDerivationAndContextSwitching() {
+        ConfigGroup group = ConfigGroup.of("hud");
+        Signal<String> mode = Signal.of("desktop");
 
-		ContextualConfigValue<Integer, String> widthConfig = new ContextualConfigValue<>(
-				group,
-				"width",
-				mode,
-				m -> m,
-				800,
-				ConfigPersister.INTEGER);
+        ContextualConfigValue<Integer, String> widthConfig = new ContextualConfigValue<>(
+                group,
+                "width",
+                mode,
+                m -> m,
+                800,
+                ConfigPersister.INTEGER);
 
-		assertEquals("hud.width.desktop", widthConfig.getCurrentKey());
-		assertEquals("hud.width.desktop", widthConfig.getKey());
-		assertEquals(800, widthConfig.get());
+        assertEquals("hud.width.desktop", widthConfig.getCurrentKey());
+        assertEquals("hud.width.desktop", widthConfig.getKey());
+        assertEquals(800, widthConfig.get());
 
-		// Mutate in desktop mode
-		widthConfig.set(1024);
-		assertEquals(1024, Core.settings.getInt("hud.width.desktop"));
-		assertEquals(1024, widthConfig.get());
+        widthConfig.set(1024);
+        assertEquals(1024, Core.settings.getInt("hud.width.desktop"));
+        assertEquals(1024, widthConfig.get());
 
-		// Switch discriminant to mobile mode
-		mode.set("mobile");
-		assertEquals("hud.width.mobile", widthConfig.getCurrentKey());
-		// Should fall back to defaultValue 800 since mobile has no saved setting yet
-		assertEquals(800, widthConfig.get());
+        mode.set("mobile");
+        assertEquals("hud.width.mobile", widthConfig.getCurrentKey());
 
-		// Set value in mobile mode
-		widthConfig.set(400);
-		assertEquals(400, Core.settings.getInt("hud.width.mobile"));
-		assertEquals(1024, Core.settings.getInt("hud.width.desktop"));
+        assertEquals(800, widthConfig.get());
 
-		// Switch back to desktop mode: should load 1024 from desktop
-		mode.set("desktop");
-		assertEquals(1024, widthConfig.get());
-	}
+        widthConfig.set(400);
+        assertEquals(400, Core.settings.getInt("hud.width.mobile"));
+        assertEquals(1024, Core.settings.getInt("hud.width.desktop"));
 
-	@Test
-	void testDiscriminantChangeEmitsToSignalListeners() {
-		ConfigGroup group = ConfigGroup.of("app");
-		Signal<Boolean> portrait = Signal.of(false);
+        mode.set("desktop");
+        assertEquals(1024, widthConfig.get());
+    }
 
-		ContextualConfigValue<Float, Boolean> xConfig = group.floatValueKeyed(
-				"posX",
-				portrait,
-				p -> p ? "portrait" : "landscape",
-				100f);
+    @Test
+    void testDiscriminantChangeEmitsToSignalListeners() {
+        ConfigGroup group = ConfigGroup.of("app");
+        Signal<Boolean> portrait = Signal.of(false);
 
-		Core.settings.put("app.posX.portrait", 250f);
+        ContextualConfigValue<Float, Boolean> xConfig = group.floatValueKeyed(
+                "posX",
+                portrait,
+                p -> p ? "portrait" : "landscape",
+                100f);
 
-		AtomicReference<Float> signalValue = new AtomicReference<>(xConfig.get());
-		xConfig.signal().subscribe(signalValue::set);
+        Core.settings.put("app.posX.portrait", 250f);
 
-		// Switch to portrait: should notify subscriber of 250f
-		portrait.set(true);
-		assertEquals(250f, signalValue.get());
-		assertEquals(250f, xConfig.get());
-	}
+        AtomicReference<Float> signalValue = new AtomicReference<>(xConfig.get());
+        Effect sub = inOwnershipWindow(() -> Effect.of(xConfig.signal(), signalValue::set));
 
-	@Test
-	void testDisposeStopsDiscriminantUpdates() {
-		ConfigGroup group = ConfigGroup.of("test");
-		Signal<String> env = Signal.of("dev");
+        portrait.set(true);
+        SignalDispatcher.flush();
+        assertEquals(250f, signalValue.get());
+        assertEquals(250f, xConfig.get());
+        sub.dispose();
+    }
 
-		ContextualConfigValue<String, String> endpoint = group.stringValueKeyed(
-				"endpoint",
-				env,
-				e -> e,
-				"http://localhost");
+    @Test
+    void testDisposeStopsDiscriminantUpdates() {
+        ConfigGroup group = ConfigGroup.of("test");
+        Signal<String> env = Signal.of("dev");
 
-		endpoint.dispose();
+        ContextualConfigValue<String, String> endpoint = group.stringValueKeyed(
+                "endpoint",
+                env,
+                e -> e,
+                "http://localhost");
 
-		env.set("prod");
-		// Discriminant listener disposed, key remains at previous
-		assertEquals("test.endpoint.dev", endpoint.getCurrentKey());
-	}
+        endpoint.dispose();
 
-	@Test
-	void testDefaultFactoryPerContext() {
-		ConfigGroup group = ConfigGroup.of("hud");
-		Signal<String> context = Signal.of("collapsed.landscape");
+        env.set("prod");
+        SignalDispatcher.flush();
 
-		ContextualConfigValue<Float, String> xConfig = group.floatValueKeyed(
-				"x",
-				context,
-				k -> k,
-				k -> k.startsWith("collapsed") ? 100f : 500f);
+        assertEquals("test.endpoint.dev", endpoint.getCurrentKey());
+    }
 
-		assertEquals(100f, xConfig.get());
-		assertEquals("hud.x.collapsed.landscape", xConfig.getCurrentKey());
+    @Test
+    void testDefaultFactoryPerContext() {
+        ConfigGroup group = ConfigGroup.of("hud");
+        Signal<String> context = Signal.of("collapsed.landscape");
 
-		// Switch to expanded: default should resolve to 500f
-		context.set("expanded.landscape");
-		assertEquals(500f, xConfig.get());
-		assertEquals("hud.x.expanded.landscape", xConfig.getCurrentKey());
+        ContextualConfigValue<Float, String> xConfig = group.floatValueKeyed(
+                "x",
+                context,
+                k -> k,
+                k -> k.startsWith("collapsed") ? 100f : 500f);
 
-		// Mutate expanded to 600f
-		xConfig.set(600f);
-		assertEquals(600f, xConfig.get());
-		assertEquals(600f, Core.settings.getFloat("hud.x.expanded.landscape"));
+        assertEquals(100f, xConfig.get());
+        assertEquals("hud.x.collapsed.landscape", xConfig.getCurrentKey());
 
-		// Switch back to collapsed: should still have 100f
-		context.set("collapsed.landscape");
-		assertEquals(100f, xConfig.get());
+        context.set("expanded.landscape");
+        SignalDispatcher.flush();
+        assertEquals(500f, xConfig.get());
+        assertEquals("hud.x.expanded.landscape", xConfig.getCurrentKey());
 
-		// Switch back to expanded: should load saved 600f
-		context.set("expanded.landscape");
-		assertEquals(600f, xConfig.get());
+        xConfig.set(600f);
+        assertEquals(600f, xConfig.get());
+        assertEquals(600f, Core.settings.getFloat("hud.x.expanded.landscape"));
 
-		// Reset in expanded: should revert to context default 500f
-		xConfig.reset();
-		assertEquals(500f, xConfig.get());
-	}
+        context.set("collapsed.landscape");
+        SignalDispatcher.flush();
+        assertEquals(100f, xConfig.get());
+
+        context.set("expanded.landscape");
+        SignalDispatcher.flush();
+        assertEquals(600f, xConfig.get());
+
+        xConfig.reset();
+        assertEquals(500f, xConfig.get());
+    }
 }

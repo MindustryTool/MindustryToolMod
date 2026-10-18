@@ -1,9 +1,11 @@
 package mindustrytool.features.playerconnect.ui;
 
 import arc.Events;
+import arc.func.Cons;
 import arc.scene.Element;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
+import arc.util.Nullable;
 import arc.util.Reflect;
 import mindustry.Vars;
 import mindustry.game.EventType.ResizeEvent;
@@ -15,16 +17,28 @@ public class JoinDialogInjector {
     private static final String ROOT_NAME = "pc-browser-root";
 
     private final PlayerConnectFeature feature;
-    private RoomBrowserView browserView;
+    private final Cons<ResizeEvent> resizeListener;
+    private @Nullable RoomBrowserView browserView;
 
     public JoinDialogInjector(PlayerConnectFeature feature) {
         this.feature = feature;
-
-        Events.run(ResizeEvent.class, () -> {
+        this.resizeListener = event -> {
             if (feature.enabled().peek()) {
                 performInjection();
             }
-        });
+        };
+
+        Events.on(ResizeEvent.class, resizeListener);
+    }
+
+    public void dispose() {
+        Events.remove(ResizeEvent.class, resizeListener);
+
+        if (browserView != null) {
+            browserView.element().remove();
+            browserView.dispose();
+            browserView = null;
+        }
     }
 
     public void inject() {
@@ -39,18 +53,17 @@ public class JoinDialogInjector {
 
     private void performInjection() {
         JoinDialog dialog = Vars.ui.join;
-        
+
         if (dialog == null) {
             return;
         }
 
         Table hosts = Reflect.get(dialog, "hosts");
-        
+
         if (hosts == null) {
             return;
         }
 
-        // 2. Add RoomBrowserView to hosts table if not present
         if (hosts.find(ROOT_NAME) == null) {
             if (browserView == null) {
                 browserView = new RoomBrowserView(feature);

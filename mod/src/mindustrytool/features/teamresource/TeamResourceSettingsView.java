@@ -4,13 +4,15 @@ import static solim.UI.*;
 
 import arc.Core;
 import arc.scene.Element;
-import mindustry.ui.Styles;
-import solim.core.BaseComponent;
+import mindustry.gen.Icon;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingScaffold;
+import mindustrytool.components.SettingSlider;
+import mindustrytool.components.WebStyles;
+import solim.core.Component;
 
-/**
- * Declarative Solim settings view for Team Resource Tracker.
- */
-public class TeamResourceSettingsView extends BaseComponent {
+public class TeamResourceSettingsView extends Component {
+
     private final TeamResourceFeature feature;
 
     public TeamResourceSettingsView(TeamResourceFeature feature) {
@@ -19,64 +21,101 @@ public class TeamResourceSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().grow().center().children(() -> {
-            scroll().center().children(() -> {
-                column().growX().gap(unit(2)).children(() -> {
-                    // Opacity Slider
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("team-resources.opacity", "Opacity")).left();
-                        spacer();
-                        slider(feature.opacityConfig.signal(), 0.1f, 1.0f, 0.05f);
-                        row().width(unit(10)).children(() -> {
-                            text(feature.opacityConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100)));
-                        });
-                    });
+        return SettingScaffold.build(() -> {
+            headerCard();
+            layoutCard();
+            metricsCard();
+            appearanceCard();
+            actionsCard();
+        });
+    }
 
-                    // Scale Slider
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("team-resources.size", "Scale")).left();
-                        spacer();
-                        slider(feature.scaleConfig.signal(), 0.3f, 2.0f, 0.05f);
-                        row().width(unit(10)).children(() -> {
-                            text(feature.scaleConfig.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
-                        });
-                    });
+    private Component headerCard() {
+        return SettingCard.header(feature, "HUD OVERLAY");
+    }
 
-                    // Overlay Width Slider
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("team-resources.width", "Overlay Width")).left();
-                        spacer();
-                        slider(feature.overlayWidthConfig.signal(), 0.15f, 1.0f, 0.05f);
-                        row().width(unit(10)).children(() -> {
-                            text(feature.overlayWidthConfig.signal().map(v -> Math.round((v != null ? v : 0.28f) * 100) + "%"));
-                        });
-                    });
+    private Component layoutCard() {
+        return SettingCard.section(Icon.settings,
+                Core.bundle.get("team-resources.settings.section.layout", "Overlay Layout"), () -> {
 
-                    divider();
+                    SettingSlider.of(
+                            Core.bundle.get("team-resources.opacity", "Opacity"),
+                            feature.opacityConfig.signal(),
+                            0.1f,
+                            1.0f,
+                            0.05f,
+                            feature.opacityConfig.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
 
-                    // Display Checkbox Options
-                    checkbox(Core.bundle.get("team-resources.show-items", "Show Core Items"), feature.showItemsConfig.signal()).growX();
-                    checkbox(Core.bundle.get("team-resources.show-units", "Show Unit Counts"), feature.showUnitsConfig.signal()).growX();
-                    checkbox(Core.bundle.get("team-resources.show-power", "Show Power Graph"), feature.showPowerConfig.signal()).growX();
-                    checkbox(Core.bundle.get("team-resources.show-stored-power", "Show Stored Power"), feature.showStoredPowerConfig.signal()).growX();
-                    checkbox(Core.bundle.get("team-resources.hide-background", "Hide Background"), feature.hideBackgroundConfig.signal()).growX();
-                    checkbox(Core.bundle.get("team-resources.always-show-flow-rate", "Always Show Flow Rate"), feature.alwaysShowFlowRateConfig.signal()).growX();
-                    checkbox(Core.bundle.get("team-resources.hide-zero-units", "Hide Inactive Units (0 count)"), feature.hideZeroUnitsConfig.signal()).growX();
-                    checkbox(Core.bundle.get("team-resources.hide-zero-items", "Hide Empty Items (0 count)"), feature.hideZeroItemsConfig.signal()).growX();
-                    checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle", "Hide Drag Handle"), feature.hideDragHandleConfig.signal()).growX();
-                    checkbox(Core.bundle.get("team-resources.hide-header", "Hide Title Bar"), feature.hideHeaderConfig.signal()).growX();
+                    SettingSlider.of(
+                            Core.bundle.get("team-resources.size", "Scale"),
+                            feature.scaleConfig.signal(),
+                            0.3f,
+                            2.0f,
+                            0.05f,
+                            feature.scaleConfig.signal().map(v -> Math.round((v != null ? v : 1f) * 100) + "%"));
 
-                    divider();
-
-                    // Reset Position Button
-                    button(Core.bundle.get("feature.quick-access.settings.reset-position", "Reset Position"), feature::resetPosition)
-                            .style(Styles.defaultb).growX();
-
-                    // Reset Defaults Button
-                    button(Core.bundle.get("team-resources.reset-to-defaults", "Reset to Defaults"), feature::resetToDefaults)
-                            .style(Styles.defaultb).growX();
+                    SettingSlider.of(
+                            Core.bundle.get("team-resources.width", "Overlay Width"),
+                            feature.overlayWidthConfig.signal(),
+                            0.15f,
+                            1.0f,
+                            0.05f,
+                            feature.overlayWidthConfig.signal()
+                                    .map(v -> Math.round((v != null ? v : 0.28f) * 100) + "%"));
                 });
+    }
+
+    private Component metricsCard() {
+        return SettingCard.section(Icon.tree,
+                Core.bundle.get("team-resources.settings.section.metrics", "Tracked Metrics"), () -> {
+                    checkbox(Core.bundle.get("team-resources.show-items", "Show Core Items"),
+                            feature.showItemsConfig.signal()).props(growX());
+
+                    checkbox(Core.bundle.get("team-resources.show-units", "Show Unit Counts"),
+                            feature.showUnitsConfig.signal()).props(growX());
+
+                    checkbox(Core.bundle.get("team-resources.show-power", "Show Power Graph"),
+                            feature.showPowerConfig.signal()).props(growX());
+
+                    checkbox(Core.bundle.get("team-resources.show-stored-power", "Show Stored Power"),
+                            feature.showStoredPowerConfig.signal()).props(growX());
+
+                    checkbox(Core.bundle.get("team-resources.always-show-flow-rate", "Always Show Flow Rate"),
+                            feature.alwaysShowFlowRateConfig.signal()).props(growX());
+                });
+    }
+
+    private Component appearanceCard() {
+        return SettingCard.section(Icon.eye,
+                Core.bundle.get("team-resources.settings.section.appearance", "Appearance & Behavior"), () -> {
+                    checkbox(Core.bundle.get("team-resources.hide-background", "Hide Background"),
+                            feature.hideBackgroundConfig.signal()).props(growX());
+
+                    checkbox(Core.bundle.get("team-resources.hide-header", "Hide Title Bar"),
+                            feature.hideHeaderConfig.signal()).props(growX());
+
+                    checkbox(Core.bundle.get("team-resources.hide-zero-units", "Hide Inactive Units (0 count)"),
+                            feature.hideZeroUnitsConfig.signal()).props(growX());
+
+                    checkbox(Core.bundle.get("team-resources.hide-zero-items", "Hide Empty Items (0 count)"),
+                            feature.hideZeroItemsConfig.signal()).props(growX());
+
+                    checkbox(Core.bundle.get("feature.common.settings.hide-drag-handle", "Hide Drag Handle"),
+                            feature.hideDragHandleConfig.signal()).props(growX());
+                });
+    }
+
+    private Component actionsCard() {
+        return SettingCard.card().children(() -> {
+            row().props(growX(), gap(unit(2)), center()).children(() -> {
+                button(Core.bundle.get("feature.quick-access.settings.reset-position", "Reset Position"),
+                        feature::resetPosition)
+                        .props(style(WebStyles.outlineText()), height(unit(11)), prefHeight(unit(11)), growX());
+
+                button(Core.bundle.get("team-resources.reset-to-defaults", "Reset to Defaults"),
+                        feature::resetToDefaults)
+                        .props(style(WebStyles.outlineText()), height(unit(11)), prefHeight(unit(11)), growX());
             });
-        }).element();
+        });
     }
 }

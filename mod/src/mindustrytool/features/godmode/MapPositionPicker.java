@@ -22,7 +22,7 @@ public final class MapPositionPicker {
             onStart.run();
         }
 
-        if (Vars.ui != null && Vars.ui.hudfrag != null && Core.bundle != null) {
+        if (Vars.ui != null && Vars.ui.hudfrag != null) {
             Vars.ui.hudfrag.showToast(Core.bundle.get("feature.god-mode.picker.tap-instruction"));
         }
 

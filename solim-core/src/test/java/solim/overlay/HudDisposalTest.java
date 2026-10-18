@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static solim.modifier.Values.opacity;
+import static solim.modifier.Values.position;
+import static solim.modifier.Values.scale;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -20,9 +23,9 @@ import arc.mock.MockGraphics;
 import mindustry.game.EventType.ResizeEvent;
 import solim.reactive.Signal;
 import solim.runtime.SignalDispatcher;
-import solim.test.SolimEnv;
+import solim.test.OwnershipEnv;
 
-class HudDisposalTest extends SolimEnv {
+class HudDisposalTest extends OwnershipEnv {
 
 	static class ResizableMockGraphics extends MockGraphics {
 		int width = 1024;
@@ -83,26 +86,25 @@ class HudDisposalTest extends SolimEnv {
 	@Test
 	void resizeListenerUnregisteredOnDispose() {
 		Hud hud = new Hud();
-		hud.element().setSize(200f, 100f);
-		hud.position(800f, 600f);
+		hud.root().setSize(200f, 100f);
+		hud.props(position(800f, 600f));
 		hud.keepInScreen();
 		assertFalse(hud.isDisposed());
 
 		mockGraphics.width = 800;
 		mockGraphics.height = 600;
 		Events.fire(new ResizeEvent());
-		assertEquals(600f, hud.element().x, 0.01f, "Resize must clamp while alive");
-		assertEquals(500f, hud.element().y, 0.01f);
+		assertEquals(600f, hud.root().x, 0.01f, "Resize must clamp while alive");
+		assertEquals(500f, hud.root().y, 0.01f);
 
 		hud.dispose();
 		assertTrue(hud.isDisposed());
 
-		hud.position(700f, 550f);
 		mockGraphics.width = 640;
 		mockGraphics.height = 480;
 		Events.fire(new ResizeEvent());
-		assertEquals(700f, hud.element().x, 0.01f, "Resize must not react after dispose");
-		assertEquals(550f, hud.element().y, 0.01f);
+		assertEquals(600f, hud.root().x, 0.01f, "Resize must not react after dispose");
+		assertEquals(500f, hud.root().y, 0.01f);
 
 		assertDoesNotThrow(hud::dispose, "Double dispose must be safe");
 		assertTrue(hud.isDisposed());
@@ -113,8 +115,7 @@ class HudDisposalTest extends SolimEnv {
 		Signal<Float> opacity = Signal.of(1f);
 		Signal<Float> scale = Signal.of(1f);
 		Hud hud = new Hud();
-		hud.opacity(opacity);
-		hud.scale(scale);
+		hud.props(opacity(opacity), scale(scale));
 		assertFalse(hud.isDisposed());
 
 		opacity.set(0.5f);

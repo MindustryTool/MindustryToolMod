@@ -3,13 +3,19 @@ package mindustrytool.features.healthbar;
 import static solim.UI.*;
 
 import arc.Core;
+import arc.graphics.Color;
 import arc.scene.Element;
-import solim.core.BaseComponent;
+import java.util.Locale;
+import mindustry.gen.Icon;
+import mindustrytool.components.SettingCard;
+import mindustrytool.components.SettingKeybindCard;
+import mindustrytool.components.SettingScaffold;
+import mindustrytool.components.SettingSlider;
+import mindustrytool.components.WebStyles;
+import solim.core.Component;
+import solim.reactive.Signal;
 
-/**
- * Declarative Solim settings view for Health Bar options.
- */
-public class HealthBarSettingsView extends BaseComponent {
+public class HealthBarSettingsView extends Component {
 
     private final HealthBarFeature feature;
 
@@ -19,64 +25,106 @@ public class HealthBarSettingsView extends BaseComponent {
 
     @Override
     protected Element build() {
-        return column().grow().center().children(() -> {
-            scroll().center().children(() -> {
-                column().growX().gap(unit(2)).children(() -> {
-                    checkbox(Core.bundle.get("feature.health-bar.settings.show-friendly-units"),
-                            feature.showFriendlyUnitsConfig.signal()).growX();
+        return SettingScaffold.build(() -> {
+            headerCard();
+            targetLayersCard();
+            visualStylingCard();
+            keybindsCard();
+            actionsCard();
+        });
+    }
 
-                    checkbox(Core.bundle.get("feature.health-bar.settings.show-enemy-units"),
-                            feature.showEnemyUnitsConfig.signal()).growX();
+    private void keybindsCard() {
+        SettingKeybindCard.forFeature(feature);
+    }
 
-                    checkbox(Core.bundle.get("feature.health-bar.settings.show-friendly-blocks"),
-                            feature.showFriendlyBlocksConfig.signal()).growX();
+    private Component headerCard() {
+        return SettingCard.header(feature, "TACTICAL");
+    }
 
-                    checkbox(Core.bundle.get("feature.health-bar.settings.show-enemy-blocks"),
-                            feature.showEnemyBlocksConfig.signal()).growX();
+    private Component targetLayersCard() {
+        return SettingCard.section(Icon.units, Core.bundle.get("feature.health-bar.settings.section.targets"), () -> {
+            checkboxRow(Core.bundle.get("feature.health-bar.settings.show-friendly-units"),
+                    feature.showFriendlyUnitsConfig.signal());
 
-                    divider();
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.health-bar.settings.min-zoom")).left();
-                        spacer();
-                        slider(feature.zoomThresholdConfig.signal(), 0f, 2f, 0.1f);
-                        row().width(unit(14)).children(() -> {
-                            text(feature.zoomThresholdConfig.signal().map(v -> (v != null ? v : 0.5f) <= 0.01f
-                                    ? Core.bundle.get("feature.health-bar.settings.off")
-                                    : String.format("%.1fx", v)));
-                        });
+            checkboxRow(Core.bundle.get("feature.health-bar.settings.show-enemy-units"),
+                    feature.showEnemyUnitsConfig.signal());
+
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
+
+            checkboxRow(Core.bundle.get("feature.health-bar.settings.show-friendly-blocks"),
+                    feature.showFriendlyBlocksConfig.signal());
+
+            divider().props(color(WebStyles.Colors.SECTION_BORDER));
+
+            checkboxRow(Core.bundle.get("feature.health-bar.settings.show-enemy-blocks"),
+                    feature.showEnemyBlocksConfig.signal());
+        });
+    }
+
+    private Component checkboxRow(String label, Signal<Boolean> signal) {
+        return row().props(growX(), gap(unit(2)), center()).children(() -> {
+            text(label).props(color(Color.white), growX(), left());
+            spacer();
+            checkbox("", signal);
+        });
+    }
+
+    private Component visualStylingCard() {
+        return SettingCard.section(Icon.image, Core.bundle.get("feature.health-bar.settings.section.visual"), () -> {
+
+            SettingSlider.of(
+                    Core.bundle.get("feature.health-bar.settings.min-zoom"),
+                    feature.zoomThresholdConfig.signal(),
+                    0f,
+                    2f,
+                    0.1f,
+                    feature.zoomThresholdConfig.signal().map(v -> {
+                        float val = v != null ? v : 0.5f;
+                        return val <= 0.01f
+                                ? Core.bundle.get("feature.health-bar.settings.off")
+                                : String.format(Locale.US, "%.1fx", val);
+                    }));
+
+            SettingSlider.of(
+                    Core.bundle.get("feature.health-bar.settings.opacity"),
+                    feature.opacityConfig.signal(),
+                    0f,
+                    1f,
+                    0.05f,
+                    feature.opacityConfig.signal()
+                            .map(v -> String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100)));
+
+            SettingSlider.of(
+                    Core.bundle.get("feature.health-bar.settings.scale"),
+                    feature.scaleConfig.signal(),
+                    0.5f,
+                    1.5f,
+                    0.1f,
+                    feature.scaleConfig.signal()
+                            .map(v -> String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100)));
+
+            SettingSlider.of(
+                    Core.bundle.get("feature.health-bar.settings.width"),
+                    feature.widthConfig.signal(),
+                    0.5f,
+                    2f,
+                    0.1f,
+                    feature.widthConfig.signal()
+                            .map(v -> String.format(Locale.US, "%.0f%%", (v != null ? v : 1f) * 100)));
+        });
+    }
+
+    private Component actionsCard() {
+        return SettingCard.card().children(() -> {
+            button(feature::resetToDefaults)
+                    .props(style(WebStyles.outline()), growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
+                    .children(() -> {
+                        icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
+                        text(Core.bundle.get("feature.health-bar.settings.reset"));
                     });
-
-                    divider();
-
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.health-bar.settings.opacity")).left();
-                        spacer();
-                        slider(feature.opacityConfig.signal(), 0f, 1f, 0.05f);
-                        row().width(unit(14)).children(() -> {
-                            text(feature.opacityConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100)));
-                        });
-                    });
-
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.health-bar.settings.scale")).left();
-                        spacer();
-                        slider(feature.scaleConfig.signal(), 0.5f, 1.5f, 0.1f);
-                        row().width(unit(14)).children(() -> {
-                            text(feature.scaleConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100)));
-                        });
-                    });
-
-                    row().growX().gap(unit(2)).children(() -> {
-                        text(Core.bundle.get("feature.health-bar.settings.width")).left();
-                        spacer();
-                        slider(feature.widthConfig.signal(), 0.5f, 2f, 0.1f);
-                        row().width(unit(14)).children(() -> {
-                            text(feature.widthConfig.signal().map(v -> String.format("%.0f%%", (v != null ? v : 1f) * 100)));
-                        });
-                    });
-                });
-            });
-        }).element();
+        });
     }
 }

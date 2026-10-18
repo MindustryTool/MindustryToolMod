@@ -10,11 +10,6 @@ import arc.func.Cons;
 import solim.graphics.RoundedDrawable;
 import solim.reactive.Readable;
 
-/**
- * Fluent chained builder for button styles supporting root properties,
- * state-specific sub-builders, reactive signals, layout values and
- * flyweight caching.
- */
 public final class SolimButtonStyleBuilder extends BaseStyleBuilder<SolimButtonStyleBuilder> {
 
     private @Nullable Integer radius;
@@ -383,7 +378,7 @@ public final class SolimButtonStyleBuilder extends BaseStyleBuilder<SolimButtonS
             } else if (state.borderColorValue() != null) {
                 bc = state.borderColorValue();
             }
-        } 
+        }
         return new ResolvedState(bg, r, s, bc, null);
     }
 
@@ -522,7 +517,7 @@ public final class SolimButtonStyleBuilder extends BaseStyleBuilder<SolimButtonS
 
     private void propagateBorder(@Nullable Float strokeValue, @Nullable Readable<Float> strokeSig,
             @Nullable Color borderValue, @Nullable Readable<Color> borderSig) {
-        ButtonStateBuilder[] states = new ButtonStateBuilder[]{up, over, down, disabled, checked};
+        ButtonStateBuilder[] states = new ButtonStateBuilder[] { up, over, down, disabled, checked };
         for (ButtonStateBuilder state : states) {
             if (state == null) {
                 continue;

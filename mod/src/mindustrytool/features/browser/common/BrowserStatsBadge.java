@@ -5,13 +5,9 @@ import static solim.UI.*;
 import arc.scene.Element;
 import mindustry.gen.Icon;
 import mindustrytool.components.FileIcon;
-import solim.core.BaseComponent;
+import solim.core.Component;
 
-/**
- * Compact badge row showing formatted likes, comments, and downloads counts
- * with vanilla stat icons.
- */
-public class BrowserStatsBadge extends BaseComponent {
+public class BrowserStatsBadge extends Component {
 
     private final long likes;
     private final long comments;
@@ -25,19 +21,19 @@ public class BrowserStatsBadge extends BaseComponent {
 
     @Override
     protected Element build() {
-        return row().growX().gap(unit(4)).children(() -> {
-            row().gap(unit(2)).center().children(() -> {
-                icon(FileIcon.of("heart.png")).size(unit(5));
+        return row().props(growX(), gap(unit(4))).children(() -> {
+            row().props(gap(unit(2)), center()).children(() -> {
+                icon(FileIcon.of("heart.png")).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)));
                 text(formatCount(likes));
             });
 
-            row().gap(unit(2)).center().children(() -> {
-                icon(FileIcon.of("message-circle.png")).size(unit(5));
+            row().props(gap(unit(2)), center()).children(() -> {
+                icon(FileIcon.of("message-circle.png")).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)));
                 text(formatCount(comments));
             });
 
-            row().gap(unit(2)).center().children(() -> {
-                icon(Icon.downloadSmall).size(unit(5));
+            row().props(gap(unit(2)), center()).children(() -> {
+                icon(Icon.downloadSmall).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)));
                 text(formatCount(downloads));
             });
         }).element();
@@ -53,11 +49,6 @@ public class BrowserStatsBadge extends BaseComponent {
         return String.valueOf(count);
     }
 
-    /**
-     * Uses a locale-invariant decimal point for compact UI counts. Negative
-     * half values follow Java Math.round semantics, which is irrelevant for
-     * normal non-negative browser statistics but keeps this helper deterministic.
-     */
     private static String oneDecimal(double value) {
         long rounded = Math.round(value * 10.0);
         long whole = rounded / 10;

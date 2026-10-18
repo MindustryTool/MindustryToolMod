@@ -1,9 +1,16 @@
 package solim.layout;
 
+import static solim.modifier.Values.*;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static solim.modifier.Values.center;
+import static solim.modifier.Values.gap;
+import static solim.modifier.Values.left;
+import static solim.modifier.Values.padding;
+import static solim.modifier.Values.right;
 
 import org.junit.jupiter.api.Test;
 
@@ -15,97 +22,96 @@ import solim.test.SolimEnv;
 
 class WrapTest extends SolimEnv {
 
+    @Test
+    void createsTableWithDefaultName() {
+        Wrap w = new Wrap();
+        assertEquals("solim-wrap-table", w.table().name);
+    }
 
-	@Test
-	void createsTableWithDefaultName() {
-		Wrap w = new Wrap();
-		assertEquals("solim-wrap-table", w.table().name);
-	}
+    @Test
+    void addAddsChildToTable() {
+        Wrap w = new Wrap();
+        Element first = new Element();
+        Element second = new Element();
 
-	@Test
-	void addAddsChildToTable() {
-		Wrap w = new Wrap();
-		Element first = new Element();
-		Element second = new Element();
+        w.add(first);
+        w.add(second);
 
-		w.add(first);
-		w.add(second);
+        assertEquals(2, w.table().getChildren().size);
+        assertSame(first, w.table().getChildren().get(0));
+        assertSame(second, w.table().getChildren().get(1));
+    }
 
-		assertEquals(2, w.table().getChildren().size);
-		assertSame(first, w.table().getChildren().get(0));
-		assertSame(second, w.table().getChildren().get(1));
-	}
+    @Test
+    void nameModifierUpdatesTableName() {
+        Wrap w = new Wrap();
+        w.name("my-wrap");
+        assertEquals("my-wrap", w.table().name);
+    }
 
-	@Test
-	void nameModifierUpdatesTableName() {
-		Wrap w = new Wrap();
-		w.name("my-wrap");
-		assertEquals("my-wrap", w.table().name);
-	}
+    @Test
+    void tableIsSameAsElement() {
+        Wrap w = new Wrap();
+        assertSame(w.table(), w.element());
+    }
 
-	@Test
-	void tableIsSameAsElement() {
-		Wrap w = new Wrap();
-		assertSame(w.table(), w.element());
-	}
+    @Test
+    void gapSetsDefaultCellPadding() {
+        Wrap w = new Wrap();
+        w.props(gap(8f));
+        assertEquals(8f, w.gap());
+        Cell<?> def = w.table().defaults();
+        assertEquals(8f, CellAccess.padRight(def));
+        assertEquals(8f, CellAccess.padBottom(def));
+    }
 
-	@Test
-	void gapSetsDefaultCellPadding() {
-		Wrap w = new Wrap();
-		w.gap(8f);
-		assertEquals(8f, w.gap());
-		Cell<?> def = w.table().defaults();
-		assertEquals(8f, CellAccess.padRight(def));
-		assertEquals(8f, CellAccess.padBottom(def));
-	}
+    @Test
+    void leftAlignsTable() {
+        Wrap w = new Wrap();
+        w.props(left());
 
-	@Test
-	void leftAlignsTable() {
-		Wrap w = new Wrap();
-		w.left();
-		// Just verify it doesn't throw
-	}
+    }
 
-	@Test
-	void centerAlignsTable() {
-		Wrap w = new Wrap();
-		w.center();
-		// Just verify it doesn't throw
-	}
+    @Test
+    void centerAlignsTable() {
+        Wrap w = new Wrap();
+        w.props(center());
 
-	@Test
-	void rightAlignsTable() {
-		Wrap w = new Wrap();
-		w.right();
-		// Just verify it doesn't throw
-	}
+    }
 
-	@Test
-	void backgroundSetsDrawable() {
-		Wrap w = new Wrap();
-		assertNull(w.table().getBackground());
-		w.background(new TextureRegionDrawable());
-		assertNotNull(w.table().getBackground());
-	}
+    @Test
+    void rightAlignsTable() {
+        Wrap w = new Wrap();
+        w.props(right());
 
-	@Test
-	void paddingSetsTablePadding() {
-		Wrap w = new Wrap();
-		w.padding(12f);
-		// Just verify it doesn't throw
-	}
+    }
 
-	@Test
-	void childrenAddsElementsToTable() {
-		Wrap w = new Wrap();
-		w.add(new Element());
-		w.add(new Element());
-		assertEquals(2, w.table().getChildren().size);
-	}
+    @Test
+    void backgroundSetsDrawable() {
+        Wrap w = new Wrap();
+        assertNull(w.table().getBackground());
+        w.props(background(new TextureRegionDrawable()));
+        assertNotNull(w.table().getBackground());
+    }
 
-	@Test
-	void defaultGapIs4() {
-		Wrap w = new Wrap();
-		assertEquals(4f, w.gap());
-	}
+    @Test
+    void paddingSetsTablePadding() {
+        Wrap w = new Wrap();
+        w.props(padding(12f));
+
+    }
+
+    @Test
+    void childrenAddsElementsToTable() {
+        Wrap w = new Wrap();
+        w.add(new Element());
+        w.add(new Element());
+        assertEquals(2, w.table().getChildren().size);
+    }
+
+    @Test
+    void defaultGapIs4() {
+        Wrap w = new Wrap();
+        assertEquals(4f, w.gap());
+    }
 }

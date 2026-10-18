@@ -198,7 +198,6 @@ public final class ChatMessages {
         String chId = realMsg.getChannelId();
         List<ChatMessage> list = copyChannel(chId);
 
-        // If real message already arrived (e.g. via live stream), simply remove tempId
         if (containsMessage(list, realMsg.getId())) {
             boolean removed = removeMessage(list, tempId);
             if (removed) {
@@ -207,7 +206,6 @@ public final class ChatMessages {
             return removed;
         }
 
-        // Replace tempId with realMsg in place
         for (int i = 0; i < list.size(); i++) {
             if (Objects.equals(list.get(i).getId(), tempId)) {
                 list.set(i, realMsg);
