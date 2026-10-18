@@ -11,7 +11,7 @@ import mindustrytool.models.response.TagData;
 
 public final class BrowserLayout {
 
-    public static final float CARD_SIZE = unit(58f);
+    public static final float CARD_SIZE = unit(78f);
     public static final float CARD_WIDTH = CARD_SIZE;
     public static final float CARD_INTERNAL_GAP = unit(2f);
     public static final float CARD_ACTION_ROW_HEIGHT = unit(9f);

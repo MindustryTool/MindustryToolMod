@@ -36,7 +36,7 @@ public class SchematicBrowserDialog extends SolimDialog {
     public SchematicBrowserDialog() {
         super(Core.bundle.get("browser.schematic.title"));
 
-        state = new BrowserState<>(SchematicBrowserDialog::fetchSchematics);
+        state = new BrowserState<>(SchematicBrowserDialog::fetchSchematics, "schematics");
         filterDialog = new BrowserFilterDialog(state, "schematics", true, false);
 
         closeOnBack();

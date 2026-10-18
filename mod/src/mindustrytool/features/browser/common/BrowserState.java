@@ -24,13 +24,15 @@ public class BrowserState<T> implements Disposable {
     private final Signal<Integer> page = Signal.of(0);
     private final Signal<Boolean> active = Signal.of(false);
     private final Query<List<T>> queryPrimitive;
+    private final String contentType;
 
     @FunctionalInterface
     public interface Fetcher<T> {
         CompletableFuture<List<T>> fetch(BrowserState<T> state);
     }
 
-    public BrowserState(Fetcher<T> fetcher) {
+    public BrowserState(Fetcher<T> fetcher, String contentType) {
+        this.contentType = contentType;
         this.queryPrimitive = Query.<List<T>>builder()
                 .key(this::queryKey)
                 .enabled(active)
@@ -39,7 +41,7 @@ public class BrowserState<T> implements Disposable {
     }
 
     private QueryKey queryKey() {
-        return QueryKey.of("browser",
+        return QueryKey.of(contentType,
                 page.get(),
                 pageSize.get(),
                 sort.get(),

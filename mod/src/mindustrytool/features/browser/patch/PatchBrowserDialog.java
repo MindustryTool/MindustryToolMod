@@ -35,7 +35,7 @@ public class PatchBrowserDialog extends SolimDialog {
     public PatchBrowserDialog() {
         super(Core.bundle.get("browser.patch.title"));
 
-        state = new BrowserState<>(PatchBrowserDialog::fetchPatches);
+        state = new BrowserState<>(PatchBrowserDialog::fetchPatches, "content-patches");
         filterDialog = new BrowserFilterDialog(state, "content-patches", false, false);
 
         closeOnBack();

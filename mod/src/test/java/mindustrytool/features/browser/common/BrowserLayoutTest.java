@@ -26,7 +26,7 @@ class BrowserLayoutTest extends SolimEnv {
     @Test
     void browserStatePageSizeReactivityAndClamping() {
         BrowserState<String> state = new BrowserState<>(
-                s -> CompletableFuture.completedFuture(Collections.emptyList()));
+                s -> CompletableFuture.completedFuture(Collections.emptyList()), "test");
         assertEquals(BrowserLayout.PAGE_SIZE_MIN, state.getPageSize());
 
         state.goToPage(3);

@@ -34,7 +34,7 @@ public class MapBrowserDialog extends SolimDialog {
     public MapBrowserDialog() {
         super(Core.bundle.get("browser.map.title"));
 
-        state = new BrowserState<>(MapBrowserDialog::fetchMaps);
+        state = new BrowserState<>(MapBrowserDialog::fetchMaps, "maps");
         filterDialog = new BrowserFilterDialog(state, "maps", false, true);
 
         closeOnBack();
