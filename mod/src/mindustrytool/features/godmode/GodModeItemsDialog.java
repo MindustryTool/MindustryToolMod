@@ -1,17 +1,6 @@
 package mindustrytool.features.godmode;
 
 import static solim.UI.*;
-import static solim.modifier.Values.checked;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.tooltip;
-import static solim.modifier.Values.width;
 
 import arc.Core;
 import arc.scene.style.TextureRegionDrawable;
@@ -22,7 +11,6 @@ import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.type.Item;
 import mindustrytool.components.WebStyles;
-import solim.modifier.Values;
 import solim.overlay.SolimDialog;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
@@ -64,11 +52,11 @@ public class GodModeItemsDialog extends SolimDialog {
 
         children(() -> {
             column().props(padding(unit(3)), gap(unit(2.5f))).children(() -> {
-                row().props(growX(), padding(unit(1.5f)), Values.rounded(unit(2), WebStyles.Colors.SECONDARY_BG), Values.border(1.5f, WebStyles.Colors.BORDER_INPUT), gap(unit(1.5f)), center())
+                row().props(growX(), padding(unit(1.5f)), rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1.5f, WebStyles.Colors.BORDER_INPUT), gap(unit(1.5f)), center())
                         .children(() -> {
                             icon(Icon.zoom).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f)), color(WebStyles.Colors.GHOST_FG));
                             textField(searchQuery)
-                                    .props(style(WebStyles.clearInput()), growX(), height(unit(8)), prefHeight(unit(8)), Values.placeholder(Core.bundle.get("feature.god-mode.common.search")));
+                                    .props(style(WebStyles.clearInput()), growX(), height(unit(8)), prefHeight(unit(8)), placeholder(Core.bundle.get("feature.god-mode.common.search")));
                         });
 
                 text(Core.bundle.get("feature.god-mode.items.select-item")).props(color(WebStyles.Colors.GHOST_FG));
@@ -108,7 +96,7 @@ public class GodModeItemsDialog extends SolimDialog {
                     text(Core.bundle.get("feature.god-mode.items.amount") + ": ").props(color(WebStyles.Colors.GHOST_FG));
 
                     row()
-                            .props(padding(unit(1)), Values.rounded(unit(2), WebStyles.Colors.SECONDARY_BG), Values.border(1.5f, WebStyles.Colors.BORDER_INPUT))
+                            .props(padding(unit(1)), rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1.5f, WebStyles.Colors.BORDER_INPUT))
                             .children(() -> {
                                 textField(amountString)
                                         .props(style(WebStyles.clearInput()), width(unit(22)), prefWidth(unit(22)), height(unit(8)), prefHeight(unit(8)));

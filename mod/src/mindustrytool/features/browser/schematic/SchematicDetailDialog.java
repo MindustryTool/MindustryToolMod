@@ -1,17 +1,6 @@
 package mindustrytool.features.browser.schematic;
 
 import static solim.UI.*;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.fillParent;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.origin;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -112,10 +101,10 @@ public class SchematicDetailDialog extends SolimDialog {
                         .props(
                                 origin(Align.top | Align.left),
                                 grow(),
-                                solim.modifier.Values.top(),
-                                solim.modifier.Values.placeholder(Icon.image),
-                                solim.modifier.Values.fallback(Icon.image),
-                                solim.modifier.Values.scaling(Scaling.fit)
+                                top(),
+                                placeholder(Icon.image),
+                                fallback(Icon.image),
+                                scaling(Scaling.fit)
                         );
             });
         }
@@ -126,10 +115,10 @@ public class SchematicDetailDialog extends SolimDialog {
                         .props(
                                 origin(Align.top),
                                 grow(),
-                                solim.modifier.Values.top(),
-                                solim.modifier.Values.placeholder(Icon.image),
-                                solim.modifier.Values.fallback(Icon.image),
-                                solim.modifier.Values.scaling(Scaling.fit)
+                                top(),
+                                placeholder(Icon.image),
+                                fallback(Icon.image),
+                                scaling(Scaling.fit)
                         );
             });
         }
@@ -138,15 +127,15 @@ public class SchematicDetailDialog extends SolimDialog {
             column().props(grow(), gap(unit(2))).children(() -> {
                 card(WebStyles.previewCardBackground()).props(padding(unit(4)), growX(), gap(unit(2))).children(() -> {
                     row().props(growX(), gap(unit(1))).children(() -> {
-                        text(Core.bundle.get("browser.detail.author")).props(color(Color.lightGray), solim.modifier.Values.fontScale(1.3f));
+                        text(Core.bundle.get("browser.detail.author")).props(color(Color.lightGray), fontScale(1.3f));
                         if (authorQuery != null) {
                             query(authorQuery)
                                     .props(growX())
-                                    .loading(() -> text(authorId != null ? authorId : "").props(color(Color.white), solim.modifier.Values.fontScale(1.3f)))
-                                    .error(err -> text(authorId != null ? authorId : "").props(color(Color.white), solim.modifier.Values.fontScale(1.3f)))
-                                    .data(name -> text(name).props(color(Color.white), solim.modifier.Values.fontScale(1.3f)));
+                                    .loading(() -> text(authorId != null ? authorId : "").props(color(Color.white), fontScale(1.3f)))
+                                    .error(err -> text(authorId != null ? authorId : "").props(color(Color.white), fontScale(1.3f)))
+                                    .data(name -> text(name).props(color(Color.white), fontScale(1.3f)));
                         } else {
-                            text(authorId != null ? authorId : "").props(color(Color.white), solim.modifier.Values.fontScale(1.3f));
+                            text(authorId != null ? authorId : "").props(color(Color.white), fontScale(1.3f));
                         }
                     });
 
@@ -169,7 +158,7 @@ public class SchematicDetailDialog extends SolimDialog {
 
                 if (detail.getDescription() != null && !detail.getDescription().isEmpty()) {
                     card(WebStyles.previewCardBackground()).props(padding(unit(4)), growX(), gap(unit(2))).children(() -> {
-                        text(detail.getDescription()).props(color(Color.lightGray), solim.modifier.Values.wrap(true), solim.modifier.Values.left(), growX());
+                        text(detail.getDescription()).props(color(Color.lightGray), textWrap(true), left(), growX());
                     });
                 }
 
@@ -196,7 +185,7 @@ public class SchematicDetailDialog extends SolimDialog {
             }
 
             card(WebStyles.previewCardBackground()).props(growX(), padding(unit(4)), top(), left(), gap(unit(2))).children(() -> {
-                text(Core.bundle.get("browser.detail.requirements")).props(color(Color.white), growX(), solim.modifier.Values.left());
+                text(Core.bundle.get("browser.detail.requirements")).props(color(Color.white), growX(), left());
                 wrap().props(growX(), left(), gap(unit(2))).children(() -> {
                     for (ItemStack stack : requirements) {
                         row().props(center(), gap(unit(1)), left()).children(() -> {

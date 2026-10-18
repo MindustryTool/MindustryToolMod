@@ -1,16 +1,6 @@
 package mindustrytool.features.emoji;
 
 import static solim.UI.*;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -19,7 +9,6 @@ import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.emoji.EmojiIcons.Entry;
-import solim.modifier.Values;
 import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -47,11 +36,11 @@ public class EmojiDialog extends SolimDialog {
 
         children(() -> {
             column().props(grow(), padding(unit(3)), center(), gap(unit(2.5f))).children(() -> {
-                row().props(growX(), padding(unit(1.5f)), Values.rounded(unit(2), WebStyles.Colors.SECONDARY_BG), Values.border(1.5f, WebStyles.Colors.BORDER_INPUT), gap(unit(1.5f)), center())
+                row().props(growX(), padding(unit(1.5f)), rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1.5f, WebStyles.Colors.BORDER_INPUT), gap(unit(1.5f)), center())
                         .children(() -> {
                             icon(Icon.zoom).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f)), color(WebStyles.Colors.GHOST_FG));
                             textField(searchQuery)
-                                    .props(style(WebStyles.clearInput()), growX(), height(unit(8)), prefHeight(unit(8)), Values.placeholder(Core.bundle.get("feature.emoji.search")));
+                                    .props(style(WebStyles.clearInput()), growX(), height(unit(8)), prefHeight(unit(8)), placeholder(Core.bundle.get("feature.emoji.search")));
                         });
 
                 scroll().props(grow()).children(() -> {

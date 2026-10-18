@@ -1,25 +1,6 @@
 package mindustrytool.features.playerconnect.ui;
 
 import static solim.UI.*;
-import static solim.modifier.Values.background;
-import static solim.modifier.Values.ellipsis;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.maxHeight;
-import static solim.modifier.Values.minHeight;
-import static solim.modifier.Values.minWidth;
-import static solim.modifier.Values.onClick;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.paddingX;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.paddingY;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.scrollX;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.enabled;
-import static solim.modifier.Values.width;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -34,7 +15,6 @@ import mindustrytool.features.playerconnect.net.PlayerConnectClient;
 import mindustrytool.models.response.PlayerConnectProvider;
 import solim.core.Component;
 import solim.core.Units;
-import solim.modifier.Values;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
 import solim.reactive.Effect;
@@ -78,7 +58,7 @@ public class HostRoomDialog extends SolimDialog {
         @Override
         protected Element build() {
             return column()
-                    .props(growX(), Values.maxWidth(Units.dvw.map(w -> Math.min(w * 0.9f, 1100f))), maxHeight(Units.dvh.map(h -> Math.min(h * 0.85f, 1200f))), gap(unit(3)), center())
+                    .props(growX(), solim.UI.maxWidth(Units.dvw.map(w -> Math.min(w * 0.9f, 1100f))), maxHeight(Units.dvh.map(h -> Math.min(h * 0.85f, 1200f))), gap(unit(3)), center())
                     .children(() -> {
                         dynamic(step, currentStep -> {
                             if (currentStep == Step.CONFIG) {
@@ -99,7 +79,7 @@ public class HostRoomDialog extends SolimDialog {
 
                         column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                             text(Core.bundle.get("feature.player-connect.room-name", "Room Name:")).props(left());
-                            row().props(growX(), height(unit(11)), prefHeight(unit(11)), Values.border(1.5f, Color.darkGray), paddingX(unit(2)), Values.rounded(unit(2)))
+                            row().props(growX(), height(unit(11)), prefHeight(unit(11)), border(1.5f, Color.darkGray), paddingX(unit(2)), rounded(unit(2)))
                                     .children(() -> {
                                         textField(feature.roomNameConfig.signal())
                                                 .props(style(WebStyles.clearInput()), grow());
@@ -108,7 +88,7 @@ public class HostRoomDialog extends SolimDialog {
 
                         column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                             text(Core.bundle.get("feature.player-connect.password", "Password:")).props(left());
-                            row().props(growX(), height(unit(11)), prefHeight(unit(11)), Values.border(1.5f, Color.darkGray), paddingX(unit(2)), Values.rounded(unit(2)))
+                            row().props(growX(), height(unit(11)), prefHeight(unit(11)), border(1.5f, Color.darkGray), paddingX(unit(2)), rounded(unit(2)))
                                     .children(() -> {
                                         textField(feature.passwordConfig.signal())
                                                 .props(style(WebStyles.clearInput()), grow());
@@ -126,7 +106,7 @@ public class HostRoomDialog extends SolimDialog {
                         });
                         column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                             text(Core.bundle.get("feature.player-connect.max-players", "Max Players (0=unlimited):")).props(left());
-                            row().props(growX(), height(unit(11)), prefHeight(unit(11)), Values.border(1.5f, Color.darkGray), paddingX(unit(2)), Values.rounded(unit(2)))
+                            row().props(growX(), height(unit(11)), prefHeight(unit(11)), border(1.5f, Color.darkGray), paddingX(unit(2)), rounded(unit(2)))
                                     .children(() -> {
                                         textField(maxPlayersSig)
                                                 .props(style(WebStyles.clearInput()), grow());
@@ -205,7 +185,7 @@ public class HostRoomDialog extends SolimDialog {
             Computed<Boolean> showAddress = Units.dvw.map(w -> w >= 700f);
 
             return card()
-                    .props(background(WebStyles.Colors.SECONDARY), Values.border(1.5f, isSelected.map(s -> s ? Pal.accent : WebStyles.Colors.BORDER_INPUT)), growX(), minHeight(unit(12)), padding(unit(2), unit(3), unit(2), unit(3)), onClick(() -> selectedProvider.set(provider)))
+                    .props(background(WebStyles.Colors.SECONDARY), border(1.5f, isSelected.map(s -> s ? Pal.accent : WebStyles.Colors.BORDER_INPUT)), growX(), minHeight(unit(12)), padding(unit(2), unit(3), unit(2), unit(3)), onClick(() -> selectedProvider.set(provider)))
                     .children(() -> {
                         row().props(growX(), gap(unit(2)), center()).children(() -> {
                             text(provider.getName()).props(color(isSelected.map(s -> s ? Pal.accent : Color.white)), left());
@@ -213,7 +193,7 @@ public class HostRoomDialog extends SolimDialog {
                             when(showAddress)
                                     .thenDo(() -> text(provider.getAddress()).props(color(Color.lightGray)));
                             text(pingSignal)
-                                    .props(color(pingSignal.map(this::getPingColor)), width(unit(22)), prefWidth(unit(22)), solim.modifier.Values.right());
+                                    .props(color(pingSignal.map(this::getPingColor)), width(unit(22)), prefWidth(unit(22)), right());
                         });
                     });
         }

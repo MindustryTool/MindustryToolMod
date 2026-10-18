@@ -1,11 +1,6 @@
 package mindustrytool.features.autoplay.tasks;
 
 import static solim.UI.*;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.math.geom.Point2;

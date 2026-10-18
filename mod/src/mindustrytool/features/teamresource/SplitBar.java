@@ -1,6 +1,6 @@
 package mindustrytool.features.teamresource;
+import static solim.UI.*;
 
-import static solim.modifier.Values.growX;
 
 import arc.func.Floatp;
 import arc.graphics.Color;

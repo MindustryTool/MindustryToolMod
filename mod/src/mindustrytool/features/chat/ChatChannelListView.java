@@ -1,21 +1,6 @@
 package mindustrytool.features.chat;
 
 import static solim.UI.*;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.fontScale;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.paddingX;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.stopClickPropagation;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.tooltip;
-import static solim.modifier.Values.visible;
-import static solim.modifier.Values.wrap;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -59,9 +44,9 @@ public class ChatChannelListView extends Component {
                     .error(err -> column().props(grow(), padding(unit(2)), center(), gap(unit(2))).children(() -> {
                         icon(Icon.warning).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(Color.scarlet));
                         text(Core.bundle.get("feature.chat.ui.error.channels", "Failed to load channels."))
-                                .props(color(Color.scarlet), fontScale(0.95f), wrap(), solim.modifier.Values.center());
+                                .props(color(Color.scarlet), fontScale(0.95f), textWrap(), center());
                         text(err != null ? err.getMessage() : "")
-                                .props(color(Color.gray), fontScale(0.8f), wrap(), solim.modifier.Values.center());
+                                .props(color(Color.gray), fontScale(0.8f), textWrap(), center());
                         button(Core.bundle.get("feature.chat.ui.retry", "Retry"), () -> {
                             if (service != null) {
                                 service.refreshChannels();

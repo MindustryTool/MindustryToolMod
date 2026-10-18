@@ -1,11 +1,6 @@
 package mindustrytool.components;
 
 import static solim.UI.*;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.maxWidth;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.scrollX;
 
 import arc.scene.Element;
 

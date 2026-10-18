@@ -1,13 +1,6 @@
 package mindustrytool.features.logicvisualizer;
 
 import static solim.UI.*;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -61,7 +54,7 @@ public class LogicVisualizerSettingsView extends Component {
         return row().props(growX(), gap(unit(2)), center()).children(() -> {
             column().props(growX(), left()).children(() -> {
                 text(label).props(color(Color.white), left());
-                text(description).props(color(WebStyles.Colors.GHOST_FG), solim.modifier.Values.wrap(true), left());
+                text(description).props(color(WebStyles.Colors.GHOST_FG), textWrap(true), left());
             });
             spacer();
             checkbox("", signal);

@@ -1,13 +1,6 @@
 package mindustrytool.features.browser.common;
 
 import static solim.UI.*;
-import static solim.modifier.Values.border;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.paddingX;
-import static solim.modifier.Values.paddingY;
-import static solim.modifier.Values.rounded;
 
 import java.util.List;
 

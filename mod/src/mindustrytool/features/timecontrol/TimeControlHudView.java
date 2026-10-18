@@ -1,21 +1,6 @@
 package mindustrytool.features.timecontrol;
 
 import static solim.UI.*;
-import static solim.modifier.Values.border;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.draggable;
-import static solim.modifier.Values.gap;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.marginLeft;
-import static solim.modifier.Values.position;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.rounded;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.enabled;
-import static solim.modifier.Values.tooltip;
-import static solim.modifier.Values.width;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -131,7 +116,7 @@ public class TimeControlHudView extends Component {
         return button()
                 .props(style(WebStyles.ghost()), enabled(canEdit), height(buttonSize), prefHeight(buttonSize), width(presetWidth), prefWidth(presetWidth))
                 .onClick(() -> feature.selectPreset(preset))
-                .children(() -> text(label).props(color(color), solim.modifier.Values.fontScale(fontScale)));
+                .children(() -> text(label).props(color(color), fontScale(fontScale)));
     }
 
     private static Component buildSliderContent(TimeControlFeature feature, Readable<Float> buttonSize,
@@ -170,7 +155,7 @@ public class TimeControlHudView extends Component {
 
                     row().props(rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1f, WebStyles.Colors.BORDER), center(),
                             height(buttonSize), prefHeight(buttonSize), width(labelWidth), prefWidth(labelWidth)).children(() -> {
-                                text(label).props(solim.modifier.Values.center(), solim.modifier.Values.fontScale(fontScale));
+                                text(label).props(center(), fontScale(fontScale));
                             });
 
                     button()

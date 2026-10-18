@@ -1,19 +1,6 @@
 package mindustrytool.features.settings;
 
 import static solim.UI.*;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.fontScale;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.left;
-import static solim.modifier.Values.maxWidth;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.scaling;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.wrap;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -57,12 +44,12 @@ public class FeatureHelpView extends Component {
 
                                 if (hasDescription) {
                                     text(description)
-                                            .props(color(Color.lightGray), fontScale(0.95f), wrap(true), left());
+                                            .props(color(Color.lightGray), fontScale(0.95f), textWrap(true), left());
                                     divider();
                                 }
 
                                 text(text)
-                                        .props(color(hasHelp ? Color.white : Color.lightGray), wrap(true), left());
+                                        .props(color(hasHelp ? Color.white : Color.lightGray), textWrap(true), left());
                             });
                 })
                 .element();

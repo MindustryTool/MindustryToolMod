@@ -1,8 +1,6 @@
 package mindustrytool.features.prettychat.ui;
 
 import static solim.UI.*;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.padding;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -12,7 +10,6 @@ import arc.scene.ui.layout.Table;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import mindustrytool.features.prettychat.Prettier;
-import solim.modifier.Values;
 import solim.core.Units;
 import solim.core.Component;
 import solim.overlay.SolimDialog;
@@ -42,10 +39,10 @@ public class PrettyChatEditDialog extends SolimDialog {
         }
 
         children(() -> {
-            column().props(grow(), Values.maxWidth(Units.dvw.map(w -> Math.min(w * 0.9f, 750f))), padding(unit(3)), gap(unit(2)))
+            column().props(grow(), solim.UI.maxWidth(Units.dvw.map(w -> Math.min(w * 0.9f, 750f))), padding(unit(3)), gap(unit(2)))
                     .children(() -> {
                         text(hint)
-                                .props(Values.color(Color.lightGray), Values.wrap(true), Values.growX());
+                                .props(color(Color.lightGray), textWrap(true), growX());
 
                         new Component() {
                             @Override

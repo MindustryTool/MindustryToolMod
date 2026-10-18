@@ -1,16 +1,6 @@
 package mindustrytool.components;
 
 import static solim.UI.*;
-import static solim.modifier.Values.border;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.left;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.rounded;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.wrap;
 
 import arc.scene.style.Drawable;
 import arc.util.Nullable;
@@ -69,7 +59,7 @@ public final class SettingCard {
 
             if (description != null && !description.trim().isEmpty()) {
                 text(description)
-                        .props(color(WebStyles.Colors.GHOST_FG), left(), wrap(), growX());
+                        .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(), growX());
             }
         });
     }
@@ -88,7 +78,7 @@ public final class SettingCard {
 
             if (description != null && !description.trim().isEmpty()) {
                 text(description)
-                        .props(color(WebStyles.Colors.GHOST_FG), left(), wrap(), growX());
+                        .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(), growX());
             }
         });
     }

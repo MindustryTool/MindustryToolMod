@@ -1,16 +1,6 @@
 package mindustrytool.features.background;
 
 import static solim.UI.*;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.gap;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.left;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.wrap;
 
 import arc.Core;
 import arc.files.Fi;
@@ -60,7 +50,7 @@ public class BackgroundSettingsView extends Component {
                 Core.bundle.get("feature.background.settings.image-selection", "Image Selection"), () -> {
                     text(Core.bundle.get("feature.background.settings.image-desc",
                             "Select a custom PNG image to replace the main menu background."))
-                            .props(color(WebStyles.Colors.GHOST_FG), wrap(), growX(), left());
+                            .props(color(WebStyles.Colors.GHOST_FG), textWrap(), growX(), left());
 
                     button(this::selectImage)
                             .props(style(WebStyles.outline()), growX(), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))

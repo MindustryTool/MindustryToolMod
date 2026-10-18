@@ -1,17 +1,6 @@
 package mindustrytool.features.browser.patch;
 
 import static solim.UI.*;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.fillParent;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.growY;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.width;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -102,17 +91,17 @@ public class PatchDetailDialog extends SolimDialog {
             column().props(growX(), gap(unit(2))).children(() -> {
                 card(WebStyles.previewCardBackground()).props(padding(unit(4)), growX(), gap(unit(2))).children(() -> {
                     row().props(growX(), gap(unit(1))).children(() -> {
-                        text(Core.bundle.get("browser.detail.author")).props(color(Color.lightGray), solim.modifier.Values.fontScale(1.1f));
+                        text(Core.bundle.get("browser.detail.author")).props(color(Color.lightGray), fontScale(1.1f));
                         if (authorQuery != null) {
                             query(authorQuery)
                                     .props(growX())
                                     .loading(() -> text(authorId != null ? authorId : "")
-                                            .props(color(Color.white), solim.modifier.Values.fontScale(1.1f)))
+                                            .props(color(Color.white), fontScale(1.1f)))
                                     .error(err -> text(authorId != null ? authorId : "")
-                                            .props(color(Color.white), solim.modifier.Values.fontScale(1.1f)))
-                                    .data(name -> text(name).props(color(Color.white), solim.modifier.Values.fontScale(1.1f)));
+                                            .props(color(Color.white), fontScale(1.1f)))
+                                    .data(name -> text(name).props(color(Color.white), fontScale(1.1f)));
                         } else {
-                            text(authorId != null ? authorId : "").props(color(Color.white), solim.modifier.Values.fontScale(1.1f));
+                            text(authorId != null ? authorId : "").props(color(Color.white), fontScale(1.1f));
                         }
                     });
 
@@ -141,7 +130,7 @@ public class PatchDetailDialog extends SolimDialog {
 
                 if (detail.getDescription() != null && !detail.getDescription().trim().isEmpty()) {
                     card(WebStyles.previewCardBackground()).props(padding(unit(4)), growX(), gap(unit(2))).children(() -> {
-                        text(detail.getDescription().trim()).props(color(Color.lightGray), solim.modifier.Values.wrap(true), solim.modifier.Values.left(), growX());
+                        text(detail.getDescription().trim()).props(color(Color.lightGray), textWrap(true), left(), growX());
                     });
                 }
             });
@@ -158,16 +147,16 @@ public class PatchDetailDialog extends SolimDialog {
             String lineNumbers = HjsonHighlighter.buildLineNumbers(formattedData);
 
             card(WebStyles.previewCardBackground()).props(grow(), padding(unit(3)), gap(unit(2))).children(() -> {
-                text(Core.bundle.get("browser.patch.data-section")).props(color(Color.white), growX(), solim.modifier.Values.left());
-                scroll().props(grow(), solim.modifier.Values.scrollX(true), solim.modifier.Values.scrollY(true)).children(() -> {
+                text(Core.bundle.get("browser.patch.data-section")).props(color(Color.white), growX(), left());
+                scroll().props(grow(), scrollX(true), scrollY(true)).children(() -> {
                     row().props(top(), left()).children(() -> {
                         text(lineNumbers)
-                                .props(style(Styles.monoLabel), color(Color.gray), solim.modifier.Values.wrap(false), solim.modifier.Values.right());
+                                .props(style(Styles.monoLabel), color(Color.gray), textWrap(false), right());
 
                         column().props(width(unit(4)), prefWidth(unit(4)));
 
                         text(highlightedCode)
-                                .props(style(Styles.monoLabel), solim.modifier.Values.wrap(false), solim.modifier.Values.left());
+                                .props(style(Styles.monoLabel), textWrap(false), left());
                     });
                 });
             });

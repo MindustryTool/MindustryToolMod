@@ -1,19 +1,6 @@
 package mindustrytool.features.quickaccess;
 
 import static solim.UI.*;
-import static solim.modifier.Values.border;
-import static solim.modifier.Values.draggable;
-import static solim.modifier.Values.gap;
-import static solim.modifier.Values.growY;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.position;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.rounded;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.func.Prov;
@@ -86,7 +73,7 @@ public class QuickAccessHudView extends Component {
                     .elseDo(() -> buildExpandedBar(buttonSize, iconSize, items));
         });
 
-        hud.props(solim.modifier.Values.opacity(feature.opacityConfig.signal()));
+        hud.props(opacity(feature.opacityConfig.signal()));
         hud.props(position(feature.xSignal, feature.ySignal));
 
         effect(() -> {

@@ -1,31 +1,6 @@
 package mindustrytool.features.chat;
 
 import static solim.UI.*;
-import static solim.modifier.Values.background;
-import static solim.modifier.Values.border;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.ellipsis;
-import static solim.modifier.Values.fallback;
-import static solim.modifier.Values.fontScale;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.left;
-import static solim.modifier.Values.marginBottom;
-import static solim.modifier.Values.marginLeft;
-import static solim.modifier.Values.marginRight;
-import static solim.modifier.Values.marginTop;
-import static solim.modifier.Values.onClick;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.placeholder;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.stopClickPropagation;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.tooltip;
-import static solim.modifier.Values.width;
-import static solim.modifier.Values.wrap;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -201,9 +176,9 @@ public class ChatMessageListView extends Component {
                             .error(chanErr -> column().props(grow(), padding(unit(4)), center(), gap(unit(2))).children(() -> {
                                 icon(Icon.warning).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(Color.scarlet));
                                 text(Core.bundle.get("feature.chat.ui.channels-failed", "Channels failed to load."))
-                                        .props(color(Color.scarlet), fontScale(1.0f), wrap(true), center());
+                                        .props(color(Color.scarlet), fontScale(1.0f), textWrap(true), center());
                                 text(chanErr != null ? chanErr.getMessage() : "")
-                                        .props(color(Color.gray), fontScale(0.85f), wrap(true), center());
+                                        .props(color(Color.gray), fontScale(0.85f), textWrap(true), center());
                                 button(Core.bundle.get("feature.chat.ui.retry-channels", "Retry Channels"), () -> {
                                     if (service != null) {
                                         service.refreshChannels();
@@ -298,8 +273,8 @@ public class ChatMessageListView extends Component {
                                                                     text(Core.bundle.get(
                                                                             "feature.chat.ui.error.messages",
                                                                             "Failed to load messages."))
-                                                                            .props(color(Color.scarlet), fontScale(1.0f), wrap(true), center());
-                                                                    text(err).props(color(Color.gray), fontScale(0.85f), wrap(true), center());
+                                                                            .props(color(Color.scarlet), fontScale(1.0f), textWrap(true), center());
+                                                                    text(err).props(color(Color.gray), fontScale(0.85f), textWrap(true), center());
                                                                     button(Core.bundle.get("feature.chat.ui.retry",
                                                                             "Retry"), () -> {
                                                                                 String activeId = store.channels()
@@ -535,7 +510,7 @@ public class ChatMessageListView extends Component {
                 ImageMessage img = (ImageMessage) parsed;
                 final String imageUrl = img.getImageUrl();
                 column().props(growX(), top(), left(), gap(unit(1))).children(() -> {
-                    text(imageUrl).props(color(Color.lightGray), fontScale(0.85f), wrap(true), left(), growX());
+                    text(imageUrl).props(color(Color.lightGray), fontScale(0.85f), textWrap(true), left(), growX());
                     networkImage(imageUrl)
                             .props(onClick(() -> new ChatImagePreviewDialog(imageUrl).show()), stopClickPropagation(true),
                                     placeholder(Icon.image), fallback(Icon.cancel), size(unit(40), unit(30)), top(), left());
@@ -579,13 +554,13 @@ public class ChatMessageListView extends Component {
             if (parsed instanceof SchematicMessage) {
                 SchematicMessage schemMsg = (SchematicMessage) parsed;
                 if (schemMsg.getPrefixText() != null && !schemMsg.getPrefixText().isEmpty()) {
-                    text(schemMsg.getPrefixText()).props(color(bodyColor), fontScale(1.0f), wrap(true), left(), growX());
+                    text(schemMsg.getPrefixText()).props(color(bodyColor), fontScale(1.0f), textWrap(true), left(), growX());
                 }
 
                 buildSchematicCard(schemMsg.getSchematic());
 
                 if (schemMsg.getSuffixText() != null && !schemMsg.getSuffixText().isEmpty()) {
-                    text(schemMsg.getSuffixText()).props(color(bodyColor), fontScale(1.0f), wrap(true), left(), growX());
+                    text(schemMsg.getSuffixText()).props(color(bodyColor), fontScale(1.0f), textWrap(true), left(), growX());
                 }
                 return;
             }
@@ -628,7 +603,7 @@ public class ChatMessageListView extends Component {
 
             String fallback = parsed.getContent() != null ? parsed.getContent() : "";
             text(fallback)
-                    .props(color(bodyColor), fontScale(1.0f), left(), wrap(true), growX());
+                    .props(color(bodyColor), fontScale(1.0f), left(), textWrap(true), growX());
         }
 
         private void buildTranslationToggleChip(String messageId, boolean showingOriginal) {
@@ -870,7 +845,7 @@ public class ChatMessageListView extends Component {
 
         private Component buildMessageText(String messageText, Readable<Color> bodyColor) {
             if (messageText == null || messageText.isEmpty()) {
-                return text("").props(color(bodyColor), fontScale(1.0f), left(), wrap(true), growX());
+                return text("").props(color(bodyColor), fontScale(1.0f), left(), textWrap(true), growX());
             }
 
             Matcher m = URL_PATTERN.matcher(messageText);
@@ -889,13 +864,13 @@ public class ChatMessageListView extends Component {
             }
 
             if (urls.isEmpty()) {
-                return text(messageText).props(color(bodyColor), fontScale(1.0f), left(), wrap(true), growX());
+                return text(messageText).props(color(bodyColor), fontScale(1.0f), left(), textWrap(true), growX());
             }
 
             if (urls.size() == 1 && messageText.trim().equals(urls.get(0))) {
                 final String onlyUrl = urls.get(0);
                 Text linkText = text(onlyUrl)
-                        .props(color(WebStyles.Colors.PRIMARY), fontScale(1.0f), left(), wrap(true), growX());
+                        .props(color(WebStyles.Colors.PRIMARY), fontScale(1.0f), left(), textWrap(true), growX());
                 linkText.label().addListener(new ClickListener() {
                     @Override
                     public void clicked(InputEvent event, float x, float y) {
@@ -912,7 +887,7 @@ public class ChatMessageListView extends Component {
             final String highlighted = marked.toString();
             final List<String> linkUrls = new ArrayList<>(urls);
             return column().props(growX(), top(), left()).children(() -> {
-                text(highlighted).props(color(bodyColor), fontScale(1.0f), left(), wrap(true), growX());
+                text(highlighted).props(color(bodyColor), fontScale(1.0f), left(), textWrap(true), growX());
 
                 row().props(growX(), top(), left(), gap(unit(1))).children(() -> {
                     for (String linkUrl : linkUrls) {
@@ -938,7 +913,7 @@ public class ChatMessageListView extends Component {
             dialog.children(() -> {
                 column().props(growX(), padding(unit(3)), gap(unit(2))).children(() -> {
                     text(Core.bundle.format("feature.chat.link.dialog.prompt", url))
-                            .props(wrap(true), growX(), left());
+                            .props(textWrap(true), growX(), left());
                     row().props(gap(unit(1))).children(() -> {
                         button(Core.bundle.get("feature.chat.link.dialog.cancel"), dialog::hide)
                                 .props(style(Styles.defaultt), height(unit(7)), prefHeight(unit(7)));

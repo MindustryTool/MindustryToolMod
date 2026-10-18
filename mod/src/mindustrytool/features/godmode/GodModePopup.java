@@ -1,9 +1,6 @@
 package mindustrytool.features.godmode;
 
 import static solim.UI.*;
-import static solim.modifier.Values.border;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.rounded;
 
 import arc.scene.Element;
 import arc.util.Nullable;

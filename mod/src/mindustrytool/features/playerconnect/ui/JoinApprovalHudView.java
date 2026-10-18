@@ -1,14 +1,6 @@
 package mindustrytool.features.playerconnect.ui;
 
 import static solim.UI.*;
-import static solim.modifier.Values.background;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.margin;
-import static solim.modifier.Values.position;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.visible;
 
 import arc.Core;
 import arc.graphics.Color;

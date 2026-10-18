@@ -1,16 +1,6 @@
 package mindustrytool.features.playerconnect.ui;
 
 import static solim.UI.*;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.margin;
-import static solim.modifier.Values.maxHeight;
-import static solim.modifier.Values.minWidth;
-import static solim.modifier.Values.paddingX;
-import static solim.modifier.Values.paddingY;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -22,7 +12,6 @@ import mindustrytool.components.WebStyles;
 import mindustrytool.features.playerconnect.net.PlayerConnectClient;
 import mindustrytool.features.playerconnect.net.PlayerConnectLink;
 import mindustrytool.models.response.PlayerConnectRoom;
-import solim.modifier.Values;
 import solim.core.Units;
 import solim.core.Component;
 import solim.overlay.SolimDialog;
@@ -67,7 +56,7 @@ public class JoinWarningDialog extends SolimDialog {
         @Override
         protected Element build() {
             return column()
-                    .props(growX(), Values.maxWidth(Units.dvw.map(w -> Math.min(w * 0.9f, 900f))), maxHeight(Units.dvh.map(h -> Math.min(h * 0.85f, 900f))), margin(unit(5)), gap(unit(3.5f)), center())
+                    .props(growX(), solim.UI.maxWidth(Units.dvw.map(w -> Math.min(w * 0.9f, 900f))), maxHeight(Units.dvh.map(h -> Math.min(h * 0.85f, 900f))), margin(unit(5)), gap(unit(3.5f)), center())
                     .children(() -> {
                         if (!missingMods.isEmpty()) {
                             text(Core.bundle.get("feature.player-connect.missing-mods", "Missing mods (may cause crashes):"))

@@ -1,9 +1,6 @@
 package mindustrytool.features.chat;
 
 import static solim.UI.*;
-import static solim.modifier.Values.background;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
 
 import arc.graphics.Color;
 import arc.scene.Element;
@@ -12,7 +9,6 @@ import solim.core.Component;
 import solim.display.NetworkImage;
 import solim.layout.Column;
 import solim.layout.SolimStack;
-import solim.modifier.Values;
 import solim.reactive.Readable;
 
 public class ChatAvatar extends Component {
@@ -63,24 +59,24 @@ public class ChatAvatar extends Component {
         int radius = cornerRadius;
 
         SolimStack stack = new SolimStack()
-                .props(Values.size(size, size), prefWidth(size), prefHeight(size))
+                .props(size(size, size), prefWidth(size), prefHeight(size))
                 .layer(() -> {
                     Column fallback = column()
-                            .props(Values.size(size, size), prefWidth(size), prefHeight(size),
-                                    radius > 0 ? Values.rounded(radius, background) : background(background), center());
+                            .props(size(size, size), prefWidth(size), prefHeight(size),
+                                    radius > 0 ? solim.UI.rounded(radius, background) : background(background), center());
 
                     return fallback
                             .children(() -> {
                                 text(initial)
-                                        .props(Values.color(Color.white), Values.fontScale(size >= 32f ? 1.2f : 0.9f));
+                                        .props(color(Color.white), fontScale(size >= 32f ? 1.2f : 0.9f));
                             });
                 })
                 .layer(() -> {
                     NetworkImage img = networkImage(avatarUrl);
                     if (radius > 0) {
-                        img.props(Values.size(size, size), Values.top(), Values.left(), Values.imageRounded(radius));
+                        img.props(size(size, size), top(), left(), imageRounded(radius));
                     } else {
-                        img.props(Values.size(size, size), Values.top(), Values.left());
+                        img.props(size(size, size), top(), left());
                     }
                     return img;
                 });

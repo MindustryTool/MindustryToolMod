@@ -1,10 +1,6 @@
 package mindustrytool.services.auth;
 
 import static solim.UI.*;
-import static solim.modifier.Values.fontScale;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.wrap;
 
 import arc.Core;
 import mindustry.Vars;
@@ -32,7 +28,7 @@ public class AuthLoginDialog extends SolimDialog {
 							Core.app.setClipboardText(loginUrlSignal.peek());
 							Vars.ui.showInfoFade(Core.bundle.get("auth.login.copied"));
 						}).children(() -> {
-							text(loginUrlSignal).props(fontScale(0.7f), wrap());
+							text(loginUrlSignal).props(fontScale(0.7f), textWrap());
 						}))
 						.elseDo(() -> new Loader(unit(8)));
 			});

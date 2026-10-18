@@ -1,11 +1,6 @@
 package mindustrytool.features.chat;
 
 import static solim.UI.*;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.util.Nullable;
@@ -28,7 +23,7 @@ public final class ChatActionPopup {
 
     public static void install(ChatStore store) {
         Popup<ParsedChatMessage> p = popup();
-        menu = p.props(solim.modifier.Values.rounded(2));
+        menu = p.props(rounded(2));
         menu.items(request -> menuRows(store, request));
     }
 

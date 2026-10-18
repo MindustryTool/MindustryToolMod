@@ -1,18 +1,6 @@
 package mindustrytool.features.music;
 
 import static solim.UI.*;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.maxWidth;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.tooltip;
-import static solim.modifier.Values.update;
 
 import arc.Core;
 import arc.files.Fi;
@@ -41,11 +29,11 @@ public class MusicSettingsView extends Component {
                 : Core.bundle.format("feature.music.now-playing", music.file.nameWithoutExtension()));
 
         return column().props(grow(), maxWidth(750f), top(), center()).children(() -> {
-            scroll().props(grow(), solim.modifier.Values.scrollX(false)).children(() -> {
+            scroll().props(grow(), scrollX(false)).children(() -> {
                 column().props(growX(), padding(unit(2)), top(), center(), gap(unit(3))).children(() -> {
                     headerCard();
 
-                    text(nowPlaying).props(color(WebStyles.Colors.GHOST_FG), growX(), solim.modifier.Values.left());
+                    text(nowPlaying).props(color(WebStyles.Colors.GHOST_FG), growX(), left());
 
                     for (MusicType type : MusicType.values()) {
                         section(type);
@@ -128,7 +116,7 @@ public class MusicSettingsView extends Component {
                     .children(() -> {
                         column().props(growX(), gap(unit(2))).children(() -> {
                             text(state.name)
-                                    .props(color(labelColor), growX(), solim.modifier.Values.left(), solim.modifier.Values.ellipsis(true));
+                                    .props(color(labelColor), growX(), left(), ellipsis(true));
 
                             when(state.isPlaying())
                                     .thenDo(() -> stack().props(growX())

@@ -1,5 +1,8 @@
-## ADDED Requirements
+# solim-ui-static-imports Specification
 
+## Purpose
+TBD - created by archiving change enforce-solim-ui-static-imports. Update Purpose after archive.
+## Requirements
 ### Requirement: Solim UI re-exports modifier factories
 The `solim.UI` class SHALL re-export all modifier factory methods provided by `solim.modifier.Values` so that callers can access all modifiers via `import static solim.UI.*`.
 
@@ -21,3 +24,4 @@ The build verification system SHALL enforce that no file in the `:mod` subprojec
 #### Scenario: Pass on compliant imports
 - **WHEN** all Java files in `mod/src` and `mod/src/test/java` use `import static solim.UI.*` and contain no direct references to `Values`
 - **THEN** running `./gradlew checkSolimModifierImports` SHALL succeed without errors.
+

@@ -1,16 +1,6 @@
 package mindustrytool.features.browser.schematic;
 
 import static solim.UI.*;
-import static solim.modifier.Values.background;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.onClick;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -87,18 +77,18 @@ public class SchematicCard extends Component {
                                         .layer(() -> networkImage()
                                                 .props(
                                                         grow(),
-                                                        solim.modifier.Values.imageRounded(8),
-                                                        solim.modifier.Values.scaling(Scaling.fit),
-                                                        solim.modifier.Values.url(imageUrl),
-                                                        solim.modifier.Values.placeholder(Icon.image),
-                                                        solim.modifier.Values.fallback(Icon.image)
+                                                        imageRounded(8),
+                                                        scaling(Scaling.fit),
+                                                        url(imageUrl),
+                                                        placeholder(Icon.image),
+                                                        fallback(Icon.image)
                                                 ))
                                         .layer(() -> column().props(grow()).children(() -> {
                                             spacer();
                                             row().props(growX(), background(Styles.black8), padding(unit(1.5f), unit(2f), unit(1.5f), unit(2f)), center())
                                                     .children(() -> {
                                                         text(title)
-                                                                .props(style(Styles.defaultLabel), color(Color.white), solim.modifier.Values.ellipsis(true), solim.modifier.Values.center(), growX());
+                                                                .props(style(Styles.defaultLabel), color(Color.white), ellipsis(true), center(), growX());
                                                     });
                                         }));
                             });
@@ -135,8 +125,8 @@ public class SchematicCard extends Component {
         button(action)
                 .props(style(WebStyles.actionCardText()), growX(), prefHeight(unit(9)), gap(unit(1)), tooltip(tooltip))
                 .children(() -> {
-                    icon(iconDrawable).props(color(Color.white), prefWidth(unit(4.5f)), prefHeight(unit(4.5f)), solim.modifier.Values.marginRight(unit(1)));
-                    text(count).props(style(Styles.defaultLabel), color(textColor), solim.modifier.Values.fontScale(0.85f));
+                    icon(iconDrawable).props(color(Color.white), prefWidth(unit(4.5f)), prefHeight(unit(4.5f)), marginRight(unit(1)));
+                    text(count).props(style(Styles.defaultLabel), color(textColor), fontScale(0.85f));
                 });
     }
 }

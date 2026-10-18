@@ -1,16 +1,6 @@
 package mindustrytool.features.schematicgrid;
 
 import static solim.UI.*;
-import static solim.modifier.Values.draggable;
-import static solim.modifier.Values.opacity;
-import static solim.modifier.Values.position;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.checked;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -294,8 +284,8 @@ public class QuickSchematicGridHudView extends Component {
         Readable<Float> buttonSize = feature.buttonSizeConfig.signal();
         return button()
                 .props(
-                        solim.modifier.Values.rounded(unit(2), WebStyles.Colors.DARK_90),
-                        solim.modifier.Values.border(1f, WebStyles.Colors.BORDER),
+                        rounded(unit(2), WebStyles.Colors.DARK_90),
+                        border(1f, WebStyles.Colors.BORDER),
                         size(buttonSize),
                         prefWidth(buttonSize),
                         prefHeight(buttonSize),
@@ -350,15 +340,15 @@ public class QuickSchematicGridHudView extends Component {
                     .props(style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), opacity(buttonOpacity), tooltip(tooltip))
                     .children(() -> text(glyph != null ? glyph : "")
                             .props(
-                                    solim.modifier.Values.fontScale(buttonSize.map(s -> (s != null ? s : 48f) / 32f)),
-                                    solim.modifier.Values.center()
+                                    fontScale(buttonSize.map(s -> (s != null ? s : 48f) / 32f)),
+                                    center()
                             ));
         }
 
         return button(activate)
                 .props(
-                        solim.modifier.Values.rounded(unit(2), WebStyles.Colors.SECONDARY_BG),
-                        solim.modifier.Values.border(1f, WebStyles.Colors.BORDER),
+                        rounded(unit(2), WebStyles.Colors.SECONDARY_BG),
+                        border(1f, WebStyles.Colors.BORDER),
                         size(buttonSize),
                         prefWidth(buttonSize),
                         prefHeight(buttonSize),

@@ -1,10 +1,6 @@
 package mindustrytool.features.browser.common;
 
 import static solim.UI.*;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.size;
 
 import arc.scene.Element;
 import mindustry.gen.Icon;

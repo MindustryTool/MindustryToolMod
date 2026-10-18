@@ -1,19 +1,6 @@
 package mindustrytool.features.schematicgrid;
 
 import static solim.UI.*;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.minHeight;
-import static solim.modifier.Values.onClick;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.checked;
-import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -28,7 +15,6 @@ import mindustry.game.Schematic;
 import mindustry.gen.Icon;
 import mindustrytool.components.WebStyles;
 import solim.core.Units;
-import solim.modifier.Values;
 import solim.core.Component;
 import solim.layout.Scroll;
 import solim.overlay.SolimDialog;
@@ -91,12 +77,12 @@ public class SchematicPickerDialog extends SolimDialog {
             Effect.of(selectedTag, tag -> resetBatch());
 
             column().props(grow(), padding(unit(3)), center(), gap(unit(2.5f))).children(() -> {
-                row().props(growX(), padding(unit(1.5f)), Values.rounded(unit(2), WebStyles.Colors.SECONDARY_BG), Values.border(1.5f, WebStyles.Colors.BORDER_INPUT), gap(unit(1.5f)), center())
+                row().props(growX(), padding(unit(1.5f)), rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1.5f, WebStyles.Colors.BORDER_INPUT), gap(unit(1.5f)), center())
                         .children(() -> {
                             icon(Icon.zoom).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f)), color(WebStyles.Colors.GHOST_FG));
                             textField(searchQuery)
                                     .props(style(WebStyles.clearInput()), growX(), height(unit(8)), prefHeight(unit(8)),
-                                            Values.placeholder(Core.bundle.get("feature.quick-schematic-grid.picker.search")));
+                                            placeholder(Core.bundle.get("feature.quick-schematic-grid.picker.search")));
                         });
 
                 scroll().props(minHeight(unit(16)), growX()).children(() -> {
@@ -113,7 +99,7 @@ public class SchematicPickerDialog extends SolimDialog {
                     reactiveGrid(displayed).columns(columnCount).key(SchematicPickerDialog::keyOf)
                             .empty(() -> {
                                 text(Core.bundle.get("feature.quick-schematic-grid.picker.empty"))
-                                        .props(color(Color.gray), solim.modifier.Values.margin(unit(4)));
+                                        .props(color(Color.gray), margin(unit(4)));
                             })
                             .props(gap(unit(3)))
                             .items(schematic -> new SchematicPickerCard(schematic, () -> {
@@ -301,15 +287,15 @@ public class SchematicPickerDialog extends SolimDialog {
                                                 icon(Icon.image).props(size(unit(6f)), prefWidth(unit(6f)), prefHeight(unit(6f)), color(Color.lightGray));
                                                 text(Core.bundle.get(
                                                         "feature.quick-schematic-grid.picker.preview-generating"))
-                                                        .props(color(Color.lightGray), solim.modifier.Values.fontScale(0.8f), solim.modifier.Values.center());
+                                                        .props(color(Color.lightGray), fontScale(0.8f), center());
                                             });
                                         }));
 
                         text(title)
-                                .props(color(Color.white), growX(), solim.modifier.Values.left(), solim.modifier.Values.ellipsis(true));
+                                .props(color(Color.white), growX(), left(), ellipsis(true));
 
                         text(dimensions)
-                                .props(color(Color.lightGray), growX(), solim.modifier.Values.left(), solim.modifier.Values.fontScale(0.85f));
+                                .props(color(Color.lightGray), growX(), left(), fontScale(0.85f));
                     }).element();
         }
     }

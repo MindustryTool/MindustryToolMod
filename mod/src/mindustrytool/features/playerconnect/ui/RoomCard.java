@@ -1,22 +1,6 @@
 package mindustrytool.features.playerconnect.ui;
 
 import static solim.UI.*;
-import static solim.modifier.Values.background;
-import static solim.modifier.Values.border;
-import static solim.modifier.Values.ellipsis;
-import static solim.modifier.Values.fontScale;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.left;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.right;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.enabled;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -151,10 +135,10 @@ public class RoomCard extends Component {
                         }
 
                         if (!missingMods.isEmpty()) {
-                            text("[scarlet]Missing mods: " + String.join(", ", missingMods)).props(solim.modifier.Values.wrap(true), growX(), left());
+                            text("[scarlet]Missing mods: " + String.join(", ", missingMods)).props(textWrap(true), growX(), left());
                         }
                         if (!unneededMods.isEmpty()) {
-                            text("[orange]Unneeded mods: " + String.join(", ", unneededMods)).props(solim.modifier.Values.wrap(true), growX(), left());
+                            text("[orange]Unneeded mods: " + String.join(", ", unneededMods)).props(textWrap(true), growX(), left());
                         }
 
                         if (!protocolMatch) {

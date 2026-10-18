@@ -1,11 +1,6 @@
 package mindustrytool.components;
 
 import static solim.UI.*;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.left;
-import static solim.modifier.Values.right;
-import static solim.modifier.Values.wrap;
 
 import arc.graphics.Color;
 import arc.util.Nullable;
@@ -34,7 +29,7 @@ public final class SettingSlider {
             });
 
             if (description != null && !description.trim().isEmpty()) {
-                text(description).props(color(WebStyles.Colors.GHOST_FG), left(), wrap(), growX());
+                text(description).props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(), growX());
             }
 
             slider(signal, min, max, step).props(growX());
@@ -67,7 +62,7 @@ public final class SettingSlider {
             });
 
             if (description != null && !description.trim().isEmpty()) {
-                text(description).props(color(WebStyles.Colors.GHOST_FG), left(), wrap(), growX());
+                text(description).props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(), growX());
             }
 
             slider(signal, min, max, step).props(growX());

@@ -1,22 +1,6 @@
 package mindustrytool.features.chat;
 
 import static solim.UI.*;
-import static solim.modifier.Values.border;
-import static solim.modifier.Values.enabled;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.paddingBottom;
-import static solim.modifier.Values.paddingLeft;
-import static solim.modifier.Values.paddingRight;
-import static solim.modifier.Values.paddingTop;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.rounded;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -88,7 +72,7 @@ public class ChatInputView extends Component {
 
                                     row().props(growX(), padding(unit(1)), height(unit(12)), prefHeight(unit(12)), gap(unit(1))).children(() -> {
                                         text(Core.bundle.format("feature.chat.ui.replying", targetName))
-                                                .props(color(Color.lightGray), solim.modifier.Values.fontScale(0.85f), solim.modifier.Values.left());
+                                                .props(color(Color.lightGray), fontScale(0.85f), left());
                                         spacer();
                                         button(() -> store.ui().setReplyTarget(null))
                                                 .props(style(Styles.clearNonei), size(unit(6), unit(6)), prefWidth(unit(6)), prefHeight(unit(6)))
@@ -109,10 +93,10 @@ public class ChatInputView extends Component {
                                                         .props(
                                                                 style(WebStyles.clearInput()),
                                                                 growX(),
-                                                                solim.modifier.Values.placeholder(
+                                                                placeholder(
                                                                         Core.bundle.get("feature.chat.ui.placeholder",
                                                                                 "Message...")),
-                                                                solim.modifier.Values.disabled(isSending)
+                                                                disabled(isSending)
                                                         );
 
                                                 button(() -> new AttachContentDialog(this::handleAttachContent).show())

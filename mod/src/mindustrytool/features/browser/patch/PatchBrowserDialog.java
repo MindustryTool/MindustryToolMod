@@ -1,18 +1,6 @@
 package mindustrytool.features.browser.patch;
 
 import static solim.UI.*;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.fillParent;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growY;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.paddingLeft;
-import static solim.modifier.Values.paddingX;
-import static solim.modifier.Values.paddingY;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.width;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -178,7 +166,7 @@ public class PatchBrowserDialog extends SolimDialog {
                         String msg = cause != null && cause.getMessage() != null ? cause.getMessage()
                                 : (cause != null ? cause.toString() : "");
 
-                        text(msg).props(color(Color.scarlet), solim.modifier.Values.wrap(true), solim.modifier.Values.growX());
+                        text(msg).props(color(Color.scarlet), textWrap(true), growX());
                         button(Core.bundle.get("browser.retry"), () -> state.refresh())
                                 .props(style(WebStyles.outlineText()), height(unit(10)), prefHeight(unit(10)));
                     }))
@@ -195,7 +183,7 @@ public class PatchBrowserDialog extends SolimDialog {
                                 .key(ContentPatchData::getItemId)
                                 .props(gap(BrowserLayout.CARD_GAP))
                                 .empty(() -> text(Core.bundle.get("browser.empty"))
-                                        .props(color(Color.gray), solim.modifier.Values.margin(unit(4))))
+                                        .props(color(Color.gray), margin(unit(4))))
                                 .items(item -> new PatchCard(item, cardSize,
                                         () -> showDetails(item),
                                         () -> PatchActions.copyToClipboard(item.getItemId()),

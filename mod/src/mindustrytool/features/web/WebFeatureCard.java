@@ -1,20 +1,6 @@
 package mindustrytool.features.web;
 
 import static solim.UI.*;
-import static solim.modifier.Values.backgroundColor;
-import static solim.modifier.Values.border;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.onClick;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.rounded;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -41,7 +27,7 @@ public class WebFeatureCard extends Component {
                             row().props(center(), gap(unit(2))).children(() -> {
                                 icon(webFeature.getIcon()).props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7)));
                                 text(webFeature.getName())
-                                        .props(style(Styles.defaultLabel), color(Color.white), solim.modifier.Values.ellipsis(true), solim.modifier.Values.left());
+                                        .props(style(Styles.defaultLabel), color(Color.white), ellipsis(true), left());
                             });
 
                             spacer();
@@ -53,9 +39,9 @@ public class WebFeatureCard extends Component {
                         text(webFeature.getDescription())
                                 .props(
                                         color(Color.lightGray),
-                                        solim.modifier.Values.fontScale(0.9f),
-                                        solim.modifier.Values.wrap(true),
-                                        solim.modifier.Values.left()
+                                        fontScale(0.9f),
+                                        textWrap(true),
+                                        left()
                                 );
                     });
                 }).element();

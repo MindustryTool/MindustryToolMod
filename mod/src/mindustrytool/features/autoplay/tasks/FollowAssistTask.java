@@ -1,14 +1,6 @@
 package mindustrytool.features.autoplay.tasks;
 
 import static solim.UI.*;
-import static solim.modifier.Values.checked;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.left;
-import static solim.modifier.Values.paddingX;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.graphics.Color;

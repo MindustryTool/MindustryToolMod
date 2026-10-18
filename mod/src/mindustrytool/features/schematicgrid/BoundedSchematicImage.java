@@ -1,7 +1,6 @@
 package mindustrytool.features.schematicgrid;
 
 import static solim.UI.*;
-import static solim.modifier.Values.align;
 
 import arc.scene.Element;
 import arc.scene.ui.layout.Scl;

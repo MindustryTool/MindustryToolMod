@@ -16,10 +16,10 @@ public class ChatImagePreviewDialog extends SolimDialog {
         children(() -> {
             networkImage(imageUrl)
                     .props(
-                            solim.modifier.Values.placeholder(Icon.image),
-                            solim.modifier.Values.fallback(Icon.cancel),
-                            solim.modifier.Values.scaling(Scaling.fit),
-                            solim.modifier.Values.size(dvw(95f), dvh(80f))
+                            placeholder(Icon.image),
+                            fallback(Icon.cancel),
+                            scaling(Scaling.fit),
+                            size(dvw(95f), dvh(80f))
                     );
         });
     }

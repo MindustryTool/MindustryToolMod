@@ -1,4 +1,5 @@
 package mindustrytool.features.maprules;
+import static solim.UI.*;
 
 import static solim.UI.badge;
 import static solim.UI.button;
@@ -18,25 +19,6 @@ import static solim.UI.text;
 import static solim.UI.textField;
 import static solim.UI.unit;
 import static solim.UI.wrap;
-import static solim.modifier.Values.checked;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.enabled;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.border;
-import static solim.modifier.Values.center;
-import static solim.modifier.Values.gap;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.left;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.minHeight;
-import static solim.modifier.Values.minWidth;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.rounded;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.func.Cons;
@@ -256,7 +238,7 @@ public class MapRulesView extends Component {
                     icon(Icon.zoom).props(size(unit(4.5f)), prefWidth(unit(4.5f)), prefHeight(unit(4.5f)), color(WebStyles.Colors.GHOST_FG));
                     textField(search)
                             .props(style(WebStyles.clearInput()))
-                            .props(growX(), height(unit(8)), prefHeight(unit(8)), solim.modifier.Values.placeholder(t("feature.map-rules.search.placeholder")));
+                            .props(growX(), height(unit(8)), prefHeight(unit(8)), placeholder(t("feature.map-rules.search.placeholder")));
                 });
     }
 
@@ -328,16 +310,16 @@ public class MapRulesView extends Component {
         card().props(growX(), padding(unit(3))).children(() -> {
             column().props(growX(), gap(unit(2))).children(() -> {
                 text(t("feature.map-rules.save_map")).props(color(Color.white), left());
-                text(t("feature.map-rules.save_section.desc")).props(color(Color.lightGray), left(), solim.modifier.Values.wrap(true));
+                text(t("feature.map-rules.save_section.desc")).props(color(Color.lightGray), left(), textWrap(true));
                 button(t("feature.map-rules.save_map"), this::onSaveClicked)
                         .props(style(WebStyles.primaryText()), growX(), height(unit(11)), prefHeight(unit(11)));
                 String folder = customMapsFolder();
                 if (folder != null) {
-                    text(f("feature.map-rules.save_folder", folder)).props(color(Color.gray), left(), solim.modifier.Values.wrap(true));
+                    text(f("feature.map-rules.save_folder", folder)).props(color(Color.gray), left(), textWrap(true));
                 }
                 dynamic(lastSavedPath, path -> {
                     if (path != null && !path.isEmpty()) {
-                        text(f("feature.map-rules.save_location", path)).props(color(Color.lightGray), left(), solim.modifier.Values.wrap(true));
+                        text(f("feature.map-rules.save_location", path)).props(color(Color.lightGray), left(), textWrap(true));
                     }
                 });
             });
@@ -396,7 +378,7 @@ public class MapRulesView extends Component {
             column().props(growX(), gap(unit(2))).children(() -> {
                 content.run();
                 if (showDescriptions()) {
-                    text(t(descKey)).props(color(Color.lightGray), left(), solim.modifier.Values.wrap(true));
+                    text(t(descKey)).props(color(Color.lightGray), left(), textWrap(true));
                 }
             });
         });

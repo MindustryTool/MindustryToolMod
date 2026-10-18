@@ -1,13 +1,6 @@
 package mindustrytool.features.callout.ui;
 
 import static solim.UI.*;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -54,7 +47,7 @@ public class CalloutSettingsView extends Component {
                     text(Core.bundle.get("feature.callout.settings.team-chat"))
                             .props(color(Color.white), left());
                     text(Core.bundle.get("feature.callout.settings.team-chat.description"))
-                            .props(color(WebStyles.Colors.GHOST_FG), left(), solim.modifier.Values.wrap(true), growX());
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(true), growX());
                 });
                 spacer();
                 checkbox("", feature.teamChatConfig.signal());
@@ -67,7 +60,7 @@ public class CalloutSettingsView extends Component {
                     text(Core.bundle.get("feature.callout.settings.close-on-send"))
                             .props(color(Color.white), left());
                     text(Core.bundle.get("feature.callout.settings.close-on-send.description"))
-                            .props(color(WebStyles.Colors.GHOST_FG), left(), solim.modifier.Values.wrap(true), growX());
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(true), growX());
                 });
                 spacer();
                 checkbox("", feature.closeOnSendConfig.signal());

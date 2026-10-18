@@ -1,16 +1,6 @@
 package mindustrytool.features.schematicgrid;
 
 import static solim.UI.*;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.onClick;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.color;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -18,7 +8,6 @@ import mindustry.game.Schematic;
 import mindustry.gen.Icon;
 import mindustry.ui.dialogs.SchematicsDialog.SchematicImage;
 import mindustrytool.components.WebStyles;
-import solim.modifier.Values;
 import solim.overlay.SolimDialog;
 import solim.reactive.Effect;
 import solim.reactive.Readable;
@@ -60,7 +49,7 @@ public class QuickSchematicGridSlotDialog extends SolimDialog {
 
             column().props(grow(), padding(unit(3)), center(), gap(unit(2.5f))).children(() -> {
                 text(Core.bundle.get("feature.quick-schematic-grid.edit.schematic"))
-                        .props(color(WebStyles.Colors.GHOST_FG), growX(), solim.modifier.Values.left());
+                        .props(color(WebStyles.Colors.GHOST_FG), growX(), left());
 
                 card(WebStyles.previewCardBackground())
                         .props(growX(), height(unit(42f)), prefHeight(unit(42f)), onClick(this::repickSchematic))
@@ -79,27 +68,27 @@ public class QuickSchematicGridSlotDialog extends SolimDialog {
                         });
 
                 text(Core.bundle.get("feature.quick-schematic-grid.edit.label"))
-                        .props(color(WebStyles.Colors.GHOST_FG), growX(), solim.modifier.Values.left());
+                        .props(color(WebStyles.Colors.GHOST_FG), growX(), left());
 
                 row().props(growX(), gap(unit(1.5f)),
-                        padding(unit(1.5f)), Values.rounded(unit(2), WebStyles.Colors.SECONDARY_BG), Values.border(1.5f, WebStyles.Colors.BORDER_INPUT),
+                        padding(unit(1.5f)), rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1.5f, WebStyles.Colors.BORDER_INPUT),
                         center())
                         .children(() -> {
                             textField(labelText)
                                     .props(style(WebStyles.clearInput()), growX(), height(unit(8)), prefHeight(unit(8)),
-                                            Values.placeholder(Core.bundle.get("feature.quick-schematic-grid.edit.label.hint")));
+                                            placeholder(Core.bundle.get("feature.quick-schematic-grid.edit.label.hint")));
                         });
 
                 text(Core.bundle.get("feature.quick-schematic-grid.edit.icon"))
-                        .props(color(WebStyles.Colors.GHOST_FG), growX(), solim.modifier.Values.left());
+                        .props(color(WebStyles.Colors.GHOST_FG), growX(), left());
 
                 row().props(growX(), gap(unit(2)), center()).children(() -> {
                     dynamic(iconText, icon -> {
                         if (icon == null || icon.trim().isEmpty()) {
                             text(Core.bundle.get("feature.quick-schematic-grid.edit.icon.none"))
-                                    .props(color(Color.gray), growX(), solim.modifier.Values.left());
+                                    .props(color(Color.gray), growX(), left());
                         } else {
-                            text(icon).props(solim.modifier.Values.fontScale(1.5f), growX(), solim.modifier.Values.left());
+                            text(icon).props(fontScale(1.5f), growX(), left());
                         }
                     }).props(growX());
 

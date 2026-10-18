@@ -1,18 +1,6 @@
 package mindustrytool.features.playerconnect.ui;
 
 import static solim.UI.*;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.margin;
-import static solim.modifier.Values.maxHeight;
-import static solim.modifier.Values.minWidth;
-import static solim.modifier.Values.paddingX;
-import static solim.modifier.Values.paddingY;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.enabled;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -23,7 +11,6 @@ import mindustrytool.features.playerconnect.net.PlayerConnectClient;
 import mindustrytool.features.playerconnect.net.PlayerConnectLink;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import solim.core.Units;
-import solim.modifier.Values;
 import solim.core.Component;
 import solim.overlay.SolimDialog;
 import solim.reactive.Computed;
@@ -91,12 +78,12 @@ public class JoinRoomDialog extends SolimDialog {
                                     .orElse(true));
 
             return column()
-                    .props(growX(), Values.maxWidth(Units.dvw.map(w -> Math.min(w * 0.9f, 1000f))), maxHeight(Units.dvh.map(h -> Math.min(h * 0.85f, 800f))), margin(unit(5)), gap(unit(4)), center())
+                    .props(growX(), solim.UI.maxWidth(Units.dvw.map(w -> Math.min(w * 0.9f, 1000f))), maxHeight(Units.dvh.map(h -> Math.min(h * 0.85f, 800f))), margin(unit(5)), gap(unit(4)), center())
                     .children(() -> {
 
                         column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                             text(Core.bundle.get("feature.player-connect.join-link", "Link:")).props(left());
-                            row().props(growX(), height(unit(11)), prefHeight(unit(11)), Values.border(1.5f, Color.darkGray), paddingX(unit(2)), Values.rounded(unit(2)))
+                            row().props(growX(), height(unit(11)), prefHeight(unit(11)), border(1.5f, Color.darkGray), paddingX(unit(2)), rounded(unit(2)))
                                     .children(() -> {
                                         textField(linkSignal)
                                                 .props(style(WebStyles.clearInput()), grow());
@@ -108,7 +95,7 @@ public class JoinRoomDialog extends SolimDialog {
                                 .thenDo(() -> {
                                     column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                                         text(Core.bundle.get("feature.player-connect.password", "Password:")).props(left());
-                                        row().props(growX(), height(unit(11)), prefHeight(unit(11)), Values.border(1.5f, Color.darkGray), paddingX(unit(2)), Values.rounded(unit(2)))
+                                        row().props(growX(), height(unit(11)), prefHeight(unit(11)), border(1.5f, Color.darkGray), paddingX(unit(2)), rounded(unit(2)))
                                                 .children(() -> {
                                                     textField(passwordSignal)
                                                             .props(style(WebStyles.clearInput()), grow());

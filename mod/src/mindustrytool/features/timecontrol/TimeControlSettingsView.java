@@ -1,13 +1,6 @@
 package mindustrytool.features.timecontrol;
 
 import static solim.UI.*;
-import static solim.modifier.Values.checked;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.paddingX;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -51,7 +44,7 @@ public class TimeControlSettingsView extends Component {
         return SettingCard.section(Icon.settings, Core.bundle.get("feature.time-control.settings.mode"), () -> {
             row().props(growX(), gap(unit(2)), center()).children(() -> {
                 text(Core.bundle.get("feature.time-control.settings.mode"))
-                        .props(color(Color.white), solim.modifier.Values.wrap(true), solim.modifier.Values.left());
+                        .props(color(Color.white), textWrap(true), left());
 
                 spacer();
                 row().props(gap(unit(1.5f))).children(() -> {
@@ -68,13 +61,13 @@ public class TimeControlSettingsView extends Component {
             });
 
             text(Core.bundle.get("feature.time-control.settings.mode.hint"))
-                    .props(color(WebStyles.Colors.GHOST_FG), solim.modifier.Values.left(), solim.modifier.Values.wrap(true));
+                    .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(true));
 
             divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
             row().props(growX(), gap(unit(2)), center()).children(() -> {
                 text(Core.bundle.get("feature.time-control.settings.display-mode"))
-                        .props(color(Color.white), solim.modifier.Values.left());
+                        .props(color(Color.white), left());
 
                 spacer();
                 row().props(gap(unit(1.5f))).children(() -> {
@@ -112,7 +105,7 @@ public class TimeControlSettingsView extends Component {
                     divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
                     text(Core.bundle.get("feature.time-control.settings.safety"))
-                            .props(color(WebStyles.Colors.GHOST_FG), solim.modifier.Values.left(), solim.modifier.Values.wrap(true), growX());
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(true), growX());
                 });
     }
 

@@ -1,25 +1,6 @@
 package mindustrytool.features.prettychat.ui;
 
 import static solim.UI.*;
-import static solim.modifier.Values.background;
-import static solim.modifier.Values.border;
-import static solim.modifier.Values.checked;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.left;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.paddingX;
-import static solim.modifier.Values.placeholder;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.right;
-import static solim.modifier.Values.rounded;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.tooltip;
-import static solim.modifier.Values.visible;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -102,7 +83,7 @@ public class PrettyChatSettingsView extends Component {
 
         return SettingCard.section(Icon.chat, previewLabel, () -> {
             text(previewDesc)
-                    .props(color(WebStyles.Colors.GHOST_FG), left(), solim.modifier.Values.wrap(true), growX());
+                    .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(true), growX());
 
             row().props(growX(), height(unit(10)), prefHeight(unit(10)), border(1.5f, WebStyles.Colors.BORDER), paddingX(unit(2)), rounded(unit(2))).children(() -> {
                         textField(previewSignal)
@@ -112,7 +93,7 @@ public class PrettyChatSettingsView extends Component {
             column().props(growX(), padding(unit(2)), rounded(6, WebStyles.Colors.SECONDARY), gap(unit(1)), left())
                     .children(() -> {
                         row().props(growX(), center()).children(() -> {
-                            text(simSender).props(left(), solim.modifier.Values.wrap(true));
+                            text(simSender).props(left(), textWrap(true));
                             spacer();
                             text(resultComputed.map(r -> r.length() + "/150"))
                                     .props(color(resultComputed.map(r -> r.length() > 150 ? Color.scarlet
@@ -120,11 +101,11 @@ public class PrettyChatSettingsView extends Component {
                         });
 
                         text(resultComputed)
-                                .props(solim.modifier.Values.wrap(true), growX(), left());
+                                .props(textWrap(true), growX(), left());
                     });
 
             text(escapeHint)
-                    .props(color(WebStyles.Colors.GHOST_FG), left(), solim.modifier.Values.wrap(true), growX());
+                    .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(true), growX());
         });
     }
 
@@ -136,7 +117,7 @@ public class PrettyChatSettingsView extends Component {
 
         return SettingCard.section(Icon.tree, pipelineTitle, () -> {
             text(pipelineDesc)
-                    .props(color(WebStyles.Colors.GHOST_FG), left(), solim.modifier.Values.wrap(true), growX());
+                    .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(true), growX());
 
             dynamic(feature.config().enabledIdsSignal, this::buildActivePipelineList).props(growX());
 
@@ -160,7 +141,7 @@ public class PrettyChatSettingsView extends Component {
 
             column().props(growX(), padding(unit(2)), rounded(6, WebStyles.Colors.SECONDARY)).children(() -> {
                 text(emptyMessage)
-                        .props(color(WebStyles.Colors.GHOST_FG), solim.modifier.Values.center(), solim.modifier.Values.wrap(true), growX());
+                        .props(color(WebStyles.Colors.GHOST_FG), center(), textWrap(true), growX());
             });
             return;
         }
@@ -180,7 +161,7 @@ public class PrettyChatSettingsView extends Component {
                                     .props(color(Pal.accent));
 
                             text(p.name())
-                                    .props(color(Color.white), solim.modifier.Values.wrap(true), growX(), left());
+                                    .props(color(Color.white), textWrap(true), growX(), left());
 
                             if (index > 0) {
                                 button(() -> feature.config().move(id, -1))
@@ -244,21 +225,21 @@ public class PrettyChatSettingsView extends Component {
                                     .props(color(Pal.accent), visible(isEnabled), left());
 
                             text(p.name())
-                                    .props(color(isEnabled.map(e -> Boolean.TRUE.equals(e) ? Pal.accent : Color.white)), solim.modifier.Values.wrap(true), left());
+                                    .props(color(isEnabled.map(e -> Boolean.TRUE.equals(e) ? Pal.accent : Color.white)), textWrap(true), left());
 
                             text("[" + getCategoryName(p.category()) + "]")
-                                    .props(color(WebStyles.Colors.GHOST_FG), solim.modifier.Values.wrap(true), left());
+                                    .props(color(WebStyles.Colors.GHOST_FG), textWrap(true), left());
                         });
 
                         text(p.description())
-                                .props(color(Color.lightGray), solim.modifier.Values.wrap(true), growX(), left());
+                                .props(color(Color.lightGray), textWrap(true), growX(), left());
 
                         Readable<String> previewTransformed = previewSignal.map(input -> {
                             String str = input != null ? input : "";
                             return p.transform(str);
                         });
                         text(previewTransformed)
-                                .props(color(Color.white), left(), solim.modifier.Values.wrap(true), growX());
+                                .props(color(Color.white), left(), textWrap(true), growX());
                     });
 
                     row().props(gap(unit(1)), right(), center()).children(() -> {

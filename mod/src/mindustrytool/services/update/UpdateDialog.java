@@ -1,9 +1,6 @@
 package mindustrytool.services.update;
 
 import static solim.UI.*;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.maxHeight;
-import static solim.modifier.Values.padding;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -12,7 +9,6 @@ import arc.util.Nullable;
 import arc.util.Timer;
 import mindustry.Vars;
 import mindustrytool.Config;
-import solim.modifier.Values;
 import solim.overlay.SolimDialog;
 
 public class UpdateDialog extends SolimDialog {
@@ -48,29 +44,29 @@ public class UpdateDialog extends SolimDialog {
                 "[#" + Color.green.toString() + "]" + latestVer);
 
         children(() -> {
-            column().props(growX(), Values.maxWidth(800f), gap(unit(2)), Values.left()).children(() -> {
+            column().props(growX(), solim.UI.maxWidth(800f), gap(unit(2)), left()).children(() -> {
                 text(newVersionText)
-                        .props(Values.wrap());
+                        .props(textWrap());
 
                 button("Discord: " + Config.DISCORD_INVITE_URL, () -> Core.app.openURI(Config.DISCORD_INVITE_URL))
-                        .props(Values.color(Color.royal), Values.left());
+                        .props(color(Color.royal), left());
 
                 divider();
 
-                scroll().props(maxHeight(800f), Values.maxWidth(800f), growX(), solim.modifier.Values.scrollX(false)).children(() -> {
-                    column().props(growX(), gap(unit(2)), Values.left()).children(() -> {
+                scroll().props(maxHeight(800f), solim.UI.maxWidth(800f), growX(), scrollX(false)).children(() -> {
+                    column().props(growX(), gap(unit(2)), left()).children(() -> {
                         if (partitioned != null && partitioned.targetRelease != null) {
                             card().props(growX(), padding(unit(2))).children(() -> {
                                 text(ChangelogFormatter.formatTargetRelease(partitioned.targetRelease))
-                                        .props(Values.wrap(), Values.left());
+                                        .props(textWrap(), left());
                             });
 
                             if (!partitioned.otherReleases.isEmpty()) {
                                 divider();
                                 text("[accent]" + Core.bundle.get("update.changelog.other-releases") + "[white]")
-                                        .props(Values.left());
+                                        .props(left());
                                 text(ChangelogFormatter.formatReleases(partitioned.otherReleases))
-                                        .props(Values.wrap(), Values.left());
+                                        .props(textWrap(), left());
                             }
                         } else {
                             String textToShow = fallbackChangelog != null
@@ -79,7 +75,7 @@ public class UpdateDialog extends SolimDialog {
                                             ? ChangelogFormatter.formatReleases(partitioned.otherReleases)
                                             : "");
                             text(textToShow != null ? textToShow : "")
-                                    .props(Values.wrap(), Values.left());
+                                    .props(textWrap(), left());
                         }
                     });
                 });

@@ -34,7 +34,8 @@ class SolimEncapsulationGuardTest extends ArcTestEnv {
             "cellConfig(",
             "respace(",
             "adopt(",
-            "reparentTo(");
+            "reparentTo(",
+            "solim.modifier.Values");
 
     private static final String MANUAL_OWN = ".*\\bown\\s*\\(.*";
 

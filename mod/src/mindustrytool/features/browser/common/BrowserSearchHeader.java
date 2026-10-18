@@ -1,18 +1,6 @@
 package mindustrytool.features.browser.common;
 
 import static solim.UI.*;
-import static solim.modifier.Values.border;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.paddingLeft;
-import static solim.modifier.Values.paddingX;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.rounded;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -22,7 +10,6 @@ import arc.util.Timer;
 import mindustry.gen.Icon;
 import mindustry.ui.Styles;
 import solim.core.Component;
-import solim.modifier.Values;
 import solim.reactive.Signal;
 
 import mindustrytool.components.WebStyles;
@@ -80,7 +67,7 @@ public class BrowserSearchHeader extends Component {
                             icon(Icon.zoom).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                             textField(inputBuffer)
                                     .props(style(WebStyles.clearInput()), growX(), height(unit(11)), prefHeight(unit(11)),
-                                            Values.placeholder(Core.bundle.get("browser.search.placeholder")))
+                                            placeholder(Core.bundle.get("browser.search.placeholder")))
                                     .onEnter(this::submitNow);
                         });
 

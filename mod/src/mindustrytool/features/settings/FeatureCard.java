@@ -1,25 +1,6 @@
 package mindustrytool.features.settings;
 
 import static solim.UI.*;
-import static solim.modifier.Values.backgroundColor;
-import static solim.modifier.Values.border;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.ellipsis;
-import static solim.modifier.Values.enabled;
-import static solim.modifier.Values.fontScale;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.left;
-import static solim.modifier.Values.onClick;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.rounded;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.tooltip;
-import static solim.modifier.Values.wrap;
 
 import arc.Core;
 import arc.func.Prov;
@@ -125,7 +106,7 @@ public class FeatureCard extends Component {
                                     .children(() -> icon(FileIcon.of("info.png")).props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7))));
                         });
 
-                        text(feature.getDescription()).props(color(Color.lightGray), fontScale(0.9f), wrap(true), left());
+                        text(feature.getDescription()).props(color(Color.lightGray), fontScale(0.9f), textWrap(true), left());
 
                         spacer();
 

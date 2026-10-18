@@ -1,17 +1,6 @@
 package mindustrytool.features.quickaccess;
 
 import static solim.UI.*;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.maxWidth;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.scrollX;
-import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.scene.Element;
@@ -128,7 +117,7 @@ public class QuickAccessSettingsView extends Component {
                                 prefWidth(unit(11)),
                                 prefHeight(unit(11)),
                                 tooltip(Core.bundle.get("feature.quick-access.settings.move-up")),
-                                solim.modifier.Values.disabled(canMoveUp.map(can -> !can))
+                                disabled(canMoveUp.map(can -> !can))
                         )
                         .children(() -> icon(FileIcon.of("chevron-up.png")).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
 
@@ -139,7 +128,7 @@ public class QuickAccessSettingsView extends Component {
                                 prefWidth(unit(11)),
                                 prefHeight(unit(11)),
                                 tooltip(Core.bundle.get("feature.quick-access.settings.move-down")),
-                                solim.modifier.Values.disabled(canMoveDown.map(can -> !can))
+                                disabled(canMoveDown.map(can -> !can))
                         )
                         .children(() -> icon(FileIcon.of("chevron-down.png")).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
             }).element();

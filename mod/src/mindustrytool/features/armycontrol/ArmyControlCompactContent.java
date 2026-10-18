@@ -1,10 +1,6 @@
 package mindustrytool.features.armycontrol;
 
 import static solim.UI.*;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.left;
-import static solim.modifier.Values.padding;
 
 import arc.Core;
 import arc.scene.Element;

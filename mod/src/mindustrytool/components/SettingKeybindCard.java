@@ -1,8 +1,6 @@
 package mindustrytool.components;
 
 import static solim.UI.*;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.growX;
 
 import arc.Core;
 import arc.struct.Seq;

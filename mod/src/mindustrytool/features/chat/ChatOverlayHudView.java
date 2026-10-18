@@ -1,24 +1,6 @@
 package mindustrytool.features.chat;
 
 import static solim.UI.*;
-import static solim.modifier.Values.background;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.draggable;
-import static solim.modifier.Values.fontScale;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.growY;
-import static solim.modifier.Values.left;
-import static solim.modifier.Values.margin;
-import static solim.modifier.Values.opacity;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.position;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.rounded;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.tooltip;
-import static solim.modifier.Values.visible;
 
 import arc.Core;
 import arc.func.Prov;

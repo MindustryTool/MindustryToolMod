@@ -1,8 +1,6 @@
 package mindustrytool.features.maprules;
 
 import static solim.UI.*;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.growX;
 
 import arc.Core;
 import arc.scene.Element;

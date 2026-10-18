@@ -1,15 +1,6 @@
 package mindustrytool.features.browser.map;
 
 import static solim.UI.*;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.fillParent;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.origin;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -98,10 +89,10 @@ public class MapDetailDialog extends SolimDialog {
                         .props(
                                 origin(Align.top | Align.left),
                                 growX(),
-                                solim.modifier.Values.placeholder(Icon.terrain),
-                                solim.modifier.Values.fallback(Icon.terrain),
-                                solim.modifier.Values.imageRounded(8),
-                                solim.modifier.Values.scaling(Scaling.fit)
+                                placeholder(Icon.terrain),
+                                fallback(Icon.terrain),
+                                imageRounded(8),
+                                scaling(Scaling.fit)
                         );
             });
         }
@@ -112,9 +103,9 @@ public class MapDetailDialog extends SolimDialog {
                         .props(
                                 origin(Align.top),
                                 growX(),
-                                solim.modifier.Values.placeholder(Icon.terrain),
-                                solim.modifier.Values.fallback(Icon.terrain),
-                                solim.modifier.Values.scaling(Scaling.fit)
+                                placeholder(Icon.terrain),
+                                fallback(Icon.terrain),
+                                scaling(Scaling.fit)
                         );
             });
         }
@@ -123,17 +114,17 @@ public class MapDetailDialog extends SolimDialog {
             column().props(growX(), gap(unit(2))).children(() -> {
                 card(WebStyles.previewCardBackground()).props(padding(unit(4)), growX(), gap(unit(2))).children(() -> {
                     row().props(growX(), gap(unit(2))).children(() -> {
-                        text(Core.bundle.get("browser.detail.author")).props(color(Color.lightGray), solim.modifier.Values.fontScale(1.2f));
+                        text(Core.bundle.get("browser.detail.author")).props(color(Color.lightGray), fontScale(1.2f));
                         if (authorQuery != null) {
                             query(authorQuery)
                                     .props(growX())
                                     .loading(() -> text(authorId != null ? authorId : "")
-                                            .props(color(Color.white), solim.modifier.Values.fontScale(1.2f)))
+                                            .props(color(Color.white), fontScale(1.2f)))
                                     .error(err -> text(authorId != null ? authorId : "")
-                                            .props(color(Color.white), solim.modifier.Values.fontScale(1.2f)))
-                                    .data(name -> text(name).props(color(Color.white), solim.modifier.Values.fontScale(1.2f)));
+                                            .props(color(Color.white), fontScale(1.2f)))
+                                    .data(name -> text(name).props(color(Color.white), fontScale(1.2f)));
                         } else {
-                            text(authorId != null ? authorId : "").props(color(Color.white), solim.modifier.Values.fontScale(1.2f));
+                            text(authorId != null ? authorId : "").props(color(Color.white), fontScale(1.2f));
                         }
                     });
 
@@ -154,7 +145,7 @@ public class MapDetailDialog extends SolimDialog {
 
                 if (detail.getDescription() != null && !detail.getDescription().isEmpty()) {
                     card(WebStyles.previewCardBackground()).props(padding(unit(4)), growX(), gap(unit(2))).children(() -> {
-                        text(detail.getDescription()).props(color(Color.lightGray), solim.modifier.Values.wrap(true), solim.modifier.Values.left(), growX());
+                        text(detail.getDescription()).props(color(Color.lightGray), textWrap(true), left(), growX());
                     });
                 }
 

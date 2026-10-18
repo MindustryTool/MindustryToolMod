@@ -1,16 +1,6 @@
 package mindustrytool.features.settings;
 
 import static solim.UI.*;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.left;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.tooltip;
-import static solim.modifier.Values.wrap;
 
 import arc.Core;
 import arc.files.Fi;
@@ -68,7 +58,7 @@ public class GeneralSettingsView extends Component {
                     text(Core.bundle.get("setting.beta.participate"))
                             .props(color(Color.white), left());
                     text(Core.bundle.get("setting.beta.participate.tooltip"))
-                            .props(color(WebStyles.Colors.GHOST_FG), left(), wrap(true), growX());
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(true), growX());
                 });
                 spacer();
                 checkbox("", ModSettings.betaParticipate.signal());
@@ -81,7 +71,7 @@ public class GeneralSettingsView extends Component {
                     text(Core.bundle.get("setting.share-presence"))
                             .props(color(Color.white), left());
                     text(Core.bundle.get("setting.share-presence.description"))
-                            .props(color(WebStyles.Colors.GHOST_FG), left(), wrap(true), growX());
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(true), growX());
                 });
                 spacer();
                 checkbox("", ModSettings.sharePresence.signal());

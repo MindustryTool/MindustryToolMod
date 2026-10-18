@@ -1,19 +1,6 @@
 package mindustrytool.features.chat;
 
 import static solim.UI.*;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.ellipsis;
-import static solim.modifier.Values.fontScale;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.left;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.wrap;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -59,9 +46,9 @@ public class ChatUserListView extends Component {
                                                             prefHeight(unit(6)), color(Color.scarlet));
                                                     text(Core.bundle.get("feature.chat.ui.channels-failed",
                                                             "Channels failed to load."))
-                                                            .props(color(Color.scarlet), fontScale(0.95f), wrap(true),
+                                                            .props(color(Color.scarlet), fontScale(0.95f), textWrap(true),
                                                                     center());
-                                                    text(chanErr).props(color(Color.gray), fontScale(0.8f), wrap(true),
+                                                    text(chanErr).props(color(Color.gray), fontScale(0.8f), textWrap(true),
                                                             center());
                                                     button(Core.bundle.get("feature.chat.ui.retry-channels",
                                                             "Retry Channels"), () -> {
@@ -98,9 +85,9 @@ public class ChatUserListView extends Component {
                                                 color(Color.scarlet));
                                         text(Core.bundle.get("feature.chat.ui.error.members",
                                                 "Failed to load members."))
-                                                .props(color(Color.scarlet), fontScale(0.95f), wrap(true), center());
+                                                .props(color(Color.scarlet), fontScale(0.95f), textWrap(true), center());
                                         text(err != null ? err.getMessage() : "")
-                                                .props(color(Color.gray), fontScale(0.8f), wrap(true), center());
+                                                .props(color(Color.gray), fontScale(0.8f), textWrap(true), center());
                                         button(Core.bundle.get("feature.chat.ui.retry", "Retry"),
                                                 () -> store.members().query().refetch())
                                                 .props(style(WebStyles.secondary()), height(unit(9)),

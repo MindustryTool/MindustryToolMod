@@ -1,21 +1,6 @@
 package mindustrytool.features.godmode;
 
 import static solim.UI.*;
-import static solim.modifier.Values.border;
-import static solim.modifier.Values.checked;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.draggable;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.paddingLeft;
-import static solim.modifier.Values.paddingRight;
-import static solim.modifier.Values.position;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.rounded;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.enabled;
-import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -131,7 +116,7 @@ public class GodModeHudView extends Component {
             Readable<Float> iconSize, @Nullable Readable<Boolean> canEdit) {
         return row().props(paddingLeft(unit(1)), paddingRight(unit(1)), gap(unit(1.5f)), center()).children(() -> {
             text(Core.bundle.get("feature.god-mode.hud.no-provider"))
-                    .props(color(WebStyles.Colors.DANGER), solim.modifier.Values.center());
+                    .props(color(WebStyles.Colors.DANGER), center());
 
             button()
                     .onClick(feature::checkProvider)

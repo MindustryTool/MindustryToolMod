@@ -124,50 +124,51 @@ tasks.register("deploy") {
 
 apply(from = "gradle/check-bundles.gradle.kts")
 
+fun stripJavaTrivia(src: String): String {
+    val out = StringBuilder(src.length)
+    var i = 0
+    var state = 0
+    while (i < src.length) {
+        when (state) {
+            0 -> {
+                if (src.startsWith("//", i)) { state = 1; out.append("  "); i += 2 }
+                else if (src.startsWith("/*", i)) { state = 2; out.append("  "); i += 2 }
+                else if (src.startsWith("\"\"\"", i)) { state = 5; out.append("   "); i += 3 }
+                else if (src[i] == '"') { state = 3; out.append(' '); i++ }
+                else if (src[i] == '\'') { state = 4; out.append(' '); i++ }
+                else { out.append(src[i]); i++ }
+            }
+            1 -> {
+                if (src[i] == '\n') { state = 0; out.append('\n') } else { out.append(' ') }
+                i++
+            }
+            2 -> {
+                if (src.startsWith("*/", i)) { state = 0; out.append("  "); i += 2 }
+                else { out.append(if (src[i] == '\n') '\n' else ' '); i++ }
+            }
+            3 -> {
+                if (src[i] == '\\' && i + 1 < src.length) { out.append("  "); i += 2 }
+                else if (src[i] == '"') { state = 0; out.append(' '); i++ }
+                else { out.append(if (src[i] == '\n') '\n' else ' '); i++ }
+            }
+            4 -> {
+                if (src[i] == '\\' && i + 1 < src.length) { out.append("  "); i += 2 }
+                else if (src[i] == '\'') { state = 0; out.append(' '); i++ }
+                else { out.append(if (src[i] == '\n') '\n' else ' '); i++ }
+            }
+            else -> {
+                if (src.startsWith("\"\"\"", i)) { state = 0; out.append("   "); i += 3 }
+                else { out.append(if (src[i] == '\n') '\n' else ' '); i++ }
+            }
+        }
+    }
+    return out.toString()
+}
+
 tasks.register("checkNoFullyQualifiedNames") {
     group = "verification"
     description = "Fails on fully qualified class names in code. Use imports instead."
     doLast {
-        fun stripStringsAndComments(src: String): String {
-            val out = StringBuilder(src.length)
-            var i = 0
-            var state = 0
-            while (i < src.length) {
-                when (state) {
-                    0 -> {
-                        if (src.startsWith("//", i)) { state = 1; out.append("  "); i += 2 }
-                        else if (src.startsWith("/*", i)) { state = 2; out.append("  "); i += 2 }
-                        else if (src.startsWith("\"\"\"", i)) { state = 5; out.append("   "); i += 3 }
-                        else if (src[i] == '"') { state = 3; out.append(' '); i++ }
-                        else if (src[i] == '\'') { state = 4; out.append(' '); i++ }
-                        else { out.append(src[i]); i++ }
-                    }
-                    1 -> {
-                        if (src[i] == '\n') { state = 0; out.append('\n') } else { out.append(' ') }
-                        i++
-                    }
-                    2 -> {
-                        if (src.startsWith("*/", i)) { state = 0; out.append("  "); i += 2 }
-                        else { out.append(if (src[i] == '\n') '\n' else ' '); i++ }
-                    }
-                    3 -> {
-                        if (src[i] == '\\' && i + 1 < src.length) { out.append("  "); i += 2 }
-                        else if (src[i] == '"') { state = 0; out.append(' '); i++ }
-                        else { out.append(if (src[i] == '\n') '\n' else ' '); i++ }
-                    }
-                    4 -> {
-                        if (src[i] == '\\' && i + 1 < src.length) { out.append("  "); i += 2 }
-                        else if (src[i] == '\'') { state = 0; out.append(' '); i++ }
-                        else { out.append(if (src[i] == '\n') '\n' else ' '); i++ }
-                    }
-                    else -> {
-                        if (src.startsWith("\"\"\"", i)) { state = 0; out.append("   "); i += 3 }
-                        else { out.append(if (src[i] == '\n') '\n' else ' '); i++ }
-                    }
-                }
-            }
-            return out.toString()
-        }
         val fqn = Regex("(?<!\\w)(java|javax|jakarta|org|com|net|io|mindustry|mindustrytool|arc|common|plugin|server|gateway)(\\.[a-z0-9_]+)+\\.([A-Z][\\w$]*)")
         val importDecl = Regex("(?m)^\\s*import\\s+(?:static\\s+)?([\\w.]+);")
         val typeDecl = Regex("(?m)^\\s*(?:public\\s+|protected\\s+|private\\s+|static\\s+|final\\s+|abstract\\s+)*(?:class|interface|enum|record|@interface)\\s+([A-Za-z0-9_]+)")
@@ -184,7 +185,7 @@ tasks.register("checkNoFullyQualifiedNames") {
             val rel = file.relativeTo(projectDir).path.replace('\\', '/')
             val original = file.readText()
             val imports = importDecl.findAll(original).map { it.groupValues[1] }.toSet()
-            val code = stripStringsAndComments(original)
+            val code = stripJavaTrivia(original)
             val declaredTypes = typeDecl.findAll(code).map { it.groupValues[1] }.toSet()
             val lines = code.lines()
             for (lineIndex in lines.indices) {
@@ -216,6 +217,42 @@ tasks.register("checkNoFullyQualifiedNames") {
     }
 }
 
+tasks.register("checkSolimModifierImports") {
+    group = "verification"
+    description = "Fails when :mod sources or tests reference solim.modifier.Values directly. Use `import static solim.UI.*` instead."
+    doLast {
+        val valuesImport = Regex("^\\s*import\\s+(?:static\\s+)?solim\\.modifier\\.Values(?:\\.[\\w.]+)?\\s*;")
+        val valuesReference = Regex("\\bValues\\.")
+        val modSrc = projectDir.resolve("mod/src")
+        val failures = mutableListOf<String>()
+        if (modSrc.exists()) {
+            val javaFiles = modSrc.walkTopDown()
+                .filter { it.isFile && it.extension == "java" }
+                .filter { !it.path.replace('\\', '/').contains("/build/") && !it.path.replace('\\', '/').contains("/bin/") }
+                .toList()
+            for (file in javaFiles) {
+                val rel = file.relativeTo(projectDir).path.replace('\\', '/')
+                val code = stripJavaTrivia(file.readText())
+                val lines = code.lines()
+                for (lineIndex in lines.indices) {
+                    val line = lines[lineIndex]
+                    if (valuesImport.containsMatchIn(line)) {
+                        failures.add("$rel:${lineIndex + 1}: import solim.modifier.Values is forbidden, use `import static solim.UI.*`")
+                    } else if (valuesReference.containsMatchIn(line)) {
+                        failures.add("$rel:${lineIndex + 1}: direct solim.modifier.Values reference is forbidden, call the Solim UI modifier directly (import static solim.UI.*)")
+                    }
+                }
+            }
+        }
+        if (failures.isNotEmpty()) {
+            throw GradleException(
+                "Direct solim.modifier.Values usage found (${failures.size}). Use `import static solim.UI.*`:\n" +
+                    failures.joinToString("\n")
+            )
+        }
+    }
+}
+
 tasks.register("check") {
     group = "verification"
     description = "Runs all subproject checks and localization bundle verification."
@@ -225,4 +262,11 @@ tasks.register("check") {
 
 tasks.named("check") {
     dependsOn("checkNoFullyQualifiedNames")
+    dependsOn("checkSolimModifierImports")
+}
+
+project(":mod") {
+    tasks.named("check") {
+        dependsOn(rootProject.tasks.named("checkSolimModifierImports"))
+    }
 }

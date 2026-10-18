@@ -1,20 +1,6 @@
 package mindustrytool.features.callout.ui;
 
 import static solim.UI.*;
-import static solim.modifier.Values.checked;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.paddingX;
-import static solim.modifier.Values.paddingY;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.scrollX;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -29,7 +15,6 @@ import mindustry.graphics.Pal;
 import mindustry.type.Item;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.callout.CalloutFeature;
-import solim.modifier.Values;
 import solim.core.Component;
 import solim.layout.Card;
 import solim.overlay.SolimDialog;
@@ -87,7 +72,7 @@ public class CalloutDialog extends SolimDialog {
 
     private Card sectionCard() {
         return card()
-                .props(growX(), padding(unit(2.5f)), Values.rounded(8, WebStyles.Colors.SECTION_BG), Values.border(1.5f, WebStyles.Colors.SECTION_BORDER), gap(unit(2)));
+                .props(growX(), padding(unit(2.5f)), rounded(8, WebStyles.Colors.SECTION_BG), border(1.5f, WebStyles.Colors.SECTION_BORDER), gap(unit(2)));
     }
 
     private Component destinationCard(Readable<Boolean> isAllChat) {

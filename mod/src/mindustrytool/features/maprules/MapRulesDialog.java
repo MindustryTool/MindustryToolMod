@@ -1,4 +1,5 @@
 package mindustrytool.features.maprules;
+import static solim.UI.*;
 
 import static solim.UI.button;
 import static solim.UI.column;
@@ -8,16 +9,6 @@ import static solim.UI.spacer;
 import static solim.UI.text;
 import static solim.UI.textField;
 import static solim.UI.unit;
-import static solim.modifier.Values.center;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.gap;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -80,7 +71,7 @@ public class MapRulesDialog extends SolimDialog {
             column().props(grow(), center()).children(() -> {
                 column().props(growX(), gap(unit(2))).children(() -> {
                     textField(nameInput)
-                            .props(style(WebStyles.clearInput()), growX(), height(unit(11)), prefHeight(unit(11)), solim.modifier.Values.placeholder(t("feature.map-rules.save_name")));
+                            .props(style(WebStyles.clearInput()), growX(), height(unit(11)), prefHeight(unit(11)), placeholder(t("feature.map-rules.save_name")));
                     row().props(growX(), gap(unit(2))).children(() -> {
                         spacer();
                         button(t("feature.map-rules.cancel"), modal::hide)

@@ -1,15 +1,6 @@
 package mindustrytool.features.godmode;
 
 import static solim.UI.*;
-import static solim.modifier.Values.checked;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.paddingX;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.scene.Element;
@@ -95,7 +86,7 @@ public class GodModeSettingsView extends Component {
                 Core.bundle.get("feature.god-mode.settings.provider", "Execution Provider"), () -> {
                     text(Core.bundle.get("feature.god-mode.settings.provider-desc",
                             "Select how sandbox commands and actions are executed in the game."))
-                            .props(color(WebStyles.Colors.GHOST_FG), solim.modifier.Values.wrap(true), growX(), left());
+                            .props(color(WebStyles.Colors.GHOST_FG), textWrap(true), growX(), left());
 
                     row().props(gap(unit(1.5f))).children(() -> {
                         button(Core.bundle.get("feature.god-mode.settings.provider.auto", "Auto"),

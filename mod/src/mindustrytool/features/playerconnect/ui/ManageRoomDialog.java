@@ -1,16 +1,6 @@
 package mindustrytool.features.playerconnect.ui;
 
 import static solim.UI.*;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.margin;
-import static solim.modifier.Values.maxHeight;
-import static solim.modifier.Values.minWidth;
-import static solim.modifier.Values.paddingX;
-import static solim.modifier.Values.paddingY;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.style;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -20,7 +10,6 @@ import mindustry.graphics.Pal;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
 import mindustrytool.features.playerconnect.net.PlayerConnectLink;
-import solim.modifier.Values;
 import solim.core.Units;
 import solim.core.Component;
 import solim.overlay.SolimDialog;
@@ -60,7 +49,7 @@ public class ManageRoomDialog extends SolimDialog {
             Computed<String> pingText = feature.pingSignal().map(p -> (p != null ? p : 0) + "ms");
 
             return column()
-                    .props(growX(), Values.maxWidth(Units.dvw.map(w -> Math.min(w * 0.9f, 900f))), maxHeight(Units.dvh.map(h -> Math.min(h * 0.85f, 800f))), margin(unit(5)), gap(unit(4)), center())
+                    .props(growX(), solim.UI.maxWidth(Units.dvw.map(w -> Math.min(w * 0.9f, 900f))), maxHeight(Units.dvh.map(h -> Math.min(h * 0.85f, 800f))), margin(unit(5)), gap(unit(4)), center())
                     .children(() -> {
                         text(Core.bundle.get("feature.player-connect.room-active",
                                 "Your room is live on the relay network!"))

@@ -1,20 +1,6 @@
 package mindustrytool.services.auth;
 
 import static solim.UI.*;
-import static solim.modifier.Values.background;
-import static solim.modifier.Values.center;
-import static solim.modifier.Values.fillParent;
-import static solim.modifier.Values.gap;
-import static solim.modifier.Values.margin;
-import static solim.modifier.Values.marginLeft;
-import static solim.modifier.Values.onClick;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.right;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.top;
-import static solim.modifier.Values.touchable;
 
 import arc.Core;
 import arc.Events;

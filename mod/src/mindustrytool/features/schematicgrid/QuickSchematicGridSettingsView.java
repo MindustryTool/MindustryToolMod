@@ -1,20 +1,6 @@
 package mindustrytool.features.schematicgrid;
 
 import static solim.UI.*;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.minWidth;
-import static solim.modifier.Values.paddingX;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.enabled;
-import static solim.modifier.Values.checked;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.scrollX;
-import static solim.modifier.Values.scrollY;
-import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -60,7 +46,7 @@ public class QuickSchematicGridSettingsView extends Component {
 
                     row().props(growX(), gap(unit(2)), center()).children(() -> {
                         text(Core.bundle.get("feature.quick-schematic-grid.settings.display-mode"))
-                                .props(color(Color.white), solim.modifier.Values.left());
+                                .props(color(Color.white), left());
 
                         spacer();
                         row().props(gap(unit(1.5f))).children(() -> {
@@ -124,7 +110,7 @@ public class QuickSchematicGridSettingsView extends Component {
 
                     column().props(growX(), gap(unit(1.5f)), left()).children(() -> {
                         text(Core.bundle.get("feature.quick-schematic-grid.settings.page-position"))
-                                .props(color(Color.white), solim.modifier.Values.left());
+                                .props(color(Color.white), left());
 
                         row().props(gap(unit(1.5f))).children(() -> {
                             button(Core.bundle.get("feature.quick-schematic-grid.settings.page-position.left"),
@@ -159,7 +145,7 @@ public class QuickSchematicGridSettingsView extends Component {
     private Component pagesCard() {
         return SettingCard.section(Icon.list, Core.bundle.get("feature.quick-schematic-grid.settings.pages"), () -> {
             row().props(growX(), gap(unit(2)), center()).children(() -> {
-                text(Core.bundle.get("feature.quick-schematic-grid.settings.pages")).props(color(Color.white), solim.modifier.Values.left());
+                text(Core.bundle.get("feature.quick-schematic-grid.settings.pages")).props(color(Color.white), left());
 
                 spacer();
 
@@ -204,7 +190,7 @@ public class QuickSchematicGridSettingsView extends Component {
 
             row().props(growX(), gap(unit(2)), center()).children(() -> {
                 text(Core.bundle.get("feature.quick-schematic-grid.settings.page-icon"))
-                        .props(color(WebStyles.Colors.GHOST_FG), solim.modifier.Values.left());
+                        .props(color(WebStyles.Colors.GHOST_FG), left());
 
                 Readable<String> activeIcon = Signal.computed(() -> {
                     int p = feature.activePage.get();
@@ -217,7 +203,7 @@ public class QuickSchematicGridSettingsView extends Component {
                         text(Core.bundle.get("feature.quick-schematic-grid.settings.page-icon.none"))
                                 .props(color(Color.gray));
                     } else {
-                        text(icon).props(solim.modifier.Values.fontScale(1.3f));
+                        text(icon).props(fontScale(1.3f));
                     }
                 });
 
@@ -296,8 +282,8 @@ public class QuickSchematicGridSettingsView extends Component {
                     .props(style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(tooltip))
                     .children(() -> text(glyph != null ? glyph : "")
                             .props(
-                                    solim.modifier.Values.fontScale(buttonSize.map(s -> (s != null ? s : 48f) / 32f)),
-                                    solim.modifier.Values.center()
+                                    fontScale(buttonSize.map(s -> (s != null ? s : 48f) / 32f)),
+                                    center()
                             ));
         }
 

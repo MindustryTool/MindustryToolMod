@@ -1,25 +1,6 @@
 package mindustrytool.features.settings;
 
 import static solim.UI.*;
-import static solim.modifier.Values.border;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.grow;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.left;
-import static solim.modifier.Values.margin;
-import static solim.modifier.Values.paddingBottom;
-import static solim.modifier.Values.paddingLeft;
-import static solim.modifier.Values.paddingTop;
-import static solim.modifier.Values.placeholder;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.rounded;
-import static solim.modifier.Values.scrollX;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.tooltip;
-import static solim.modifier.Values.visible;
 
 import arc.Core;
 import arc.graphics.Color;

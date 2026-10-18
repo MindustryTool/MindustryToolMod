@@ -1,22 +1,6 @@
 package mindustrytool.features.autoplay;
 
 import static solim.UI.*;
-import static solim.modifier.Values.border;
-import static solim.modifier.Values.checked;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.left;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.paddingTop;
-import static solim.modifier.Values.paddingX;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.rounded;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.tooltip;
-import static solim.modifier.Values.wrap;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -87,7 +71,7 @@ public class AutoplaySettingsView extends Component {
                 });
             });
 
-            text(Core.bundle.get("feature.autoplay.hud.reorder-hint")).props(color(WebStyles.Colors.GHOST_FG), growX(), left(), wrap());
+            text(Core.bundle.get("feature.autoplay.hud.reorder-hint")).props(color(WebStyles.Colors.GHOST_FG), growX(), left(), textWrap());
 
             divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
@@ -119,7 +103,7 @@ public class AutoplaySettingsView extends Component {
     private Component tasksCard() {
         return SettingCard.section(Icon.list, Core.bundle.get("feature.autoplay.settings.tasks"), () -> {
             text(Core.bundle.get("feature.autoplay.settings.tasks.description"))
-                    .props(growX(), left(), color(WebStyles.Colors.GHOST_FG), wrap());
+                    .props(growX(), left(), color(WebStyles.Colors.GHOST_FG), textWrap());
 
             reactiveGrid(feature.tasks()).key(AutoplayTask::getId).props(growX(), gap(unit(2)))
                     .items(task -> new TaskRow(feature, task));
@@ -192,10 +176,10 @@ public class AutoplaySettingsView extends Component {
                                  column().props(growX(), paddingTop(unit(2)), gap(unit(2))).children(() -> {
                                      row().props(growX(), gap(unit(2)), left()).children(() -> {
                                          icon(task.getIcon()).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)), color(color));
-                                         text(task.getName()).props(color(color), wrap());
+                                         text(task.getName()).props(color(color), textWrap());
                                      });
 
-                                     text(task.status()).props(color(color), growX(), left(), wrap());
+                                     text(task.status()).props(color(color), growX(), left(), textWrap());
                                  });
 
                                  row().props(gap(unit(1)), center()).children(() -> {

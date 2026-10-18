@@ -1,13 +1,6 @@
 package mindustrytool.features.togglerendering;
 
 import static solim.UI.*;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.height;
-import static solim.modifier.Values.left;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.wrap;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -53,7 +46,7 @@ public class ToggleRenderingSettingsView extends Component {
                     text(Core.bundle.get("feature.toggle-rendering.settings.draw-units-allies"))
                             .props(color(Color.white), left());
                     text(Core.bundle.get("feature.toggle-rendering.settings.draw-units-allies.desc"))
-                            .props(color(WebStyles.Colors.GHOST_FG), left(), wrap(), growX());
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(), growX());
                 });
                 spacer();
                 checkbox("", feature.drawUnitsAlliesConfig.signal());
@@ -66,7 +59,7 @@ public class ToggleRenderingSettingsView extends Component {
                     text(Core.bundle.get("feature.toggle-rendering.settings.draw-units-enemies"))
                             .props(color(Color.white), left());
                     text(Core.bundle.get("feature.toggle-rendering.settings.draw-units-enemies.desc"))
-                            .props(color(WebStyles.Colors.GHOST_FG), left(), wrap(), growX());
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(), growX());
                 });
                 spacer();
                 checkbox("", feature.drawUnitsEnemiesConfig.signal());
@@ -79,7 +72,7 @@ public class ToggleRenderingSettingsView extends Component {
                     text(Core.bundle.get("feature.toggle-rendering.settings.draw-blocks"))
                             .props(color(Color.white), left());
                     text(Core.bundle.get("feature.toggle-rendering.settings.draw-blocks.desc"))
-                            .props(color(WebStyles.Colors.GHOST_FG), left(), wrap(), growX());
+                            .props(color(WebStyles.Colors.GHOST_FG), left(), textWrap(), growX());
                 });
                 spacer();
                 checkbox("", feature.drawBlocksConfig.signal());

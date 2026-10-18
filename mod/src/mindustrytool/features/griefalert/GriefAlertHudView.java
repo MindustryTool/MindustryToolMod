@@ -1,18 +1,6 @@
 package mindustrytool.features.griefalert;
 
 import static solim.UI.*;
-import static solim.modifier.Values.border;
-import static solim.modifier.Values.color;
-import static solim.modifier.Values.growX;
-import static solim.modifier.Values.maxWidth;
-import static solim.modifier.Values.onClick;
-import static solim.modifier.Values.padding;
-import static solim.modifier.Values.prefHeight;
-import static solim.modifier.Values.prefWidth;
-import static solim.modifier.Values.rounded;
-import static solim.modifier.Values.size;
-import static solim.modifier.Values.style;
-import static solim.modifier.Values.tooltip;
 
 import arc.Core;
 import arc.graphics.Color;
@@ -54,7 +42,7 @@ public class GriefAlertHudView extends Component {
                     icon(Icon.warning).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(WebStyles.Colors.DANGER));
 
                     text(message)
-                            .props(color(Color.white), solim.modifier.Values.wrap(true), growX(), left());
+                            .props(color(Color.white), textWrap(true), growX(), left());
 
                     button()
                             .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.grief-alert.hud.dismiss")))

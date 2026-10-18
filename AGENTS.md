@@ -686,7 +686,7 @@ protected Element build() {
 
 The chained layout modifiers are gone. Every layout, spacing, alignment, sizing and
 decorative property is applied through a single `props(...)` call whose arguments are the
-static factories on `solim.modifier.Values`.
+static factories re-exported on `solim.UI`.
 
 ```java
 row()
@@ -720,10 +720,20 @@ counterpart spelled out, because the cell constraint is a separate property:
 icon(Icon.add).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
 ```
 
-The factories come from `solim.modifier.Values`; import them explicitly
-(`import static solim.modifier.Values.growX;`). Do not rely on a wildcard `solim.UI.*`
-import to reach them, and qualify any factory whose name is also an inherited method on the
-host (`Values.rounded(...)` inside a `SolimDialog` subclass, for example).
+The factories are re-exported on `solim.UI`; reach them through a single wildcard static
+import (`import static solim.UI.*;`) and call them bare. Never import or reference
+`solim.modifier.Values` from mod code — the `checkSolimModifierImports` Gradle task fails the
+build on any such reference.
+
+Because the wildcard import is a static import, an instance method on the enclosing host
+shadows a same-named factory — for example `maxWidth(...)` inside a `SolimDialog` subclass
+whose superclass already declares it, or `rounded(...)` in a host that declares
+`rounded(int)`. Qualify the factory as `solim.UI.<name>(...)` at that call site rather than
+reaching for `Values`.
+
+The text-wrapping factory is named `textWrap()` / `textWrap(boolean)` on `solim.UI`, because
+bare `wrap()` is the `Wrap` layout component. Use `textWrap()` for the padding-style text
+wrap property.
 
 ## Modifier Order
 
