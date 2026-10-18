@@ -129,9 +129,11 @@ public class SchematicBrowserDialog extends SolimDialog {
                 expandVisible(visibleCount, total, page != null ? page : 0);
             });
 
-            return column().props(grow(), paddingX(BrowserLayout.HORIZONTAL_PADDING), paddingY(unit(2)), center())
+            return column()
+                    .props(grow(), paddingX(BrowserLayout.HORIZONTAL_PADDING), paddingY(unit(2)), center())
                     .children(() -> {
-                        column().props(width(contentWidth), prefWidth(contentWidth), growY(), gap(unit(2)))
+                        column()
+                                .props(width(contentWidth), prefWidth(contentWidth), growY(), gap(unit(2)))
                                 .children(() -> {
                                     new BrowserSearchHeader(state, () -> filterDialog.show());
                                     body(columnCount, cardSize, visibleItems);
@@ -145,14 +147,17 @@ public class SchematicBrowserDialog extends SolimDialog {
             if (current == null || current >= total) {
                 return;
             }
+
             Core.app.post(() -> {
                 if (isDisposed()) {
                     return;
                 }
+
                 Integer currentPage = state.page().peek();
                 if (currentPage == null || currentPage != page) {
                     return;
                 }
+                
                 Integer shown = visibleCount.peek();
                 int next = Math.min(total, (shown != null ? shown : 0) + BrowserLayout.RENDER_CHUNK_SIZE);
                 visibleCount.set(next);

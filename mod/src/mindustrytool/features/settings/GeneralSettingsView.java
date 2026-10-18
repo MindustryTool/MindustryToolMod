@@ -29,8 +29,8 @@ public class GeneralSettingsView extends Component {
         return SettingScaffold.build(() -> {
             headerCard();
             preferencesCard();
-            keybindsCard();
             diagnosticsCard();
+            keybindsCard();
         });
     }
 
