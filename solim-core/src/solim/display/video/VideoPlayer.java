@@ -46,6 +46,7 @@ public final class VideoPlayer implements Disposable {
 
 	private static final ExecutorService DECODE_WORKER = Threads.unboundedExecutor("solim-video-decode", 2);
 	private static final int FRAME_POOL = 4;
+	private static final int FRAME_WAIT_MILLIS = 250;
 	private static final double END_EPSILON = 0.08;
 	private static final float AUDIO_EPSILON = 0.001f;
 	private static final float RESYNC_THRESHOLD = 0.25f;
@@ -410,8 +411,8 @@ public final class VideoPlayer implements Disposable {
 		try {
 			ByteBuffer dest = scratch.getPixels();
 			dest.clear();
-			pixels.position(0);
-			pixels.limit(pixels.capacity());
+			// The converter leaves position at 0 and the limit at the produced byte count, so the copy
+			// stays inside the finished frame instead of dragging along stale buffer content.
 			dest.put(pixels);
 			dest.flip();
 			texture.draw(scratch, 0, 0);
@@ -687,13 +688,26 @@ public final class VideoPlayer implements Disposable {
 					continue;
 				}
 				YuvToRgbaConverter.convert(picture, buffer, cornerRadius);
-				if (readyFrames.offer(new DecodedFrame(buffer, pts))) {
-					framesSinceLoop++;
-					if (singleFrame)
-						singleFrame = false;
-				} else {
-					freeBuffers.offer(buffer);
+				// H.264 frames cannot be skipped without breaking reference chains, so the decoder is
+				// paced by the display instead: hold this frame until the queue has room rather than
+				// decoding ahead and throwing the result away. Without this the loop outruns the
+				// display and burns every core for the whole clip.
+				DecodedFrame frame = new DecodedFrame(buffer, pts);
+				boolean queued = false;
+				try {
+					while (!queued && !disposed) {
+						queued = readyFrames.offer(frame, FRAME_WAIT_MILLIS, TimeUnit.MILLISECONDS);
+					}
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
 				}
+				if (!queued) {
+					freeBuffers.offer(buffer);
+					break;
+				}
+				framesSinceLoop++;
+				if (singleFrame)
+					singleFrame = false;
 			}
 		} catch (Throwable t) {
 			if (!disposed)
