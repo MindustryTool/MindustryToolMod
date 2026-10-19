@@ -48,6 +48,13 @@ Mindustry's `MenuRenderer` handles drawing the main menu background. `Background
 - **Choice**: Inspect file extension. If `.mp4`, route to `VideoMenuRenderer`. Otherwise route to static `ImageMenuRenderer`.
 - **Rationale**: Simple, deterministic, and fast without blocking I/O probe.
 
+### 6. Replacing the Default Menu Renderer
+- **Choice**: A video background takes over the menu renderer completely: `VideoMenuRenderer` is constructed with no default renderer to blend into, and the captured `MenuRenderer` is disposed while the video plays, rebuilt only when the default background becomes needed again. Image backgrounds keep the existing blend behaviour. The `MenuRenderer` subclass releases the 3D menu cache and framebuffer its own constructor generates, because custom backgrounds override `render()` and never use them.
+- **Rationale**: Keeping the default 3D menu scene alive under a video wastes GPU memory and per-frame cost. Releasing the inherited resources also fixes a leak of the default menu cache on every applied background.
+- **Alternatives Considered**:
+  - *Blending video over the default menu*: The video is a full-screen background; blending produced a visible mismatch and extra draw cost.
+  - *Keeping the default renderer alive*: Cheaper on menu re-entry, but holds the GL resources the video is meant to replace.
+
 ## Risks / Trade-offs
 
 - **[Risk] High-resolution video (e.g. 4K 60fps) causing high CPU utilization in pure-Java JCodec.**
@@ -55,4 +62,4 @@ Mindustry's `MenuRenderer` handles drawing the main menu background. `Background
 - **[Risk] Unsupported video codecs (HEVC, AV1).**
   - *Mitigation*: Catch `IllegalStateException` during demuxing in `VideoPlayer.Listener.onFailed`, show a clear translatable dialog explaining that H.264 AVC is required, and restore the original renderer.
 - **[Risk] Slight delay when returning to main menu due to re-opening video.**
-  - *Mitigation*: Loading happens asynchronously on `DECODE_WORKER`, displaying the original menu background until the first frame is ready.
+  - *Mitigation*: Loading happens asynchronously on `DECODE_WORKER`. A video fully replaces the default menu renderer, so while the first frame is still decoding the menu shows the cleared background colour and playback resumes automatically once ready.
