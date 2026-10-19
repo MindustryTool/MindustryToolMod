@@ -241,7 +241,7 @@ public final class SolimVideo extends Component
 
         Table transport = new Table();
         transport.add(playButton.element()).size(Units.unit(9)).pad(Units.unit(1));
-        transport.add(time.label()).growX().pad(Units.unit(1));
+        transport.add(time.label()).growX().minWidth(0f).pad(Units.unit(1));
         transport.add(replayButton.element()).size(Units.unit(9)).pad(Units.unit(1));
         transport.add(muteButton.element()).size(Units.unit(9)).pad(Units.unit(1));
 

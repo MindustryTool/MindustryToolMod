@@ -183,35 +183,49 @@ class SolimVideoTest extends SolimEnv {
 		SolimVideo video = track(new SolimVideo().props(controls(true)));
 		flushEffects();
 
-		float stageWidth = Units.unit(80);
-		float stageHeight = Units.unit(45);
-		video.stack().setSize(stageWidth, stageHeight);
-		video.stack().validate();
-
-		assertControlsLaidOut(video.overlay(), stageWidth, stageHeight);
+		assertControlsLaidOut(video, Units.unit(80), Units.unit(45));
+		assertReadoutIsLegible(video.overlay());
+		assertControlsLaidOut(video, Units.unit(60), Units.unit(34));
+		assertControlsLaidOut(video, Units.unit(40), Units.unit(22));
 	}
 
-	private static void assertControlsLaidOut(Group group, float stageWidth, float stageHeight) {
+	private static void assertControlsLaidOut(SolimVideo video, float stageWidth, float stageHeight) {
+		video.stack().setSize(stageWidth, stageHeight);
+		video.stack().validate();
+		assertControlsInsideBounds(video.overlay(), stageWidth, stageHeight);
+	}
+
+	private static void assertControlsInsideBounds(Group group, float stageWidth, float stageHeight) {
 		SnapshotSeq<Element> children = group.getChildren();
 		for (int i = 0; i < children.size; i++) {
 			Element child = children.get(i);
 			assertTrue(child.x >= 0f && child.y >= 0f && child.x + child.getWidth() <= stageWidth
 					&& child.y + child.getHeight() <= stageHeight,
-					child.getClass().getSimpleName() + " escapes the video stage at " + child.x + "," + child.y
-							+ " sized " + child.getWidth() + "x" + child.getHeight());
+					child.getClass().getSimpleName() + " escapes a " + stageWidth + "x" + stageHeight
+							+ " stage at " + child.x + "," + child.y + " sized " + child.getWidth() + "x"
+							+ child.getHeight());
+			for (int j = i + 1; j < children.size; j++) {
+				Element sibling = children.get(j);
+				assertFalse(overlaps(child, sibling), child.getClass().getSimpleName() + " overlaps "
+						+ sibling.getClass().getSimpleName() + " in a " + stageWidth + "x" + stageHeight + " stage");
+			}
+			if (child instanceof Group) {
+				assertControlsInsideBounds((Group) child, stageWidth, stageHeight);
+			}
+		}
+	}
+
+	private static void assertReadoutIsLegible(Group group) {
+		SnapshotSeq<Element> children = group.getChildren();
+		for (int i = 0; i < children.size; i++) {
+			Element child = children.get(i);
 			if (child instanceof Label) {
 				Label label = (Label) child;
 				assertTrue(label.getWidth() >= label.getText().length() * GLYPH_WIDTH,
 						"the readout \"" + label.getText() + "\" needs " + label.getText().length() * GLYPH_WIDTH
 								+ "px but was given " + label.getWidth());
-			}
-			for (int j = i + 1; j < children.size; j++) {
-				Element sibling = children.get(j);
-				assertFalse(overlaps(child, sibling), child.getClass().getSimpleName() + " overlaps "
-						+ sibling.getClass().getSimpleName());
-			}
-			if (child instanceof Group) {
-				assertControlsLaidOut((Group) child, stageWidth, stageHeight);
+			} else if (child instanceof Group) {
+				assertReadoutIsLegible((Group) child);
 			}
 		}
 	}
