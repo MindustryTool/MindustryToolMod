@@ -278,6 +278,10 @@ public final class VideoPlayer implements Disposable {
 	public void update(float delta) {
 		if (disposed)
 			return;
+		// Guard against a huge delta after the window was backgrounded: otherwise the
+		// clock jumps past the end and the player seeks forever without advancing.
+		if (delta > 0.1f)
+			delta = 0.1f;
 		if (loopRestartRequest) {
 			loopRestartRequest = false;
 			lastAudioPosition = -1f;
@@ -643,20 +647,17 @@ public final class VideoPlayer implements Disposable {
 				// display and burns every core for the whole clip.
 				DecodedFrame frame = new DecodedFrame(buffer, pts);
 				boolean queued = false;
-				int offerAttempts = 0;
 				try {
-					while (!queued && !disposed) {
+					while (!queued && !disposed && (state == State.PLAYING || singleFrame)) {
 						queued = readyFrames.offer(frame, FRAME_WAIT_MILLIS, TimeUnit.MILLISECONDS);
-						if (!queued && !disposed) {
+						if (!queued && !disposed && (state == State.PLAYING || singleFrame)) {
 							// The queue stayed full: pace the decoder instead of abandoning the
 							// stream. A fast native decoder can otherwise outrun a slow display,
 							// time out here and exit the decode thread, which silently stops
-							// playback (and looping) after the first pass.
+							// playback (and looping) after the first pass. When the window is
+							// backgrounded the display stops consuming, so wait patiently and
+							// resume once it comes back instead of exiting.
 							sleepBriefly();
-							if (++offerAttempts > 20) {
-								// Give up waiting so a stuck display cannot pin the thread forever.
-								break;
-							}
 						}
 					}
 				} catch (InterruptedException e) {
@@ -664,7 +665,9 @@ public final class VideoPlayer implements Disposable {
 				}
 				if (!queued) {
 					freeBuffers.offer(buffer);
-					break;
+					if (disposed)
+						break;
+					continue;
 				}
 				framesSinceLoop++;
 				if (singleFrame)
