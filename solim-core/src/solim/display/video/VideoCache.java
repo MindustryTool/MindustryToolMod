@@ -13,6 +13,9 @@ public final class VideoCache {
 	}
 
 	static final long CACHE_MAX_AGE = 30L * 24 * 60 * 60 * 1000;
+	static final String AUDIO_CACHE_VERSION = "v2";
+	static final int WAV_HEADER_BYTES = 44;
+	static final long MIN_VIDEO_BYTES = 16;
 
 	private static volatile boolean cleanupDone = false;
 
@@ -54,12 +57,20 @@ public final class VideoCache {
 	}
 
 	static String audioName(String url) {
-		return cacheName(url) + ".wav";
+		return cacheName(url) + "." + AUDIO_CACHE_VERSION + ".wav";
 	}
 
-	public static boolean isFresh(@Nullable Fi file) {
+	public static boolean isFreshVideo(@Nullable Fi file) {
+		return isFresh(file, MIN_VIDEO_BYTES);
+	}
+
+	public static boolean isFreshAudio(@Nullable Fi file) {
+		return isFresh(file, WAV_HEADER_BYTES + 1L);
+	}
+
+	private static boolean isFresh(@Nullable Fi file, long minimumBytes) {
 		try {
-			if (file == null || !file.exists() || file.isDirectory() || file.length() == 0)
+			if (file == null || !file.exists() || file.isDirectory() || file.length() < minimumBytes)
 				return false;
 			return System.currentTimeMillis() - file.lastModified() <= CACHE_MAX_AGE;
 		} catch (Throwable t) {
@@ -73,7 +84,14 @@ public final class VideoCache {
 			if (dir == null || bytes == null || bytes.length == 0)
 				return;
 			dir.mkdirs();
-			dir.child(cacheName(url) + ".mp4").writeBytes(bytes);
+			Fi part = dir.child(videoName(url) + ".part");
+			part.writeBytes(bytes);
+			Fi target = dir.child(videoName(url));
+			target.delete();
+			if (!part.file().renameTo(target.file())) {
+				part.delete();
+				Log.debug("SolimVideo: cache commit failed: " + target.name());
+			}
 		} catch (Throwable t) {
 			Log.debug("SolimVideo: disk write failed: " + t.getMessage());
 		}

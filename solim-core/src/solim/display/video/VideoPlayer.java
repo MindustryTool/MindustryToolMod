@@ -16,9 +16,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import org.jcodec.codecs.h264.H264Decoder;
-import org.jcodec.codecs.h264.H264Utils;
-import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
@@ -50,6 +47,12 @@ public final class VideoPlayer implements Disposable {
 	private static final ExecutorService DECODE_WORKER = Threads.unboundedExecutor("solim-video-decode", 2);
 	private static final int FRAME_POOL = 4;
 	private static final double END_EPSILON = 0.08;
+	private static final float AUDIO_EPSILON = 0.001f;
+	private static final float RESYNC_THRESHOLD = 0.25f;
+
+	static {
+		VideoLog.install();
+	}
 
 	private static final class DecodedFrame {
 		final ByteBuffer pixels;
@@ -67,7 +70,8 @@ public final class VideoPlayer implements Disposable {
 	private volatile boolean streamEnded = false;
 	private volatile boolean decodeDone = false;
 	private volatile boolean singleFrame = false;
-	private volatile boolean musicRestartRequest = false;
+	private volatile boolean loopRestartRequest = false;
+	private volatile int framesSinceLoop = 0;
 	private volatile double pendingSeek = -1;
 	private volatile boolean pendingPlay = false;
 	private volatile int cornerRadius = 0;
@@ -77,6 +81,7 @@ public final class VideoPlayer implements Disposable {
 	private float volume = 1f;
 	private boolean muted = false;
 	private float silentClock = 0f;
+	private float lastAudioPosition = -1f;
 	private float lastAppliedVolume = -1f;
 
 	private Fi mp4File;
@@ -89,9 +94,7 @@ public final class VideoPlayer implements Disposable {
 	private RandomAccessFile mediaRaf;
 	private MP4Demuxer demuxer;
 	private SeekableDemuxerTrack videoTrack;
-	private H264Decoder videoDecoder;
-	private AvcCBox avcC;
-	private byte[][] reusePlanes;
+	private H264PacketDecoder packetDecoder;
 	private int width;
 	private int height;
 	private int totalFrames;
@@ -261,14 +264,16 @@ public final class VideoPlayer implements Disposable {
 		}
 		hasAudio = false;
 		holdback = null;
-		reusePlanes = null;
+		packetDecoder = null;
 		discardUntil = -1;
 		streamEnded = false;
 		decodeDone = false;
 		singleFrame = false;
+		framesSinceLoop = 0;
 		freeBuffers = null;
 		readyFrames = null;
 		lastAppliedVolume = -1f;
+		lastAudioPosition = -1f;
 		state = State.LOADING;
 		try {
 			DECODE_WORKER.execute(this::openInBackground);
@@ -281,6 +286,7 @@ public final class VideoPlayer implements Disposable {
 		pendingSeek = target;
 		silentClock = (float) target;
 		lastPosition = (float) target;
+		lastAudioPosition = -1f;
 		holdback = null;
 		if (music != null) {
 			try {
@@ -293,8 +299,12 @@ public final class VideoPlayer implements Disposable {
 	public void update(float delta) {
 		if (disposed)
 			return;
-		if (musicRestartRequest) {
-			musicRestartRequest = false;
+		if (loopRestartRequest) {
+			loopRestartRequest = false;
+			lastAudioPosition = -1f;
+			silentClock = 0f;
+			lastPosition = 0f;
+			holdback = null;
 			if (music != null) {
 				try {
 					music.setPosition(0);
@@ -305,20 +315,54 @@ public final class VideoPlayer implements Disposable {
 			}
 		}
 		if (state == State.PLAYING) {
-			float master = hasAudio && music != null ? music.getPosition() : (silentClock += delta);
+			float audioPosition = audioPosition();
+			boolean audioAdvancing = audioPosition > lastAudioPosition + AUDIO_EPSILON;
+			if (audioPosition >= 0f)
+				lastAudioPosition = audioPosition;
+			float master = advanceClock(silentClock, delta, audioPosition, audioAdvancing);
 			if (master < 0f)
 				master = 0f;
+			if (audioAdvancing && master - audioPosition > RESYNC_THRESHOLD)
+				resyncAudio(master);
+			silentClock = master;
 			lastPosition = master;
 			presentUpTo(master);
 			boolean starved = streamEnded && decodeDone && readyFramesIsEmpty() && holdback == null;
 			boolean pastEnd = durationSec > 0 && master >= durationSec - END_EPSILON;
-			if (starved || pastEnd) {
+			if (starved || (pastEnd && !looping)) {
 				toEnded();
+			} else if (pastEnd) {
+				seekInternal(0);
 			}
 		} else if (state == State.PAUSED || state == State.READY || state == State.ENDED) {
 			presentUpTo(Double.MAX_VALUE);
 		}
 		applyVolume();
+	}
+
+	static float advanceClock(float clock, float delta, float audioPosition, boolean audioAdvancing) {
+		float next = clock + Math.max(0f, delta);
+		if (!audioAdvancing)
+			return next;
+		float lead = audioPosition - next;
+		return lead > 0f && lead <= RESYNC_THRESHOLD ? audioPosition : next;
+	}
+
+	private float audioPosition() {
+		if (!hasAudio || music == null)
+			return -1f;
+		try {
+			return music.getPosition();
+		} catch (Throwable t) {
+			return -1f;
+		}
+	}
+
+	private void resyncAudio(float master) {
+		try {
+			music.setPosition(master);
+		} catch (Throwable ignored) {
+		}
 	}
 
 	private boolean readyFramesIsEmpty() {
@@ -420,6 +464,14 @@ public final class VideoPlayer implements Disposable {
 		}
 	}
 
+	private static boolean audioReady() {
+		try {
+			return Core.audio != null && Core.audio.initialized();
+		} catch (Throwable ignored) {
+			return false;
+		}
+	}
+
 	private static float sfxVolume() {
 		try {
 			if (Core.settings != null)
@@ -476,8 +528,7 @@ public final class VideoPlayer implements Disposable {
 			if (priv == null || priv.remaining() == 0)
 				throw new IllegalStateException("Missing AVC configuration");
 			byte[] avcBytes = NIOUtils.toArray(priv);
-			avcC = H264Utils.createAvcCFromBytes(ByteBuffer.wrap(avcBytes));
-			videoDecoder = H264Decoder.createH264DecoderFromCodecPrivate(ByteBuffer.wrap(avcBytes));
+			packetDecoder = new H264PacketDecoder(avcBytes);
 
 			freeBuffers = new ArrayBlockingQueue<>(FRAME_POOL);
 			for (int i = 0; i < FRAME_POOL; i++) {
@@ -497,7 +548,7 @@ public final class VideoPlayer implements Disposable {
 			wavFile = audioUrl != null ? VideoCache.audioFile(audioUrl) : null;
 			if (wavFile == null)
 				return false;
-			if (VideoCache.isFresh(wavFile))
+			if (VideoCache.isFreshAudio(wavFile))
 				return true;
 			return AacToWav.decode(file, wavFile.file()) != null;
 		} catch (Throwable t) {
@@ -518,15 +569,19 @@ public final class VideoPlayer implements Disposable {
 				texture = new Texture(width, height);
 				texture.setFilter(TextureFilter.linear);
 			}
-			if (hasAudio && wavFile != null) {
+			if (hasAudio && wavFile != null && audioReady()) {
 				try {
 					music = new Music(wavFile);
 					music.setLooping(looping);
+					if (!music.valid()) {
+						music.dispose();
+						music = null;
+					}
 				} catch (Throwable t) {
 					music = null;
-					hasAudio = false;
 				}
 			}
+			hasAudio = music != null;
 			state = State.READY;
 			if (listener != null)
 				listener.onReady(width, height, durationSec);
@@ -632,10 +687,12 @@ public final class VideoPlayer implements Disposable {
 					continue;
 				}
 				YuvToRgbaConverter.convert(picture, buffer, cornerRadius);
-				if (!readyFrames.offer(new DecodedFrame(buffer, pts))) {
+				if (readyFrames.offer(new DecodedFrame(buffer, pts))) {
+					framesSinceLoop++;
+					if (singleFrame)
+						singleFrame = false;
+				} else {
 					freeBuffers.offer(buffer);
-				} else if (singleFrame) {
-					singleFrame = false;
 				}
 			}
 		} catch (Throwable t) {
@@ -656,9 +713,10 @@ public final class VideoPlayer implements Disposable {
 	}
 
 	private boolean handleStreamEnd() {
-		if (looping && !disposed) {
+		if (looping && !disposed && framesSinceLoop > 0) {
+			framesSinceLoop = 0;
 			doSeek(0);
-			musicRestartRequest = true;
+			loopRestartRequest = true;
 			return true;
 		}
 		streamEnded = true;
@@ -709,18 +767,9 @@ public final class VideoPlayer implements Disposable {
 	}
 
 	private @Nullable Picture decodePacket(Packet packet) {
-		try {
-			ByteBuffer data = packet.getData();
-			if (data == null || data.remaining() == 0)
-				return null;
-			H264Utils.decodeMOVPacketInplace(data, avcC);
-			Picture picture = videoDecoder.decodeFrame(data, reusePlanes);
-			if (picture != null)
-				reusePlanes = picture.getData();
-			return picture;
-		} catch (Throwable t) {
+		if (packetDecoder == null)
 			return null;
-		}
+		return packetDecoder.decode(packet.getData());
 	}
 
 	private void closeStream() {

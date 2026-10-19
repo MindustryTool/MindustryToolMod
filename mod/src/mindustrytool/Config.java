@@ -16,6 +16,8 @@ public class Config {
     public static final String REPO_NAME = "MindustryToolMod";
     public static final String MOD_HJSON_URL = "https://raw.githubusercontent.com/MindustryTool/MindustryToolMod/v8/mod.hjson";
     public static final String GITHUB_API_URL = "https://api.github.com/repos/MindustryTool/MindustryToolMod/releases";
+    public static final String PREVIEW_VIDEO_BASE_URL = "https://raw.githubusercontent.com/" + ORG_NAME + "/" + REPO_NAME
+            + "/main/preview/";
 
     public static final String WEB_URL = "https://mindustry-tool.com";
     public static final String UPLOAD_SCHEMATIC_URL = WEB_URL + "/schematics?upload=true";

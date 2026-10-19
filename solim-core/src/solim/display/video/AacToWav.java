@@ -123,52 +123,54 @@ public final class AacToWav {
 		if (parent != null)
 			parent.mkdirs();
 		File tmp = new File(parent, wavOut.getName() + ".part");
-		boolean done = false;
+		boolean committed = false;
 		int sampleRate = 0;
 		int channels = 0;
 		long dataLen = 0;
-		try (OutputStream out = new BufferedOutputStream(new FileOutputStream(tmp))) {
-			writeWavHeader(out, 44100, 2, 0);
-			byte[] copy = new byte[8192];
-			Packet packet;
-			while ((packet = audio.nextFrame()) != null) {
-				ByteBuffer raw = packet.getData();
-				if (raw == null || raw.remaining() == 0)
-					continue;
-				AudioBuffer decoded = decoder.decodeFrame(wrapAdts(asc, raw), null);
-				if (decoded == null || decoded.getFormat() == null)
-					continue;
-				if (sampleRate <= 0) {
-					AudioFormat format = decoded.getFormat();
-					if (format.getSampleSizeInBits() != 16)
-						return null;
-					sampleRate = format.getSampleRate();
-					channels = format.getChannels();
-					if (sampleRate <= 0 || channels <= 0)
-						return null;
-				}
-				ByteBuffer pcm = decoded.getData();
-				while (pcm.hasRemaining()) {
-					int n = Math.min(copy.length, pcm.remaining());
-					pcm.get(copy, 0, n);
-					out.write(copy, 0, n);
-					dataLen += n;
+		try {
+			try (OutputStream out = new BufferedOutputStream(new FileOutputStream(tmp))) {
+				writeWavHeader(out, 44100, 2, 0);
+				byte[] copy = new byte[8192];
+				Packet packet;
+				while ((packet = audio.nextFrame()) != null) {
+					ByteBuffer raw = packet.getData();
+					if (raw == null || raw.remaining() == 0)
+						continue;
+					AudioBuffer decoded = decoder.decodeFrame(wrapAdts(asc, raw), null);
+					if (decoded == null || decoded.getFormat() == null)
+						continue;
+					if (sampleRate <= 0) {
+						AudioFormat format = decoded.getFormat();
+						if (format.getSampleSizeInBits() != 16)
+							return null;
+						sampleRate = format.getSampleRate();
+						channels = format.getChannels();
+						if (sampleRate <= 0 || channels <= 0)
+							return null;
+					}
+					ByteBuffer pcm = decoded.getData();
+					while (pcm.hasRemaining()) {
+						int n = Math.min(copy.length, pcm.remaining());
+						pcm.get(copy, 0, n);
+						out.write(copy, 0, n);
+						dataLen += n;
+					}
 				}
 			}
+			if (dataLen == 0 || sampleRate <= 0 || channels <= 0)
+				return null;
+			rewriteWavHeader(tmp, sampleRate, channels, dataLen);
+			if (wavOut.exists() && !wavOut.delete())
+				return null;
+			if (!tmp.renameTo(wavOut))
+				return null;
+			committed = true;
+			DemuxerTrackMeta meta = audio.getMeta();
+			return new AudioInfo(sampleRate, channels, meta != null ? meta.getTotalDuration() : 0);
 		} finally {
-			if (!done)
+			if (!committed)
 				tmp.delete();
 		}
-		if (dataLen == 0 || sampleRate <= 0 || channels <= 0)
-			return null;
-		rewriteWavHeader(tmp, sampleRate, channels, dataLen);
-		if (wavOut.exists() && !wavOut.delete())
-			return null;
-		if (!tmp.renameTo(wavOut))
-			return null;
-		done = true;
-		DemuxerTrackMeta meta = audio.getMeta();
-		return new AudioInfo(sampleRate, channels, meta != null ? meta.getTotalDuration() : 0);
 	}
 
 	static ByteBuffer wrapAdts(byte[] asc, ByteBuffer raw) {

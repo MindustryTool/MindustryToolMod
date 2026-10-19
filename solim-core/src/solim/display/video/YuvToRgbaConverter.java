@@ -45,9 +45,9 @@ public final class YuvToRgbaConverter {
 			int yRow = (y0 + y) * yStride + x0;
 			int cRow = ((y0 + y) >> 1) * cStride + (x0 >> 1);
 			for (int x = 0; x < width; x++) {
-				int Y = yPlane[yRow + x] & 0xFF;
-				int U = uPlane[cRow + (x >> 1)] & 0xFF;
-				int V = vPlane[cRow + (x >> 1)] & 0xFF;
+				int Y = yPlane[yRow + x] + 128;
+				int U = uPlane[cRow + (x >> 1)] + 128;
+				int V = vPlane[cRow + (x >> 1)] + 128;
 
 				int r;
 				int g;

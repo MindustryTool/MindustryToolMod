@@ -13,15 +13,16 @@ class YuvToRgbaConverterTest {
 	private static Picture solidFrame(int width, int height, ColorSpace color, int y, int u, int v) {
 		Picture picture = Picture.create(width, height, color);
 		byte[][] data = picture.getData();
-		fill(data[0], y);
-		fill(data[1], u);
-		fill(data[2], v);
+		storeShifted(data[0], y);
+		storeShifted(data[1], u);
+		storeShifted(data[2], v);
 		return picture;
 	}
 
-	private static void fill(byte[] plane, int value) {
+	private static void storeShifted(byte[] plane, int value) {
+		byte sample = (byte) (value - 128);
 		for (int i = 0; i < plane.length; i++) {
-			plane[i] = (byte) value;
+			plane[i] = sample;
 		}
 	}
 
@@ -50,6 +51,15 @@ class YuvToRgbaConverterTest {
 		ByteBuffer out = YuvToRgbaConverter.allocate(4, 4);
 		YuvToRgbaConverter.convert(red, out, 0);
 		assertArrayEquals(new int[] { 255, 1, 0, 255 }, pixel(out, 0, 0, 4));
+	}
+
+	@Test
+	void neutralPlanesConvertToGray() {
+		Picture neutral = solidFrame(4, 4, ColorSpace.YUV420, 128, 128, 128);
+		ByteBuffer out = YuvToRgbaConverter.allocate(4, 4);
+		YuvToRgbaConverter.convert(neutral, out, 0);
+		assertArrayEquals(new int[] { 130, 130, 130, 255 }, pixel(out, 0, 0, 4),
+				"a frame with no chroma must stay gray instead of turning into a saturated color mask");
 	}
 
 	@Test

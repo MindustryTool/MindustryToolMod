@@ -5,19 +5,30 @@ import static solim.modifier.Values.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import arc.Core;
+import arc.graphics.g2d.Font;
+import arc.graphics.g2d.Font.FontData;
+import arc.graphics.g2d.Font.Glyph;
 import arc.graphics.g2d.TextureRegion;
+import arc.scene.Element;
+import arc.scene.Group;
 import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.Image;
+import arc.scene.ui.Label;
+import arc.scene.ui.Label.LabelStyle;
 import arc.scene.ui.Slider.SliderStyle;
+import arc.struct.SnapshotSeq;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import solim.core.Units;
 import solim.reactive.Signal;
 import solim.test.SolimEnv;
 
 class SolimVideoTest extends SolimEnv {
+
+	private static final int GLYPH_WIDTH = 8;
 
 	private final List<SolimVideo> videos = new ArrayList<>();
 
@@ -164,5 +175,73 @@ class SolimVideoTest extends SolimEnv {
 		SolimVideo video = track(new SolimVideo().props(autoplay(true)));
 		assertTrue(video.isAutoplay());
 		video.dispose();
+	}
+
+	@Test
+	void overlayControlsFitTheVideoStage() {
+		installMeasuredLabelFont();
+		SolimVideo video = track(new SolimVideo().props(controls(true)));
+		flushEffects();
+
+		float stageWidth = Units.unit(80);
+		float stageHeight = Units.unit(45);
+		video.stack().setSize(stageWidth, stageHeight);
+		video.stack().validate();
+
+		assertControlsLaidOut(video.overlay(), stageWidth, stageHeight);
+	}
+
+	private static void assertControlsLaidOut(Group group, float stageWidth, float stageHeight) {
+		SnapshotSeq<Element> children = group.getChildren();
+		for (int i = 0; i < children.size; i++) {
+			Element child = children.get(i);
+			assertTrue(child.x >= 0f && child.y >= 0f && child.x + child.getWidth() <= stageWidth
+					&& child.y + child.getHeight() <= stageHeight,
+					child.getClass().getSimpleName() + " escapes the video stage at " + child.x + "," + child.y
+							+ " sized " + child.getWidth() + "x" + child.getHeight());
+			if (child instanceof Label) {
+				Label label = (Label) child;
+				assertTrue(label.getWidth() >= label.getText().length() * GLYPH_WIDTH,
+						"the readout \"" + label.getText() + "\" needs " + label.getText().length() * GLYPH_WIDTH
+								+ "px but was given " + label.getWidth());
+			}
+			for (int j = i + 1; j < children.size; j++) {
+				Element sibling = children.get(j);
+				assertFalse(overlaps(child, sibling), child.getClass().getSimpleName() + " overlaps "
+						+ sibling.getClass().getSimpleName());
+			}
+			if (child instanceof Group) {
+				assertControlsLaidOut((Group) child, stageWidth, stageHeight);
+			}
+		}
+	}
+
+	private static boolean overlaps(Element a, Element b) {
+		return a.x < b.x + b.getWidth() && b.x < a.x + a.getWidth()
+				&& a.y < b.y + b.getHeight() && b.y < a.y + a.getHeight();
+	}
+
+	private static void installMeasuredLabelFont() {
+		Core.scene.addStyle(LabelStyle.class, new LabelStyle(measuredFont(), null));
+	}
+
+	private static Font measuredFont() {
+		FontData data = new FontData() {
+			@Override
+			public boolean hasGlyph(char ch) {
+				return true;
+			}
+
+			@Override
+			public Glyph getGlyph(char ch) {
+				Glyph glyph = new Glyph();
+				glyph.id = ch;
+				glyph.width = GLYPH_WIDTH;
+				glyph.height = GLYPH_WIDTH;
+				glyph.xadvance = GLYPH_WIDTH;
+				return glyph;
+			}
+		};
+		return new Font(data, new TextureRegion(), false);
 	}
 }

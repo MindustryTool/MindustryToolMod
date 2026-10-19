@@ -5,18 +5,28 @@ import static solim.UI.*;
 import arc.Core;
 import arc.graphics.Color;
 import arc.scene.Element;
+import arc.util.Nullable;
 import arc.util.Scaling;
 import mindustry.Vars;
 import mindustry.ui.Styles;
 import mindustrytool.features.Feature;
+import mindustrytool.services.PreviewVideos;
 import solim.core.Component;
+import solim.reactive.Signal;
 
 public class FeatureHelpView extends Component {
 
     private final Feature feature;
+    private final Signal<Boolean> videoAvailable = Signal.of(false);
+    private final @Nullable String videoUrl;
 
     public FeatureHelpView(Feature feature) {
         this.feature = feature;
+        this.videoUrl = feature.getPreviewVideoUrl();
+        if (videoUrl != null) {
+            PreviewVideos.exists(videoUrl)
+                    .thenAccept(exists -> Core.app.post(() -> videoAvailable.set(Boolean.TRUE.equals(exists))));
+        }
     }
 
     @Override
@@ -53,8 +63,25 @@ public class FeatureHelpView extends Component {
 
                                 text(text)
                                         .props(color(hasHelp ? Color.white : Color.lightGray), textWrap(true), left());
+
+                                if (videoUrl != null) {
+                                    when(videoAvailable).thenDo(this::videoPreview);
+                                }
                             });
                 })
                 .element();
+    }
+
+    private void videoPreview() {
+        divider();
+
+        video(videoUrl)
+                .props(
+                        growX(),
+                        maxWidth(unit(80)),
+                        prefHeight(unit(45)),
+                        imageRounded(unit(4)),
+                        controls(true),
+                        loop(false));
     }
 }

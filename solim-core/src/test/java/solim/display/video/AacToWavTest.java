@@ -1,12 +1,27 @@
 package solim.display.video;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import arc.files.Fi;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import org.junit.jupiter.api.Test;
 
 class AacToWavTest {
+
+	private static File previewClip() {
+		File dir = new File(System.getProperty("user.dir"));
+		while (dir != null) {
+			File candidate = new File(dir, "preview/quick-rotate.mp4");
+			if (candidate.isFile())
+				return candidate;
+			dir = dir.getParentFile();
+		}
+		return null;
+	}
 
 	private static int readIntLE(byte[] buf, int offset) {
 		return (buf[offset] & 0xFF) | ((buf[offset + 1] & 0xFF) << 8)
@@ -15,6 +30,41 @@ class AacToWavTest {
 
 	private static int readShortLE(byte[] buf, int offset) {
 		return (buf[offset] & 0xFF) | ((buf[offset + 1] & 0xFF) << 8);
+	}
+
+	@Test
+	void transcodeCommitsDecodedPcmToTheFinalFile() throws Exception {
+		File clip = previewClip();
+		assumeTrue(clip != null, "preview/quick-rotate.mp4 is not available");
+		File dir = Files.createTempDirectory("solim-transcode").toFile();
+		File wav = new File(dir, "audio.wav");
+
+		AacToWav.AudioInfo info = AacToWav.decode(clip, wav);
+
+		assertNotNull(info);
+		assertTrue(info.sampleRate > 0);
+		assertFalse(new File(dir, "audio.wav.part").exists());
+
+		byte[] bytes = new Fi(wav).readBytes();
+		assertTrue(bytes.length > VideoCache.WAV_HEADER_BYTES, "decoded PCM must survive the commit");
+		long dataLen = readIntLE(bytes, 40) & 0xFFFFFFFFL;
+		assertEquals(bytes.length - VideoCache.WAV_HEADER_BYTES, dataLen);
+		assertEquals(36 + dataLen, readIntLE(bytes, 4) & 0xFFFFFFFFL);
+		assertTrue(dataLen > (long) info.sampleRate * info.channels, "audio must cover more than half a second");
+	}
+
+	@Test
+	void abandonedTranscodeLeavesNoPartFile() throws Exception {
+		File clip = previewClip();
+		assumeTrue(clip != null, "preview/quick-rotate.mp4 is not available");
+		File dir = Files.createTempDirectory("solim-transcode-abandon").toFile();
+		File blocked = new File(dir, "audio.wav");
+		assumeTrue(blocked.mkdir() && new File(blocked, "occupied").createNewFile());
+
+		assertNull(AacToWav.decode(clip, blocked));
+
+		assertFalse(new File(dir, "audio.wav.part").exists());
+		assertTrue(blocked.isDirectory());
 	}
 
 	@Test

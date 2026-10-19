@@ -206,8 +206,8 @@ public final class SolimVideo extends Component
     private void buildOverlay() {
         Button playButton = new Button(this::togglePlay);
         playButton.icon(playing.map(active -> active ? pauseIconOrDefault() : playIconOrDefault()));
-        playButton.props(Values.size(Units.unit(11)), Values.prefWidth(Units.unit(11)),
-                Values.prefHeight(Units.unit(11)));
+        playButton.props(Values.size(Units.unit(9)), Values.prefWidth(Units.unit(9)),
+                Values.prefHeight(Units.unit(9)));
 
         SolimSlider scrub = SolimSlider.of(progress, 0f, 1f, 0.001f);
         scrub.element().addListener(new InputListener() {
@@ -226,23 +226,28 @@ public final class SolimVideo extends Component
         });
 
         Text time = Text
-                .of(new Computed<>(() -> formatTime(positionSig.get()) + " / " + formatTime(durationSig.get())));
+                .of(new Computed<>(() -> formatTime(positionSig.get()) + " / " + formatTime(durationSig.get())))
+                .props(Values.ellipsis());
 
         Button replayButton = new Button(this::replay);
         replayButton.icon(replayIconOrDefault());
-        replayButton.props(Values.size(Units.unit(11)), Values.prefWidth(Units.unit(11)),
-                Values.prefHeight(Units.unit(11)));
+        replayButton.props(Values.size(Units.unit(9)), Values.prefWidth(Units.unit(9)),
+                Values.prefHeight(Units.unit(9)));
 
         Button muteButton = new Button(this::toggleMute);
         muteButton.icon(mutedState.map(muted -> muted ? muteIconOrDefault() : volumeIconOrDefault()));
-        muteButton.props(Values.size(Units.unit(11)), Values.prefWidth(Units.unit(11)),
-                Values.prefHeight(Units.unit(11)));
+        muteButton.props(Values.size(Units.unit(9)), Values.prefWidth(Units.unit(9)),
+                Values.prefHeight(Units.unit(9)));
 
-        overlay.add(playButton.element()).size(Units.unit(11)).pad(Units.unit(1));
+        Table transport = new Table();
+        transport.add(playButton.element()).size(Units.unit(9)).pad(Units.unit(1));
+        transport.add(time.label()).growX().pad(Units.unit(1));
+        transport.add(replayButton.element()).size(Units.unit(9)).pad(Units.unit(1));
+        transport.add(muteButton.element()).size(Units.unit(9)).pad(Units.unit(1));
+
         overlay.add(scrub.element()).growX().pad(Units.unit(1));
-        overlay.add(time.label()).pad(Units.unit(1));
-        overlay.add(replayButton.element()).size(Units.unit(11)).pad(Units.unit(1));
-        overlay.add(muteButton.element()).size(Units.unit(11)).pad(Units.unit(1));
+        overlay.row();
+        overlay.add(transport).growX();
     }
 
     private Drawable playIconOrDefault() {
