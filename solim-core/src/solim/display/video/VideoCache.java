@@ -3,6 +3,7 @@ package solim.display.video;
 import arc.files.Fi;
 import arc.util.Log;
 import arc.util.Nullable;
+import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import mindustry.Vars;
@@ -65,7 +66,26 @@ public final class VideoCache {
 	}
 
 	public static boolean isFreshAudio(@Nullable Fi file) {
-		return isFresh(file, WAV_HEADER_BYTES + 1L);
+		return isFresh(file, WAV_HEADER_BYTES + 1L) && hasWaveHeader(file);
+	}
+
+	/**
+	 * Whether the cached file really is a wave file. A cache entry that was written by an
+	 * older build, or that was cut short, would keep the audio silent forever, because a
+	 * fresh cache is never rewritten.
+	 */
+	private static boolean hasWaveHeader(@Nullable Fi file) {
+		if (file == null) {
+			return false;
+		}
+		try (RandomAccessFile raf = new RandomAccessFile(file.file(), "r")) {
+			byte[] head = new byte[12];
+			raf.readFully(head);
+			return head[0] == 'R' && head[1] == 'I' && head[2] == 'F' && head[3] == 'F'
+					&& head[8] == 'W' && head[9] == 'A' && head[10] == 'V' && head[11] == 'E';
+		} catch (Throwable t) {
+			return false;
+		}
 	}
 
 	private static boolean isFresh(@Nullable Fi file, long minimumBytes) {

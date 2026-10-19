@@ -47,8 +47,25 @@ class VideoCacheTest {
 		audio.writeBytes(new byte[VideoCache.WAV_HEADER_BYTES]);
 		assertFalse(VideoCache.isFreshAudio(audio));
 
-		audio.writeBytes(new byte[VideoCache.WAV_HEADER_BYTES + 2]);
+		audio.writeBytes(waveFile(VideoCache.WAV_HEADER_BYTES + 2));
 		assertTrue(VideoCache.isFreshAudio(audio));
+	}
+
+	@Test
+	void audioEntryWithoutAWaveHeaderIsStale() throws Exception {
+		File file = File.createTempFile("solim-cache-audio", ".wav");
+		file.deleteOnExit();
+		Fi audio = new Fi(file);
+
+		audio.writeBytes(new byte[VideoCache.WAV_HEADER_BYTES + 2]);
+		assertFalse(VideoCache.isFreshAudio(audio), "a cache entry that is not a wave file cannot be used");
+	}
+
+	private static byte[] waveFile(int length) {
+		byte[] data = new byte[length];
+		byte[] magic = { 'R', 'I', 'F', 'F', 0, 0, 0, 0, 'W', 'A', 'V', 'E' };
+		System.arraycopy(magic, 0, data, 0, magic.length);
+		return data;
 	}
 
 	@Test

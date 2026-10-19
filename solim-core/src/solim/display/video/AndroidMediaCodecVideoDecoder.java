@@ -3,6 +3,7 @@ package solim.display.video;
 import arc.files.Fi;
 import arc.util.Nullable;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * Android decoder built on {@code MediaCodec} and {@code MediaExtractor}. It decodes H.264
@@ -372,7 +373,7 @@ final class AndroidMediaCodecVideoDecoder implements VideoFrameDecoder {
 		}
 		converter.convert(rawFrame, stride, uvOffset, sliceHeight, offsetX, offsetY, width, height, false, pixels);
 		rgba.clear();
-		rgba.order(java.nio.ByteOrder.LITTLE_ENDIAN).asIntBuffer().put(pixels, 0, width * height);
+		rgba.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().put(pixels, 0, width * height);
 		rgba.position(0);
 		rgba.limit(width * height * 4);
 	}

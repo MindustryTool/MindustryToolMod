@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import arc.files.Fi;
 import java.io.File;
+import java.nio.ByteBuffer;
+
 import org.junit.jupiter.api.Test;
 import solim.test.SolimEnv;
 
@@ -190,7 +192,7 @@ class VideoPlayerTest extends SolimEnv {
 		}
 
 		@Override
-		public double decodeNext(java.nio.ByteBuffer rgba) {
+		public double decodeNext(ByteBuffer rgba) {
 			if (stalePending) {
 				stalePending = false;
 				return position + 30;
