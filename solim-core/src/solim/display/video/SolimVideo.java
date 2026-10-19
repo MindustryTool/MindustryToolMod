@@ -43,6 +43,8 @@ public final class SolimVideo extends Component
         implements Configurable<SolimVideo>, VideoCapability, ImageCapability {
 
     private static final long OVERLAY_HIDE_DELAY = 2500;
+    private static final long SCRUB_SEEK_INTERVAL = 120;
+    private static final double SCRUB_SEEK_EPSILON = 0.6;
 
     private static VideoLoader loader = new DefaultVideoLoader();
 
@@ -129,6 +131,7 @@ public final class SolimVideo extends Component
     private long lastPoke = 0;
     private float refreshAccum = 0;
     private boolean scrubbing = false;
+    private long lastScrubSeek = 0;
 
     public SolimVideo() {
         this(new VideoStage());
@@ -222,6 +225,7 @@ public final class SolimVideo extends Component
             public void touchUp(InputEvent event, float x, float y, int pointer, KeyCode button) {
                 scrubbing = false;
                 poke();
+                flushScrub();
             }
         });
 
@@ -536,9 +540,36 @@ public final class SolimVideo extends Component
         double duration = active.getDuration();
         if (duration <= 0)
             return;
-        if (Math.abs(position * duration - active.getPosition()) > 0.6) {
-            active.seek(position * duration);
-        }
+        double target = position * duration;
+        if (Math.abs(target - active.getPosition()) <= SCRUB_SEEK_EPSILON)
+            return;
+        // A fast drag emits a seek per pointer move. Each one costs a full decoder seek,
+        // so they are throttled while dragging and the final position is applied on release.
+        if (scrubbing && !scrubSeekAllowed())
+            return;
+        active.seek(target);
+    }
+
+    private boolean scrubSeekAllowed() {
+        long now = Time.millis();
+        if (now - lastScrubSeek < SCRUB_SEEK_INTERVAL)
+            return false;
+        lastScrubSeek = now;
+        return true;
+    }
+
+    private void flushScrub() {
+        Float position = progress.get();
+        VideoPlayer active = player;
+        if (active == null || position == null)
+            return;
+        double duration = active.getDuration();
+        if (duration <= 0)
+            return;
+        double target = position * duration;
+        if (Math.abs(target - active.getPosition()) <= SCRUB_SEEK_EPSILON)
+            return;
+        active.seek(target);
     }
 
     void onAct(float delta) {
@@ -555,7 +586,10 @@ public final class SolimVideo extends Component
             durationSig.set(active.getDuration());
             playing.set(active.isPlaying());
             double duration = active.getDuration();
-            progress.set(duration > 0 ? (float) (active.getPosition() / duration) : 0f);
+            // While dragging, the slider owns the position — writing the playback position
+            // back would yank the handle away from the pointer.
+            if (!scrubbing)
+                progress.set(duration > 0 ? (float) (active.getPosition() / duration) : 0f);
         }
         if (scrubbing)
             poke();

@@ -21,6 +21,8 @@ import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
  */
 final class JCodecFrameDecoder implements VideoFrameDecoder {
 
+	private static final int MAX_DISCARDED_FRAMES = 8;
+
 	private final Fi file;
 	private SeekableByteChannel channel;
 	private RandomAccessFile mediaFile;
@@ -33,6 +35,7 @@ final class JCodecFrameDecoder implements VideoFrameDecoder {
 	private double duration;
 	private double frameRate = 30;
 	private double discardUntil = -1;
+	private int discarded = 0;
 
 	private JCodecFrameDecoder(Fi file) {
 		this.file = file;
@@ -87,9 +90,14 @@ final class JCodecFrameDecoder implements VideoFrameDecoder {
 				return END_OF_STREAM;
 			double pts = packet.getTimescale() > 0 ? (double) packet.getPts() / packet.getTimescale() : 0;
 			if (discardUntil >= 0) {
-				if (pts < discardUntil)
+				// The track restarts at the sync frame before the target. The drop is bounded so
+				// that a stream of seeks cannot starve playback.
+				if (pts < discardUntil && discarded < MAX_DISCARDED_FRAMES) {
+					discarded++;
 					continue;
+				}
 				discardUntil = -1;
+				discarded = 0;
 			}
 			Picture picture = packetDecoder.decode(packet.getData());
 			if (picture == null)
@@ -103,6 +111,7 @@ final class JCodecFrameDecoder implements VideoFrameDecoder {
 	public void seek(double seconds) {
 		double target = Math.max(0, seconds);
 		discardUntil = target;
+		discarded = 0;
 		long frameNo = totalFrames > 0
 				? Math.min((long) (target * frameRate), totalFrames - 1)
 				: (long) (target * frameRate);

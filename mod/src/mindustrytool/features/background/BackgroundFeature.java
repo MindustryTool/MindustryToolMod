@@ -36,6 +36,7 @@ public class BackgroundFeature extends Feature {
     private int rendererGeneration;
     private boolean releasedForGameplay;
     private boolean videoFailed;
+    private boolean pathEffectReady = false;
 
     public BackgroundFeature() {
         super(FeatureMetadata.builder()
@@ -51,6 +52,12 @@ public class BackgroundFeature extends Feature {
         scalingConfig = config.stringValue("scaling", BackgroundScaling.CROP);
 
         Effect.of(pathConfig.signal(), path -> {
+            // The effect runs once when it is created, which would load the background a
+            // second time: onEnable() already applies the path. Only later changes count.
+            if (!pathEffectReady) {
+                pathEffectReady = true;
+                return;
+            }
             if (isEnabled()) {
                 applyPath(path);
             }

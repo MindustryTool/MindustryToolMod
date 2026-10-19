@@ -15,6 +15,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import solim.core.Disposable;
 
 public final class VideoPlayer implements Disposable {
@@ -61,6 +62,10 @@ public final class VideoPlayer implements Disposable {
 	private volatile boolean loopRestartRequest = false;
 	private volatile int framesSinceLoop = 0;
 	private volatile double pendingSeek = -1;
+	private volatile int seekEpoch = 0;
+	private volatile double seekTarget = 0;
+	private final AtomicInteger sessionCounter = new AtomicInteger();
+	private volatile @Nullable Thread decodeThread;
 	private volatile boolean pendingPlay = false;
 	private volatile int cornerRadius = 0;
 	private volatile float lastPosition = 0f;
@@ -235,6 +240,7 @@ public final class VideoPlayer implements Disposable {
 	}
 
 	private void reopen() {
+		stopDecodeSession();
 		closeStream();
 		if (music != null) {
 			try {
@@ -261,12 +267,39 @@ public final class VideoPlayer implements Disposable {
 		}
 	}
 
+	/**
+	 * Ends the running decode session and waits for its thread to finish. A session that is
+	 * still winding down would push frames into the queues of the session that replaces it,
+	 * which starves the new decoder and can pull the native reader out from under a running
+	 * decode.
+	 */
+	private void stopDecodeSession() {
+		sessionCounter.incrementAndGet();
+		Thread previous = decodeThread;
+		decodeThread = null;
+		if (previous == null || previous == Thread.currentThread()) {
+			return;
+		}
+		try {
+			previous.interrupt();
+		} catch (Throwable ignored) {
+		}
+		try {
+			previous.join(500);
+		} catch (InterruptedException ignored) {
+			Thread.currentThread().interrupt();
+		}
+	}
+
 	private void seekInternal(double target) {
+		seekEpoch++;
+		seekTarget = target;
 		pendingSeek = target;
 		silentClock = (float) target;
 		lastPosition = (float) target;
 		lastAudioPosition = -1f;
 		holdback = null;
+		drainQueues();
 		if (music != null) {
 			try {
 				music.setPosition((float) target);
@@ -311,13 +344,13 @@ public final class VideoPlayer implements Disposable {
 			lastPosition = master;
 			presentUpTo(master);
 			boolean starved = streamEnded && decodeDone && readyFramesIsEmpty() && holdback == null;
-		// If looping, the decode thread restarts the stream itself — do NOT seek again.
-		boolean pastEnd = !looping && durationSec > 0 && master >= durationSec - END_EPSILON;
-		if (starved) {
-			toEnded();
-		} else if (pastEnd) {
-			seekInternal(0);
-		}
+			boolean pastEnd = durationSec > 0 && master >= durationSec - END_EPSILON;
+			// A looping clip is restarted by the decode thread, which signals the restart
+			// through loopRestartRequest. Seeking from here as well would fight that
+			// restart and leave the presentation clock pinned at the end of the clip.
+			if (starved || (pastEnd && !looping)) {
+				toEnded();
+			}
 		} else if (state == State.PAUSED || state == State.READY || state == State.ENDED) {
 			presentUpTo(Double.MAX_VALUE);
 		}
@@ -411,7 +444,6 @@ public final class VideoPlayer implements Disposable {
 	}
 
 	private void toEnded() {
-		Log.info("SolimVideo: toEnded (starved/end) state=" + state);
 		state = State.ENDED;
 		if (music != null) {
 			try {
@@ -470,8 +502,10 @@ public final class VideoPlayer implements Disposable {
 	public void dispose() {
 		if (disposed)
 			return;
-		Log.info("SolimVideo: dispose called");
 		disposed = true;
+		// Invalidates the running session so a decoder that is still opening is released
+		// instead of being installed into a player that nobody owns any more.
+		sessionCounter.incrementAndGet();
 		pendingPlay = false;
 		if (music != null) {
 			try {
@@ -488,12 +522,20 @@ public final class VideoPlayer implements Disposable {
 	}
 
 	private void openInBackground() {
+		VideoFrameDecoder opened = null;
+		int session = sessionCounter.incrementAndGet();
 		try {
 			File file = mp4File.file();
-			decoder = VideoDecoders.open(mp4File);
-			width = decoder.width();
-			height = decoder.height();
-			durationSec = decoder.duration();
+			opened = VideoDecoders.open(mp4File);
+			if (session != sessionCounter.get()) {
+				closeDecoder(opened);
+				return;
+			}
+			VideoFrameDecoder instance = opened;
+			decoder = instance;
+			width = instance.width();
+			height = instance.height();
+			durationSec = instance.duration();
 
 			freeBuffers = new ArrayBlockingQueue<>(FRAME_POOL);
 			for (int i = 0; i < FRAME_POOL; i++) {
@@ -502,8 +544,9 @@ public final class VideoPlayer implements Disposable {
 			readyFrames = new ArrayBlockingQueue<>(FRAME_POOL);
 
 			hasAudio = transcodeAudio(file);
-			postMain(this::finishOpen);
+			postMain(() -> finishOpen(session, instance));
 		} catch (Throwable t) {
+			closeDecoder(opened);
 			fail(t);
 		}
 	}
@@ -522,9 +565,13 @@ public final class VideoPlayer implements Disposable {
 		}
 	}
 
-	private void finishOpen() {
-		if (disposed || state != State.LOADING) {
-			closeStream();
+	private void finishOpen(int session, @Nullable VideoFrameDecoder instance) {
+		if (disposed || state != State.LOADING || session != sessionCounter.get()) {
+			// A newer session already owns the stream, so only this decoder is released.
+			closeDecoder(instance);
+			if (decoder == instance) {
+				decoder = null;
+			}
 			return;
 		}
 		try {
@@ -551,7 +598,7 @@ public final class VideoPlayer implements Disposable {
 			if (listener != null)
 				listener.onReady(width, height, durationSec);
 			try {
-				DECODE_WORKER.execute(this::decodeLoop);
+				DECODE_WORKER.execute(() -> decodeLoop(session));
 			} catch (Throwable t) {
 				failOnMain(t);
 				return;
@@ -592,9 +639,13 @@ public final class VideoPlayer implements Disposable {
 		}
 	}
 
-	private void decodeLoop() {
+	private void decodeLoop(int session) {
+		VideoFrameDecoder active = decoder;
+		BlockingQueue<ByteBuffer> buffers = freeBuffers;
+		BlockingQueue<DecodedFrame> frames = readyFrames;
+		decodeThread = Thread.currentThread();
 		try {
-			while (!disposed) {
+			while (!disposed && session == sessionCounter.get()) {
 				State current = state;
 				if (current != State.PLAYING && !singleFrame) {
 					sleepBriefly();
@@ -603,7 +654,7 @@ public final class VideoPlayer implements Disposable {
 				if (pendingSeek >= 0) {
 					double target = pendingSeek;
 					pendingSeek = -1;
-					doSeek(target);
+					doSeek(active, target, frames, buffers);
 					if (disposed)
 						break;
 					if (state != State.PLAYING && !singleFrame)
@@ -613,36 +664,48 @@ public final class VideoPlayer implements Disposable {
 					break;
 				ByteBuffer buffer;
 				try {
-					buffer = freeBuffers.poll(50, TimeUnit.MILLISECONDS);
+					buffer = buffers.poll(50, TimeUnit.MILLISECONDS);
 				} catch (InterruptedException e) {
 					break;
 				}
 				if (buffer == null || disposed) {
 					if (buffer != null)
-						freeBuffers.offer(buffer);
+						buffers.offer(buffer);
 					continue;
 				}
 				if (pendingSeek >= 0 || (state != State.PLAYING && !singleFrame)) {
-					freeBuffers.offer(buffer);
+					buffers.offer(buffer);
 					continue;
 				}
 				double pts;
-				VideoFrameDecoder activeDecoder = decoder;
-				if (activeDecoder == null) {
+				if (active == null) {
+					buffers.offer(buffer);
 					break;
 				}
+				int epoch = seekEpoch;
 				try {
-					pts = activeDecoder.decodeNext(buffer);
+					pts = active.decodeNext(buffer);
 				} catch (Throwable t) {
-					freeBuffers.offer(buffer);
-					if (switchToSoftwareDecoder())
+					buffers.offer(buffer);
+					VideoFrameDecoder software = switchToSoftwareDecoder(active);
+					if (software != null) {
+						active = software;
 						continue;
+					}
 					fail(t);
 					break;
 				}
+				// A seek that landed while this frame was being decoded invalidates it, unless the
+				// frame already sits at the new position. Dropping every frame would starve the
+				// display while the user scrubs, because each seek invalidates the frame that was
+				// just decoded.
+				if (epoch != seekEpoch && pts + 0.001 < seekTarget) {
+					buffers.offer(buffer);
+					continue;
+				}
 				if (pts < 0) {
-					freeBuffers.offer(buffer);
-					if (!handleStreamEnd())
+					buffers.offer(buffer);
+					if (!handleStreamEnd(active, frames, buffers))
 						break;
 					continue;
 				}
@@ -656,7 +719,7 @@ public final class VideoPlayer implements Disposable {
 				boolean queued = false;
 				try {
 					while (!queued && !disposed && (state == State.PLAYING || singleFrame)) {
-						queued = readyFrames.offer(frame, FRAME_WAIT_MILLIS, TimeUnit.MILLISECONDS);
+						queued = frames.offer(frame, FRAME_WAIT_MILLIS, TimeUnit.MILLISECONDS);
 						if (!queued && !disposed && (state == State.PLAYING || singleFrame)) {
 							// The queue stayed full: pace the decoder instead of abandoning the
 							// stream. A fast native decoder can otherwise outrun a slow display,
@@ -671,7 +734,7 @@ public final class VideoPlayer implements Disposable {
 					Thread.currentThread().interrupt();
 				}
 				if (!queued) {
-					freeBuffers.offer(buffer);
+					buffers.offer(buffer);
 					if (disposed)
 						break;
 					continue;
@@ -685,7 +748,11 @@ public final class VideoPlayer implements Disposable {
 				fail(t);
 		} finally {
 			decodeDone = true;
-			closeStream();
+			closeDecoder(active);
+			if (decoder == active) {
+				decoder = null;
+			}
+			decodeThread = null;
 		}
 	}
 
@@ -697,10 +764,11 @@ public final class VideoPlayer implements Disposable {
 		}
 	}
 
-	private boolean handleStreamEnd() {
+	private boolean handleStreamEnd(VideoFrameDecoder active, BlockingQueue<DecodedFrame> frames,
+			BlockingQueue<ByteBuffer> buffers) {
 		if (looping && !disposed && framesSinceLoop > 0) {
 			framesSinceLoop = 0;
-			doSeek(0);
+			doSeek(active, 0, frames, buffers);
 			loopRestartRequest = true;
 			return true;
 		}
@@ -708,9 +776,9 @@ public final class VideoPlayer implements Disposable {
 		return false;
 	}
 
-	private void doSeek(double seconds) {
-		drainQueues();
-		VideoFrameDecoder active = decoder;
+	private void doSeek(@Nullable VideoFrameDecoder active, double seconds,
+			BlockingQueue<DecodedFrame> frames, BlockingQueue<ByteBuffer> buffers) {
+		drainQueues(frames, buffers);
 		if (active == null)
 			return;
 		try {
@@ -721,40 +789,48 @@ public final class VideoPlayer implements Disposable {
 	}
 
 	private void drainQueues() {
-		if (readyFrames == null || freeBuffers == null)
+		drainQueues(readyFrames, freeBuffers);
+	}
+
+	private static void drainQueues(@Nullable BlockingQueue<DecodedFrame> frames,
+			@Nullable BlockingQueue<ByteBuffer> buffers) {
+		if (frames == null || buffers == null)
 			return;
 		DecodedFrame frame;
-		while ((frame = readyFrames.poll()) != null) {
-			freeBuffers.offer(frame.pixels);
+		while ((frame = frames.poll()) != null) {
+			buffers.offer(frame.pixels);
 		}
 	}
 
-	private boolean switchToSoftwareDecoder() {
-		VideoFrameDecoder active = decoder;
-		if (active == null || !active.isNative())
-			return false;
+	private @Nullable VideoFrameDecoder switchToSoftwareDecoder(VideoFrameDecoder current) {
+		if (current == null || !current.isNative())
+			return null;
 		try {
 			VideoFrameDecoder software = VideoDecoders.openSoftware(mp4File);
 			decoder = software;
-			active.close();
+			closeDecoder(current);
 			drainQueues();
 			software.seek(lastPosition);
 			Log.warn("SolimVideo: native decoder failed, continuing with software decoding");
-			return true;
+			return software;
 		} catch (Throwable error) {
 			Log.debug("SolimVideo: software fallback failed: " + error.getMessage());
-			return false;
+			return null;
 		}
 	}
 
 	private void closeStream() {
 		VideoFrameDecoder active = decoder;
 		decoder = null;
-		if (active != null) {
-			try {
-				active.close();
-			} catch (Throwable ignored) {
-			}
+		closeDecoder(active);
+	}
+
+	private static void closeDecoder(@Nullable VideoFrameDecoder instance) {
+		if (instance == null)
+			return;
+		try {
+			instance.close();
+		} catch (Throwable ignored) {
 		}
 	}
 

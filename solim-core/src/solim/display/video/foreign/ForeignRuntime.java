@@ -7,9 +7,9 @@ import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Reflective bridge over the Foreign Function & Memory API (JDK 22+).
@@ -56,8 +56,11 @@ public final class ForeignRuntime {
 	private final Object layoutShort;
 	private final Object layoutByte;
 	private final Object layoutAddress;
-	private final Map<Long, MethodHandle> functions = new HashMap<>();
-	private final Map<String, Long> symbols = new HashMap<>();
+	// Decoders are opened and closed on worker threads, so both caches are written
+	// concurrently. A plain HashMap can be corrupted by that, which surfaces as a crash
+	// inside the JVM rather than as an exception.
+	private final Map<Long, MethodHandle> functions = new ConcurrentHashMap<>();
+	private final Map<String, Long> symbols = new ConcurrentHashMap<>();
 
 	private ForeignRuntime() throws ReflectiveOperationException {
 		Class<?> arenaClass = Class.forName(ROOT + "Arena");

@@ -25,6 +25,7 @@ final class MediaFoundationVideoDecoder implements VideoFrameDecoder {
 	private static final int VT_I8 = 20;
 	private static final int VT_UI8 = 21;
 	private static final int COINIT_MULTITHREADED = 0;
+	private static final int MAX_DISCARDED_FRAMES = 8;
 
 	private static final int IUNKNOWN_RELEASE = 2;
 	private static final int ATTRIBUTES_GET_UINT32 = 7;
@@ -47,6 +48,14 @@ final class MediaFoundationVideoDecoder implements VideoFrameDecoder {
 	private static final Object[] NO_ARGUMENTS = new Object[0];
 
 	private static volatile Boolean supported;
+
+	/**
+	 * Media Foundation is not reference counted: a single MFShutdown unloads the platform
+	 * for every reader in the process. Decoders are created and destroyed on worker threads,
+	 * so the platform is started and stopped by the number of live decoders instead.
+	 */
+	private static final Object platformLock = new Object();
+	private static int platformRefs = 0;
 
 	private final ForeignRuntime ffi;
 	private final ForeignMemory actualStream;
@@ -79,9 +88,16 @@ final class MediaFoundationVideoDecoder implements VideoFrameDecoder {
 	private double duration;
 	private double frameRate = 30;
 	private double discardUntil = -1;
+	private int discarded = 0;
 	private byte[] rawFrame = new byte[0];
 	private int[] pixels = new int[0];
 	private final Nv12ToRgbaConverter converter = new Nv12ToRgbaConverter();
+
+	/**
+	 * Guards the source reader. Releasing it while a read is in flight leaves the decoder
+	 * calling into freed native memory, which kills the process without a Java stack trace.
+	 */
+	private final Object streamLock = new Object();
 
 	private MediaFoundationVideoDecoder() {
 		ffi = ForeignRuntime.get();
@@ -180,61 +196,93 @@ final class MediaFoundationVideoDecoder implements VideoFrameDecoder {
 
 	@Override
 	public double decodeNext(ByteBuffer rgba) {
-		while (true) {
-			check(call(reader(), SOURCE_READER_READ_SAMPLE, MF_SOURCE_READER_FIRST_VIDEO_STREAM, 0,
-					actualStream, streamFlags, timestamp, sampleOut), "ReadSample");
-			int flags = streamFlags.getInt(0);
-			ForeignMemory sample = sampleOut.getPointer(0);
-			if (sample.isNull()) {
-				if ((flags & MF_SOURCE_READERF_ENDOFSTREAM) != 0)
-					return END_OF_STREAM;
-				continue;
-			}
-			try {
-				if ((flags & MF_SOURCE_READERF_ENDOFSTREAM) != 0)
-					return END_OF_STREAM;
-				if ((flags & MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED) != 0)
-					refreshOutputFormat();
-				double pts = timestamp.getLong(0) / 10_000_000.0;
-				if (discardUntil >= 0) {
-					if (pts + 1e-6 < discardUntil)
-						continue;
-					discardUntil = -1;
+		synchronized (streamLock) {
+			while (true) {
+				check(call(reader(), SOURCE_READER_READ_SAMPLE, MF_SOURCE_READER_FIRST_VIDEO_STREAM, 0,
+						actualStream, streamFlags, timestamp, sampleOut), "ReadSample");
+				int flags = streamFlags.getInt(0);
+				ForeignMemory sample = sampleOut.getPointer(0);
+				if (sample.isNull()) {
+					if ((flags & MF_SOURCE_READERF_ENDOFSTREAM) != 0)
+						return END_OF_STREAM;
+					continue;
 				}
-				copyFrame(sample, rgba);
-				return pts;
-			} finally {
-				release(sample);
+				try {
+					if ((flags & MF_SOURCE_READERF_ENDOFSTREAM) != 0)
+						return END_OF_STREAM;
+					if ((flags & MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED) != 0)
+						refreshOutputFormat();
+					double pts = timestamp.getLong(0) / 10_000_000.0;
+					if (discardUntil >= 0) {
+						// The reader restarts at the keyframe before the target, so the frames in
+						// between have to be dropped. The drop is bounded: a scrub that keeps
+						// seeking would otherwise never reach the target and playback would stall.
+						if (pts + 1e-6 < discardUntil && discarded < MAX_DISCARDED_FRAMES) {
+							discarded++;
+							continue;
+						}
+						discardUntil = -1;
+						discarded = 0;
+					}
+					copyFrame(sample, rgba);
+					return pts;
+				} finally {
+					release(sample);
+				}
 			}
 		}
 	}
 
 	@Override
 	public void seek(double seconds) {
-		double target = Math.max(0, seconds);
-		timeVariant.clear();
-		timeVariant.setShort(0, (short) VT_I8);
-		timeVariant.setLong(8, (long) (target * 10_000_000L));
-		check(call(reader(), SOURCE_READER_SET_CURRENT_POSITION, timeFormat, timeVariant), "SetCurrentPosition");
-		discardUntil = target;
+		synchronized (streamLock) {
+			double target = Math.max(0, seconds);
+			timeVariant.clear();
+			timeVariant.setShort(0, (short) VT_I8);
+			timeVariant.setLong(8, (long) (target * 10_000_000L));
+			check(call(reader(), SOURCE_READER_SET_CURRENT_POSITION, timeFormat, timeVariant), "SetCurrentPosition");
+			discardUntil = target;
+			discarded = 0;
+		}
 	}
 
 	@Override
 	public void close() {
-		converter.close();
-		if (reader != null) {
-			release(reader);
-			reader = null;
+		synchronized (streamLock) {
+			converter.close();
+			if (reader != null) {
+				release(reader);
+				reader = null;
+			}
+			if (attributes != null) {
+				release(attributes);
+				attributes = null;
+			}
+			releasePlatform();
 		}
-		if (attributes != null) {
-			release(attributes);
-			attributes = null;
+	}
+
+	private void acquirePlatform() {
+		synchronized (platformLock) {
+			if (platformRefs++ == 0) {
+				check(ffi.invoke(startup, MF_VERSION, 0), "MFStartup");
+			}
+			started = true;
 		}
-		if (started) {
+	}
+
+	private void releasePlatform() {
+		synchronized (platformLock) {
+			if (!started) {
+				return;
+			}
 			started = false;
-			try {
-				ffi.invoke(shutdown);
-			} catch (Throwable ignored) {
+			if (--platformRefs <= 0) {
+				platformRefs = 0;
+				try {
+					ffi.invoke(shutdown);
+				} catch (Throwable ignored) {
+				}
 			}
 		}
 	}
@@ -242,8 +290,7 @@ final class MediaFoundationVideoDecoder implements VideoFrameDecoder {
 	private void open(Fi file) {
 		timeFormat.clear();
 		initializeCom();
-		check(ffi.invoke(startup, MF_VERSION, 0), "MFStartup");
-		started = true;
+		acquirePlatform();
 
 		ForeignMemory attributesOut = ffi.allocate(8);
 		check(ffi.invoke(createAttributes, attributesOut, 2), "MFCreateAttributes");

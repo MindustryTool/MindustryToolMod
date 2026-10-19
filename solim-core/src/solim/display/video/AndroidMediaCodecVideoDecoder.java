@@ -40,6 +40,12 @@ final class AndroidMediaCodecVideoDecoder implements VideoFrameDecoder {
 	private boolean outputEOS;
 	private long currentPtsUs;
 	private final Nv12ToRgbaConverter converter = new Nv12ToRgbaConverter();
+
+	/**
+	 * Guards the codec. Releasing it while a dequeue is in flight leaves the decoder calling
+	 * into a freed native object, which kills the process without a Java stack trace.
+	 */
+	private final Object streamLock = new Object();
 	private byte[] rawFrame = new byte[0];
 	private int[] pixels = new int[0];
 
@@ -154,6 +160,12 @@ final class AndroidMediaCodecVideoDecoder implements VideoFrameDecoder {
 
 	@Override
 	public double decodeNext(ByteBuffer rgba) {
+		synchronized (streamLock) {
+			return decodeNextLocked(rgba);
+		}
+	}
+
+	private double decodeNextLocked(ByteBuffer rgba) {
 		Class<?> codecClass = null;
 		try {
 			codecClass = Class.forName("android.media.MediaCodec");
@@ -246,38 +258,44 @@ final class AndroidMediaCodecVideoDecoder implements VideoFrameDecoder {
 
 	@Override
 	public void seek(double seconds) {
-		try {
-			Class<?> codecClass = Class.forName("android.media.MediaCodec");
-			codecClass.getMethod("flush").invoke(codec);
-			Class<?> extractorClass = Class.forName("android.media.MediaExtractor");
-			extractorClass.getMethod("seekTo", long.class, int.class).invoke(extractor, (long) (seconds * 1_000_000.0), SEEK_TO_PREVIOUS_SYNC);
-			inputEOS = false;
-			outputEOS = false;
-		} catch (Throwable ignored) {
+		synchronized (streamLock) {
+			try {
+				Class<?> codecClass = Class.forName("android.media.MediaCodec");
+				codecClass.getMethod("flush").invoke(codec);
+				Class<?> extractorClass = Class.forName("android.media.MediaExtractor");
+				extractorClass.getMethod("seekTo", long.class, int.class).invoke(extractor, (long) (seconds * 1_000_000.0), SEEK_TO_PREVIOUS_SYNC);
+				inputEOS = false;
+				outputEOS = false;
+			} catch (Throwable ignored) {
+			}
 		}
 	}
 
 	@Override
 	public void close() {
-		try {
-			if (codec != null) {
-				Class<?> codecClass = Class.forName("android.media.MediaCodec");
-				try {
-					codecClass.getMethod("stop").invoke(codec);
-				} catch (Throwable ignored) {
+		synchronized (streamLock) {
+			try {
+				if (codec != null) {
+					Class<?> codecClass = Class.forName("android.media.MediaCodec");
+					try {
+						codecClass.getMethod("stop").invoke(codec);
+					} catch (Throwable ignored) {
+					}
+					codecClass.getMethod("release").invoke(codec);
+					codec = null;
 				}
-				codecClass.getMethod("release").invoke(codec);
-				codec = null;
+			} catch (Throwable ignored) {
 			}
-		} catch (Throwable ignored) {
 		}
-		try {
-			if (extractor != null) {
-				Class.forName("android.media.MediaExtractor").getMethod("release").invoke(extractor);
+		synchronized (streamLock) {
+			try {
+				if (extractor != null) {
+					Class.forName("android.media.MediaExtractor").getMethod("release").invoke(extractor);
+				}
+			} catch (Throwable ignored) {
 			}
-		} catch (Throwable ignored) {
+			converter.close();
 		}
-		converter.close();
 	}
 
 	private void applyOutputFormat(Object format) {
