@@ -138,7 +138,6 @@ public class Main extends Mod {
                 Core.app.post(() -> {
                     boolean hasCrashed = new CrashReportService().checkForCrashes();
                     if (hasCrashed) {
-
                         FeatureManager.disableAll();
                     }
                     FeatureManager.init();

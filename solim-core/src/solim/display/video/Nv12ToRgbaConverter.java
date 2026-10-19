@@ -105,8 +105,8 @@ final class Nv12ToRgbaConverter {
 			int targetTop = y * width;
 			int targetBottom = targetTop + width;
 			for (int x = 0; x < evenWidth; x += 2) {
-				int u = source[chromaBase + x] & 0xFF;
-				int v = source[chromaBase + x + 1] & 0xFF;
+				int u = source[chromaBase + x + 1] & 0xFF;
+				int v = source[chromaBase + x] & 0xFF;
 				int redBase = rTable[v];
 				int greenBase = gTableU[u] + gTableV[v];
 				int blueBase = bTable[u];
@@ -135,8 +135,8 @@ final class Nv12ToRgbaConverter {
 		int targetBase = y * width;
 		int evenWidth = width & ~1;
 		for (int x = 0; x < evenWidth; x += 2) {
-			int u = source[chromaBase + x] & 0xFF;
-			int v = source[chromaBase + x + 1] & 0xFF;
+			int u = source[chromaBase + x + 1] & 0xFF;
+			int v = source[chromaBase + x] & 0xFF;
 			int redBase = rTable[v];
 			int greenBase = gTableU[u] + gTableV[v];
 			int blueBase = bTable[u];
@@ -147,8 +147,8 @@ final class Nv12ToRgbaConverter {
 		if ((width & 1) != 0) {
 			int x = evenWidth;
 			int chroma = chromaBase + x;
-			int u = source[chroma] & 0xFF;
-			int v = source[chroma + 1] & 0xFF;
+			int u = source[chroma + 1] & 0xFF;
+			int v = source[chroma] & 0xFF;
 			out[targetBase + x] = pack(yTable[source[lumaBase + x] & 0xFF],
 					rTable[v], gTableU[u] + gTableV[v], bTable[u]);
 		}
