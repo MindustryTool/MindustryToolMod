@@ -38,6 +38,11 @@ public final class VideoPlayer implements Disposable {
 	private static final double END_EPSILON = 0.08;
 	private static final float AUDIO_EPSILON = 0.001f;
 	private static final float RESYNC_THRESHOLD = 0.25f;
+	/**
+	 * How far the playback clock may drift from the decoded frames before the clock is
+	 * pulled back onto the decoder's timeline.
+	 */
+	private static final float TIMELINE_TOLERANCE = 1.0f;
 
 	static {
 		VideoLog.install();
@@ -64,6 +69,12 @@ public final class VideoPlayer implements Disposable {
 	private volatile double pendingSeek = -1;
 	private volatile int seekEpoch = 0;
 	private volatile double seekTarget = 0;
+	/**
+	 * Position of the newest frame the decoder produced. The decoded frames are the media
+	 * timeline, so this is the position everything else is measured against.
+	 */
+	private volatile double decodedPts = -1;
+	private volatile int presentedFrames = 0;
 	private final AtomicInteger sessionCounter = new AtomicInteger();
 	private volatile @Nullable Thread decodeThread;
 	private volatile boolean pendingPlay = false;
@@ -101,6 +112,23 @@ public final class VideoPlayer implements Disposable {
 
 	public float getPosition() {
 		return lastPosition;
+	}
+
+	/**
+	 * Position of the newest frame the decoder produced, or -1 when no frame was decoded
+	 * yet. The decoded frames are the media timeline, so this is the position the playback
+	 * clock is measured against.
+	 */
+	double decodedPosition() {
+		return decodedPts;
+	}
+
+	/**
+	 * Number of frames that reached the display. A player that stops presenting frames is
+	 * frozen, even when its clock keeps running.
+	 */
+	int presentedFrameCount() {
+		return presentedFrames;
 	}
 
 	public double getDuration() {
@@ -299,6 +327,9 @@ public final class VideoPlayer implements Disposable {
 		lastPosition = (float) target;
 		lastAudioPosition = -1f;
 		holdback = null;
+		// The decoded position still describes the old position, so it is dropped until the
+		// decoder reports a frame from the new one.
+		decodedPts = -1;
 		drainQueues();
 		if (music != null) {
 			try {
@@ -321,6 +352,9 @@ public final class VideoPlayer implements Disposable {
 			silentClock = 0f;
 			lastPosition = 0f;
 			holdback = null;
+			// The decoder starts the clip over, so its old position no longer describes
+			// anything until it reports a frame from the new pass.
+			decodedPts = -1;
 			if (music != null) {
 				try {
 					music.setPosition(0);
@@ -338,6 +372,17 @@ public final class VideoPlayer implements Disposable {
 			float master = advanceClock(silentClock, delta, audioPosition, audioAdvancing);
 			if (master < 0f)
 				master = 0f;
+			// The decoded frames are the media timeline. A clock that runs away from them
+			// presents frames that no longer exist, leaves the display waiting for a frame
+			// that will never arrive and races to the end of the clip, so the clock is
+			// pulled back onto the timeline the decoder is on.
+			double decoded = decodedPts;
+			if (decoded >= 0 && Math.abs(master - decoded) > TIMELINE_TOLERANCE) {
+				master = (float) decoded;
+				silentClock = master;
+				lastAudioPosition = -1f;
+				resyncAudio(master);
+			}
 			if (audioAdvancing && master - audioPosition > RESYNC_THRESHOLD)
 				resyncAudio(master);
 			silentClock = master;
@@ -392,6 +437,11 @@ public final class VideoPlayer implements Disposable {
 			if (holdback.pts <= master + 0.005) {
 				best = holdback;
 				holdback = null;
+			} else if (holdback.pts > decodedPts + TIMELINE_TOLERANCE) {
+				// The decoder has moved on to a different position, so this frame belongs to
+				// the previous one. Holding it back would keep every later frame waiting.
+				recycle(holdback);
+				holdback = null;
 			} else {
 				return;
 			}
@@ -410,6 +460,7 @@ public final class VideoPlayer implements Disposable {
 			}
 		}
 		if (best != null) {
+			presentedFrames++;
 			upload(best.pixels);
 			recycle(best);
 		}
@@ -709,6 +760,7 @@ public final class VideoPlayer implements Disposable {
 						break;
 					continue;
 				}
+				decodedPts = pts;
 				if (cornerRadius > 0)
 					RgbaCorners.apply(buffer, width, height, cornerRadius);
 				// H.264 frames cannot be skipped without breaking reference chains, so the decoder is

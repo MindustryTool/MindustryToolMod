@@ -102,6 +102,156 @@ class VideoPlayerTest extends SolimEnv {
 	}
 
 	@Test
+	void thePlaybackClockStaysOnTheDecodedTimelineAfterRapidScrubbing() throws Exception {
+		File clip = previewClip();
+		assumeTrue(clip != null, "preview/quick-rotate.mp4 is not available");
+		VideoPlayer player = new VideoPlayer();
+		try {
+			player.setLooping(true);
+			player.open(new Fi(clip), null, false, accepting());
+
+			for (int i = 0; i < 2000 && player.getState() == VideoPlayer.State.LOADING; i++) {
+				player.update(1f / 60f);
+				Thread.sleep(2);
+			}
+			assertEquals(VideoPlayer.State.READY, player.getState(), "the clip must load before it can play");
+			player.play();
+			for (int i = 0; i < 30; i++) {
+				player.update(1f / 60f);
+				Thread.sleep(2);
+			}
+
+			for (int i = 0; i < 60; i++) {
+				player.seek(i % 2 == 0 ? 1.0 : 8.0);
+				player.update(1f / 60f);
+				Thread.sleep(2);
+			}
+			int presented = player.presentedFrameCount();
+			for (int i = 0; i < 60; i++) {
+				player.update(1f / 60f);
+				Thread.sleep(2);
+			}
+
+			assertTrue(player.presentedFrameCount() > presented,
+					"the display must keep receiving frames after scrubbing");
+			double decoded = player.decodedPosition();
+			assertTrue(decoded >= 0, "the decoder must still be producing frames after scrubbing");
+			assertTrue(Math.abs(player.getPosition() - decoded) < 2.0,
+					"the playback clock must follow the decoded frames; clock=" + player.getPosition()
+							+ " decoded=" + decoded);
+		} finally {
+			player.dispose();
+		}
+	}
+
+	/**
+	 * A decoder that hands out one frame from the position it was at before the seek before
+	 * it continues from the requested one, which is what a hardware source reader does while
+	 * it catches up with the new position.
+	 */
+	private static final class StaleFrameDecoder implements VideoFrameDecoder {
+
+		private double position;
+		private boolean stalePending;
+		private final double duration;
+
+		StaleFrameDecoder(double duration) {
+			this.duration = duration;
+		}
+
+		@Override
+		public String name() {
+			return "stale";
+		}
+
+		@Override
+		public boolean isNative() {
+			return true;
+		}
+
+		@Override
+		public int width() {
+			return 16;
+		}
+
+		@Override
+		public int height() {
+			return 16;
+		}
+
+		@Override
+		public double duration() {
+			return duration;
+		}
+
+		@Override
+		public double frameRate() {
+			return 30;
+		}
+
+		@Override
+		public double decodeNext(java.nio.ByteBuffer rgba) {
+			if (stalePending) {
+				stalePending = false;
+				return position + 30;
+			}
+			position += 1 / 30.0;
+			if (position > duration)
+				return -1;
+			return position;
+		}
+
+		@Override
+		public void seek(double seconds) {
+			position = seconds;
+			stalePending = true;
+		}
+
+		@Override
+		public void close() {
+		}
+	}
+
+	@Test
+	void aFrameFromThePreviousPositionDoesNotFreezeTheDisplay() throws Exception {
+		StaleFrameDecoder decoder = new StaleFrameDecoder(20);
+		VideoDecoders.setFactory(file -> decoder);
+		VideoPlayer player = new VideoPlayer();
+		try {
+			player.setLooping(true);
+			player.open(new Fi(new File("unused.mp4")), null, false, accepting());
+
+			for (int i = 0; i < 2000 && player.getState() == VideoPlayer.State.LOADING; i++) {
+				player.update(1f / 60f);
+				Thread.sleep(2);
+			}
+			assertEquals(VideoPlayer.State.READY, player.getState(), "the clip must load before it can play");
+			player.play();
+			for (int i = 0; i < 60; i++) {
+				player.update(1f / 60f);
+				Thread.sleep(2);
+			}
+
+			// Jump backwards: the decoder answers with a frame from the old position first.
+			player.seek(2);
+			int presented = player.presentedFrameCount();
+			for (int i = 0; i < 120; i++) {
+				player.update(1f / 60f);
+				Thread.sleep(2);
+			}
+
+			assertTrue(player.presentedFrameCount() > presented,
+					"a frame from the previous position must not stop the display");
+			assertTrue(Math.abs(player.getPosition() - player.decodedPosition()) < 2.0,
+					"the playback clock must follow the decoded frames; clock=" + player.getPosition()
+							+ " decoded=" + player.decodedPosition());
+		} finally {
+			player.dispose();
+			VideoDecoders.setFactory(null);
+		}
+	}
+
+	@Test
 	void initialStateIsIdle() {
 		VideoPlayer player = new VideoPlayer();
 		assertEquals(VideoPlayer.State.IDLE, player.getState());

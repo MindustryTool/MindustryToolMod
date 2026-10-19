@@ -130,8 +130,8 @@ public final class SolimVideo extends Component
     private int cornerRadius = 0;
     private long lastPoke = 0;
     private float refreshAccum = 0;
-    private boolean scrubbing = false;
     private long lastScrubSeek = 0;
+    private @Nullable SolimSlider scrubSlider;
 
     public SolimVideo() {
         this(new VideoStage());
@@ -213,17 +213,16 @@ public final class SolimVideo extends Component
                 Values.prefHeight(Units.unit(9)));
 
         SolimSlider scrub = SolimSlider.of(progress, 0f, 1f, 0.001f);
+        scrubSlider = scrub;
         scrub.element().addListener(new InputListener() {
             @Override
             public boolean touchDown(InputEvent event, float x, float y, int pointer, KeyCode button) {
-                scrubbing = true;
                 poke();
                 return false;
             }
 
             @Override
             public void touchUp(InputEvent event, float x, float y, int pointer, KeyCode button) {
-                scrubbing = false;
                 poke();
                 flushScrub();
             }
@@ -545,9 +544,18 @@ public final class SolimVideo extends Component
             return;
         // A fast drag emits a seek per pointer move. Each one costs a full decoder seek,
         // so they are throttled while dragging and the final position is applied on release.
-        if (scrubbing && !scrubSeekAllowed())
+        if (isScrubbing() && !scrubSeekAllowed())
             return;
         active.seek(target);
+    }
+
+    /**
+     * Whether the user is holding the scrub handle. The slider knows this itself, and its
+     * answer stays correct even when the pointer leaves the handle during a fast drag.
+     */
+    private boolean isScrubbing() {
+        SolimSlider scrub = scrubSlider;
+        return scrub != null && scrub.slider().isDragging();
     }
 
     private boolean scrubSeekAllowed() {
@@ -580,14 +588,15 @@ public final class SolimVideo extends Component
             return;
         active.update(delta);
         refreshAccum += delta;
+        boolean scrubbing = isScrubbing();
         if (refreshAccum >= 0.1f) {
             refreshAccum = 0;
             positionSig.set(active.getPosition());
             durationSig.set(active.getDuration());
             playing.set(active.isPlaying());
             double duration = active.getDuration();
-            // While dragging, the slider owns the position — writing the playback position
-            // back would yank the handle away from the pointer.
+            // While the handle is held, the slider owns the position. Writing the playback
+            // position back would yank the handle away from the pointer.
             if (!scrubbing)
                 progress.set(duration > 0 ? (float) (active.getPosition() / duration) : 0f);
         }

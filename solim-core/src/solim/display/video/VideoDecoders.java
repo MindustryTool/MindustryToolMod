@@ -68,12 +68,30 @@ public final class VideoDecoders {
 	}
 
 	public static VideoFrameDecoder open(Fi file) throws Exception {
+		Factory override = factory;
+		if (override != null) {
+			return override.open(file);
+		}
 		if (preference == Preference.AUTO) {
 			VideoFrameDecoder nativeDecoder = openNative(file);
 			if (nativeDecoder != null)
 				return nativeDecoder;
 		}
 		return openSoftware(file);
+	}
+
+	interface Factory {
+		VideoFrameDecoder open(Fi file) throws Exception;
+	}
+
+	private static volatile @Nullable Factory factory;
+
+	/**
+	 * Replaces the decoder that is opened. Only used by tests, which need a decoder whose
+	 * behaviour after a seek can be controlled.
+	 */
+	static void setFactory(@Nullable Factory value) {
+		factory = value;
 	}
 
 	static VideoFrameDecoder openSoftware(Fi file) throws Exception {
