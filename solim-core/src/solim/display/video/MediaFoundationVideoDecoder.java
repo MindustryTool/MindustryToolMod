@@ -95,6 +95,7 @@ final class MediaFoundationVideoDecoder implements VideoFrameDecoder {
 		currentLength = ffi.allocate(4);
 		timeVariant = ffi.allocate(24);
 		timeFormat = ffi.allocate(16);
+		timeFormat.clear();
 		startup = ffi.symbol("MFStartup");
 		shutdown = ffi.symbol("MFShutdown");
 		createMediaType = ffi.symbol("MFCreateMediaType");

@@ -643,9 +643,21 @@ public final class VideoPlayer implements Disposable {
 				// display and burns every core for the whole clip.
 				DecodedFrame frame = new DecodedFrame(buffer, pts);
 				boolean queued = false;
+				int offerAttempts = 0;
 				try {
 					while (!queued && !disposed) {
 						queued = readyFrames.offer(frame, FRAME_WAIT_MILLIS, TimeUnit.MILLISECONDS);
+						if (!queued && !disposed) {
+							// The queue stayed full: pace the decoder instead of abandoning the
+							// stream. A fast native decoder can otherwise outrun a slow display,
+							// time out here and exit the decode thread, which silently stops
+							// playback (and looping) after the first pass.
+							sleepBriefly();
+							if (++offerAttempts > 20) {
+								// Give up waiting so a stuck display cannot pin the thread forever.
+								break;
+							}
+						}
 					}
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
