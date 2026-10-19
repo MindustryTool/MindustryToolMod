@@ -629,7 +629,6 @@ public final class VideoPlayer implements Disposable {
 				double pts;
 				VideoFrameDecoder activeDecoder = decoder;
 				if (activeDecoder == null) {
-					Log.info("SolimVideo: decodeLoop decoder is null, exiting");
 					break;
 				}
 				try {
@@ -685,7 +684,6 @@ public final class VideoPlayer implements Disposable {
 			if (!disposed)
 				fail(t);
 		} finally {
-			Log.info("SolimVideo: decodeLoop exiting, disposed=" + disposed + " streamEnded=" + streamEnded);
 			decodeDone = true;
 			closeStream();
 		}
@@ -700,16 +698,13 @@ public final class VideoPlayer implements Disposable {
 	}
 
 	private boolean handleStreamEnd() {
-		Log.info("SolimVideo: handleStreamEnd looping=" + looping + " framesSinceLoop=" + framesSinceLoop + " disposed=" + disposed);
 		if (looping && !disposed && framesSinceLoop > 0) {
 			framesSinceLoop = 0;
 			doSeek(0);
 			loopRestartRequest = true;
-			Log.info("SolimVideo: loop restart requested");
 			return true;
 		}
 		streamEnded = true;
-		Log.info("SolimVideo: stream ended (no loop)");
 		return false;
 	}
 
@@ -720,9 +715,8 @@ public final class VideoPlayer implements Disposable {
 			return;
 		try {
 			active.seek(Math.max(0, seconds));
-			Log.info("SolimVideo: seek(" + seconds + ") ok");
 		} catch (Throwable t) {
-			Log.info("SolimVideo: seek failed: " + t.getMessage());
+			Log.err(t);
 		}
 	}
 
