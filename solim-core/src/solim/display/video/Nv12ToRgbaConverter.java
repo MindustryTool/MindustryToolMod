@@ -101,7 +101,7 @@ final class Nv12ToRgbaConverter {
 			int topBase = topRow * stride + offsetX;
 			int bottomBase = bottomRow * stride + offsetX;
 			int chromaRow = flip ? (codedHeight >> 1) - 1 - ((offsetY + y) >> 1) : (offsetY + y) >> 1;
-			int chromaBase = uvOffset + chromaRow * stride + offsetX;
+			int chromaBase = uvOffset + chromaRow * stride + (offsetX & ~1);
 			int targetTop = y * width;
 			int targetBottom = targetTop + width;
 			for (int x = 0; x < evenWidth; x += 2) {

@@ -46,7 +46,7 @@ public final class ForeignRuntime {
 	private final Method getInt;
 	private final Method getLong;
 	private final Method getShort;
-	private final Method getByte;
+	// private final Method getByte;
 	private final Method setInt;
 	private final Method setLong;
 	private final Method setShort;
@@ -90,7 +90,7 @@ public final class ForeignRuntime {
 		getInt = segmentClass.getMethod("get", intLayoutClass, long.class);
 		getLong = segmentClass.getMethod("get", longLayoutClass, long.class);
 		getShort = segmentClass.getMethod("get", shortLayoutClass, long.class);
-		getByte = segmentClass.getMethod("get", byteLayoutClass, long.class);
+		// getByte = segmentClass.getMethod("get", byteLayoutClass, long.class);
 		setInt = segmentClass.getMethod("set", intLayoutClass, long.class, int.class);
 		setLong = segmentClass.getMethod("set", longLayoutClass, long.class, long.class);
 		setShort = segmentClass.getMethod("set", shortLayoutClass, long.class, short.class);

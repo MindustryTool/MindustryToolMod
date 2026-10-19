@@ -260,11 +260,13 @@ final class MediaFoundationVideoDecoder implements VideoFrameDecoder {
 
 		ForeignMemory nativeType = getNativeMediaType();
 		long codedSize = 0;
+		// int nativeStride = 0;
 		try {
 			if (nativeType != null) {
 				codedSize = getUint64(nativeType, Keys.MF_MT_FRAME_SIZE);
 				codedWidth = (int) (codedSize >>> 32);
 				codedHeight = (int) (codedSize & 0xFFFFFFFFL);
+				// nativeStride = (int) getUint32(nativeType, Keys.MF_MT_DEFAULT_STRIDE);
 				readAperture(nativeType);
 				double nativeRate = readFrameRate(nativeType);
 				if (nativeRate > 0)
@@ -321,10 +323,11 @@ final class MediaFoundationVideoDecoder implements VideoFrameDecoder {
 				codedHeight = h;
 			}
 			int negotiatedStride = (int) getUint32(type, Keys.MF_MT_DEFAULT_STRIDE);
-			if (negotiatedStride != 0)
+			if (negotiatedStride != 0) {
 				stride = negotiatedStride;
-			else if (stride == 0 && w > 0)
+			} else if (w > 0) {
 				stride = w;
+			}
 		} finally {
 			release(type);
 		}
@@ -388,6 +391,7 @@ final class MediaFoundationVideoDecoder implements VideoFrameDecoder {
 		int sourceStride = Math.abs(stride);
 		check(call(sample, SAMPLE_CONVERT_TO_CONTIGUOUS_BUFFER, bufferOut), "ConvertToContiguousBuffer");
 		ForeignMemory buffer = bufferOut.getPointer(0);
+		int uvOffset = sourceStride * codedHeight;
 		try {
 			check(call(buffer, BUFFER_LOCK, dataOut, maxLength, currentLength), "Lock");
 			try {
@@ -395,14 +399,15 @@ final class MediaFoundationVideoDecoder implements VideoFrameDecoder {
 				if (length > rawFrame.length)
 					rawFrame = new byte[length];
 				ffi.view(dataOut.getPointer(0).address(), length).readBytes(rawFrame, length);
+				// MF pads the Y plane height up to a 16-row boundary before the UV plane.
+				uvOffset = sourceStride * ((codedHeight + 15) & ~15);
 			} finally {
 				call(buffer, BUFFER_UNLOCK);
 			}
 		} finally {
 			release(buffer);
 		}
-		converter.convert(rawFrame, sourceStride, sourceStride * codedHeight, codedHeight,
-				offsetX, offsetY, width, height, stride < 0, pixels);
+		converter.convert(rawFrame, sourceStride, uvOffset, codedHeight, offsetX, offsetY, width, height, stride < 0, pixels);
 		rgba.clear();
 		rgba.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().put(pixels, 0, width * height);
 		rgba.position(0);

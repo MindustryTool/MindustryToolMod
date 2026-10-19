@@ -21,7 +21,7 @@ public final class VideoCache {
 
 	public static @Nullable Fi cacheDir() {
 		try {
-			return Vars.dataDirectory.child("solim").child("cache").child("networkImage");
+			return Vars.dataDirectory.child("solim").child("cache").child("video");
 		} catch (Throwable t) {
 			return null;
 		}
