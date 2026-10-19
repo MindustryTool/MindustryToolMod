@@ -51,6 +51,7 @@ public final class Popup<T> extends Component
     private boolean touchAttached = false;
     private boolean keyAttached = false;
     private long lastHideTime = 0L;
+    private int hideGeneration = 0;
 
     private final Cons<ResizeEvent> resizeListener = e -> {
         Element el = element();
@@ -74,7 +75,21 @@ public final class Popup<T> extends Component
                     return false;
                 }
             }
-            hide();
+            // Defer the removal: mutating the scene graph while a touch-down event is still
+            // being dispatched makes Arc call getScene().addTouchFocus(...) on a detached
+            // element and crash with a NullPointerException. Hiding on the next frame keeps
+            // the tap falling through to underlying elements without the mid-dispatch detach.
+            final int generation = hideGeneration;
+            Runnable hideTask = () -> {
+                if (generation == hideGeneration && isShowing()) {
+                    hide();
+                }
+            };
+            if (Core.app != null) {
+                Core.app.post(hideTask);
+            } else {
+                hideTask.run();
+            }
             return false;
         }
     };
@@ -178,6 +193,7 @@ public final class Popup<T> extends Component
     }
 
     public Popup<T> show(@Nullable T data, float stageX, float stageY) {
+        hideGeneration++;
         if (data == null || Core.scene == null || Core.scene.root == null) {
             if (data == null) {
                 hide();

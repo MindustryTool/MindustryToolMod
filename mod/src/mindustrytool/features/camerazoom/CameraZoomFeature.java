@@ -142,7 +142,8 @@ public class CameraZoomFeature extends Feature {
         return mult > 0f && !Float.isNaN(mult) && !Float.isInfinite(mult) ? mult : 1f;
     }
 
-    // arc.Settings.getFloat(String, float) boxes its default argument on every call.
+    // arc.Settings.getFloat(String, float) boxes its default argument on every
+    // call.
     private static float multiplierSetting(String key) {
         Object stored = Core.settings.get(key, null);
         return stored instanceof Float ? (Float) stored : 1f;

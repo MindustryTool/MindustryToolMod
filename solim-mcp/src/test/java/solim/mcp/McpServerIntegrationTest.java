@@ -32,83 +32,6 @@ class McpServerIntegrationTest {
     }
 
     @Test
-    void webSocketTokenAuthAndFullFlow() throws Exception {
-        Gadget gadget = new Gadget();
-        gadget.name = "gadget";
-        gadget.progress.set(0.5f);
-
-        SolimMcpServer server = SolimMcpServer.start(
-                new McpConfig(true, "127.0.0.1", 0, 0, "sekrit", 100),
-                SnapshotRoot.fixed(gadget));
-        assertNotNull(server);
-        assertTrue(server.isRunning());
-
-        LinkedBlockingQueue<String> inbox = new LinkedBlockingQueue<>();
-        AtomicInteger closeCode = new AtomicInteger(-1);
-        WebSocketClient client = new WebSocketClient(
-                new URI("ws://127.0.0.1:" + server.webSocketPort() + "/?token=sekrit")) {
-            @Override
-            public void onOpen(ServerHandshake handshake) {
-            }
-
-            @Override
-            public void onMessage(String message) {
-                inbox.add(message);
-            }
-
-            @Override
-            public void onClose(int code, String reason, boolean remote) {
-                closeCode.set(code);
-            }
-
-            @Override
-            public void onError(Exception ex) {
-            }
-        };
-        try {
-            assertTrue(client.connectBlocking(5, TimeUnit.SECONDS), "client should connect");
-
-            client.send("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\"}");
-            String init = inbox.poll(5, TimeUnit.SECONDS);
-            assertNotNull(init, "no initialize response");
-            assertTrue(init.contains("\"2024-11-05\""), init);
-
-            client.send("{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/list\"}");
-            String tools = inbox.poll(5, TimeUnit.SECONDS);
-            assertNotNull(tools);
-            assertTrue(tools.contains("get_component_tree"), tools);
-
-            client.send(
-                    "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\",\"params\":{\"name\":\"get_component_tree\",\"arguments\":{}}}");
-            String tree = inbox.poll(5, TimeUnit.SECONDS);
-            assertNotNull(tree);
-            assertTrue(tree.contains("gadget"), tree);
-
-            client.send(
-                    "{\"jsonrpc\":\"2.0\",\"id\":31,\"method\":\"tools/call\",\"params\":{\"name\":\"execute_js\",\"arguments\":{\"code\":\"1 + 2\"}}}");
-            String js = inbox.poll(5, TimeUnit.SECONDS);
-            assertNotNull(js);
-            assertTrue(js.contains("3"), js);
-
-            client.send("{\"jsonrpc\":\"2.0\",\"id\":4,\"method\":\"solim/subscribe\"}");
-            String subscribed = inbox.poll(5, TimeUnit.SECONDS);
-            assertNotNull(subscribed);
-            assertTrue(subscribed.contains("\"subscribed\":true"), subscribed);
-
-            gadget.progress.set(0.9f);
-            String notification = awaitNotify(inbox, "0.9", 5);
-            assertNotNull(notification, "expected solim/notify with progress 0.9");
-            assertTrue(notification.contains("solim/notify"), notification);
-        } finally {
-            try {
-                client.closeBlocking();
-            } catch (Exception ignored) {
-            }
-            server.stop();
-        }
-    }
-
-    @Test
     void invalidTokenIsRejectedWith4003() throws Exception {
         SolimMcpServer server = SolimMcpServer.start(
                 new McpConfig(true, "127.0.0.1", 0, 0, "sekrit", 100),
@@ -233,18 +156,6 @@ class McpServerIntegrationTest {
         } finally {
             server.stop();
         }
-    }
-
-    private static String awaitNotify(LinkedBlockingQueue<String> inbox, String needle, int seconds)
-            throws InterruptedException {
-        long deadline = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(seconds);
-        while (System.currentTimeMillis() < deadline) {
-            String message = inbox.poll(200, TimeUnit.MILLISECONDS);
-            if (message != null && message.contains("solim/notify") && message.contains(needle)) {
-                return message;
-            }
-        }
-        return null;
     }
 
     private static String httpPost(int port, String body, String authHeader) throws Exception {

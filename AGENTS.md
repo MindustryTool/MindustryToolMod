@@ -16,6 +16,7 @@ Prioritize:
 
 Do not introduce complexity unless it provides clear value.
 Do not ever write comments, variable, function must explain it self
+When fixing bugs, if you are not sure what is the bug, you can add debug logs and ask me to run the game for the logs
 ---
 
 # Internationalization (i18n) — Mandatory

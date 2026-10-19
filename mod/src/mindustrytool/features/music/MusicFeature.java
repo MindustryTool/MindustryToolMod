@@ -9,12 +9,13 @@ import arc.struct.ObjectMap;
 import arc.struct.Seq;
 import arc.util.Log;
 import arc.util.Nullable;
+import arc.util.Timer;
+
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import mindustry.Vars;
 import mindustry.game.EventType.MusicRegisterEvent;
-import mindustry.game.EventType.Trigger;
 import mindustry.game.EventType.WorldLoadEvent;
 import mindustry.gen.Musics;
 import mindustrytool.Folders;
@@ -77,7 +78,7 @@ public class MusicFeature extends Feature {
             trackSignals.put(type, Signal.of(new Seq<>()));
         }
 
-        Events.run(Trigger.update, () -> {
+        Timer.schedule(() -> {
             currentMusic.set(Vars.control.sound.getCurrent());
 
             boolean inMenu = Vars.state.isMenu();
@@ -90,8 +91,9 @@ public class MusicFeature extends Feature {
             if (inEditor && !wasInEditor) {
                 rerollSlot(MusicType.EDITOR);
             }
+
             wasInEditor = inEditor;
-        });
+        }, 0, 0.1f);
 
         Events.run(WorldLoadEvent.class, () -> Core.app.post(() -> {
             if (isEnabled()) {
@@ -319,6 +321,7 @@ public class MusicFeature extends Feature {
                 playable.add(state.music);
             }
         }
+
         setSlotMusic(type, pickSlotMusic(playable, originalSlot(type), slotMusic(type)));
     }
 
@@ -326,6 +329,7 @@ public class MusicFeature extends Feature {
         if (!isEnabled()) {
             return;
         }
+
         assignSlot(type, trackSignals.get(type).peek());
     }
 
@@ -333,11 +337,13 @@ public class MusicFeature extends Feature {
         if (playable == null || playable.isEmpty()) {
             return fallback;
         }
+
         if (playable.size == 1) {
             return playable.first();
         }
 
         Seq<Music> candidates = new Seq<>();
+
         for (Music music : playable) {
             if (music != current) {
                 candidates.add(music);

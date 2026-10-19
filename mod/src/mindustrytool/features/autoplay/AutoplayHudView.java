@@ -35,12 +35,15 @@ public class AutoplayHudView extends Component {
     protected Element build() {
         hud = hud(() -> {
             row()
-                    .props(padding(unit(1)), rounded(unit(2), WebStyles.Colors.SECTION_BG), border(1.5f, WebStyles.Colors.BORDER), gap(unit(1)), center())
+                    .props(padding(unit(1)), rounded(unit(2), WebStyles.Colors.SECTION_BG),
+                            border(1.5f, WebStyles.Colors.BORDER), gap(unit(1)), center())
                     .children(() -> {
                         when(feature.hideDragHandleConfig.signal())
                                 .elseDo(() -> button()
-                                        .props(style(WebStyles.ghost()), size(buttonSize()), prefWidth(buttonSize()), prefHeight(buttonSize()), draggable(feature.xSignal, feature.ySignal))
-                                        .children(() -> icon(Icon.move).props(size(iconSize()), prefWidth(iconSize()), prefHeight(iconSize()))));
+                                        .props(style(WebStyles.ghost()), size(buttonSize()), prefWidth(buttonSize()),
+                                                prefHeight(buttonSize()), draggable(feature.xSignal, feature.ySignal))
+                                        .children(() -> icon(Icon.move).props(size(iconSize()), prefWidth(iconSize()),
+                                                prefHeight(iconSize()))));
 
                         buildControls(feature, null);
                     });
@@ -112,11 +115,13 @@ public class AutoplayHudView extends Component {
                 .map(en -> Boolean.TRUE.equals(en) ? Color.white : Color.darkGray);
 
         Button btn = button()
-                .props(checked(feature.enabled()), style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(Core.bundle.get("feature.autoplay.hud.master.tooltip")))
+                .props(style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize),
+                        prefHeight(buttonSize), tooltip(Core.bundle.get("feature.autoplay.hud.master.tooltip")))
                 .onClick(() -> feature.setEnabled(!feature.isEnabled()))
                 .onLongClick(300L, () -> openSettings(feature))
-                .children(() -> icon(Icon.play).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize), color(color)));
-                
+                .children(() -> icon(Icon.play).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize),
+                        color(color)));
+
         return canEdit != null ? btn.props(enabled(canEdit)) : btn;
     }
 
@@ -140,10 +145,12 @@ public class AutoplayHudView extends Component {
         });
 
         Button btn = button()
-                .props(style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(task.getName()))
+                .props(style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize),
+                        tooltip(task.getName()))
                 .onClick(() -> feature.setTaskEnabled(task.getId(), !feature.isTaskEnabled(task.getId())))
                 .onLongClick(300L, () -> openSettings(feature))
-                .children(() -> icon(task.getIcon()).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize), color(color)));
+                .children(() -> icon(task.getIcon()).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize),
+                        color(color)));
 
         return canEdit != null ? btn.props(enabled(canEdit)) : btn;
     }

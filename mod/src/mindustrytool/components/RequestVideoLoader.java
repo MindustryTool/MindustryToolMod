@@ -23,7 +23,7 @@ public final class RequestVideoLoader implements VideoLoader {
             return;
         }
         Fi cached = VideoCache.videoFile(url);
-        if (VideoCache.isFresh(cached)) {
+        if (VideoCache.isFreshVideo(cached)) {
             if (onSuccess != null) {
                 onSuccess.get(cached);
             }

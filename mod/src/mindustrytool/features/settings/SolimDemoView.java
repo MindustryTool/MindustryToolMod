@@ -54,7 +54,8 @@ public class SolimDemoView extends Component {
             textField(textInput)
                     .props(growX(), style(WebStyles.clearInput()), placeholder("Type something..."));
 
-            divider().props(color(WebStyles.Colors.SECTION_BORDER));
+            divider()
+                    .props(color(WebStyles.Colors.SECTION_BORDER));
 
             text("Slider")
                     .props(color(Pal.accent), left());
@@ -63,61 +64,72 @@ public class SolimDemoView extends Component {
                     "",
                     sliderValue,
                     0f, 1f, 0.01f,
-                    sliderValue.map(v -> Math.round(v * 100) + "%")
-            );
+                    sliderValue.map(v -> Math.round(v * 100) + "%"));
 
-            divider().props(color(WebStyles.Colors.SECTION_BORDER));
+            divider()
+                    .props(color(WebStyles.Colors.SECTION_BORDER));
 
-            row().props(growX(), gap(unit(2)), center()).children(() -> {
-                checkbox("", checkboxValue)
-                        .props(tooltip("Checkbox example"));
-                text("Checkbox")
-                        .props(color(Color.white), left(), growX());
-            });
+            row()
+                    .props(growX(), gap(unit(2)), center())
+                    .children(() -> {
+                        checkbox("", checkboxValue)
+                                .props(tooltip("Checkbox example"));
+                        text("Checkbox")
+                                .props(color(Color.white), left(), growX());
+                    });
 
-            divider().props(color(WebStyles.Colors.SECTION_BORDER));
+            divider()
+                    .props(color(WebStyles.Colors.SECTION_BORDER));
 
             text("Dropdown")
                     .props(color(Pal.accent), left());
 
-            row().props(growX(), gap(unit(2))).children(() -> {
-                List<String> options = Arrays.asList("Option 1", "Option 2", "Option 3", "Option 4");
-                select(dropdownValue, options)
-                        .props(growX());
-            });
+            row()
+                    .props(growX(), gap(unit(2)))
+                    .children(() -> {
+                        List<String> options = Arrays.asList("Option 1", "Option 2", "Option 3", "Option 4");
+                        select(dropdownValue, options)
+                                .props(growX());
+                    });
 
-            divider().props(color(WebStyles.Colors.SECTION_BORDER));
+            divider()
+                    .props(color(WebStyles.Colors.SECTION_BORDER));
 
             text("Color Picker")
                     .props(color(Pal.accent), left());
 
-            row().props(growX(), gap(unit(2)), center()).children(() -> {
-                button(() -> {
-                    Color[] colors = {
-                        Color.valueOf("ff6b6b"),
-                        Color.valueOf("4ecdc4"),
-                        Color.valueOf("ffe66d"),
-                        Color.valueOf("95e1d3"),
-                        Color.valueOf("f38181"),
-                        Color.valueOf("aa96da")
-                    };
-                    Color current = pickedColor.get();
-                    int idx = 0;
-                    for (int i = 0; i < colors.length; i++) {
-                        if (colors[i].equals(current)) {
-                            idx = (i + 1) % colors.length;
-                            break;
-                        }
-                    }
-                    pickedColor.set(colors[idx]);
-                })
-                        .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)),
-                                tooltip("Cycle colors"), color(pickedColor))
-                        .children(() -> icon(Icon.pencil).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
+            row()
+                    .props(growX(), gap(unit(2)), center())
+                    .children(() -> {
+                        button(() -> {
+                            Color[] colors = {
+                                    Color.valueOf("ff6b6b"),
+                                    Color.valueOf("4ecdc4"),
+                                    Color.valueOf("ffe66d"),
+                                    Color.valueOf("95e1d3"),
+                                    Color.valueOf("f38181"),
+                                    Color.valueOf("aa96da")
+                            };
+                            Color current = pickedColor.get();
+                            int idx = 0;
+                            for (int i = 0; i < colors.length; i++) {
+                                if (colors[i].equals(current)) {
+                                    idx = (i + 1) % colors.length;
+                                    break;
+                                }
+                            }
 
-                text(pickedColor.map(c -> "#" + c.toString().substring(2).toUpperCase()))
-                        .props(color(Color.white), left(), growX());
-            });
+                            pickedColor.set(colors[idx]);
+                        })
+                                .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)),
+                                        prefHeight(unit(11)), tooltip("Cycle colors"), color(pickedColor))
+                                .children(
+                                        () -> icon(Icon.pencil)
+                                                .props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
+
+                        text(pickedColor.map(c -> "#" + c.toString().substring(2).toUpperCase()))
+                                .props(color(Color.white), left(), growX());
+                    });
         });
     }
 
@@ -126,22 +138,29 @@ public class SolimDemoView extends Component {
             text("row() - Horizontal layout")
                     .props(color(Pal.accent), left());
 
-            row().props(growX(), gap(unit(2)), center(), padding(unit(2)), rounded(unit(2), WebStyles.Colors.SECTION_BG), border(1f, WebStyles.Colors.SECTION_BORDER)).children(() -> {
-                button(() -> {}).props(style(WebStyles.secondary())).children(() -> text("Left"));
-                button(() -> {}).props(style(WebStyles.secondary())).children(() -> text("Center"));
-                button(() -> {}).props(style(WebStyles.secondary())).children(() -> text("Right"));
-            });
+            row()
+                    .props(growX(), gap(unit(2)), center(), padding(unit(2)),
+                            rounded(unit(2), WebStyles.Colors.SECTION_BG), border(1f, WebStyles.Colors.SECTION_BORDER))
+                    .children(() -> {
+                        button(() -> {
+                        }).props(style(WebStyles.secondary())).children(() -> text("Left"));
+                        button(() -> {
+                        }).props(style(WebStyles.secondary())).children(() -> text("Center"));
+                        button(() -> {
+                        }).props(style(WebStyles.secondary())).children(() -> text("Right"));
+                    });
 
             divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
             text("column() - Vertical layout")
                     .props(color(Pal.accent), left());
 
-            column().props(growX(), gap(unit(2)), padding(unit(2)), rounded(unit(2), WebStyles.Colors.SECTION_BG), border(1f, WebStyles.Colors.SECTION_BORDER)).children(() -> {
-                text("Top item").props(color(Color.white));
-                text("Middle item").props(color(Color.white));
-                text("Bottom item").props(color(Color.white));
-            });
+            column().props(growX(), gap(unit(2)), padding(unit(2)), rounded(unit(2), WebStyles.Colors.SECTION_BG),
+                    border(1f, WebStyles.Colors.SECTION_BORDER)).children(() -> {
+                        text("Top item").props(color(Color.white));
+                        text("Middle item").props(color(Color.white));
+                        text("Bottom item").props(color(Color.white));
+                    });
 
             divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
@@ -151,7 +170,8 @@ public class SolimDemoView extends Component {
             wrap().props(growX(), top(), left(), gap(unit(2))).children(() -> {
                 for (int i = 0; i < 6; i++) {
                     int finalI = i;
-                    button(() -> {}).props(style(WebStyles.filterChip()), height(unit(9)), prefHeight(unit(9)))
+                    button(() -> {
+                    }).props(style(WebStyles.filterChip()), height(unit(9)), prefHeight(unit(9)))
                             .children(() -> text("Item " + (finalI + 1)));
                 }
             });
@@ -161,18 +181,22 @@ public class SolimDemoView extends Component {
             text("Card Component")
                     .props(color(Pal.accent), left());
 
-            card().props(padding(unit(3)), rounded(unit(3), WebStyles.Colors.SECTION_BG), border(1f, WebStyles.Colors.SECTION_BORDER)).children(() -> {
-                column().props(gap(unit(1))).children(() -> {
-                    text("Card Title").props(color(Pal.accent));
-                    text("This is a card component with padding, rounded corners, and border.").props(color(WebStyles.Colors.GHOST_FG), textWrap(true), growX());
-                    row().props(growX(), right(), gap(unit(1)), marginTop(unit(2))).children(() -> {
-                        button(() -> {}).props(style(WebStyles.primary()), height(unit(9)), prefHeight(unit(9)))
-                                .children(() -> text("Action"));
-                        button(() -> {}).props(style(WebStyles.ghost()), height(unit(9)), prefHeight(unit(9)))
-                                .children(() -> text("Cancel"));
+            card().props(padding(unit(3)), rounded(unit(3), WebStyles.Colors.SECTION_BG),
+                    border(1f, WebStyles.Colors.SECTION_BORDER)).children(() -> {
+                        column().props(gap(unit(1))).children(() -> {
+                            text("Card Title").props(color(Pal.accent));
+                            text("This is a card component with padding, rounded corners, and border.")
+                                    .props(color(WebStyles.Colors.GHOST_FG), textWrap(true), growX());
+                            row().props(growX(), right(), gap(unit(1)), marginTop(unit(2))).children(() -> {
+                                button(() -> {
+                                }).props(style(WebStyles.primary()), height(unit(9)), prefHeight(unit(9)))
+                                        .children(() -> text("Action"));
+                                button(() -> {
+                                }).props(style(WebStyles.ghost()), height(unit(9)), prefHeight(unit(9)))
+                                        .children(() -> text("Cancel"));
+                            });
+                        });
                     });
-                });
-            });
 
             divider().props(color(WebStyles.Colors.SECTION_BORDER));
 
@@ -245,7 +269,8 @@ public class SolimDemoView extends Component {
 
             row().props(growX(), gap(unit(2)), center(), marginTop(unit(1))).children(() -> {
                 text(counter.map(i -> i > 5 ? "High" : "Low"))
-                        .props(color(counter.map(i -> i > 5 ? Color.red : Color.blue)), growX(), left(), fontScale(1.2f));
+                        .props(color(counter.map(i -> i > 5 ? Color.red : Color.blue)), growX(), left(),
+                                fontScale(1.2f));
             });
 
             divider().props(color(WebStyles.Colors.SECTION_BORDER));
@@ -254,13 +279,13 @@ public class SolimDemoView extends Component {
                     .props(color(WebStyles.Colors.GHOST_FG), fontScale(0.8f), textWrap(true), growX());
 
             row().props(growX(), gap(unit(2)), center(), marginTop(unit(1))).children(() -> {
-                button(() -> {}).props(
-                                style(WebStyles.secondary()),
-                                height(unit(11)), prefHeight(unit(11)),
-                                visible(counter.map(i -> i >= 0)),
-                                enabled(counter.map(i -> i < 10)),
-                                color(counter.map(i -> i > 5 ? Color.red : Color.green))
-                        )
+                button(() -> {
+                }).props(
+                        style(WebStyles.secondary()),
+                        height(unit(11)), prefHeight(unit(11)),
+                        visible(counter.map(i -> i >= 0)),
+                        enabled(counter.map(i -> i < 10)),
+                        color(counter.map(i -> i > 5 ? Color.red : Color.green)))
                         .children(() -> text("Visible & Enabled (count < 10)"));
             });
 
@@ -275,7 +300,8 @@ public class SolimDemoView extends Component {
                     .props(gap(unit(1)))
                     .items(s -> {
                         return card()
-                                .props(padding(unit(2)), rounded(unit(2), WebStyles.Colors.SECTION_BG), border(1f, WebStyles.Colors.SECTION_BORDER))
+                                .props(padding(unit(2)), rounded(unit(2), WebStyles.Colors.SECTION_BG),
+                                        border(1f, WebStyles.Colors.SECTION_BORDER))
                                 .children(() -> text(s).props(color(Color.white), center()));
                     });
 
@@ -289,13 +315,15 @@ public class SolimDemoView extends Component {
                         .children(() -> icon(Icon.add).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))));
 
                 button(() -> items.update(seq -> {
-                    if (seq.isEmpty()) return seq;
+                    if (seq.isEmpty())
+                        return seq;
                     Seq<String> copy = seq.copy();
                     copy.remove(copy.size - 1);
                     return copy;
                 }))
                         .props(style(WebStyles.secondary()), height(unit(9)), prefHeight(unit(9)))
-                        .children(() -> icon(Icon.cancel).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))));
+                        .children(
+                                () -> icon(Icon.cancel).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5))));
             });
         });
     }
@@ -313,11 +341,13 @@ public class SolimDemoView extends Component {
             row().props(growX(), gap(unit(2)), center(), marginTop(unit(2))).children(() -> {
                 button(() -> counter.update(v -> v - 1))
                         .props(style(WebStyles.secondary()), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
-                        .children(() -> icon(Icon.cancel).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
+                        .children(
+                                () -> icon(Icon.cancel).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
 
                 button(() -> counter.set(0))
                         .props(style(WebStyles.outline()), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
-                        .children(() -> icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
+                        .children(
+                                () -> icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
 
                 button(() -> counter.update(v -> v + 1))
                         .props(style(WebStyles.primary()), height(unit(11)), prefHeight(unit(11)), gap(unit(2)))
@@ -330,15 +360,20 @@ public class SolimDemoView extends Component {
                     .props(color(Pal.accent), left());
 
             wrap().props(gap(unit(1))).children(() -> {
-                button(() -> {}).props(style(WebStyles.ghost()), height(unit(11)), prefHeight(unit(11)))
+                button(() -> {
+                }).props(style(WebStyles.ghost()), height(unit(11)), prefHeight(unit(11)))
                         .children(() -> text("Ghost"));
-                button(() -> {}).props(style(WebStyles.secondary()), height(unit(11)), prefHeight(unit(11)))
+                button(() -> {
+                }).props(style(WebStyles.secondary()), height(unit(11)), prefHeight(unit(11)))
                         .children(() -> text("Secondary"));
-                button(() -> {}).props(style(WebStyles.primary()), height(unit(11)), prefHeight(unit(11)))
+                button(() -> {
+                }).props(style(WebStyles.primary()), height(unit(11)), prefHeight(unit(11)))
                         .children(() -> text("Primary"));
-                button(() -> {}).props(style(WebStyles.outline()), height(unit(11)), prefHeight(unit(11)))
+                button(() -> {
+                }).props(style(WebStyles.outline()), height(unit(11)), prefHeight(unit(11)))
                         .children(() -> text("Outline"));
-                button(() -> {}).props(style(WebStyles.danger()), height(unit(11)), prefHeight(unit(11)))
+                button(() -> {
+                }).props(style(WebStyles.danger()), height(unit(11)), prefHeight(unit(11)))
                         .children(() -> text("Danger"));
             });
 
@@ -348,24 +383,40 @@ public class SolimDemoView extends Component {
                     .props(color(Pal.accent), left());
 
             wrap().props(gap(unit(1))).children(() -> {
-                button(() -> {})
-                        .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip("Settings"))
-                        .children(() -> icon(Icon.settings).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
-                button(() -> {})
-                        .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip("Refresh"))
-                        .children(() -> icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
-                button(() -> {})
-                        .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip("Download"))
+                button(() -> {
+                })
+                        .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)),
+                                tooltip("Settings"))
+                        .children(() -> icon(Icon.settings).props(size(unit(6)), prefWidth(unit(6)),
+                                prefHeight(unit(6))));
+                button(() -> {
+                })
+                        .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)),
+                                tooltip("Refresh"))
+                        .children(
+                                () -> icon(Icon.refresh).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
+                button(() -> {
+                })
+                        .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)),
+                                tooltip("Download"))
                         .children(() -> icon(Icon.down).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
-                button(() -> {})
-                        .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip("Upload"))
+                button(() -> {
+                })
+                        .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)),
+                                tooltip("Upload"))
                         .children(() -> icon(Icon.up).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
-                button(() -> {})
-                        .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip("Delete"))
-                        .children(() -> icon(Icon.cancel).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
-                button(() -> {})
-                        .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip("Edit"))
-                        .children(() -> icon(Icon.pencil).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
+                button(() -> {
+                })
+                        .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)),
+                                tooltip("Delete"))
+                        .children(
+                                () -> icon(Icon.cancel).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
+                button(() -> {
+                })
+                        .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)),
+                                tooltip("Edit"))
+                        .children(
+                                () -> icon(Icon.pencil).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
             });
         });
     }
@@ -377,17 +428,18 @@ public class SolimDemoView extends Component {
 
             wrap().props(gap(unit(1))).children(() -> {
                 Color[] colors = {
-                    Color.valueOf("ff6b6b"), Color.valueOf("4ecdc4"), Color.valueOf("ffe66d"),
-                    Color.valueOf("95e1d3"), Color.valueOf("f38181"), Color.valueOf("aa96da"),
-                    Color.valueOf("fcbad3"), Color.valueOf("a8d8ea"), Color.valueOf("ffd3b6"),
-                    Color.valueOf("ffaaa5"), Color.valueOf("ff8b94"), Color.valueOf("c5e0b4")
+                        Color.valueOf("ff6b6b"), Color.valueOf("4ecdc4"), Color.valueOf("ffe66d"),
+                        Color.valueOf("95e1d3"), Color.valueOf("f38181"), Color.valueOf("aa96da"),
+                        Color.valueOf("fcbad3"), Color.valueOf("a8d8ea"), Color.valueOf("ffd3b6"),
+                        Color.valueOf("ffaaa5"), Color.valueOf("ff8b94"), Color.valueOf("c5e0b4")
                 };
                 for (Color c : colors) {
                     Color finalC = c;
                     button(() -> pickedColor.set(finalC))
                             .props(style(WebStyles.ghost()), size(unit(9)), prefWidth(unit(9)), prefHeight(unit(9)),
                                     color(c), tooltip(c.toString()))
-                            .children(() -> {});
+                            .children(() -> {
+                            });
                 }
             });
 
@@ -411,17 +463,20 @@ public class SolimDemoView extends Component {
 
             wrap().props(gap(unit(2))).children(() -> {
                 Color[] bgColors = {
-                    WebStyles.Colors.SECTION_BG,
-                    WebStyles.Colors.SECONDARY,
-                    WebStyles.Colors.CLEAR_BG,
-                    Color.darkGray,
-                    Color.gray
+                        WebStyles.Colors.SECTION_BG,
+                        WebStyles.Colors.SECONDARY,
+                        WebStyles.Colors.CLEAR_BG,
+                        Color.darkGray,
+                        Color.gray
                 };
                 for (Color c : bgColors) {
                     Color finalC = c;
                     card()
-                            .props(padding(unit(2)), rounded(unit(2), finalC), border(1f, WebStyles.Colors.SECTION_BORDER), size(unit(20)), prefWidth(unit(20)), prefHeight(unit(20)))
-                            .children(() -> text(finalC.toString()).props(color(Color.white), center(), fontScale(0.7f), textWrap(true)));
+                            .props(padding(unit(2)), rounded(unit(2), finalC),
+                                    border(1f, WebStyles.Colors.SECTION_BORDER), size(unit(20)), prefWidth(unit(20)),
+                                    prefHeight(unit(20)))
+                            .children(() -> text(finalC.toString()).props(color(Color.white), center(), fontScale(0.7f),
+                                    textWrap(true)));
                 }
             });
         });
