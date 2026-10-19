@@ -20,6 +20,16 @@ public final class VideoDecoders {
 
 	private static final boolean WINDOWS =
 			System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("windows");
+	private static final boolean ANDROID = isAndroid();
+
+	private static boolean isAndroid() {
+		try {
+			Class.forName("android.os.Build");
+			return true;
+		} catch (Throwable ignored) {
+			return false;
+		}
+	}
 
 	private static volatile Preference preference = readPreference();
 	private static volatile boolean nativeDisabled;
@@ -33,7 +43,7 @@ public final class VideoDecoders {
 	 * decoder class.
 	 */
 	static boolean isNativePlatform() {
-		return WINDOWS;
+		return WINDOWS || ANDROID;
 	}
 
 	public static void setPreference(Preference value) {
@@ -48,6 +58,8 @@ public final class VideoDecoders {
 		if (!isNativePlatform() || nativeDisabled)
 			return false;
 		try {
+			if (ANDROID)
+				return AndroidMediaCodecVideoDecoder.isSupported();
 			return MediaFoundationVideoDecoder.isSupported();
 		} catch (Throwable error) {
 			disableNative(error);
@@ -72,6 +84,8 @@ public final class VideoDecoders {
 		if (!isNativePlatform() || nativeDisabled)
 			return null;
 		try {
+			if (ANDROID)
+				return AndroidMediaCodecVideoDecoder.tryOpen(file);
 			return MediaFoundationVideoDecoder.tryOpen(file);
 		} catch (Throwable error) {
 			disableNative(error);

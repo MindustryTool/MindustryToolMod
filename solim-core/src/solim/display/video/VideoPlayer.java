@@ -311,12 +311,13 @@ public final class VideoPlayer implements Disposable {
 			lastPosition = master;
 			presentUpTo(master);
 			boolean starved = streamEnded && decodeDone && readyFramesIsEmpty() && holdback == null;
-			boolean pastEnd = durationSec > 0 && master >= durationSec - END_EPSILON;
-			if (starved || (pastEnd && !looping)) {
-				toEnded();
-			} else if (pastEnd) {
-				seekInternal(0);
-			}
+		// If looping, the decode thread restarts the stream itself — do NOT seek again.
+		boolean pastEnd = !looping && durationSec > 0 && master >= durationSec - END_EPSILON;
+		if (starved) {
+			toEnded();
+		} else if (pastEnd) {
+			seekInternal(0);
+		}
 		} else if (state == State.PAUSED || state == State.READY || state == State.ENDED) {
 			presentUpTo(Double.MAX_VALUE);
 		}
@@ -410,6 +411,7 @@ public final class VideoPlayer implements Disposable {
 	}
 
 	private void toEnded() {
+		Log.info("SolimVideo: toEnded (starved/end) state=" + state);
 		state = State.ENDED;
 		if (music != null) {
 			try {
@@ -468,6 +470,7 @@ public final class VideoPlayer implements Disposable {
 	public void dispose() {
 		if (disposed)
 			return;
+		Log.info("SolimVideo: dispose called");
 		disposed = true;
 		pendingPlay = false;
 		if (music != null) {
@@ -624,8 +627,13 @@ public final class VideoPlayer implements Disposable {
 					continue;
 				}
 				double pts;
+				VideoFrameDecoder activeDecoder = decoder;
+				if (activeDecoder == null) {
+					Log.info("SolimVideo: decodeLoop decoder is null, exiting");
+					break;
+				}
 				try {
-					pts = decoder.decodeNext(buffer);
+					pts = activeDecoder.decodeNext(buffer);
 				} catch (Throwable t) {
 					freeBuffers.offer(buffer);
 					if (switchToSoftwareDecoder())
@@ -677,6 +685,7 @@ public final class VideoPlayer implements Disposable {
 			if (!disposed)
 				fail(t);
 		} finally {
+			Log.info("SolimVideo: decodeLoop exiting, disposed=" + disposed + " streamEnded=" + streamEnded);
 			decodeDone = true;
 			closeStream();
 		}
@@ -691,13 +700,16 @@ public final class VideoPlayer implements Disposable {
 	}
 
 	private boolean handleStreamEnd() {
+		Log.info("SolimVideo: handleStreamEnd looping=" + looping + " framesSinceLoop=" + framesSinceLoop + " disposed=" + disposed);
 		if (looping && !disposed && framesSinceLoop > 0) {
 			framesSinceLoop = 0;
 			doSeek(0);
 			loopRestartRequest = true;
+			Log.info("SolimVideo: loop restart requested");
 			return true;
 		}
 		streamEnded = true;
+		Log.info("SolimVideo: stream ended (no loop)");
 		return false;
 	}
 
@@ -708,8 +720,9 @@ public final class VideoPlayer implements Disposable {
 			return;
 		try {
 			active.seek(Math.max(0, seconds));
+			Log.info("SolimVideo: seek(" + seconds + ") ok");
 		} catch (Throwable t) {
-			fail(t);
+			Log.info("SolimVideo: seek failed: " + t.getMessage());
 		}
 	}
 

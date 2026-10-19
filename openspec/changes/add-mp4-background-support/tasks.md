@@ -40,6 +40,6 @@
 - [x] 7.4 Implement `MediaFoundationVideoDecoder` (Windows) on Media Foundation's source reader through the Foreign Function & Memory API, decoding NV12 and converting to RGBA through the bounded-lifetime `Nv12ToRgbaConverter` pool
 - [x] 7.5 Verify native and software decoders agree on geometry, frame count and seek positions, and that the native path is preferred
 - [x] 7.6 Benchmark native and software decoding at 1440p and document the measured bottleneck
-- [ ] 7.7 Implement the Android MediaCodec decoder provider (Phase 2) — deferred until a machine with an Android SDK is available; Android currently uses the JCodec fallback
+- [x] 7.7 Implement the Android MediaCodec decoder provider (Phase 2) — reflection-based `AndroidMediaCodecVideoDecoder` using `MediaExtractor` + `MediaCodec` in ByteBuffer mode, converting NV12/I420/NV21 to RGBA; device verification pending
 - [x] 7.8 Add the reflective `ForeignRuntime`/`ForeignMemory` bridge over `java.lang.foreign` and port `MediaFoundationVideoDecoder` off JNA, which cannot initialize in Mindustry's jlink runtime because it requires `java.util.logging`
 

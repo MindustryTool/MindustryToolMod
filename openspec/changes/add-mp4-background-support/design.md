@@ -72,11 +72,12 @@ Mindustry's `MenuRenderer` handles drawing the main menu background. `Background
   - *NV12 on the GPU via a shader*: Avoids CPU conversion, but Arc's `SpriteBatch` has no per-draw shader hook, so this would mean bypassing the established render path.
 - **Notes**: The reader reports coded (macroblock-aligned) dimensions in `MF_MT_FRAME_SIZE` and display dimensions in `MF_MT_GEOMETRIC_APERTURE`; the decoder reports display dimensions and crops during conversion. `MF_SOURCE_READER_ENABLE_ADVANCED_VIDEO_PROCESSING` must not be set on this machine — the reader fails with `E_INVALIDARG` when it is. Media Foundation needs COM initialized on the calling thread.
 
-### 9. Android MediaCodec: Deferred
-- **Choice**: Ship the platform decoder interface with only the Windows implementation; Android keeps using the JCodec fallback until an Android MediaCodec provider is added.
-- **Rationale**: MediaCodec requires `android.jar` at compile time and a device or emulator to validate, neither of which is available in the current development environment. Adding the interface now means the Android provider can be dropped in later without touching `VideoPlayer` or the selection logic.
+### 9. Android MediaCodec: Implemented
+- **Choice**: Ship a reflection-based `AndroidMediaCodecVideoDecoder` using `MediaExtractor` + `MediaCodec` in ByteBuffer mode, converting NV12/I420/NV21 output to RGBA. Selected via `VideoDecoders` on Android (detected through `android.os.Build`).
+- **Rationale**: MediaCodec is the only fast decode path on Android; JCodec remains the fallback when MediaCodec is unavailable or fails. Reflection keeps `solim-core` compiling on the Java 17 toolchain without `android.jar`, mirroring the FFM bridge. Device verification is pending since no Android SDK/emulator is available in this environment.
 - **Alternatives Considered**:
-  - *Binding MediaCodec through reflection to avoid `android.jar`*: Compiles everywhere, but cannot be exercised here and would ship unverified code.
+  - *Compiling against `android.jar`*: Cleaner code, but requires an Android SDK on the build machine.
+  - *Surface-based zero-copy output*: Fastest, but requires changing `VideoPlayer` to own a `Surface` and bypassing the RGBA buffer pipeline.
 
 
 ## Risks / Trade-offs
