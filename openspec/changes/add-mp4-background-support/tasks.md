@@ -31,3 +31,15 @@
 - [x] 6.1 Create unit tests for background media detection, scaling geometry, and lifecycle teardown
 - [x] 6.2 Verify encapsulation guard test (`SolimEncapsulationGuardTest`) and zero-allocation frame rules pass
 - [x] 6.3 Run Gradle build and test suite to ensure clean compile and test pass
+
+## 7. Native Decoder Path
+
+- [x] 7.1 Extract video decoding behind `VideoFrameDecoder` and add `VideoDecoders` selection with `AUTO`/`SOFTWARE` preference and `solim.video.decoder` override
+- [x] 7.2 Move rounded-corner masking into `RgbaCorners` and reduce `YuvToRgbaConverter` to `convert(Picture, ByteBuffer)` with `allocateRgba`
+- [x] 7.3 Make `VideoPlayer` fail over from a native decoder to the JCodec decoder at the current position when native decoding fails mid-stream
+- [x] 7.4 Implement `MediaFoundationVideoDecoder` (Windows) on Media Foundation's source reader through the Foreign Function & Memory API, decoding NV12 and converting to RGBA through the bounded-lifetime `Nv12ToRgbaConverter` pool
+- [x] 7.5 Verify native and software decoders agree on geometry, frame count and seek positions, and that the native path is preferred
+- [x] 7.6 Benchmark native and software decoding at 1440p and document the measured bottleneck
+- [ ] 7.7 Implement the Android MediaCodec decoder provider (Phase 2) — deferred until a machine with an Android SDK is available; Android currently uses the JCodec fallback
+- [x] 7.8 Add the reflective `ForeignRuntime`/`ForeignMemory` bridge over `java.lang.foreign` and port `MediaFoundationVideoDecoder` off JNA, which cannot initialize in Mindustry's jlink runtime because it requires `java.util.logging`
+

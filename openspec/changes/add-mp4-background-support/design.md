@@ -55,10 +55,39 @@ Mindustry's `MenuRenderer` handles drawing the main menu background. `Background
   - *Blending video over the default menu*: The video is a full-screen background; blending produced a visible mismatch and extra draw cost.
   - *Keeping the default renderer alive*: Cheaper on menu re-entry, but holds the GL resources the video is meant to replace.
 
+### 7. Decoding: Native First, JCodec Fallback
+- **Choice**: Decoding sits behind `VideoFrameDecoder`. `VideoDecoders` prefers a platform decoder (`MediaFoundationVideoDecoder` on Windows) and falls back to `JCodecFrameDecoder` when native is unavailable, unsupported, or fails. `VideoDecoders.Preference` (default `AUTO`) and the `solim.video.decoder=software` system property force software decoding. A native decoder that fails mid-stream is reopened as a JCodec decoder at the last position. The Windows decoder is implemented on Media Foundation's source reader through the Foreign Function & Memory API (`java.lang.foreign`), reached reflectively so the mod still compiles against the Java 17 toolchain.
+- **Rationale**: The pure-Java JCodec decoder cannot keep up with 1440p (measured ≈4.5 fps), while the operating-system decoder does. Keeping the fallback means every platform still works, and the abstraction keeps the platform code out of `VideoPlayer`. JNA was the original binding, but its `Native`, `NativeLibrary` and `Structure` classes require `java.util.logging`, which Mindustry's shipped Windows runtime (a jlink image of `java.base` and `jdk.unsupported`) omits, so JNA cannot initialize there. The Foreign Function & Memory API lives in `java.base` and works in that runtime. Native decoding therefore requires a JDK 22+ runtime (all current Mindustry desktop builds ship JDK 25); on older runtimes and on Android the JCodec fallback applies.
+- **Alternatives Considered**:
+  - *JCodec only*: Unusable above 720p30.
+  - *JNA for the Windows binding*: Rejected; see the rationale above.
+  - *Bundling native codec binaries or a JNI shim*: Rejected; not mod-compatible, adds per-platform binary weight, and requires a native build toolchain.
+  - *Binding MediaCodec through reflection to avoid `android.jar`*: Compiles everywhere, but cannot be exercised here and would ship unverified code.
+
+### 8. Media Foundation Output Format: NV12, Not RGB32
+- **Choice**: Request NV12 from the source reader and convert to RGBA in `Nv12ToRgbaConverter` rather than requesting RGB32 and letting the video processor convert.
+- **Rationale**: The in-box RGB32 conversion path is a software video processor and measured ≈52 ms/frame at 1440p, capping playback at ≈15 fps. Requesting NV12 makes the decode step ≈5.4 ms/frame (≈185 fps); the remaining cost is our own conversion, which is table-driven and split across a small worker pool owned by the decoder.
+- **Alternatives Considered**:
+  - *RGB32 through the video processor*: Simplest, but the conversion dominated the frame budget.
+  - *NV12 on the GPU via a shader*: Avoids CPU conversion, but Arc's `SpriteBatch` has no per-draw shader hook, so this would mean bypassing the established render path.
+- **Notes**: The reader reports coded (macroblock-aligned) dimensions in `MF_MT_FRAME_SIZE` and display dimensions in `MF_MT_GEOMETRIC_APERTURE`; the decoder reports display dimensions and crops during conversion. `MF_SOURCE_READER_ENABLE_ADVANCED_VIDEO_PROCESSING` must not be set on this machine — the reader fails with `E_INVALIDARG` when it is. Media Foundation needs COM initialized on the calling thread.
+
+### 9. Android MediaCodec: Deferred
+- **Choice**: Ship the platform decoder interface with only the Windows implementation; Android keeps using the JCodec fallback until an Android MediaCodec provider is added.
+- **Rationale**: MediaCodec requires `android.jar` at compile time and a device or emulator to validate, neither of which is available in the current development environment. Adding the interface now means the Android provider can be dropped in later without touching `VideoPlayer` or the selection logic.
+- **Alternatives Considered**:
+  - *Binding MediaCodec through reflection to avoid `android.jar`*: Compiles everywhere, but cannot be exercised here and would ship unverified code.
+
+
 ## Risks / Trade-offs
 
 - **[Risk] High-resolution video (e.g. 4K 60fps) causing high CPU utilization in pure-Java JCodec.**
-  - *Mitigation*: Highlight in UI description that 1080p or 720p 30fps is recommended for smooth software decoding.
+  - *Mitigation*: Prefer the platform decoder; JCodec remains only the fallback. Measured on a Ryzen 5 5600H with a 2560×1440 H.264 clip: JCodec ≈4.5 fps, Media Foundation ≈44 fps (NV12 decode ≈5.4 ms/frame plus a parallel RGBA conversion). When only JCodec is available, highlight in the UI description that 1080p or 720p 30fps is recommended for smooth software decoding.
+- **[Risk] Native decoding requires a JDK 22+ runtime.**
+  - *Mitigation*: The mod compiles against Java 17, and `ForeignRuntime` reaches the Foreign Function & Memory API reflectively, so it is absent only on older runtimes. On those runtimes, and on Android, `VideoDecoders.isNativeAvailable()` returns false and the JCodec fallback is used. The native tests in `VideoDecoderSelectionTest` are guarded by `assumeTrue(VideoDecoders.isNativeAvailable())` and therefore skip on a Java 17 test runtime.
+- **[Risk] Native access is restricted by default on JDK 25 (JEP 472).**
+  - *Mitigation*: `System.loadLibrary` and `MemorySegment.reinterpret` emit a warning on first use but still work. The mod cannot add `--enable-native-access=ALL-UNNAMED` itself, so a future JDK that blocks restricted access instead of warning would disable native decoding; the JCodec fallback would then take over. No user-visible failure occurs either way.
+
 - **[Risk] Unsupported video codecs (HEVC, AV1).**
   - *Mitigation*: Catch `IllegalStateException` during demuxing in `VideoPlayer.Listener.onFailed`, show a clear translatable dialog explaining that H.264 AVC is required, and restore the original renderer.
 - **[Risk] Slight delay when returning to main menu due to re-opening video.**

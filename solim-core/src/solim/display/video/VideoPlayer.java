@@ -10,24 +10,11 @@ import arc.util.Log;
 import arc.util.Nullable;
 import arc.util.Threads;
 import java.io.File;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import org.jcodec.common.Codec;
-import org.jcodec.common.DemuxerTrack;
-import org.jcodec.common.DemuxerTrackMeta;
-import org.jcodec.common.SeekableDemuxerTrack;
-import org.jcodec.common.VideoCodecMeta;
-import org.jcodec.common.io.FileChannelWrapper;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.common.model.Packet;
-import org.jcodec.common.model.Picture;
-import org.jcodec.common.model.Size;
-import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import solim.core.Disposable;
 
 public final class VideoPlayer implements Disposable {
@@ -91,16 +78,9 @@ public final class VideoPlayer implements Disposable {
 	private Listener listener;
 	private Fi wavFile;
 
-	private SeekableByteChannel channel;
-	private RandomAccessFile mediaRaf;
-	private MP4Demuxer demuxer;
-	private SeekableDemuxerTrack videoTrack;
-	private H264PacketDecoder packetDecoder;
+	private @Nullable VideoFrameDecoder decoder;
 	private int width;
 	private int height;
-	private int totalFrames;
-	private double fps = 30;
-	private double discardUntil = -1;
 	private BlockingQueue<ByteBuffer> freeBuffers;
 	private BlockingQueue<DecodedFrame> readyFrames;
 
@@ -265,8 +245,6 @@ public final class VideoPlayer implements Disposable {
 		}
 		hasAudio = false;
 		holdback = null;
-		packetDecoder = null;
-		discardUntil = -1;
 		streamEnded = false;
 		decodeDone = false;
 		singleFrame = false;
@@ -505,35 +483,14 @@ public final class VideoPlayer implements Disposable {
 	private void openInBackground() {
 		try {
 			File file = mp4File.file();
-			openChannel(file);
-			demuxer = MP4Demuxer.createMP4Demuxer(channel);
-			DemuxerTrack track = demuxer.getVideoTrack();
-			if (!(track instanceof SeekableDemuxerTrack))
-				throw new IllegalStateException("Video track is not seekable");
-			videoTrack = (SeekableDemuxerTrack) track;
-			DemuxerTrackMeta meta = track.getMeta();
-			if (meta == null || meta.getCodec() != Codec.H264)
-				throw new IllegalStateException("Only H.264 video is supported");
-			VideoCodecMeta videoMeta = meta.getVideoCodecMeta();
-			Size size = videoMeta != null ? videoMeta.getSize() : null;
-			if (size == null || size.getWidth() <= 0 || size.getHeight() <= 0)
-				throw new IllegalStateException("Unknown video dimensions");
-			width = size.getWidth();
-			height = size.getHeight();
-			durationSec = meta.getTotalDuration();
-			if (durationSec < 0)
-				durationSec = 0;
-			totalFrames = Math.max(0, meta.getTotalFrames());
-			fps = durationSec > 0 && totalFrames > 0 ? (double) totalFrames / durationSec : 30;
-			ByteBuffer priv = meta.getCodecPrivate();
-			if (priv == null || priv.remaining() == 0)
-				throw new IllegalStateException("Missing AVC configuration");
-			byte[] avcBytes = NIOUtils.toArray(priv);
-			packetDecoder = new H264PacketDecoder(avcBytes);
+			decoder = VideoDecoders.open(mp4File);
+			width = decoder.width();
+			height = decoder.height();
+			durationSec = decoder.duration();
 
 			freeBuffers = new ArrayBlockingQueue<>(FRAME_POOL);
 			for (int i = 0; i < FRAME_POOL; i++) {
-				freeBuffers.offer(YuvToRgbaConverter.allocate(width, height));
+				freeBuffers.offer(YuvToRgbaConverter.allocateRgba(width, height));
 			}
 			readyFrames = new ArrayBlockingQueue<>(FRAME_POOL);
 
@@ -662,32 +619,24 @@ public final class VideoPlayer implements Disposable {
 					freeBuffers.offer(buffer);
 					continue;
 				}
-				Packet packet;
+				double pts;
 				try {
-					packet = videoTrack.nextFrame();
+					pts = decoder.decodeNext(buffer);
 				} catch (Throwable t) {
 					freeBuffers.offer(buffer);
+					if (switchToSoftwareDecoder())
+						continue;
 					fail(t);
 					break;
 				}
-				if (packet == null) {
+				if (pts < 0) {
 					freeBuffers.offer(buffer);
 					if (!handleStreamEnd())
 						break;
 					continue;
 				}
-				double pts = packet.getTimescale() > 0 ? (double) packet.getPts() / packet.getTimescale() : 0;
-				if (discardUntil >= 0 && pts < discardUntil) {
-					freeBuffers.offer(buffer);
-					continue;
-				}
-				discardUntil = -1;
-				Picture picture = decodePacket(packet);
-				if (picture == null) {
-					freeBuffers.offer(buffer);
-					continue;
-				}
-				YuvToRgbaConverter.convert(picture, buffer, cornerRadius);
+				if (cornerRadius > 0)
+					RgbaCorners.apply(buffer, width, height, cornerRadius);
 				// H.264 frames cannot be skipped without breaking reference chains, so the decoder is
 				// paced by the display instead: hold this frame until the queue has room rather than
 				// decoding ahead and throwing the result away. Without this the loop outruns the
@@ -739,33 +688,11 @@ public final class VideoPlayer implements Disposable {
 
 	private void doSeek(double seconds) {
 		drainQueues();
-		discardUntil = seconds;
-		long frameNo = totalFrames > 0 ? Math.min((long) (seconds * fps), totalFrames - 1) : (long) (seconds * fps);
-		if (frameNo < 0)
-			frameNo = 0;
-		boolean ok = false;
+		VideoFrameDecoder active = decoder;
+		if (active == null)
+			return;
 		try {
-			ok = videoTrack.gotoSyncFrame(frameNo);
-		} catch (Throwable ignored) {
-		}
-		if (!ok)
-			reopenAtStart();
-	}
-
-	private void reopenAtStart() {
-		closeStream();
-		try {
-			File file = mp4File.file();
-			openChannel(file);
-			demuxer = MP4Demuxer.createMP4Demuxer(channel);
-			DemuxerTrack track = demuxer.getVideoTrack();
-			if (track instanceof SeekableDemuxerTrack) {
-				videoTrack = (SeekableDemuxerTrack) track;
-				try {
-					videoTrack.gotoSyncFrame(0);
-				} catch (Throwable ignored) {
-				}
-			}
+			active.seek(Math.max(0, seconds));
 		} catch (Throwable t) {
 			fail(t);
 		}
@@ -780,48 +707,32 @@ public final class VideoPlayer implements Disposable {
 		}
 	}
 
-	private @Nullable Picture decodePacket(Packet packet) {
-		if (packetDecoder == null)
-			return null;
-		return packetDecoder.decode(packet.getData());
+	private boolean switchToSoftwareDecoder() {
+		VideoFrameDecoder active = decoder;
+		if (active == null || !active.isNative())
+			return false;
+		try {
+			VideoFrameDecoder software = VideoDecoders.openSoftware(mp4File);
+			decoder = software;
+			active.close();
+			drainQueues();
+			software.seek(lastPosition);
+			Log.warn("SolimVideo: native decoder failed, continuing with software decoding");
+			return true;
+		} catch (Throwable error) {
+			Log.debug("SolimVideo: software fallback failed: " + error.getMessage());
+			return false;
+		}
 	}
 
 	private void closeStream() {
-		if (demuxer != null) {
+		VideoFrameDecoder active = decoder;
+		decoder = null;
+		if (active != null) {
 			try {
-				demuxer.close();
+				active.close();
 			} catch (Throwable ignored) {
 			}
-			demuxer = null;
-		}
-		if (channel != null) {
-			try {
-				channel.close();
-			} catch (Throwable ignored) {
-			}
-			channel = null;
-		}
-		if (mediaRaf != null) {
-			try {
-				mediaRaf.close();
-			} catch (Throwable ignored) {
-			}
-			mediaRaf = null;
-		}
-		videoTrack = null;
-	}
-
-	private void openChannel(File file) throws Exception {
-		RandomAccessFile raf = new RandomAccessFile(file, "r");
-		try {
-			channel = new FileChannelWrapper(raf.getChannel());
-			mediaRaf = raf;
-		} catch (Throwable t) {
-			try {
-				raf.close();
-			} catch (Throwable ignored) {
-			}
-			throw t;
 		}
 	}
 

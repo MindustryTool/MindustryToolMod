@@ -4,18 +4,17 @@ import java.nio.ByteBuffer;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
-import solim.graphics.RoundedGenerator;
 
 public final class YuvToRgbaConverter {
 
 	private YuvToRgbaConverter() {
 	}
 
-	public static ByteBuffer allocate(int width, int height) {
+	public static ByteBuffer allocateRgba(int width, int height) {
 		return ByteBuffer.allocateDirect(Math.max(1, width) * Math.max(1, height) * 4);
 	}
 
-	public static void convert(Picture picture, ByteBuffer out, int cornerRadius) {
+	public static void convert(Picture picture, ByteBuffer out) {
 		if (picture == null || out == null)
 			return;
 		Rect crop = picture.getCrop();
@@ -37,8 +36,6 @@ public final class YuvToRgbaConverter {
 		int yStride = Math.max(1, picture.getPlaneWidth(0));
 		int cStride = Math.max(1, picture.getPlaneWidth(1));
 		boolean fullRange = picture.getColor() == ColorSpace.YUV420J;
-
-		int radius = Math.min(Math.max(0, cornerRadius), Math.min(width, height) / 2);
 
 		int pos = 0;
 		for (int y = 0; y < height; y++) {
@@ -67,34 +64,14 @@ public final class YuvToRgbaConverter {
 					b = (298 * c + 516 * d + 128) >> 8;
 				}
 
-				int alpha = 255;
-				if (radius > 0 && x < radius && y < radius) {
-					alpha = cornerByte(radius - 0.5f - x, radius - 0.5f - y, radius);
-				} else if (radius > 0 && x >= width - radius && y < radius) {
-					alpha = cornerByte(x - (width - radius) + 0.5f, radius - 0.5f - y, radius);
-				} else if (radius > 0 && x < radius && y >= height - radius) {
-					alpha = cornerByte(radius - 0.5f - x, y - (height - radius) + 0.5f, radius);
-				} else if (radius > 0 && x >= width - radius && y >= height - radius) {
-					alpha = cornerByte(x - (width - radius) + 0.5f, y - (height - radius) + 0.5f, radius);
-				}
-
 				out.put(pos++, (byte) clip(r));
 				out.put(pos++, (byte) clip(g));
 				out.put(pos++, (byte) clip(b));
-				out.put(pos++, (byte) alpha);
+				out.put(pos++, (byte) 255);
 			}
 		}
 		out.position(0);
 		out.limit(width * height * 4);
-	}
-
-	private static int cornerByte(float dx, float dy, int radius) {
-		float alpha = RoundedGenerator.computeAlpha(dx, dy, radius);
-		if (alpha < 0f)
-			alpha = 0f;
-		if (alpha > 1f)
-			alpha = 1f;
-		return Math.round(alpha * 255f);
 	}
 
 	private static int clip(int value) {

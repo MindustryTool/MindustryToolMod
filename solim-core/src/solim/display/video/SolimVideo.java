@@ -604,8 +604,6 @@ public final class SolimVideo extends Component
         return constraints;
     }
 
-    // TODO: Those component arent table, they should not impl these method and
-    // having children function causing user missuse
     @Override
     public @Nullable Props<SolimVideo> pendingProps() {
         return pending;

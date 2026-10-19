@@ -129,8 +129,8 @@ class H264PacketDecoderTest {
 			assertNotNull(picture);
 			Rect crop = picture.getCrop();
 			int pixels = crop.getWidth() * crop.getHeight();
-			ByteBuffer rgba = YuvToRgbaConverter.allocate(crop.getWidth(), crop.getHeight());
-			YuvToRgbaConverter.convert(picture, rgba, 0);
+			ByteBuffer rgba = YuvToRgbaConverter.allocateRgba(crop.getWidth(), crop.getHeight());
+			YuvToRgbaConverter.convert(picture, rgba);
 
 			int saturated = 0;
 			for (int i = 0; i < pixels; i++) {
