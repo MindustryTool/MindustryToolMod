@@ -132,6 +132,7 @@ public final class AacToWav {
 		long dataLen = 0;
 		int peak = 0;
 		long trim = 0;
+		// The number of bytes at the front of the track that belong to the delay.
 		try {
 			try (OutputStream out = new BufferedOutputStream(new FileOutputStream(tmp))) {
 				writeWavHeader(out, 44100, 2, 0);
@@ -157,7 +158,7 @@ public final class AacToWav {
 						// that compensates it starts the sound at the picture, and one that
 						// does not plays the whole sound behind the picture.
 						double offset = packet.getPts() / (double) packet.getTimescale();
-						trim = offset > 0 ? Math.round(offset * sampleRate) : 0;
+						trim = offset > 0 ? Math.round(offset * sampleRate) * 2 * channels : 0;
 					}
 					ByteBuffer pcm = decoded.getData();
 					while (pcm.hasRemaining()) {

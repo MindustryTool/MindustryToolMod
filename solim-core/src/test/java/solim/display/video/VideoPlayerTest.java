@@ -321,7 +321,7 @@ class VideoPlayerTest extends SolimEnv {
 	void clockAdvancesFromWallTimeWhileAudioIsInert() {
 		float clock = 0f;
 		for (int tick = 0; tick < 3; tick++) {
-			clock = VideoPlayer.advanceClock(clock, 0.016f, 0f, true);
+			clock = VideoPlayer.advanceClock(clock, 0.016f, 0f, false);
 		}
 		assertEquals(0.048f, clock, 1e-4f);
 	}

@@ -18,7 +18,7 @@ public final class VideoCache {
 	 * Bumped whenever the extraction changes, so that wave files written by an older build
 	 * are extracted again instead of being reused.
 	 */
-	static final String AUDIO_CACHE_VERSION = "v3";
+	static final String AUDIO_CACHE_VERSION = "v4";
 	static final int WAV_HEADER_BYTES = 44;
 	static final long MIN_VIDEO_BYTES = 16;
 
