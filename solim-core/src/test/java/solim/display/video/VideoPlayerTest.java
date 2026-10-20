@@ -344,6 +344,13 @@ class VideoPlayerTest extends SolimEnv {
 	}
 
 	@Test
+	void clockAdoptsAudioThatLagsSlightly() {
+		// A picture that runs ahead of the sound is the offset a viewer notices, so the
+		// clock has to give way to a sound that trails it a little.
+		assertEquals(0.9f, VideoPlayer.advanceClock(1f, 0.016f, 0.9f, true), 1e-4f);
+	}
+
+	@Test
 	void clockNeverRewindsOnNegativeDelta() {
 		assertEquals(2f, VideoPlayer.advanceClock(2f, -0.5f, -1f, false), 1e-4f);
 	}

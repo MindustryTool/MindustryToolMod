@@ -406,7 +406,10 @@ public final class VideoPlayer implements Disposable {
 		if (!audioAdvancing)
 			return next;
 		float lead = audioPosition - next;
-		return lead > 0f && lead <= RESYNC_THRESHOLD ? audioPosition : next;
+		// The sound is the clock of the picture. It leads the wall clock and it lags it by
+		// the same amount, and a picture that runs ahead of the sound is what a viewer
+		// notices first, so the clock follows the sound in both directions.
+		return lead >= -RESYNC_THRESHOLD && lead <= RESYNC_THRESHOLD ? audioPosition : next;
 	}
 
 	private float audioPosition() {
@@ -547,7 +550,7 @@ public final class VideoPlayer implements Disposable {
 	private void applyVolume() {
 		if (music == null)
 			return;
-		float effective = muted ? 0f : volume * sfxVolume();
+		float effective = muted ? 0f : volume * musicVolume();
 		if (effective != lastAppliedVolume) {
 			lastAppliedVolume = effective;
 			try {
@@ -585,10 +588,15 @@ public final class VideoPlayer implements Disposable {
 		}
 	}
 
-	private static float sfxVolume() {
+	/**
+	 * Volume of the music in the game. The audio of a video replaces the menu music, so it
+	 * follows the music volume and not the volume of the sound effects: a player who turned
+	 * the game sounds off still wants to hear the video.
+	 */
+	private static float musicVolume() {
 		try {
 			if (Core.settings != null)
-				return Core.settings.getInt("sfxvol", 100) / 100f;
+				return Core.settings.getInt("musicvol", 100) / 100f;
 		} catch (Throwable ignored) {
 		}
 		return 1f;
@@ -660,7 +668,7 @@ public final class VideoPlayer implements Disposable {
 			}
 			AacToWav.AudioInfo info = AacToWav.decode(file, wavFile.file());
 			if (info == null) {
-				Log.info("SolimVideo: no decodable audio track in " + file.getName());
+				Log.info("SolimVideo: no usable audio track in " + file.getName());
 				return false;
 			}
 			Log.info("SolimVideo: audio extracted " + wavFile.path() + " " + info.sampleRate + "Hz "
