@@ -87,7 +87,6 @@ public final class VideoPlayer implements Disposable {
 	private float silentClock = 0f;
 	private float lastAudioPosition = -1f;
 	private float lastAppliedVolume = -1f;
-	private float audioReportAccum = 0;
 
 	private Fi mp4File;
 	private String audioUrl;
@@ -394,11 +393,6 @@ public final class VideoPlayer implements Disposable {
 			presentUpTo(Double.MAX_VALUE);
 		}
 		applyVolume();
-		audioReportAccum += delta;
-		if (audioReportAccum >= 2f) {
-			audioReportAccum = 0;
-			reportAudio();
-		}
 	}
 
 	static float advanceClock(float clock, float delta, float audioPosition, boolean audioAdvancing) {
@@ -516,7 +510,6 @@ public final class VideoPlayer implements Disposable {
 		if (music != null && hasAudio) {
 			try {
 				music.play();
-				Log.info("SolimVideo: audio started, looping=" + looping + " volume=" + music.getVolume());
 			} catch (Throwable ignored) {
 			}
 		}
@@ -558,26 +551,6 @@ public final class VideoPlayer implements Disposable {
 			} catch (Throwable ignored) {
 			}
 		}
-	}
-
-	/**
-	 * Reports the state of the audio track. The audio is easy to break silently: a track
-	 * that stopped playing, lost its volume or drifted away from the picture all look the
-	 * same from the outside.
-	 */
-	private void reportAudio() {
-		Music track = music;
-		if (track == null)
-			return;
-		float position = -1f;
-		boolean playing = false;
-		try {
-			position = track.getPosition();
-			playing = track.isPlaying();
-		} catch (Throwable ignored) {
-		}
-		Log.info("SolimVideo: audio playing=" + playing + " volume=" + track.getVolume()
-				+ " position=" + position + " clock=" + lastPosition + " decoded=" + decodedPts);
 	}
 
 	private static boolean audioReady() {
@@ -659,21 +632,12 @@ public final class VideoPlayer implements Disposable {
 		try {
 			wavFile = audioUrl != null ? VideoCache.audioFile(audioUrl) : null;
 			if (wavFile == null) {
-				Log.info("SolimVideo: no audio track for " + (audioUrl != null ? audioUrl : "null"));
 				return false;
 			}
 			if (VideoCache.isFreshAudio(wavFile)) {
-				Log.info("SolimVideo: audio cached " + wavFile.path() + " (" + wavFile.length() + " bytes)");
 				return true;
 			}
-			AacToWav.AudioInfo info = AacToWav.decode(file, wavFile.file());
-			if (info == null) {
-				Log.info("SolimVideo: no usable audio track in " + file.getName());
-				return false;
-			}
-			Log.info("SolimVideo: audio extracted " + wavFile.path() + " " + info.sampleRate + "Hz "
-					+ info.channels + "ch " + (long) (info.durationSec * 1000) + "ms");
-			return true;
+			return AacToWav.decode(file, wavFile.file()) != null;
 		} catch (Throwable t) {
 			Log.debug("SolimVideo: audio unavailable: " + t.getMessage());
 			return false;
@@ -701,7 +665,6 @@ public final class VideoPlayer implements Disposable {
 					music = new Music(wavFile);
 					music.setLooping(looping);
 					if (!music.valid()) {
-						Log.info("SolimVideo: audio track could not be loaded: " + wavFile.path());
 						music.dispose();
 						music = null;
 						// The cached wave is unusable, so it is dropped and extracted again
@@ -709,11 +672,8 @@ public final class VideoPlayer implements Disposable {
 						VideoCache.deleteQuietly(wavFile);
 					}
 				} catch (Throwable t) {
-					Log.info("SolimVideo: audio track failed: " + t);
 					music = null;
 				}
-			} else if (hasAudio) {
-				Log.info("SolimVideo: audio unavailable, backend not ready");
 			}
 			hasAudio = music != null;
 			state = State.READY;

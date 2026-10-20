@@ -187,7 +187,6 @@ public final class AacToWav {
 			if (peak == 0) {
 				// The track decoded, but every sample is zero. Writing it out would give a
 				// sound that plays in silence, which is worse than having no sound at all.
-				Log.info("SolimVideo: the audio track holds no sound");
 				return null;
 			}
 			rewriteWavHeader(tmp, sampleRate, channels, dataLen);
