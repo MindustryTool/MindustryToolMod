@@ -140,6 +140,7 @@ public class Main extends Mod {
                     if (hasCrashed) {
                         FeatureManager.disableAll();
                     }
+                    FileIcon.load();
                     FeatureManager.init();
                     AuthOverlay.getInstance().init();
                     MindustryAuthProvider.getInstance().init();

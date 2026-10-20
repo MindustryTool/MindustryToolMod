@@ -6,6 +6,7 @@ import arc.graphics.g2d.TextureRegion;
 import arc.scene.style.TextureRegionDrawable;
 import arc.util.Log;
 import arc.util.Nullable;
+
 import java.util.concurrent.ConcurrentHashMap;
 import mindustry.gen.Icon;
 import mindustrytool.Main;
@@ -13,6 +14,20 @@ import mindustrytool.Main;
 public class FileIcon {
 
     private static ConcurrentHashMap<String, TextureRegionDrawable> iconCache = new ConcurrentHashMap<>();
+
+    public static void load() {
+        for (Fi file : Main.self.root.child("icons").list()) {
+            try {
+                String name = file.name();
+                TextureRegion texture = new TextureRegion(new Texture(file));
+                TextureRegionDrawable drawable = new TextureRegionDrawable(texture);
+
+                iconCache.put(name, drawable);
+            } catch (Exception e) {
+                Log.err(e);
+            }
+        }
+    }
 
     public static TextureRegionDrawable of(String name) {
         return of(name, fallbackIcon());
@@ -34,6 +49,7 @@ public class FileIcon {
             }
             TextureRegion texture = new TextureRegion(new Texture(file));
             TextureRegionDrawable drawable = new TextureRegionDrawable(texture);
+
             iconCache.put(name, drawable);
 
             return drawable;
