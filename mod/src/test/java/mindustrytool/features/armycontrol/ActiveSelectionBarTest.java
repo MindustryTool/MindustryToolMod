@@ -16,6 +16,7 @@ import mindustry.type.UnitType;
 import mindustrytool.test.MindustryTestEnv;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import solim.reactive.Readable;
 
 class ActiveSelectionBarTest extends MindustryTestEnv {
 
@@ -49,7 +50,7 @@ class ActiveSelectionBarTest extends MindustryTestEnv {
     @Test
     void testActiveSelectionBarElementCreationAndDeselection() {
         ArmyControlFeature feature = new ArmyControlFeature();
-        ActiveSelectionBar bar = new ActiveSelectionBar(feature);
+        ActiveSelectionBar bar = new ActiveSelectionBar(feature, Readable.of(1f));
 
         assertNotNull(bar.element());
 
