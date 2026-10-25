@@ -40,6 +40,7 @@ import solim.input.SolimSelect;
 import solim.input.SolimSlider;
 import solim.input.SolimTextField;
 import solim.input.Switch;
+import solim.layout.BlurContainer;
 import solim.layout.Card;
 import solim.layout.Column;
 import solim.layout.Direction;
@@ -129,6 +130,22 @@ public final class UI {
 
     public static Card card(@Nullable Drawable background, @Nullable Runnable r) {
         return card(background).children(r);
+    }
+
+    public static BlurContainer blurContainer() {
+        return new BlurContainer();
+    }
+
+    public static BlurContainer blurContainer(float contentBlurRadius) {
+        return new BlurContainer(contentBlurRadius);
+    }
+
+    public static BlurContainer blurContainer(@Nullable Runnable r) {
+        return blurContainer().children(r);
+    }
+
+    public static BlurContainer blurContainer(float contentBlurRadius, @Nullable Runnable r) {
+        return blurContainer(contentBlurRadius).children(r);
     }
 
     public static Row row() {
@@ -781,6 +798,22 @@ public final class UI {
 
     public static Prop<TableCapability, Color> backgroundColor(@Nullable Color color) {
         return Values.backgroundColor(color);
+    }
+
+    public static Prop<TableCapability, Float> backdropBlur(float radius) {
+        return Values.backdropBlur(radius);
+    }
+
+    public static Prop<TableCapability, Float> backdropBlur() {
+        return Values.backdropBlur();
+    }
+
+    public static Prop<TableCapability, Float> contentBlur(float radius) {
+        return Values.contentBlur(radius);
+    }
+
+    public static Prop<TableCapability, Float> contentBlur() {
+        return Values.contentBlur();
     }
 
     public static Prop<TableCapability, Readable<Color>> backgroundColor(@Nullable Readable<Color> color) {

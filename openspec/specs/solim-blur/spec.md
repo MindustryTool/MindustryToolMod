@@ -1,4 +1,9 @@
-## ADDED Requirements
+# Solim Blur Specification
+
+## Purpose
+Native backdrop blur (frosted glass) and content blur post-processing for Solim UI components.
+
+## Requirements
 
 ### Requirement: Declarative Backdrop Blur Modifier
 The Solim UI framework SHALL provide a declarative `backdropBlur(float radius)` modifier applicable to any container, card, dialog, or popup. When applied, the component SHALL sample and blur the screen content beneath its bounding box prior to drawing its background tint and foreground children.

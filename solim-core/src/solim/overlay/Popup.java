@@ -15,6 +15,7 @@ import arc.util.Nullable;
 import arc.util.Time;
 import arc.func.Func;
 import mindustry.game.EventType.ResizeEvent;
+import solim.graphics.BlurHelper;
 import solim.core.Component;
 import solim.core.SolimToken;
 import solim.layout.Spacer;
@@ -122,6 +123,15 @@ public final class Popup<T> extends Component
 
     public Table table() {
         return table;
+    }
+
+    public Popup<T> blurBackdrop(float radius) {
+        BlurHelper.applyBackdropBlur(table, radius);
+        return this;
+    }
+
+    public Popup<T> blurBackdrop() {
+        return blurBackdrop(8f);
     }
 
     @Override

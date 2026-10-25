@@ -13,7 +13,6 @@ import mindustry.game.EventType.ResizeEvent;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
-import mindustry.ui.Styles;
 import mindustrytool.components.WebStyles;
 import mindustrytool.components.FileIcon;
 import solim.core.Component;
@@ -84,17 +83,21 @@ public class ChatOverlayHudView extends Component {
                             store.unread().markAsRead(activeId);
                         }
                     })
-                            .props(prefWidth(unit(12)), prefHeight(unit(12)), draggable(hud, feature.xSignal, feature.ySignal))
+                            .props(prefWidth(unit(12)), prefHeight(unit(12)),
+                                    draggable(hud, feature.xSignal, feature.ySignal))
                             .children(() -> {
                                 stack()
                                         .props(grow(), center())
                                         .layer(() -> row().props(padding(unit(2)))
                                                 .children(() -> icon(FileIcon.of("message-circle.png"))
-                                                        .props(prefWidth(unit(8)), prefHeight(unit(8)), grow(), color(Color.white), center())))
-                                        .layer(() -> row().props(top(), right(), grow(), visible(hasUnread)).children(() -> {
-                                            image(circle())
-                                                    .props(margin(unit(1)), prefWidth(unit(3)), prefHeight(unit(3)), color(Color.scarlet));
-                                        }));
+                                                        .props(prefWidth(unit(8)), prefHeight(unit(8)), grow(),
+                                                                color(Color.white), center())))
+                                        .layer(() -> row().props(top(), right(), grow(), visible(hasUnread))
+                                                .children(() -> {
+                                                    image(circle())
+                                                            .props(margin(unit(1)), prefWidth(unit(3)),
+                                                                    prefHeight(unit(3)), color(Color.scarlet));
+                                                }));
                             });
                 });
     }
@@ -142,16 +145,18 @@ public class ChatOverlayHudView extends Component {
                 ? Core.bundle.get("feature.chat.ui.expand-users", "Show Members")
                 : Core.bundle.get("feature.chat.ui.collapse-users", "Hide Members"));
 
-
-
-        return card(Styles.black9)
+        return card()
+                .props(backdropBlur(12), rounded(unit(2), new Color(0.05f, 0.05f, 0.08f, 0.5f)), border(1f, WebStyles.Colors.SECTION_BORDER))
                 .children(() -> {
                     column().props(grow()).children(() -> {
 
-                        row().props(growX(), background(colored(new Color(0.45f, 0.35f, 0.9f, 0.3f), Tex.whiteui)), padding(unit(1), unit(2), unit(1), unit(2)), gap(unit(2)), draggable(hud, feature.xSignal, feature.ySignal), center())
+                        row().props(growX(), background(colored(new Color(0.45f, 0.35f, 0.9f, 0.3f), Tex.whiteui)),
+                                padding(unit(1), unit(2), unit(1), unit(2)), gap(unit(2)),
+                                draggable(hud, feature.xSignal, feature.ySignal), center())
                                 .children(() -> {
                                     image(circle())
-                                            .props(prefWidth(unit(3)), prefHeight(unit(3)), color(isConnected.map(c -> c ? Pal.heal : Color.scarlet)));
+                                            .props(prefWidth(unit(3)), prefHeight(unit(3)),
+                                                    color(isConnected.map(c -> c ? Pal.heal : Color.scarlet)));
 
                                     text(channelTitle)
                                             .props(color(Pal.accent), fontScale(0.95f), left());
@@ -159,16 +164,21 @@ public class ChatOverlayHudView extends Component {
                                     spacer();
 
                                     button(store.ui()::toggleChannelsCollapsed)
-                                            .props(style(WebStyles.ghost()), prefWidth(unit(10)), prefHeight(unit(10)), visible(isDesktop), tooltip(channelsTooltip))
-                                            .children(() -> icon(channelsIcon).props(prefWidth(unit(6)), prefHeight(unit(6))));
+                                            .props(style(WebStyles.ghost()), prefWidth(unit(10)), prefHeight(unit(10)),
+                                                    visible(isDesktop), tooltip(channelsTooltip))
+                                            .children(() -> icon(channelsIcon).props(prefWidth(unit(6)),
+                                                    prefHeight(unit(6))));
 
                                     button(store.ui()::toggleUsersCollapsed)
-                                            .props(style(WebStyles.ghost()), prefWidth(unit(10)), prefHeight(unit(10)), visible(isDesktop), tooltip(usersTooltip))
-                                            .children(() -> icon(usersIcon).props(prefWidth(unit(6)), prefHeight(unit(6))));
+                                            .props(style(WebStyles.ghost()), prefWidth(unit(10)), prefHeight(unit(10)),
+                                                    visible(isDesktop), tooltip(usersTooltip))
+                                            .children(() -> icon(usersIcon).props(prefWidth(unit(6)),
+                                                    prefHeight(unit(6))));
 
                                     button(() -> service.refresh(store.channels().activeId().peek()))
                                             .props(style(WebStyles.ghost()), prefWidth(unit(10)), prefHeight(unit(10)))
-                                            .children(() -> icon(Icon.refresh).props(prefWidth(unit(5)), prefHeight(unit(5))));
+                                            .children(() -> icon(Icon.refresh).props(prefWidth(unit(5)),
+                                                    prefHeight(unit(5))));
 
                                     button(() -> {
                                         Prov<SolimDialog> dialog = feature.getSettingDialog();
@@ -176,12 +186,16 @@ public class ChatOverlayHudView extends Component {
                                             dialog.get().show();
                                         }
                                     })
-                                            .props(style(WebStyles.ghost()), prefWidth(unit(10)), prefHeight(unit(10)), tooltip(Core.bundle.get("feature.chat.ui.settings", "Settings")))
-                                            .children(() -> icon(Icon.settings).props(prefWidth(unit(5)), prefHeight(unit(5))));
+                                            .props(style(WebStyles.ghost()), prefWidth(unit(10)), prefHeight(unit(10)),
+                                                    tooltip(Core.bundle.get("feature.chat.ui.settings", "Settings")))
+                                            .children(() -> icon(Icon.settings).props(prefWidth(unit(5)),
+                                                    prefHeight(unit(5))));
 
                                     button(() -> feature.collapsedConfig.set(true))
-                                            .props(style(WebStyles.ghost()), prefWidth(unit(10)), prefHeight(unit(10)), tooltip(Core.bundle.get("feature.chat.ui.collapse", "Collapse")))
-                                            .children(() -> icon(Icon.cancel).props(prefWidth(unit(5)), prefHeight(unit(5))));
+                                            .props(style(WebStyles.ghost()), prefWidth(unit(10)), prefHeight(unit(10)),
+                                                    tooltip(Core.bundle.get("feature.chat.ui.collapse", "Collapse")))
+                                            .children(() -> icon(Icon.cancel).props(prefWidth(unit(5)),
+                                                    prefHeight(unit(5))));
                                 });
 
                         divider();

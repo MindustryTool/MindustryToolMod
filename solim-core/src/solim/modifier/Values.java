@@ -35,7 +35,9 @@ import solim.display.SolimImage;
 import solim.display.Text;
 import solim.display.video.SolimVideo;
 import solim.display.video.VideoSource;
+import solim.graphics.BlurHelper;
 import solim.graphics.RoundedDrawable;
+import solim.layout.BlurTable;
 import solim.input.Button;
 import solim.input.Checkbox;
 import solim.input.SolimSelect;
@@ -551,6 +553,30 @@ public final class Values {
 
     public static Prop<TableCapability, Color> backgroundColor(@Nullable Color color) {
         return background(color);
+    }
+
+    public static Prop<TableCapability, Float> backdropBlur(float radius) {
+        return Prop.table(TableCapability.class, "backdropBlur", radius, (table, val) -> {
+            if (val != null) {
+                BlurHelper.applyBackdropBlur(table, val);
+            }
+        });
+    }
+
+    public static Prop<TableCapability, Float> backdropBlur() {
+        return backdropBlur(8f);
+    }
+
+    public static Prop<TableCapability, Float> contentBlur(float radius) {
+        return Prop.table(TableCapability.class, "contentBlur", radius, (table, val) -> {
+            if (table instanceof BlurTable && val != null) {
+                ((BlurTable) table).contentBlurRadius(val);
+            }
+        });
+    }
+
+    public static Prop<TableCapability, Float> contentBlur() {
+        return contentBlur(5f);
     }
 
     public static Prop<TableCapability, Readable<Color>> backgroundColor(@Nullable Readable<Color> color) {
