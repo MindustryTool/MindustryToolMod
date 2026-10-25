@@ -74,6 +74,8 @@ import solim.modifier.WrappableCapability;
 import solim.style.InputStyle;
 import solim.style.SolimButtonStyle;
 import solim.style.SolimButtonStyleBuilder;
+import solim.overlay.DockAnchorStore;
+import solim.overlay.DockEngine;
 import solim.overlay.Hud;
 import solim.overlay.Popup;
 import solim.overlay.SolimDialog;
@@ -954,6 +956,25 @@ public final class UI {
 
     public static Prop<ElementCapability, Void> draggable(@Nullable Hud hud, @Nullable Signal<Float> x, @Nullable Signal<Float> y) {
         return Values.draggable(hud, x, y);
+    }
+
+    public static Prop<ElementCapability, Void> dockable(DockEngine engine) {
+        return Values.dockable(engine);
+    }
+
+    public static Prop<ElementCapability, Void> dockable(DockEngine engine, @Nullable DockAnchorStore store) {
+        return Values.dockable(engine, store);
+    }
+
+    public static Prop<ElementCapability, Void> dockable(DockEngine engine, @Nullable DockAnchorStore store,
+            @Nullable String targetId) {
+        return Values.dockable(engine, store, targetId);
+    }
+
+    public static Prop<ElementCapability, Void> dockable(@Nullable Hud hud, DockEngine engine,
+            @Nullable DockAnchorStore store, @Nullable Signal<Float> x, @Nullable Signal<Float> y,
+            @Nullable String targetId) {
+        return Values.dockable(hud, engine, store, x, y, targetId);
     }
 
     public static Prop<ElementCapability, Cons<Element>> update(Cons<Element> fn) {

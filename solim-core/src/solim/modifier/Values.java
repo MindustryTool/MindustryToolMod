@@ -49,6 +49,8 @@ import solim.layout.Grid;
 import solim.layout.Scroll;
 import solim.layout.SolimCollapser;
 import solim.layout.Tabs;
+import solim.overlay.DockAnchorStore;
+import solim.overlay.DockEngine;
 import solim.overlay.Hud;
 import solim.overlay.Popup;
 import solim.reactive.Effect;
@@ -906,6 +908,29 @@ public final class Values {
             @Nullable Signal<Float> y) {
         return Prop.raw(ElementCapability.class, "draggable", Prop.Kind.ELEMENT,
                 target -> Hud.makeDraggable((Element) target, hud, x, y));
+    }
+
+    public static Prop<ElementCapability, Void> dockable(DockEngine engine) {
+        return Prop.raw(ElementCapability.class, "dockable", Prop.Kind.ELEMENT,
+                target -> Hud.makeDockable((Element) target, null, engine, null, null, null, null));
+    }
+
+    public static Prop<ElementCapability, Void> dockable(DockEngine engine, @Nullable DockAnchorStore store) {
+        return Prop.raw(ElementCapability.class, "dockable", Prop.Kind.ELEMENT,
+                target -> Hud.makeDockable((Element) target, null, engine, store, null, null, null));
+    }
+
+    public static Prop<ElementCapability, Void> dockable(DockEngine engine, @Nullable DockAnchorStore store,
+            @Nullable String targetId) {
+        return Prop.raw(ElementCapability.class, "dockable", Prop.Kind.ELEMENT,
+                target -> Hud.makeDockable((Element) target, null, engine, store, null, null, targetId));
+    }
+
+    public static Prop<ElementCapability, Void> dockable(@Nullable Hud hud, DockEngine engine,
+            @Nullable DockAnchorStore store, @Nullable Signal<Float> x, @Nullable Signal<Float> y,
+            @Nullable String targetId) {
+        return Prop.raw(ElementCapability.class, "dockable", Prop.Kind.ELEMENT,
+                target -> Hud.makeDockable((Element) target, hud, engine, store, x, y, targetId));
     }
 
     public static Prop<ElementCapability, Cons<Element>> update(Cons<Element> fn) {

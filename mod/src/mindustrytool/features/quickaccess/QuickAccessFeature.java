@@ -15,6 +15,8 @@ import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
+import mindustrytool.ui.dock.DockPositionConfig;
+import mindustrytool.ui.dock.MindustryDockRegistry;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
@@ -45,6 +47,7 @@ public class QuickAccessFeature extends Feature {
 
     public final Signal<Float> xSignal;
     public final Signal<Float> ySignal;
+    public final DockPositionConfig dockPosition;
 
     private @Nullable QuickAccessHudView hudView;
     private @Nullable QuickAccessSettingsDialog settingsDialog;
@@ -106,6 +109,7 @@ public class QuickAccessFeature extends Feature {
 
         xSignal = xConfig.signal();
         ySignal = yConfig.signal();
+        dockPosition = new DockPositionConfig(config, xConfig, yConfig);
 
         Effect.of(Signals.isPortrait(), p -> {
             if (hudView != null) {
@@ -341,8 +345,7 @@ public class QuickAccessFeature extends Feature {
         Core.settings.put("mindustrytool.quick-access.y.portrait", cy);
         Core.settings.put("mindustrytool.quick-access.y.landscape", cy);
 
-        xConfig.reset();
-        yConfig.reset();
+        dockPosition.resetTo(cx, cy);
 
         if (hudView != null) {
             Core.app.post(hudView::keepInScreen);
@@ -363,6 +366,7 @@ public class QuickAccessFeature extends Feature {
             el.name = "quick-access-hud";
             el.visible(() -> Vars.ui.hudfrag != null && Vars.ui.hudfrag.shown && Vars.state != null
                     && Vars.state.isGame());
+            MindustryDockRegistry.get().registerHud("quick-access", el);
 
             Core.app.post(() -> {
                 if (hudView != null && Vars.ui.hudGroup != null) {
@@ -377,6 +381,7 @@ public class QuickAccessFeature extends Feature {
         if (hudView != null) {
             QuickAccessHudView view = hudView;
             hudView = null;
+            MindustryDockRegistry.get().unregisterHud("quick-access");
             Core.app.post(() -> {
                 view.element().remove();
                 view.dispose();

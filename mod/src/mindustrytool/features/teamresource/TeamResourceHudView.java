@@ -21,6 +21,7 @@ import mindustry.type.UnitType;
 import mindustry.ui.Styles;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.settings.ModSettings;
+import mindustrytool.ui.dock.MindustryDockRegistry;
 import solim.core.Component;
 import solim.core.EventsUtil;
 import solim.layout.Card;
@@ -87,7 +88,8 @@ public class TeamResourceHudView extends Component {
 
                             when(feature.hideDragHandleConfig.signal())
                                     .elseDo(() -> button()
-                                            .props(style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), draggable(hud, feature.xSignal, feature.ySignal))
+                                            .props(style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize),
+                                                    dockable(MindustryDockRegistry.get().engine(), feature.dockPosition, "team-resources"))
                                             .children(() -> icon(Icon.move).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize))));
 
                             button()
@@ -137,6 +139,8 @@ public class TeamResourceHudView extends Component {
             });
         });
 
+        hud.dockable(null, MindustryDockRegistry.get().engine(), feature.dockPosition, feature.xSignal, feature.ySignal,
+                "team-resources");
         hud.props(rounded(unit(2), bgColor), border(1.5f, borderColor), opacity(feature.opacityConfig.signal()), position(feature.xSignal, feature.ySignal));
         hud.toFrontOnTouch();
 

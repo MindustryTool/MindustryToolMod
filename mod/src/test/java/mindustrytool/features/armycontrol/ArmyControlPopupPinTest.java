@@ -20,6 +20,7 @@ import mindustry.type.UnitType;
 import mindustrytool.test.MindustryTestEnv;
 import org.junit.jupiter.api.Test;
 import solim.overlay.Popup;
+import solim.test.SolimEnv;
 
 class ArmyControlPopupPinTest extends MindustryTestEnv {
 
@@ -77,6 +78,7 @@ class ArmyControlPopupPinTest extends MindustryTestEnv {
         Element popupTable = scene.root.find("solim-popup-menu");
         assertNotNull(popupTable);
         assertTrue(popupTable.y >= barTop);
+        float bottomBefore = popupTable.y;
 
         ObjectIntMap<UnitType> types = new ObjectIntMap<>();
         for (int i = 0; i < 30; i++) {
@@ -84,10 +86,19 @@ class ArmyControlPopupPinTest extends MindustryTestEnv {
             types.put(ut != null ? ut : new UnitType("pin-unit-" + i), 5);
         }
         feature.discoveredTypesSignal().set(types);
+        SolimEnv.flushEffects();
         popupTable.validate();
 
+        assertEquals(bottomBefore, popupTable.y, 0.5f, "Bottom edge must remain fixed when pinned to BOTTOM");
         assertTrue(popupTable.y >= barTop);
         assertTrue(popupTable.y + popupTable.getHeight() <= 600f);
+
+        ObjectIntMap<UnitType> empty = new ObjectIntMap<>();
+        feature.discoveredTypesSignal().set(empty);
+        SolimEnv.flushEffects();
+        popupTable.validate();
+
+        assertEquals(bottomBefore, popupTable.y, 0.5f, "Bottom edge must remain fixed when shrinking");
         ArmyControlPopup.hide();
     }
 
@@ -119,6 +130,7 @@ class ArmyControlPopupPinTest extends MindustryTestEnv {
         Element popupTable = scene.root.find("solim-popup-menu");
         assertNotNull(popupTable);
         assertTrue(popupTable.y + popupTable.getHeight() <= bar.y);
+        float topBefore = popupTable.y + popupTable.getHeight();
 
         ObjectIntMap<UnitType> types = new ObjectIntMap<>();
         for (int i = 0; i < 30; i++) {
@@ -126,7 +138,19 @@ class ArmyControlPopupPinTest extends MindustryTestEnv {
             types.put(ut != null ? ut : new UnitType("pin-unit-top-" + i), 5);
         }
         feature.discoveredTypesSignal().set(types);
+        SolimEnv.flushEffects();
         popupTable.validate();
+
+        float topAfter = popupTable.y + popupTable.getHeight();
+        assertEquals(topBefore, topAfter, 0.5f, "Top edge must remain fixed when pinned to TOP");
+
+        ObjectIntMap<UnitType> empty = new ObjectIntMap<>();
+        feature.discoveredTypesSignal().set(empty);
+        SolimEnv.flushEffects();
+        popupTable.validate();
+
+        float topShrunk = popupTable.y + popupTable.getHeight();
+        assertEquals(topBefore, topShrunk, 0.5f, "Top edge must remain fixed when shrinking");
 
         assertTrue(popupTable.y + popupTable.getHeight() <= bar.y);
         assertTrue(popupTable.y >= 0f);

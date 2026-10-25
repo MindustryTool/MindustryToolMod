@@ -23,6 +23,8 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.quickaccess.QuickAccessFeature;
+import mindustrytool.ui.dock.DockPositionConfig;
+import mindustrytool.ui.dock.MindustryDockRegistry;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
@@ -53,6 +55,7 @@ public class ArmyControlFeature extends Feature {
 
     public final Signal<Float> xSignal;
     public final Signal<Float> ySignal;
+    public final DockPositionConfig dockPosition;
 
     private final Seq<Unit> poolUnits = new Seq<>();
     private final Signal<ObjectIntMap<UnitType>> discoveredTypesSignal = Signal.of(new ObjectIntMap<>());
@@ -107,6 +110,7 @@ public class ArmyControlFeature extends Feature {
 
         xSignal = xConfig.signal();
         ySignal = yConfig.signal();
+        dockPosition = new DockPositionConfig(positionGroup, xConfig, yConfig);
 
         bindDialog("armycontrolsettings", KeyCode.unset, getSettingDialog(), false);
 
@@ -298,6 +302,7 @@ public class ArmyControlFeature extends Feature {
         Element el = hudView.element();
         el.name = "army-control-hud";
         el.visible(() -> Vars.ui.hudfrag.shown && Vars.state.isGame());
+        MindustryDockRegistry.get().registerHud("army-control", el);
         Core.app.post(() -> {
             if (hudView != null && !isPopupActive()) {
                 Vars.ui.hudGroup.addChild(el);
@@ -311,10 +316,24 @@ public class ArmyControlFeature extends Feature {
         }
         ArmyControlHudView view = hudView;
         hudView = null;
+        MindustryDockRegistry.get().unregisterHud("army-control");
         Core.app.post(() -> {
             view.element().remove();
             view.dispose();
         });
+    }
+
+    public void resetPosition() {
+        float sw = Units.screenWidth();
+        float sh = Units.screenHeight();
+        float cx = sw > 0 ? sw / 2f : 400f;
+        float cy = sh > 0 ? sh / 2f : 200f;
+
+        dockPosition.resetTo(cx, cy);
+
+        if (hudView != null) {
+            Core.app.post(hudView::keepInScreen);
+        }
     }
 
     @Override

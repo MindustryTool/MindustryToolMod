@@ -359,16 +359,19 @@ public final class Popup<T> extends Component
 
         @Override
         public void validate() {
+            super.validate();
             if (owner != null) {
                 owner.reconcilePinnedEdge();
+                if (needsLayout()) {
+                    super.validate();
+                }
             }
-            super.validate();
         }
     }
 
     private void reconcilePinnedEdge() {
         Edge edge = pinnedEdge;
-        if (edge == null || !table.needsLayout()) {
+        if (edge == null) {
             return;
         }
         float w = table.getWidth();

@@ -28,6 +28,11 @@ import mindustry.ui.fragments.HudFragment;
 import mindustrytool.features.visualizer.VisualizerFeature;
 import mindustrytool.features.visualizer.VisualizerFeature.BridgeFlowState;
 import mindustrytool.test.MindustryTestEnv;
+import solim.overlay.DockCandidate;
+import solim.overlay.DockEngine;
+import solim.overlay.DockGuideRenderer;
+import solim.overlay.DockSide;
+import solim.overlay.DockTarget;
 
 class RenderLoopAllocationTest extends MindustryTestEnv {
 
@@ -258,5 +263,83 @@ class RenderLoopAllocationTest extends MindustryTestEnv {
         long allocated = endAlloc - startAlloc;
 
         assertEquals(0L, allocated, "Block stats efficiency lookup and color selection must allocate 0 bytes");
+    }
+
+    private static final class StaticDockTarget implements DockTarget {
+        private final String id;
+        private final float x;
+        private final float y;
+        private final float width;
+        private final float height;
+
+        private StaticDockTarget(String id, float x, float y, float width, float height) {
+            this.id = id;
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+        }
+
+        @Override
+        public String id() {
+            return id;
+        }
+
+        @Override
+        public float x() {
+            return x;
+        }
+
+        @Override
+        public float y() {
+            return y;
+        }
+
+        @Override
+        public float width() {
+            return width;
+        }
+
+        @Override
+        public float height() {
+            return height;
+        }
+
+        @Override
+        public boolean active() {
+            return true;
+        }
+
+        @Override
+        public boolean supports(DockSide side) {
+            return side == DockSide.BOTTOM;
+        }
+    }
+
+    @Test
+    void testDockedHudIdleFrameZeroAllocation() {
+        DockGuideRenderer guide = new DockGuideRenderer();
+        DockEngine engine = new DockEngine();
+        DockTarget target = new StaticDockTarget("minimap", 100f, 100f, 200f, 100f);
+        engine.register(target);
+        DockCandidate candidate = new DockCandidate(target, DockSide.BOTTOM, 150f, 46f, 50f, 0f);
+
+        for (int frame = 0; frame < 100; frame++) {
+            guide.draw();
+            engine.breaksAway(candidate, 150f, 46f);
+            engine.find("minimap");
+        }
+
+        long startAlloc = threadBean.getThreadAllocatedBytes(threadId);
+        for (int frame = 0; frame < 60; frame++) {
+            guide.draw();
+            engine.breaksAway(candidate, 150f + frame % 10, 46f);
+            engine.find("minimap");
+        }
+        long endAlloc = threadBean.getThreadAllocatedBytes(threadId);
+        long allocated = endAlloc - startAlloc;
+
+        assertEquals(0L, allocated, "An idle docked HUD frame must allocate 0 bytes on heap");
+        assertNotNull(engine.find("minimap"));
     }
 }
