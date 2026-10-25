@@ -2,6 +2,7 @@ package mindustrytool.features.armycontrol;
 
 import static solim.UI.*;
 
+import arc.Core;
 import arc.scene.Element;
 import arc.util.Nullable;
 import mindustry.game.EventType.ResizeEvent;
@@ -39,12 +40,19 @@ public class ArmyControlHudView extends Component {
             });
         }).props(gap(unit(1.5f)), position(feature.xSignal, feature.ySignal), padding(unit(2.5f)), rounded(unit(2), WebStyles.Colors.SECTION_BG), border(1.5f, WebStyles.Colors.BORDER));
 
-        listen(ResizeEvent.class, e -> {
-            if (hud != null) {
-                hud.keepInScreen();
-            }
+        listen(ResizeEvent.class, e -> keepInScreen());
+
+        effect(() -> {
+            scale.get();
+            Core.app.post(this::keepInScreen);
         });
 
         return hud.element();
+    }
+
+    public void keepInScreen() {
+        if (hud != null) {
+            hud.keepInScreen();
+        }
     }
 }

@@ -1,4 +1,10 @@
-## ADDED Requirements
+# video-background Specification
+
+## Purpose
+
+Support selecting, configuring, and rendering local H.264 MP4 video backgrounds on the main menu, coordinating audio with ambient menu music, and managing native/software video decoder lifecycles.
+
+## Requirements
 
 ### Requirement: MP4 Background Video Playback
 The system SHALL support selecting and playing local H.264 MP4 video files as the main menu background in continuous loop.

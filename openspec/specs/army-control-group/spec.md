@@ -3,7 +3,6 @@
 ## Purpose
 
 Fast RTS army control for large unit armies, especially on mobile/touchscreen where precision box-selecting is cumbersome. Provides one-click map/screen selection, named unit control groups with recall, and quick unit-type deselection via interactive chips, integrated with vanilla RTS Command Mode without moving the camera. Created by archiving change army-control-group.
-
 ## Requirements
 
 **Source: army-control-group**
@@ -104,3 +103,56 @@ The system SHALL provide Army Control as a compact QuickAccess popup or persiste
 #### Scenario: Configurable display mode
 - **WHEN** the user changes the display mode setting to HUD in feature settings
 - **THEN** the same compact Army Control content is rendered as a persistent draggable HUD instead of a popup
+
+### Requirement: Army Control Overlay Scaling
+
+The Army Control HUD and its QuickAccess popup SHALL render from a single effective scale equal to `ModSettings.effectiveScale(feature.scaleConfig.signal())`, the product of the global universal scale and the feature's local scale. Both surfaces SHALL apply that scale to every interactive control, icon, text run, and the panel width in the compact content, and SHALL keep structural spacing at fixed `unit(...)` values. No minimum clamp SHALL be applied, and text SHALL follow the raw scale.
+
+#### Scenario: HUD content scales with the signal
+
+- **WHEN** the effective scale changes from 1.0 to 0.5 while the HUD is shown
+- **THEN** toolbar buttons, the drag handle, selection chips, group recall rows, group delete buttons, and unit icons render at half their 1× size
+- **AND** chip counts, group counts, and the empty-state hint render at half their 1× font scale
+- **AND** the panel width becomes `unit(65) × 0.5`
+
+#### Scenario: Popup matches the HUD
+
+- **WHEN** Army Control is displayed in popup mode at an effective scale of 1.5
+- **THEN** the popup content uses the same scaled control and text sizes as the HUD at 1.5
+- **AND** the popup width is `unit(65) × 1.5`
+- **AND** the popup's own padding, gaps, corner radius, and border width remain at their fixed `unit(...)` values
+
+#### Scenario: Universal scale multiplies the feature scale
+
+- **WHEN** the universal scale is 0.8 and the Army Control feature scale is 1.5
+- **THEN** both the HUD and the popup render at 1.2×
+
+#### Scenario: Structural spacing stays fixed
+
+- **WHEN** the effective scale is 0.5
+- **THEN** chip padding, chip gaps, group-row gaps, panel padding, panel gap, corner radius, and border width are unchanged from 1.0
+- **AND** only control dimensions, icon dimensions, panel width, and font scale follow the signal
+
+#### Scenario: No minimum clamp
+
+- **WHEN** the universal scale is 0.5 and the Army Control feature scale is 0.5
+- **THEN** both surfaces render at 0.25× with no floor applied to buttons, icons, panel width, or text
+
+#### Scenario: HUD re-clamps when scale changes
+
+- **WHEN** the effective scale changes while the HUD is shown and the new width would place part of the HUD outside the screen
+- **THEN** the HUD is re-clamped into the screen
+- **AND** the clamped position is persisted through the bound position signals
+
+#### Scenario: Popup keeps its horizontal position during live scale changes
+
+- **WHEN** the effective scale changes while the popup is open
+- **THEN** the popup's X position is unchanged
+- **AND** its bar-facing vertical edge remains pinned as content height changes
+- **AND** horizontal overflow at a screen edge is accepted until the popup is reopened
+
+#### Scenario: 1× identity
+
+- **WHEN** the effective scale is 1.0
+- **THEN** control sizes, text sizes, panel width, and spacing match the pre-change Army Control layout
+

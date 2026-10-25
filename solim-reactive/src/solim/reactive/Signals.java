@@ -40,9 +40,7 @@ public final class Signals {
             return;
         }
 
-        Events.on(ResizeEvent.class, e -> {
-            Core.app.post(() -> portrait.set(Core.graphics.isPortrait()));
-        });
+        Events.on(ResizeEvent.class, e -> portrait.set(Core.graphics.isPortrait()));
 
         refreshNetNow();
         Events.on(HostEvent.class, e -> requestRefresh());

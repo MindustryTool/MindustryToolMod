@@ -8,6 +8,7 @@ import arc.util.Nullable;
 import arc.util.Time;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.quickaccess.QuickAccessPopupHelper;
+import mindustrytool.features.settings.ModSettings;
 import solim.core.Component;
 import solim.overlay.Popup;
 import solim.reactive.Readable;
@@ -68,10 +69,13 @@ public final class ArmyControlPopup {
             return row();
         }
 
+        Readable<Float> scale = ModSettings.effectiveScale(feature.scaleConfig.signal());
+        Readable<Float> columnWidth = scale.map(s -> unit(65) * (s != null ? s : 1f));
+
         return column()
-                .props(width(unit(65)), prefWidth(unit(65)), padding(unit(2.5f)), rounded(unit(2), WebStyles.Colors.SECTION_BG), border(1f, WebStyles.Colors.SECTION_BORDER), gap(unit(2)))
+                .props(width(columnWidth), prefWidth(columnWidth), padding(unit(2.5f)), rounded(unit(2), WebStyles.Colors.SECTION_BG), border(1f, WebStyles.Colors.SECTION_BORDER), gap(unit(2)))
                 .children(() -> {
-                    new ArmyControlCompactContent(feature, Readable.of(1f));
+                    new ArmyControlCompactContent(feature, scale);
                 });
     }
 }

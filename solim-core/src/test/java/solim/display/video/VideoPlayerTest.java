@@ -83,15 +83,18 @@ class VideoPlayerTest extends SolimEnv {
 				Thread.sleep(2);
 			}
 			assertEquals(VideoPlayer.State.READY, player.getState(), "the clip must load before it can play");
+			player.seek(8.0);
 			player.play();
 
 			float previous = player.getPosition();
 			boolean restarted = false;
-			for (int i = 0; i < 1600 && player.getState() != VideoPlayer.State.ENDED; i++) {
+			for (int i = 0; i < 2000 && player.getState() != VideoPlayer.State.ENDED; i++) {
 				player.update(1f / 60f);
 				float position = player.getPosition();
-				if (position + 1f < previous)
+				if (position + 1f < previous) {
 					restarted = true;
+					break;
+				}
 				previous = position;
 				Thread.sleep(2);
 			}
@@ -321,7 +324,7 @@ class VideoPlayerTest extends SolimEnv {
 	void clockAdvancesFromWallTimeWhileAudioIsInert() {
 		float clock = 0f;
 		for (int tick = 0; tick < 3; tick++) {
-			clock = VideoPlayer.advanceClock(clock, 0.016f, 0f, true);
+			clock = VideoPlayer.advanceClock(clock, 0.016f, 0f, false);
 		}
 		assertEquals(0.048f, clock, 1e-4f);
 	}
@@ -341,6 +344,13 @@ class VideoPlayerTest extends SolimEnv {
 	@Test
 	void clockAdoptsAudioSlightlyAhead() {
 		assertEquals(1.02f, VideoPlayer.advanceClock(1f, 0.016f, 1.02f, true), 1e-4f);
+	}
+
+	@Test
+	void clockAdoptsAudioThatLagsSlightly() {
+		// A picture that runs ahead of the sound is the offset a viewer notices, so the
+		// clock has to give way to a sound that trails it a little.
+		assertEquals(0.9f, VideoPlayer.advanceClock(1f, 0.016f, 0.9f, true), 1e-4f);
 	}
 
 	@Test

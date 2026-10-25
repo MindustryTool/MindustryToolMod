@@ -108,4 +108,49 @@ class AacToWavTest {
 			assertEquals(raw[i], frame.get(7 + i));
 		}
 	}
+
+	@Test
+	void aSampleThatAlreadyCarriesAHeaderIsNotWrappedAgain() {
+		byte[] asc = new byte[] { 0x12, 0x10 };
+		byte[] wrapped = new byte[107];
+		wrapped[0] = (byte) 0xFF;
+		wrapped[1] = (byte) 0xF9;
+		wrapped[2] = 0x50;
+		// The length field of the header has to name the whole frame.
+		wrapped[3] = 0x40;
+		wrapped[4] = (byte) (wrapped.length >> 3);
+		wrapped[5] = (byte) ((wrapped.length & 7) << 5);
+		for (int i = 7; i < wrapped.length; i++) {
+			wrapped[i] = (byte) i;
+		}
+
+		ByteBuffer frame = AacToWav.wrapAdts(asc, ByteBuffer.wrap(wrapped));
+
+		assertEquals(wrapped.length, frame.remaining());
+		for (int i = 0; i < wrapped.length; i++) {
+			assertEquals(wrapped[i], frame.get(i));
+		}
+	}
+
+	@Test
+	void aSampleThatOnlyLooksLikeAHeaderIsWrapped() {
+		byte[] asc = new byte[] { 0x12, 0x10 };
+		// Raw audio that starts with the sync word by chance. The length field of the
+		// header does not match the sample, so the sample is not a header.
+		byte[] raw = new byte[100];
+		raw[0] = (byte) 0xFF;
+		raw[1] = (byte) 0xF1;
+		raw[3] = (byte) 0x7F;
+		for (int i = 4; i < raw.length; i++) {
+			raw[i] = (byte) i;
+		}
+
+		ByteBuffer frame = AacToWav.wrapAdts(asc, ByteBuffer.wrap(raw));
+
+		assertEquals(107, frame.remaining());
+		assertEquals((byte) 0xFF, frame.get(0));
+		for (int i = 0; i < raw.length; i++) {
+			assertEquals(raw[i], frame.get(7 + i));
+		}
+	}
 }

@@ -14,7 +14,11 @@ public final class VideoCache {
 	}
 
 	static final long CACHE_MAX_AGE = 30L * 24 * 60 * 60 * 1000;
-	static final String AUDIO_CACHE_VERSION = "v2";
+	/**
+	 * Bumped whenever the extraction changes, so that wave files written by an older build
+	 * are extracted again instead of being reused.
+	 */
+	static final String AUDIO_CACHE_VERSION = "v4";
 	static final int WAV_HEADER_BYTES = 44;
 	static final long MIN_VIDEO_BYTES = 16;
 

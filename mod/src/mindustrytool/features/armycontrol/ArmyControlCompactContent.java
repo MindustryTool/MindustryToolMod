@@ -35,19 +35,19 @@ public class ArmyControlCompactContent extends Component {
                             .props(growX())
                             .thenDo(() -> divider().props(color(WebStyles.Colors.SECTION_BORDER)));
 
-                    new ActiveSelectionBar(feature);
+                    new ActiveSelectionBar(feature, scale);
 
                     when(hasGroups)
                             .props(growX())
                             .thenDo(() -> divider().props(color(WebStyles.Colors.SECTION_BORDER)));
 
-                    new ControlGroupList(feature);
+                    new ControlGroupList(feature, scale);
 
                     when(feature.contentEmptySignal())
                             .props(growX())
                             .thenDo(() -> row().props(growX(), padding(unit(1))).children(() -> {
                                 text(Core.bundle.get("feature.army-control.empty.all", "Nothing selected yet"))
-                                        .props(color(WebStyles.Colors.DISABLED_FG), left());
+                                        .props(color(WebStyles.Colors.DISABLED_FG), left(), fontScale(scale));
                             }));
                 }).element();
     }

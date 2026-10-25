@@ -23,6 +23,8 @@ import mindustry.game.EventType.ResizeEvent;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import solim.config.ConfigGroup;
+import solim.config.ContextualConfigValue;
 import solim.reactive.Signal;
 import solim.input.Button;
 import solim.runtime.AttachmentStack;
@@ -147,6 +149,39 @@ class HudTest extends SolimEnv {
         assertEquals(824f, xSig.get(), 0.01f, "X signal should clamp to 824");
         assertEquals(668f, ySig.get(), 0.01f, "Y signal should clamp to 668");
 
+        hud.dispose();
+    }
+
+    @Test
+    void dragWithoutExplicitSignalsWritesBoundSignals() {
+        Hud hud = new Hud();
+        hud.element().setSize(200f, 100f);
+        Signal<Float> xSig = Signal.of(100f);
+        Signal<Float> ySig = Signal.of(100f);
+        hud.props(position(xSig, ySig));
+
+        Element handle = new Element();
+        hud.draggable(handle);
+
+        InputListener dragListener = null;
+        for (EventListener l : handle.getListeners()) {
+            if (l instanceof InputListener) {
+                dragListener = (InputListener) l;
+                break;
+            }
+        }
+        assertNotNull(dragListener);
+
+        InputEvent event = new InputEvent();
+        dragListener.touchDown(event, 10f, 10f, 0, KeyCode.mouseLeft);
+        dragListener.touchDragged(event, 60f, 80f, 0);
+
+        assertEquals(150f, hud.element().x, 0.01f);
+        assertEquals(170f, hud.element().y, 0.01f);
+        assertEquals(150f, xSig.get(), 0.01f, "Drag must write the bound X signal");
+        assertEquals(170f, ySig.get(), 0.01f, "Drag must write the bound Y signal");
+
+        SignalDispatcher.flush();
         hud.dispose();
     }
 
@@ -364,7 +399,7 @@ class HudTest extends SolimEnv {
     }
 
     @Test
-    void resizeEventClampingWithSignals() {
+    void resizeEventClampingDoesNotOverwriteSignals() {
         Hud hud = new Hud();
         hud.element().setSize(200f, 100f);
         Signal<Float> xSig = Signal.of(800f);
@@ -377,12 +412,146 @@ class HudTest extends SolimEnv {
 
         Events.fire(new ResizeEvent());
 
-        assertEquals(600f, hud.element().x, 0.01f);
-        assertEquals(500f, hud.element().y, 0.01f);
-        assertEquals(600f, xSig.get(), 0.01f, "X signal should clamp on resize");
-        assertEquals(500f, ySig.get(), 0.01f, "Y signal should clamp on resize");
+        assertEquals(600f, hud.element().x, 0.01f, "Displayed X clamps to the smaller viewport");
+        assertEquals(500f, hud.element().y, 0.01f, "Displayed Y clamps to the smaller viewport");
+        assertEquals(800f, xSig.get(), 0.01f, "X signal must keep the saved position on resize");
+        assertEquals(600f, ySig.get(), 0.01f, "Y signal must keep the saved position on resize");
 
         SignalDispatcher.flush();
+        hud.dispose();
+    }
+
+    @Test
+    void viewportRestoreReappliesSavedPosition() {
+        Hud hud = new Hud();
+        hud.element().setSize(200f, 100f);
+        Signal<Float> xSig = Signal.of(800f);
+        Signal<Float> ySig = Signal.of(600f);
+        hud.props(position(xSig, ySig));
+        hud.keepInScreen();
+
+        mockGraphics.width = 800;
+        mockGraphics.height = 600;
+        Events.fire(new ResizeEvent());
+
+        assertEquals(600f, hud.element().x, 0.01f);
+        assertEquals(500f, hud.element().y, 0.01f);
+
+        mockGraphics.width = 1024;
+        mockGraphics.height = 768;
+        Events.fire(new ResizeEvent());
+
+        assertEquals(800f, hud.element().x, 0.01f, "X must return to the saved position");
+        assertEquals(600f, hud.element().y, 0.01f, "Y must return to the saved position");
+        assertEquals(800f, xSig.get(), 0.01f);
+        assertEquals(600f, ySig.get(), 0.01f);
+
+        SignalDispatcher.flush();
+        hud.dispose();
+    }
+
+    @Test
+    void degenerateViewportLeavesPositionUntouched() {
+        Hud hud = new Hud();
+        hud.element().setSize(200f, 100f);
+        Signal<Float> xSig = Signal.of(300f);
+        Signal<Float> ySig = Signal.of(200f);
+        hud.props(position(xSig, ySig));
+        hud.keepInScreen();
+
+        mockGraphics.width = 160;
+        mockGraphics.height = 31;
+        Events.fire(new ResizeEvent());
+
+        assertEquals(300f, hud.element().x, 0.01f, "Minimized viewport must not move the panel");
+        assertEquals(200f, hud.element().y, 0.01f, "Minimized viewport must not move the panel");
+        assertEquals(300f, xSig.get(), 0.01f);
+        assertEquals(200f, ySig.get(), 0.01f);
+
+        mockGraphics.width = 0;
+        mockGraphics.height = 0;
+        Events.fire(new ResizeEvent());
+
+        assertEquals(300f, hud.element().x, 0.01f, "Zero-size viewport must not move the panel");
+        assertEquals(200f, hud.element().y, 0.01f, "Zero-size viewport must not move the panel");
+        assertEquals(300f, xSig.get(), 0.01f);
+        assertEquals(200f, ySig.get(), 0.01f);
+
+        mockGraphics.width = 1024;
+        mockGraphics.height = 768;
+        Events.fire(new ResizeEvent());
+
+        assertEquals(300f, hud.element().x, 0.01f);
+        assertEquals(200f, hud.element().y, 0.01f);
+
+        SignalDispatcher.flush();
+        hud.dispose();
+    }
+
+    @Test
+    void contentGrowthClampsDisplayAndShrinkRestoresSavedPosition() {
+        Hud hud = new Hud();
+        hud.element().setSize(100f, 50f);
+        Signal<Float> xSig = Signal.of(800f);
+        Signal<Float> ySig = Signal.of(600f);
+        hud.props(position(xSig, ySig));
+        hud.keepInScreen();
+
+        hud.element().setSize(900f, 400f);
+        hud.keepInScreen();
+
+        assertEquals(124f, hud.element().x, 0.01f, "Growing content clamps the displayed X");
+        assertEquals(368f, hud.element().y, 0.01f, "Growing content clamps the displayed Y");
+        assertEquals(800f, xSig.get(), 0.01f, "Growing content must not move the saved position");
+        assertEquals(600f, ySig.get(), 0.01f, "Growing content must not move the saved position");
+
+        hud.element().setSize(100f, 50f);
+        hud.keepInScreen();
+
+        assertEquals(800f, hud.element().x, 0.01f, "Shrinking content restores the saved X");
+        assertEquals(600f, hud.element().y, 0.01f, "Shrinking content restores the saved Y");
+
+        SignalDispatcher.flush();
+        hud.dispose();
+    }
+
+    @Test
+    void rotationKeepsOutgoingContextPosition() {
+        Signal<Boolean> portrait = Signal.of(false);
+        ConfigGroup group = ConfigGroup.of("hud-rotation-test");
+        ContextualConfigValue<Float, Boolean> xConfig = group.floatValueKeyed(
+                "x", portrait, p -> p ? "portrait" : "landscape", 100f);
+        ContextualConfigValue<Float, Boolean> yConfig = group.floatValueKeyed(
+                "y", portrait, p -> p ? "portrait" : "landscape", 120f);
+        xConfig.set(800f);
+        yConfig.set(600f);
+
+        Hud hud = new Hud();
+        hud.element().setSize(200f, 100f);
+        hud.props(position(xConfig.signal(), yConfig.signal()));
+        SignalDispatcher.flush();
+        hud.keepInScreen();
+
+        portrait.set(true);
+        SignalDispatcher.flush();
+        hud.keepInScreen();
+
+        assertEquals(100f, hud.element().x, 0.01f, "Portrait context uses its own saved position");
+        assertEquals(120f, hud.element().y, 0.01f, "Portrait context uses its own saved position");
+        assertEquals(800f, Core.settings.getFloat("hud-rotation-test.x.landscape", 0f), 0.01f,
+                "Rotating must not overwrite the outgoing landscape position");
+        assertEquals(600f, Core.settings.getFloat("hud-rotation-test.y.landscape", 0f), 0.01f,
+                "Rotating must not overwrite the outgoing landscape position");
+
+        portrait.set(false);
+        SignalDispatcher.flush();
+        hud.keepInScreen();
+
+        assertEquals(800f, hud.element().x, 0.01f, "Rotating back restores the landscape position");
+        assertEquals(600f, hud.element().y, 0.01f, "Rotating back restores the landscape position");
+
+        xConfig.dispose();
+        yConfig.dispose();
         hud.dispose();
     }
 
