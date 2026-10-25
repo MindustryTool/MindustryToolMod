@@ -457,7 +457,7 @@ public class ChatMessageListView extends Component {
                 } catch (Throwable ignored) {
                 }
             }
-            ChatActionPopup.showFor(message, x, y);
+            ChatActionPopup.showFor(store, message, x, y);
         }
 
         private void buildReplyPreview(String replyToId) {

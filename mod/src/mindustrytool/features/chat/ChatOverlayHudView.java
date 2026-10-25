@@ -142,7 +142,7 @@ public class ChatOverlayHudView extends Component {
                 ? Core.bundle.get("feature.chat.ui.expand-users", "Show Members")
                 : Core.bundle.get("feature.chat.ui.collapse-users", "Hide Members"));
 
-        ChatActionPopup.install(store);
+
 
         return card(Styles.black9)
                 .children(() -> {

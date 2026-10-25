@@ -75,6 +75,11 @@ public class SolimDialog extends Component
     }
 
     @Override
+    protected boolean attachesToParent() {
+        return false;
+    }
+
+    @Override
     public SolimDialog self() {
         return this;
     }

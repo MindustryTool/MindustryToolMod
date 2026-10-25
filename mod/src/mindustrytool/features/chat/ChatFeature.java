@@ -204,6 +204,7 @@ public class ChatFeature extends Feature {
     @Override
     public void onDisable() {
         service.stop();
+        ChatActionPopup.dispose();
 
         if (hudView != null) {
             ChatOverlayHudView view = hudView;

@@ -232,6 +232,11 @@ public final class Popup<T> extends Component
     }
 
     @Override
+    protected boolean attachesToParent() {
+        return false;
+    }
+
+    @Override
     protected Element build() {
         return new Spacer().element();
     }

@@ -894,3 +894,14 @@ The system SHALL deserialize SSE events from `/chats/stream` using the `type` di
 #### Scenario: Unread latest message pointer updated on deletion
 - **WHEN** a `"delete"` event includes a non-null `lastMessageId` for `channelId`
 - **THEN** `store.unread().setLatestMessage(channelId, lastMessageId)` is updated accordingly.
+
+### Requirement: Chat Action Popup Lifecycle Isolation
+The message action popup SHALL be lazily initialized upon invocation and decoupled from the HUD view build lifecycle, preventing unnecessary instantiations and layout pollution.
+
+#### Scenario: Opening action popup for the first time
+- **WHEN** a user triggers the action popup for a message
+- **THEN** the popup menu is lazily constructed outside the HUD render pass and positioned correctly on Core.scene without layout shift
+
+#### Scenario: Disabling chat feature tears down action popup
+- **WHEN** the chat feature is disabled
+- **THEN** any active message action popup is dismissed and its resources are disposed
