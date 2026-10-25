@@ -58,6 +58,7 @@ import mindustrytool.services.crash.CrashReportService;
 import mindustrytool.services.update.UpdateService;
 import solim.display.video.SolimVideo;
 import solim.performance.Perf;
+import solim.reactive.Signals;
 
 public class Main extends Mod {
     public static LoadedMod self;
@@ -72,6 +73,7 @@ public class Main extends Mod {
     public void init() {
 
         Perf.init();
+        Signals.init();
 
         self = Vars.mods.getMod(Main.class);
 

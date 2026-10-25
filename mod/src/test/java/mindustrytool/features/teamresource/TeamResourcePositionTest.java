@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import arc.Core;
+import arc.Events;
 import arc.graphics.Color;
 import arc.graphics.g2d.Font;
 import arc.graphics.g2d.Font.FontData;
@@ -36,6 +37,7 @@ import java.lang.reflect.Method;
 import mindustry.Vars;
 import mindustry.core.UI;
 import mindustry.ctype.Content;
+import mindustry.game.EventType.ResizeEvent;
 import mindustry.game.Team;
 import mindustry.type.Item;
 import mindustry.ui.Fonts;
@@ -383,6 +385,52 @@ class TeamResourcePositionTest extends MindustryTestEnv {
         assertFalse(feature.hideDragHandleConfig.get(), "resetToDefaults resets hideDragHandleConfig");
         assertFalse(feature.hideHeaderConfig.get(), "resetToDefaults resets hideHeaderConfig");
 
+        flushEffects();
+    }
+
+    @Test
+    void testMinimizeWindowDoesNotResetPosition() {
+        TeamResourceFeature feature = new TeamResourceFeature();
+        feature.onEnable();
+        Element root = feature.getHudView().element();
+
+        feature.x(100f);
+        feature.y(200f);
+        root.validate();
+        assertEquals(100f, feature.x(), 1.0f);
+        assertEquals(200f, feature.y(), 1.0f);
+
+        mockGraphics.width = 160;
+        mockGraphics.height = 31;
+        Core.scene.resize(160, 31);
+        Events.fire(new ResizeEvent());
+
+        mockGraphics.width = 1000;
+        mockGraphics.height = 800;
+        Core.scene.resize(1000, 800);
+        Events.fire(new ResizeEvent());
+
+        root.validate();
+        assertEquals(100f, feature.x(), 1.0f, "X must not reset on window minimize/restore");
+        assertEquals(200f, feature.y(), 1.0f, "Y must not reset on window minimize/restore");
+        assertEquals(100f, root.x, 1.0f, "Displayed X must return after restore");
+        assertEquals(200f, root.y, 1.0f, "Displayed Y must return after restore");
+
+        mockGraphics.width = 0;
+        mockGraphics.height = 0;
+        Core.scene.resize(0, 0);
+        Events.fire(new ResizeEvent());
+
+        mockGraphics.width = 1000;
+        mockGraphics.height = 800;
+        Core.scene.resize(1000, 800);
+        Events.fire(new ResizeEvent());
+
+        root.validate();
+        assertEquals(100f, feature.x(), 1.0f, "X must not reset on 0x0 minimize/restore");
+        assertEquals(200f, feature.y(), 1.0f, "Y must not reset on 0x0 minimize/restore");
+
+        feature.onDisable();
         flushEffects();
     }
 }

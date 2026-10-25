@@ -30,6 +30,8 @@ import solim.modifier.ContainerCapability;
 public class Hud extends Component
         implements Configurable<Hud>, TableCapability, ContainerCapability<Hud> {
 
+    private static final float MIN_VIEWPORT_SIZE = 100f;
+
     private final Table root;
     private final Table container;
     private final PendingCellConfig constraints = new PendingCellConfig();
@@ -49,7 +51,7 @@ public class Hud extends Component
                 if (pw > 0f && ph > 0f && (Math.abs(getWidth() - pw) > 1.0f || Math.abs(getHeight() - ph) > 1.0f)) {
                     setSize(pw, ph);
                     if (hud != null) {
-                        hud.keepInScreen(false);
+                        hud.keepInScreen();
                     }
                 }
             }
@@ -275,13 +277,8 @@ public class Hud extends Component
                     }
                 }
                 targetHud.element().moveBy(dx, dy);
-                targetHud.keepInScreen();
-                if (xSignal != null) {
-                    xSignal.set(targetHud.element().x);
-                }
-                if (ySignal != null) {
-                    ySignal.set(targetHud.element().y);
-                }
+                targetHud.clampToViewport();
+                targetHud.writePositionSignals(xSignal, ySignal);
             }
 
             @Override
@@ -290,17 +287,23 @@ public class Hud extends Component
                 if (targetHud == null)
                     return;
                 if (didDrag) {
-                    targetHud.keepInScreen();
-                    if (xSignal != null) {
-                        xSignal.set(targetHud.element().x);
-                    }
-                    if (ySignal != null) {
-                        ySignal.set(targetHud.element().y);
-                    }
+                    targetHud.clampToViewport();
+                    targetHud.writePositionSignals(xSignal, ySignal);
                 }
                 didDrag = false;
             }
         });
+    }
+
+    private void writePositionSignals(@Nullable Signal<Float> xSignal, @Nullable Signal<Float> ySignal) {
+        Signal<Float> targetX = xSignal != null ? xSignal : boundXSignal;
+        Signal<Float> targetY = ySignal != null ? ySignal : boundYSignal;
+        if (targetX != null) {
+            targetX.set(root.x);
+        }
+        if (targetY != null) {
+            targetY.set(root.y);
+        }
     }
 
     private static boolean isInteractiveDescendant(@Nullable Element target, Element handle) {
@@ -320,20 +323,65 @@ public class Hud extends Component
     }
 
     public void keepInScreen() {
-        keepInScreen(true);
+        float sw = viewportWidth();
+        float sh = viewportHeight();
+        if (isDegenerateViewport(sw, sh)) {
+            return;
+        }
+        applyDesiredPosition();
+        clampDisplay(sw, sh);
     }
 
-    public void keepInScreen(boolean updateSignals) {
-        float scl = Scl.scl();
-        float sw = Core.scene != null ? Core.scene.getWidth()
-                : (Core.graphics != null ? Core.graphics.getWidth() / (scl > 0f ? scl : 1f) : 0f);
-        float sh = Core.scene != null ? Core.scene.getHeight()
-                : (Core.graphics != null ? Core.graphics.getHeight() / (scl > 0f ? scl : 1f) : 0f);
-        if (sw <= 0f || sh <= 0f)
+    private void clampToViewport() {
+        float sw = viewportWidth();
+        float sh = viewportHeight();
+        if (isDegenerateViewport(sw, sh)) {
             return;
+        }
+        clampDisplay(sw, sh);
+    }
 
+    private float viewportWidth() {
+        if (Core.scene != null) {
+            return Core.scene.getWidth();
+        }
+        float scl = Scl.scl();
+        return Core.graphics != null ? Core.graphics.getWidth() / (scl > 0f ? scl : 1f) : 0f;
+    }
+
+    private float viewportHeight() {
+        if (Core.scene != null) {
+            return Core.scene.getHeight();
+        }
+        float scl = Scl.scl();
+        return Core.graphics != null ? Core.graphics.getHeight() / (scl > 0f ? scl : 1f) : 0f;
+    }
+
+    private static boolean isDegenerateViewport(float sw, float sh) {
+        return sw <= MIN_VIEWPORT_SIZE || sh <= MIN_VIEWPORT_SIZE;
+    }
+
+    private void applyDesiredPosition() {
+        if (boundXSignal != null) {
+            Float value = boundXSignal.peek();
+            if (value != null) {
+                root.x = value;
+            }
+        }
+        if (boundYSignal != null) {
+            Float value = boundYSignal.peek();
+            if (value != null) {
+                root.y = value;
+            }
+        }
+    }
+
+    private void clampDisplay(float sw, float sh) {
         if (root.getWidth() <= 0f || root.getHeight() <= 0f) {
             root.pack();
+        }
+        if (root.getWidth() <= 0f || root.getHeight() <= 0f) {
+            return;
         }
 
         float w = root.getWidth();
@@ -352,15 +400,6 @@ public class Hud extends Component
             curY = 0;
 
         root.setPosition(curX, curY);
-
-        if (updateSignals) {
-            if (boundXSignal != null && (boundXSignal.get() == null || Math.abs(boundXSignal.get() - curX) > 0.5f)) {
-                boundXSignal.set(curX);
-            }
-            if (boundYSignal != null && (boundYSignal.get() == null || Math.abs(boundYSignal.get() - curY) > 0.5f)) {
-                boundYSignal.set(curY);
-            }
-        }
     }
 
     public void pack() {

@@ -2,10 +2,13 @@ package solim.reactive;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import arc.Application;
 import arc.Core;
 import arc.Events;
+import arc.mock.MockApplication;
 import arc.mock.MockGraphics;
 import solim.test.SolimEnv;
+import java.util.ArrayDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 import mindustry.game.EventType.ResizeEvent;
 import org.junit.jupiter.api.BeforeAll;
@@ -14,6 +17,15 @@ import org.junit.jupiter.api.Test;
 import solim.runtime.SignalDispatcher;
 
 class SignalsTest extends SolimEnv {
+
+    static class QueuedApplication extends MockApplication {
+        final ArrayDeque<Runnable> pending = new ArrayDeque<>();
+
+        @Override
+        public void post(Runnable runnable) {
+            pending.addLast(runnable);
+        }
+    }
 
     static class ResizableMockGraphics extends MockGraphics {
         int width = 1000;
@@ -70,6 +82,23 @@ class SignalsTest extends SolimEnv {
         Events.fire(new ResizeEvent());
 
         assertFalse(Signals.isPortrait().peek());
+    }
+
+    @Test
+    void testOrientationUpdatesSynchronouslyDuringResize() {
+        Application previousApp = Core.app;
+        QueuedApplication queuedApp = new QueuedApplication();
+        Core.app = queuedApp;
+        try {
+            mockGraphics.width = 500;
+            mockGraphics.height = 1000;
+            Events.fire(new ResizeEvent());
+
+            assertTrue(Signals.isPortrait().peek(),
+                    "Orientation must be updated before later ResizeEvent listeners run");
+        } finally {
+            Core.app = previousApp;
+        }
     }
 
     @Test
