@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import arc.files.Fi;
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import solim.test.SolimEnv;
@@ -39,6 +40,22 @@ class VideoPlayerTest extends SolimEnv {
 		};
 	}
 
+	/**
+	 * Advances the player like a render loop until playback finishes or fails. The wait is
+	 * bounded by wall time, not by a frame count, because a software decoder needs longer than
+	 * the simulated frame budget to walk a full clip on a slow machine.
+	 */
+	private static void playUntilEnded(VideoPlayer player, int timeoutSeconds) throws InterruptedException {
+		long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(timeoutSeconds);
+		while (System.nanoTime() < deadline) {
+			VideoPlayer.State current = player.getState();
+			if (current == VideoPlayer.State.ENDED || current == VideoPlayer.State.FAILED)
+				return;
+			player.update(1f / 60f);
+			Thread.sleep(2);
+		}
+	}
+
 	@Test
 	void playbackOfArealClipAdvancesThroughItBeforeEnding() throws Exception {
 		File clip = previewClip();
@@ -56,12 +73,10 @@ class VideoPlayerTest extends SolimEnv {
 			assertEquals(11.096, player.getDuration(), 0.5);
 
 			player.play();
-			for (int i = 0; i < 2000 && player.getState() != VideoPlayer.State.ENDED; i++) {
-				player.update(1f / 60f);
-				Thread.sleep(2);
-			}
+			playUntilEnded(player, 120);
 
-			assertEquals(VideoPlayer.State.ENDED, player.getState(), "a non-looping clip must end");
+			assertEquals(VideoPlayer.State.ENDED, player.getState(),
+					"a non-looping clip must end; was " + player.getState() + " at " + player.getPosition());
 			assertTrue(player.getPosition() > 5f,
 					"playback must be driven by decoded frames, not end at the start; was " + player.getPosition());
 		} finally {
