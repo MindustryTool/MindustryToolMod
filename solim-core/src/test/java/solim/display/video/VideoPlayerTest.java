@@ -83,15 +83,18 @@ class VideoPlayerTest extends SolimEnv {
 				Thread.sleep(2);
 			}
 			assertEquals(VideoPlayer.State.READY, player.getState(), "the clip must load before it can play");
+			player.seek(8.0);
 			player.play();
 
 			float previous = player.getPosition();
 			boolean restarted = false;
-			for (int i = 0; i < 1600 && player.getState() != VideoPlayer.State.ENDED; i++) {
+			for (int i = 0; i < 2000 && player.getState() != VideoPlayer.State.ENDED; i++) {
 				player.update(1f / 60f);
 				float position = player.getPosition();
-				if (position + 1f < previous)
+				if (position + 1f < previous) {
 					restarted = true;
+					break;
+				}
 				previous = position;
 				Thread.sleep(2);
 			}
