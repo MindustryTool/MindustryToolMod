@@ -2,6 +2,7 @@ package mindustrytool.features.armycontrol;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import arc.struct.ObjectIntMap;
 import java.lang.reflect.Field;
@@ -33,6 +34,11 @@ class ActiveSelectionBarTest extends MindustryTestEnv {
         }
     }
 
+    private static UnitType getOrCreateUnitType(String name) {
+        UnitType existing = Vars.content.unit(name);
+        return existing != null ? existing : new UnitType(name);
+    }
+
     @BeforeEach
     void init() {
         if (Vars.content == null) {
@@ -54,12 +60,17 @@ class ActiveSelectionBarTest extends MindustryTestEnv {
 
         assertNotNull(bar.element());
 
-        UnitType typeA = new UnitType("unit-a");
-        UnitType typeB = new UnitType("unit-b");
+        UnitType typeA = getOrCreateUnitType("active-bar-unit-a");
+        UnitType typeB = getOrCreateUnitType("active-bar-unit-b");
 
         UnitEntity u1 = new UnitEntity() {
             @Override
             public boolean isValid() {
+                return true;
+            }
+
+            @Override
+            public boolean allowCommand() {
                 return true;
             }
         };
@@ -70,12 +81,22 @@ class ActiveSelectionBarTest extends MindustryTestEnv {
             public boolean isValid() {
                 return true;
             }
+
+            @Override
+            public boolean allowCommand() {
+                return true;
+            }
         };
         u2.type = typeA;
 
         UnitEntity u3 = new UnitEntity() {
             @Override
             public boolean isValid() {
+                return true;
+            }
+
+            @Override
+            public boolean allowCommand() {
                 return true;
             }
         };
@@ -90,16 +111,99 @@ class ActiveSelectionBarTest extends MindustryTestEnv {
 
         feature.deselectUnitType(typeA);
 
-        assertEquals(1, mindustry.Vars.control.input.selectedUnits.size);
-        assertEquals(u3, mindustry.Vars.control.input.selectedUnits.first());
+        assertEquals(1, Vars.control.input.selectedUnits.size);
+        assertEquals(u3, Vars.control.input.selectedUnits.first());
 
         ObjectIntMap<UnitType> mapAfter = feature.activeSelectionSignal().get();
         assertEquals(0, mapAfter.get(typeA, 0));
         assertEquals(1, mapAfter.get(typeB, 0));
 
         feature.deselectAll();
-        assertEquals(0, mindustry.Vars.control.input.selectedUnits.size);
+        assertEquals(0, Vars.control.input.selectedUnits.size);
         assertEquals(0, feature.activeSelectionSignal().get().size);
+
+        bar.dispose();
+    }
+
+    @Test
+    void testActiveSelectionBarToggleMatrix() {
+        ArmyControlFeature feature = new ArmyControlFeature();
+        ActiveSelectionBar bar = new ActiveSelectionBar(feature, Readable.of(1f));
+        assertNotNull(bar.element());
+
+        UnitType typeA = getOrCreateUnitType("active-bar-unit-a");
+        UnitType typeB = getOrCreateUnitType("active-bar-unit-b");
+
+        UnitEntity u1 = new UnitEntity() {
+            @Override
+            public boolean isValid() {
+                return true;
+            }
+
+            @Override
+            public boolean allowCommand() {
+                return true;
+            }
+        };
+        u1.type = typeA;
+
+        UnitEntity u2 = new UnitEntity() {
+            @Override
+            public boolean isValid() {
+                return true;
+            }
+
+            @Override
+            public boolean allowCommand() {
+                return true;
+            }
+        };
+        u2.type = typeB;
+
+        Vars.control.input.selectedUnits.addAll(u1, u2);
+        feature.refreshActiveSelection();
+
+        assertEquals(1, feature.discoveredTypesSignal().get().get(typeA, 0));
+        assertEquals(1, feature.discoveredTypesSignal().get().get(typeB, 0));
+
+        feature.toggleUnitType(typeA);
+        assertEquals(0, feature.activeSelectionSignal().get().get(typeA, 0));
+        assertEquals(1, feature.activeSelectionSignal().get().get(typeB, 0));
+        assertEquals(1, feature.discoveredTypesSignal().get().get(typeA, 0));
+
+        feature.toggleUnitType(typeA);
+        assertEquals(1, feature.activeSelectionSignal().get().get(typeA, 0));
+
+        bar.dispose();
+    }
+
+    @Test
+    void testManyUnitTypesHeightBounded() {
+        ArmyControlFeature feature = new ArmyControlFeature();
+        ActiveSelectionBar bar = new ActiveSelectionBar(feature, Readable.of(1f));
+
+        for (int i = 0; i < 20; i++) {
+            UnitType t = getOrCreateUnitType("bulk-unit-" + i);
+            UnitEntity u = new UnitEntity() {
+                @Override
+                public boolean isValid() {
+                    return true;
+                }
+
+                @Override
+                public boolean allowCommand() {
+                    return true;
+                }
+            };
+            u.type = t;
+            Vars.control.input.selectedUnits.add(u);
+        }
+        feature.refreshActiveSelection();
+
+        bar.element().pack();
+        bar.element().layout();
+        float prefHeight = bar.element().getPrefHeight();
+        assertTrue(prefHeight <= 200f);
 
         bar.dispose();
     }

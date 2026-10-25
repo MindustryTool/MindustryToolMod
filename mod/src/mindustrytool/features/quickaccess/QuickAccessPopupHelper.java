@@ -45,17 +45,25 @@ public final class QuickAccessPopupHelper {
         float anchorX = quickAccessBar != null ? (leftHalf ? barX : barX + barW) : stageW / 2f;
         float anchorY = quickAccessBar != null ? (upperHalf ? barY - gap : barTop + gap) : stageH / 2f;
 
-        menu.layerBehind(quickAccessBar);
+        menu.layerBehind(null);
+        menu.setPinnedEdge(upperHalf ? Popup.Edge.TOP : Popup.Edge.BOTTOM);
         menu.show(data, anchorX, anchorY);
 
         if (Core.scene != null && quickAccessBar != null && menu.table() != null) {
             try {
                 float menuW = menu.table().getWidth();
                 float menuH = menu.table().getHeight();
+                float maxH = upperHalf ? barY - gap : stageH - (barTop + gap);
+                if (maxH > 0f && menuH > maxH) {
+                    menuH = maxH;
+                    menu.table().setSize(menuW, menuH);
+                }
                 float desiredX = computeDesiredX(barX, barW, menuW, stageW);
                 float desiredY = upperHalf ? barY - menuH - gap : barTop + gap;
                 float clampedX = clampX(desiredX, menuW, stageW);
-                float clampedY = stageH > menuH ? Math.max(0f, Math.min(desiredY, stageH - menuH)) : 0f;
+                float clampedY = upperHalf
+                        ? Math.max(0f, desiredY)
+                        : Math.min(desiredY, Math.max(0f, stageH - menuH));
                 menu.table().setPosition(clampedX, clampedY);
             } catch (Exception ignored) {
             }

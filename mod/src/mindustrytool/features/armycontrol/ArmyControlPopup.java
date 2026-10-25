@@ -17,8 +17,13 @@ import solim.reactive.Readable;
 public final class ArmyControlPopup {
 
     private static @Nullable Popup<ArmyControlFeature> menu;
+    private static @Nullable Element lastAnchorBar;
 
     private ArmyControlPopup() {
+    }
+
+    public static @Nullable Element anchorBar() {
+        return lastAnchorBar;
     }
 
     public static boolean isShowing() {
@@ -37,16 +42,18 @@ public final class ArmyControlPopup {
         if (feature == null) {
             return;
         }
+        lastAnchorBar = quickAccessBar;
         if (menu == null) {
             menu = popup();
             menu.items(ArmyControlPopup::buildContent);
         }
         feature.refreshActiveSelection();
         QuickAccessPopupHelper.show(menu, feature, quickAccessBar);
-        menu.props(pinnedEdge(pinnedEdgeFor(quickAccessBar)));
+        menu.setPinnedEdge(pinnedEdgeFor(quickAccessBar));
     }
 
     public static void hide() {
+        lastAnchorBar = null;
         if (menu != null) {
             menu.hide();
         }

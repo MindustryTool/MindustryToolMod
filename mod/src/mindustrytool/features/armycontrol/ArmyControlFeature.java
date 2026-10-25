@@ -54,13 +54,18 @@ public class ArmyControlFeature extends Feature {
     public final Signal<Float> xSignal;
     public final Signal<Float> ySignal;
 
+    private final Seq<Unit> poolUnits = new Seq<>();
+    private final Signal<ObjectIntMap<UnitType>> discoveredTypesSignal = Signal.of(new ObjectIntMap<>());
     private final Signal<ObjectIntMap<UnitType>> activeSelectionSignal = Signal.of(new ObjectIntMap<>());
     private final Signal<Seq<ControlGroup>> controlGroupsSignal = Signal.of(new Seq<>());
     private final Computed<Boolean> contentEmpty = Signal.computed(() -> {
-        ObjectIntMap<UnitType> selection = activeSelectionSignal.get();
+        ObjectIntMap<UnitType> pool = discoveredTypesSignal.get();
         Seq<ControlGroup> groups = controlGroupsSignal.get();
-        return (selection == null || selection.size == 0) && (groups == null || groups.size == 0);
+        return (pool == null || pool.size == 0) && (groups == null || groups.size == 0);
     });
+
+    private boolean noneMode = false;
+    private boolean uiSelectionAction = false;
 
     private @Nullable ArmyControlHudView hudView;
     private @Nullable ArmyControlSettingsDialog settingsDialog;
@@ -193,9 +198,16 @@ public class ArmyControlFeature extends Feature {
     }
 
     private void onWorldReset() {
-
+        poolUnits.clear();
+        noneMode = false;
+        uiSelectionAction = false;
         controlGroupsSignal.set(new Seq<>());
+        discoveredTypesSignal.set(new ObjectIntMap<>());
         activeSelectionSignal.set(new ObjectIntMap<>());
+    }
+
+    public Signal<ObjectIntMap<UnitType>> discoveredTypesSignal() {
+        return discoveredTypesSignal;
     }
 
     public Signal<ObjectIntMap<UnitType>> activeSelectionSignal() {
@@ -321,14 +333,17 @@ public class ArmyControlFeature extends Feature {
         }
         Seq<Unit> selected = Vars.control.input.selectedUnits;
         selected.clear();
+        poolUnits.clear();
         if (Groups.unit != null) {
             for (Unit u : Groups.unit) {
-
                 if (u.team == Vars.player.team() && u != Vars.player.unit() && u.isValid() && u.allowCommand()) {
                     selected.add(u);
+                    poolUnits.add(u);
                 }
             }
         }
+        noneMode = false;
+        uiSelectionAction = true;
         Vars.control.input.commandMode = true;
         refreshActiveSelection();
     }
@@ -339,6 +354,7 @@ public class ArmyControlFeature extends Feature {
         }
         Seq<Unit> selected = Vars.control.input.selectedUnits;
         selected.clear();
+        poolUnits.clear();
         Rect bounds = new Rect();
         Core.camera.bounds(bounds);
         if (Groups.unit != null) {
@@ -346,18 +362,23 @@ public class ArmyControlFeature extends Feature {
                 if (u.team == Vars.player.team() && u != Vars.player.unit() && u.isValid() && u.allowCommand()
                         && bounds.contains(u.x, u.y)) {
                     selected.add(u);
+                    poolUnits.add(u);
                 }
             }
         }
+        noneMode = false;
+        uiSelectionAction = true;
         Vars.control.input.commandMode = true;
         refreshActiveSelection();
     }
 
     public void deselectAll() {
-        if (Vars.control == null || Vars.control.input == null) {
-            return;
+        if (Vars.control != null && Vars.control.input != null) {
+            Vars.control.input.selectedUnits.clear();
         }
-        Vars.control.input.selectedUnits.clear();
+        poolUnits.clear();
+        noneMode = false;
+        uiSelectionAction = false;
         refreshActiveSelection();
     }
 
@@ -365,34 +386,169 @@ public class ArmyControlFeature extends Feature {
         if (Vars.control == null || Vars.control.input == null || type == null) {
             return;
         }
+        uiSelectionAction = true;
         Seq<Unit> selected = Vars.control.input.selectedUnits;
         for (int i = selected.size - 1; i >= 0; i--) {
             Unit u = selected.get(i);
-            if (u.type == type) {
+            if (u != null && u.type == type) {
                 selected.remove(i);
+            }
+        }
+        if (selected.isEmpty()) {
+            noneMode = true;
+        }
+        Vars.control.input.commandMode = true;
+        refreshActiveSelection();
+    }
+
+    public void toggleUnitType(UnitType type) {
+        if (Vars.control == null || Vars.control.input == null || type == null) {
+            return;
+        }
+        uiSelectionAction = true;
+        Seq<Unit> selected = Vars.control.input.selectedUnits;
+        boolean currentlyActive = false;
+        for (int i = 0; i < selected.size; i++) {
+            Unit u = selected.get(i);
+            if (u != null && u.type == type) {
+                currentlyActive = true;
+                break;
+            }
+        }
+
+        if (currentlyActive) {
+            for (int i = selected.size - 1; i >= 0; i--) {
+                Unit u = selected.get(i);
+                if (u != null && u.type == type) {
+                    selected.remove(i);
+                }
+            }
+            if (selected.isEmpty()) {
+                noneMode = true;
+            }
+        } else {
+            for (int i = 0; i < poolUnits.size; i++) {
+                Unit u = poolUnits.get(i);
+                if (u != null && u.isValid() && u.allowCommand() && u.type == type && !selected.contains(u, true)) {
+                    selected.add(u);
+                }
+            }
+            noneMode = false;
+        }
+        Vars.control.input.commandMode = true;
+        refreshActiveSelection();
+    }
+
+    public void selectAllPool() {
+        if (Vars.control == null || Vars.control.input == null) {
+            return;
+        }
+        uiSelectionAction = true;
+        noneMode = false;
+        Seq<Unit> selected = Vars.control.input.selectedUnits;
+        selected.clear();
+        for (int i = 0; i < poolUnits.size; i++) {
+            Unit u = poolUnits.get(i);
+            if (u != null && u.isValid() && u.allowCommand()) {
+                selected.add(u);
             }
         }
         Vars.control.input.commandMode = true;
         refreshActiveSelection();
     }
 
+    public void selectNonePool() {
+        if (Vars.control == null || Vars.control.input == null) {
+            return;
+        }
+        uiSelectionAction = true;
+        noneMode = true;
+        Vars.control.input.selectedUnits.clear();
+        refreshActiveSelection();
+    }
+
+    public void invertPool() {
+        if (Vars.control == null || Vars.control.input == null) {
+            return;
+        }
+        uiSelectionAction = true;
+        Seq<Unit> selected = Vars.control.input.selectedUnits;
+        Seq<Unit> previouslySelected = new Seq<>(selected);
+        selected.clear();
+        for (int i = 0; i < poolUnits.size; i++) {
+            Unit u = poolUnits.get(i);
+            if (u != null && u.isValid() && u.allowCommand() && !previouslySelected.contains(u, true)) {
+                selected.add(u);
+            }
+        }
+        noneMode = selected.isEmpty();
+        Vars.control.input.commandMode = true;
+        refreshActiveSelection();
+    }
+
     public void refreshActiveSelection() {
-        ObjectIntMap<UnitType> map = new ObjectIntMap<>();
-        if (Vars.control != null && Vars.control.input != null) {
-            Seq<Unit> selected = Vars.control.input.selectedUnits;
+        Seq<Unit> selected = Vars.control != null && Vars.control.input != null ? Vars.control.input.selectedUnits : null;
+
+        if (selected != null && selected.size > 0) {
+            if (!uiSelectionAction) {
+                boolean containsNew = false;
+                for (int i = 0; i < selected.size; i++) {
+                    Unit u = selected.get(i);
+                    if (u != null && u.isValid() && !poolUnits.contains(u, true)) {
+                        containsNew = true;
+                        break;
+                    }
+                }
+                if (containsNew || poolUnits.isEmpty()) {
+                    poolUnits.clear();
+                    for (int i = 0; i < selected.size; i++) {
+                        Unit u = selected.get(i);
+                        if (u != null && u.isValid()) {
+                            poolUnits.add(u);
+                        }
+                    }
+                }
+            }
+            noneMode = false;
+        } else if (!noneMode) {
+            poolUnits.clear();
+        }
+        uiSelectionAction = false;
+
+        for (int i = poolUnits.size - 1; i >= 0; i--) {
+            Unit u = poolUnits.get(i);
+            if (u == null || !u.isValid()) {
+                poolUnits.remove(i);
+            }
+        }
+
+        ObjectIntMap<UnitType> poolMap = new ObjectIntMap<>();
+        for (int i = 0; i < poolUnits.size; i++) {
+            Unit u = poolUnits.get(i);
+            if (u != null && u.isValid() && u.type != null) {
+                poolMap.put(u.type, poolMap.get(u.type, 0) + 1);
+            }
+        }
+
+        ObjectIntMap<UnitType> activeMap = new ObjectIntMap<>();
+        if (selected != null) {
             for (int i = 0; i < selected.size; i++) {
                 Unit u = selected.get(i);
                 if (u != null && u.isValid() && u.type != null) {
-                    map.put(u.type, map.get(u.type, 0) + 1);
+                    activeMap.put(u.type, activeMap.get(u.type, 0) + 1);
                 }
             }
         }
-        if (!sameSelection(activeSelectionSignal.peek(), map)) {
-            activeSelectionSignal.set(map);
+
+        if (!sameSelection(discoveredTypesSignal.peek(), poolMap)) {
+            discoveredTypesSignal.set(poolMap);
+        }
+        if (!sameSelection(activeSelectionSignal.peek(), activeMap)) {
+            activeSelectionSignal.set(activeMap);
         }
     }
 
-    private static boolean sameSelection(@Nullable ObjectIntMap<UnitType> a, @Nullable ObjectIntMap<UnitType> b) {
+    static boolean sameSelection(@Nullable ObjectIntMap<UnitType> a, @Nullable ObjectIntMap<UnitType> b) {
         if (a == b) {
             return true;
         }
@@ -430,13 +586,17 @@ public class ArmyControlFeature extends Feature {
         group.pruneDeadUnits();
         Seq<Unit> selected = Vars.control.input.selectedUnits;
         selected.clear();
+        poolUnits.clear();
         IntSeq ids = group.getUnitIds();
         for (int i = 0; i < ids.size; i++) {
             Unit u = Groups.unit != null ? Groups.unit.getByID(ids.get(i)) : null;
             if (u != null && u.isValid() && u.allowCommand()) {
                 selected.add(u);
+                poolUnits.add(u);
             }
         }
+        noneMode = false;
+        uiSelectionAction = true;
         Vars.control.input.commandMode = true;
         refreshActiveSelection();
     }

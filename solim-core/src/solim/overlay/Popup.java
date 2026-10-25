@@ -191,7 +191,14 @@ public final class Popup<T> extends Component
         }
         if (stageW > 0f && stageH > 0f) {
             nx = Math.max(0f, Math.min(nx, Math.max(0f, stageW - newW)));
-            ny = Math.max(0f, Math.min(ny, Math.max(0f, stageH - newH)));
+            if (edge == Edge.BOTTOM) {
+                ny = y;
+            } else if (edge == Edge.TOP) {
+                float top = Math.min(y + h, stageH);
+                ny = Math.max(0f, top - newH);
+            } else {
+                ny = Math.max(0f, Math.min(ny, Math.max(0f, stageH - newH)));
+            }
         }
         return new Vec2(nx, ny);
     }
@@ -373,8 +380,19 @@ public final class Popup<T> extends Component
         }
         float stageW = stageWidth();
         float stageH = stageHeight();
-        Vec2 pos = pinnedPosition(edge, table.x, table.y, w, h, pw, ph, stageW, stageH);
-        table.setSize(pw, ph);
+        float targetH = ph;
+        if (stageH > 0f) {
+            if (edge == Edge.BOTTOM) {
+                float maxAvailable = Math.max(0f, stageH - table.y);
+                targetH = Math.min(ph, maxAvailable);
+            } else if (edge == Edge.TOP) {
+                float topEdge = table.y + h;
+                float maxAvailable = Math.max(0f, topEdge);
+                targetH = Math.min(ph, maxAvailable);
+            }
+        }
+        Vec2 pos = pinnedPosition(edge, table.x, table.y, w, h, pw, targetH, stageW, stageH);
+        table.setSize(pw, targetH);
         table.setPosition(pos.x, pos.y);
     }
 

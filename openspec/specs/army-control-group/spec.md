@@ -49,20 +49,48 @@ The system SHALL allow players to create, save, recall, and delete unit control 
 - **THEN** the groups section renders nothing (no section label and no `No groups saved` placeholder)
 
 ### Requirement: Unit Type Deselection via Chips
-The system SHALL display compact icon-plus-count chips representing each unit type in the active selection, and exclude an entire unit type when its chip is tapped.
+The system SHALL display compact icon-plus-count toggle chips representing each unit type in the discovered unit pool, allow bidirectional inclusion/exclusion by tapping chips, and provide batch controls to select all, select none, or invert the selection without discarding discovered unit types.
 
-#### Scenario: View active selection summary
-- **WHEN** units are currently selected in `input.selectedUnits`
-- **THEN** the UI displays one chip per selected unit type showing its unit icon alongside its count only (no full type name in the chip)
-- **AND** the full unit type name is available via the chip tooltip together with the deselection hint
+#### Scenario: View selection matrix summary
+- **WHEN** units are captured into the discovered pool via map, screen, or box-selection
+- **THEN** the UI displays one toggle chip per discovered unit type showing its unit icon alongside its count
+- **AND** chips representing currently selected unit types render in an active highlighted state
+- **AND** chips representing excluded unit types render in a dimmed, inactive state
 
-#### Scenario: Deselect specific unit type
-- **WHEN** the user taps a unit type chip (e.g. the Mono icon-plus-count chip) in the Active Selection Bar
+#### Scenario: Toggle unit type off
+- **WHEN** the user taps an active unit type chip in the Active Selection Bar
 - **THEN** all units of that type are removed from `input.selectedUnits`
-- **AND** the remaining unit types remain selected in `input.selectedUnits`
+- **AND** the remaining unit types remain in `input.selectedUnits`
+- **AND** the tapped chip transitions to a dimmed inactive state without being removed from the UI
+
+#### Scenario: Toggle unit type on
+- **WHEN** the user taps a dimmed inactive unit type chip in the Active Selection Bar
+- **THEN** all living units of that type from the discovered pool are added back to `input.selectedUnits`
+- **AND** the tapped chip transitions to an active highlighted state
+
+#### Scenario: Batch select none
+- **WHEN** the user activates the "None" batch control
+- **THEN** all units are cleared from `input.selectedUnits`
+- **AND** all discovered unit type chips remain visible in the UI in a dimmed inactive state
+
+#### Scenario: Batch select all
+- **WHEN** the user activates the "All" batch control
+- **THEN** all living units in the discovered pool are added to `input.selectedUnits`
+- **AND** all discovered unit type chips transition to an active highlighted state
+
+#### Scenario: Batch invert selection
+- **WHEN** the user activates the "Invert" batch control
+- **THEN** all currently active unit types are removed from `input.selectedUnits`
+- **AND** all currently inactive unit types from the discovered pool are added to `input.selectedUnits`
+- **AND** their respective chip states are inverted
+
+#### Scenario: Pool dismissal on clear
+- **WHEN** the user activates the toolbar "Deselect All" (✕) action or taps empty ground to clear selection
+- **THEN** `input.selectedUnits` is cleared
+- **AND** the discovered unit pool is completely cleared and all chips collapse
 
 #### Scenario: Empty selection collapses
-- **WHEN** no units are currently selected but control groups are saved
+- **WHEN** no units are in the discovered pool and no control groups are saved
 - **THEN** the Active Selection section renders nothing (no section label and no `No units selected` placeholder)
 
 ### Requirement: UI Display Mode and Persistence
