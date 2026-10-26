@@ -38,13 +38,15 @@ public class UpdateDialog extends SolimDialog {
         name("updateAvailableDialog");
         closeOnBack();
 
+        table().center();
+
         String newVersionText = Core.bundle.format(
                 "update.message.new-version",
                 "[#" + Color.crimson.toString() + "]" + currentVer,
                 "[#" + Color.green.toString() + "]" + latestVer);
 
         children(() -> {
-            column().props(growX(), solim.UI.maxWidth(800f), gap(unit(2)), left()).children(() -> {
+            column().props(growX(), solim.UI.maxWidth(800f), gap(unit(2)), center()).children(() -> {
                 text(newVersionText)
                         .props(textWrap());
 
