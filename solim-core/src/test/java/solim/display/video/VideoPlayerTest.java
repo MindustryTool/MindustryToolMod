@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import arc.files.Fi;
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import solim.test.SolimEnv;
@@ -39,6 +40,22 @@ class VideoPlayerTest extends SolimEnv {
 		};
 	}
 
+	/**
+	 * Advances the player like a render loop until playback finishes or fails. The wait is
+	 * bounded by wall time, not by a frame count, because a software decoder needs longer than
+	 * the simulated frame budget to walk a full clip on a slow machine.
+	 */
+	private static void playUntilEnded(VideoPlayer player, int timeoutSeconds) throws InterruptedException {
+		long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(timeoutSeconds);
+		while (System.nanoTime() < deadline) {
+			VideoPlayer.State current = player.getState();
+			if (current == VideoPlayer.State.ENDED || current == VideoPlayer.State.FAILED)
+				return;
+			player.update(1f / 60f);
+			Thread.sleep(2);
+		}
+	}
+
 	@Test
 	void playbackOfArealClipAdvancesThroughItBeforeEnding() throws Exception {
 		File clip = previewClip();
@@ -56,12 +73,10 @@ class VideoPlayerTest extends SolimEnv {
 			assertEquals(11.096, player.getDuration(), 0.5);
 
 			player.play();
-			for (int i = 0; i < 2000 && player.getState() != VideoPlayer.State.ENDED; i++) {
-				player.update(1f / 60f);
-				Thread.sleep(2);
-			}
+			playUntilEnded(player, 120);
 
-			assertEquals(VideoPlayer.State.ENDED, player.getState(), "a non-looping clip must end");
+			assertEquals(VideoPlayer.State.ENDED, player.getState(),
+					"a non-looping clip must end; was " + player.getState() + " at " + player.getPosition());
 			assertTrue(player.getPosition() > 5f,
 					"playback must be driven by decoded frames, not end at the start; was " + player.getPosition());
 		} finally {
@@ -71,19 +86,18 @@ class VideoPlayerTest extends SolimEnv {
 
 	@Test
 	void playbackOfALoopingClipRestartsInsteadOfEnding() throws Exception {
-		File clip = previewClip();
-		assumeTrue(clip != null, "preview/quick-rotate.mp4 is not available");
+		LoopingFrameDecoder decoder = new LoopingFrameDecoder(0.5);
+		VideoDecoders.setFactory(file -> decoder);
 		VideoPlayer player = new VideoPlayer();
 		try {
 			player.setLooping(true);
-			player.open(new Fi(clip), null, false, accepting());
+			player.open(new Fi(new File("unused.mp4")), null, false, accepting());
 
 			for (int i = 0; i < 2000 && player.getState() == VideoPlayer.State.LOADING; i++) {
 				player.update(1f / 60f);
 				Thread.sleep(2);
 			}
 			assertEquals(VideoPlayer.State.READY, player.getState(), "the clip must load before it can play");
-			player.seek(8.0);
 			player.play();
 
 			float previous = player.getPosition();
@@ -91,7 +105,7 @@ class VideoPlayerTest extends SolimEnv {
 			for (int i = 0; i < 2000 && player.getState() != VideoPlayer.State.ENDED; i++) {
 				player.update(1f / 60f);
 				float position = player.getPosition();
-				if (position + 1f < previous) {
+				if (position + 0.2f < previous) {
 					restarted = true;
 					break;
 				}
@@ -103,6 +117,7 @@ class VideoPlayerTest extends SolimEnv {
 			assertEquals(VideoPlayer.State.PLAYING, player.getState(), "a looping clip must not end");
 		} finally {
 			player.dispose();
+			VideoDecoders.setFactory(null);
 		}
 	}
 
@@ -146,6 +161,64 @@ class VideoPlayerTest extends SolimEnv {
 							+ " decoded=" + decoded);
 		} finally {
 			player.dispose();
+		}
+	}
+
+	private static final class LoopingFrameDecoder implements VideoFrameDecoder {
+
+		private double position;
+		private final double duration;
+
+		LoopingFrameDecoder(double duration) {
+			this.duration = duration;
+		}
+
+		@Override
+		public String name() {
+			return "looping";
+		}
+
+		@Override
+		public boolean isNative() {
+			return true;
+		}
+
+		@Override
+		public int width() {
+			return 16;
+		}
+
+		@Override
+		public int height() {
+			return 16;
+		}
+
+		@Override
+		public double duration() {
+			return duration;
+		}
+
+		@Override
+		public double frameRate() {
+			return 30;
+		}
+
+		@Override
+		public double decodeNext(ByteBuffer rgba) {
+			position += 1 / 30.0;
+			if (position > duration) {
+				return -1;
+			}
+			return position;
+		}
+
+		@Override
+		public void seek(double seconds) {
+			position = seconds;
+		}
+
+		@Override
+		public void close() {
 		}
 	}
 

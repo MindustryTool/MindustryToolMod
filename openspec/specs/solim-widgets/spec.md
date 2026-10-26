@@ -407,7 +407,7 @@ The `Hud` container SHALL support a `keepInScreen()` method and automatically re
 - **THEN** hovering and clicking within the visually rendered area of the Hud triggers correct element hover and click states, with no offset between visual position and hit region
 
 ### Requirement: Draggable modifier for Hud repositioning
-The Solim framework SHALL provide a `.draggable()` modifier that attaches touch drag handling to an element. The handle element SHALL have `touchable = enabled` so its entire surface area can capture drag gestures. When a touch occurs on an interactive descendant button or clickable control within the handle, the drag listener SHALL NOT consume the event and SHALL return `false` on `touchDown` so the child control receives the click. When a touch occurs on the container background or non-button elements (such as text, images, or spacers), the drag listener SHALL return `true`, translate the parent `Hud` container by the drag delta, clamp coordinates to the screen, and optionally update reactive `Signal<Float>` x and y positions.
+The Solim framework SHALL provide a `.draggable()` modifier that attaches touch drag handling to an element. The handle element SHALL have `touchable = enabled` so its entire surface area can capture drag gestures. When a touch occurs on an interactive descendant button or clickable control within the handle, the drag listener SHALL NOT consume the event and SHALL return `false` on `touchDown` so the child control receives the click. When a touch occurs on the container background or non-button elements (such as text, images, or spacers), the drag listener SHALL return `true`, translate the parent `Hud` container by the drag delta, clamp coordinates to the screen, optionally consult registered dock targets for magnetic snapping, and update reactive `Signal<Float>` x and y positions or active dock anchors.
 
 #### Scenario: Dragging a handle moves the Hud
 - **WHEN** a user touches down on a non-button area of a handle configured with `.draggable()` and drags
@@ -425,9 +425,9 @@ The Solim framework SHALL provide a `.draggable()` modifier that attaches touch 
 - **WHEN** a user touches down and drags on a `Label`, `Image`, or empty background area within a handle container
 - **THEN** the parent `Hud` moves with the drag gesture
 
-**Source: solim-input-extensions**
-
-Provides enter-key submission and validation hooks on SolimTextField.
+#### Scenario: Dragging with dock targets snaps to target edge
+- **WHEN** a user drags a handle on a `Hud` configured with dock targets near an active target boundary
+- **THEN** the drag position magnetically snaps to align with the target edge
 
 ### Requirement: Enter Key Submission
 The system SHALL provide onEnter(Consumer<String> onSubmit) and onEnter(Runnable onSubmit) on solim.input.SolimTextField.
@@ -827,4 +827,11 @@ A `ReactiveGrid` that is disposed before its pending reconciliation runs SHALL n
 #### Scenario: Disposal between invalidation and execution
 - **WHEN** a `ReactiveGrid` is invalidated and then disposed before its reconciliation runs
 - **THEN** no cells are added to its table and no reconciler state is mutated
+
+### Requirement: Declarative dockable modifier for Hud elements
+The Solim framework SHALL provide a `.dockable()` modifier that binds a `Hud` to a `DockEngine` or target registry. It SHALL configure drag handling with proximity snapping, snap guideline rendering, breakaway detection, and anchor locking on touch release.
+
+#### Scenario: Applying dockable modifier to handle
+- **WHEN** a handle element is configured with `.props(dockable(dockEngine))`
+- **THEN** drag interactions on the handle trigger magnetic snapping against targets in the dock engine and update anchor state upon touch release
 

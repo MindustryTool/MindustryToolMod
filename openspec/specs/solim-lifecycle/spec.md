@@ -547,3 +547,14 @@ A component SHALL install itself as the active ambient owner for exactly the dur
 - **WHEN** a resource is created before or after every window for that component
 - **THEN** the component does not claim ownership of it, so the resource belongs to the scope that was actually ambient at creation time
 
+
+### Requirement: Overlay Non-Attachment to Parent Containers
+Overlay components, specifically `Popup` and `SolimDialog`, SHALL NOT attach to parent container tables via `AttachmentStack` when instantiated in an active ambient scope, while still registering with the ambient `OwnershipContext` for proper lifecycle disposal.
+
+#### Scenario: Instantiating Popup inside a container block
+- **WHEN** a `Popup` is constructed while a container table is on the `AttachmentStack`
+- **THEN** the `Popup` table is not added as a child of the container table and its `table.parent` remains null until explicitly mounted
+
+#### Scenario: Instantiating SolimDialog inside a container block
+- **WHEN** a `SolimDialog` is constructed while a container table is on the `AttachmentStack`
+- **THEN** the dialog element is not added as a child of the container table and does not contribute layout cells to the container

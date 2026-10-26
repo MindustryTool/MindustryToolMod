@@ -11,6 +11,7 @@ import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import mindustry.ui.dialogs.BaseDialog;
+import solim.graphics.BlurHelper;
 
 import arc.func.Prov;
 import solim.core.Component;
@@ -72,6 +73,11 @@ public class SolimDialog extends Component
     @Override
     public void setPendingProps(@Nullable Props<SolimDialog> props) {
         this.pending = props;
+    }
+
+    @Override
+    protected boolean attachesToParent() {
+        return false;
     }
 
     @Override
@@ -239,6 +245,15 @@ public class SolimDialog extends Component
     public SolimDialog setWidth(float width) {
         wrapped.setWidth(width);
         return this;
+    }
+
+    public SolimDialog blurBackdrop(float radius) {
+        BlurHelper.applyBackdropBlur(wrapped, radius);
+        return this;
+    }
+
+    public SolimDialog blurBackdrop() {
+        return blurBackdrop(12f);
     }
 
     public SolimDialog maxWidth(float maxWidth) {

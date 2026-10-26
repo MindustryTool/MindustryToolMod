@@ -35,7 +35,9 @@ import solim.display.SolimImage;
 import solim.display.Text;
 import solim.display.video.SolimVideo;
 import solim.display.video.VideoSource;
+import solim.graphics.BlurHelper;
 import solim.graphics.RoundedDrawable;
+import solim.layout.BlurTable;
 import solim.input.Button;
 import solim.input.Checkbox;
 import solim.input.SolimSelect;
@@ -47,6 +49,8 @@ import solim.layout.Grid;
 import solim.layout.Scroll;
 import solim.layout.SolimCollapser;
 import solim.layout.Tabs;
+import solim.overlay.DockAnchorStore;
+import solim.overlay.DockEngine;
 import solim.overlay.Hud;
 import solim.overlay.Popup;
 import solim.reactive.Effect;
@@ -553,6 +557,30 @@ public final class Values {
         return background(color);
     }
 
+    public static Prop<TableCapability, Float> backdropBlur(float radius) {
+        return Prop.table(TableCapability.class, "backdropBlur", radius, (table, val) -> {
+            if (val != null) {
+                BlurHelper.applyBackdropBlur(table, val);
+            }
+        });
+    }
+
+    public static Prop<TableCapability, Float> backdropBlur() {
+        return backdropBlur(8f);
+    }
+
+    public static Prop<TableCapability, Float> contentBlur(float radius) {
+        return Prop.table(TableCapability.class, "contentBlur", radius, (table, val) -> {
+            if (table instanceof BlurTable && val != null) {
+                ((BlurTable) table).contentBlurRadius(val);
+            }
+        });
+    }
+
+    public static Prop<TableCapability, Float> contentBlur() {
+        return contentBlur(5f);
+    }
+
     public static Prop<TableCapability, Readable<Color>> backgroundColor(@Nullable Readable<Color> color) {
         if (color == null) {
             return Prop.table(TableCapability.class, "backgroundColor", (Readable<Color>) null, (table, val) -> {
@@ -880,6 +908,29 @@ public final class Values {
             @Nullable Signal<Float> y) {
         return Prop.raw(ElementCapability.class, "draggable", Prop.Kind.ELEMENT,
                 target -> Hud.makeDraggable((Element) target, hud, x, y));
+    }
+
+    public static Prop<ElementCapability, Void> dockable(DockEngine engine) {
+        return Prop.raw(ElementCapability.class, "dockable", Prop.Kind.ELEMENT,
+                target -> Hud.makeDockable((Element) target, null, engine, null, null, null, null));
+    }
+
+    public static Prop<ElementCapability, Void> dockable(DockEngine engine, @Nullable DockAnchorStore store) {
+        return Prop.raw(ElementCapability.class, "dockable", Prop.Kind.ELEMENT,
+                target -> Hud.makeDockable((Element) target, null, engine, store, null, null, null));
+    }
+
+    public static Prop<ElementCapability, Void> dockable(DockEngine engine, @Nullable DockAnchorStore store,
+            @Nullable String targetId) {
+        return Prop.raw(ElementCapability.class, "dockable", Prop.Kind.ELEMENT,
+                target -> Hud.makeDockable((Element) target, null, engine, store, null, null, targetId));
+    }
+
+    public static Prop<ElementCapability, Void> dockable(@Nullable Hud hud, DockEngine engine,
+            @Nullable DockAnchorStore store, @Nullable Signal<Float> x, @Nullable Signal<Float> y,
+            @Nullable String targetId) {
+        return Prop.raw(ElementCapability.class, "dockable", Prop.Kind.ELEMENT,
+                target -> Hud.makeDockable((Element) target, hud, engine, store, x, y, targetId));
     }
 
     public static Prop<ElementCapability, Cons<Element>> update(Cons<Element> fn) {

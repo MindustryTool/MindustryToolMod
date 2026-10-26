@@ -13,6 +13,7 @@ import mindustry.gen.Icon;
 import mindustry.graphics.Pal;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.settings.ModSettings;
+import mindustrytool.ui.dock.MindustryDockRegistry;
 import solim.core.Component;
 import solim.input.SolimSlider;
 import solim.overlay.Hud;
@@ -37,12 +38,15 @@ public class TimeControlHudView extends Component {
         hud = hud(() -> {
             when(feature.hideDragHandleConfig.signal())
                     .elseDo(() -> button()
-                            .props(style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), draggable(feature.xSignal, feature.ySignal))
+                            .props(style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize),
+                                    dockable(MindustryDockRegistry.get().engine(), feature.dockPosition, "time-control"))
                             .children(() -> icon(Icon.move).props(size(dragIconSize), prefWidth(dragIconSize), prefHeight(dragIconSize))));
 
             buildControls(feature, null);
         }).props(gap(unit(1)));
 
+        hud.dockable(null, MindustryDockRegistry.get().engine(), feature.dockPosition, feature.xSignal, feature.ySignal,
+                "time-control");
         hud.props(position(feature.xSignal, feature.ySignal), rounded(unit(2), WebStyles.Colors.SECTION_BG), border(1.5f, WebStyles.Colors.BORDER));
 
         listen(ResizeEvent.class, e -> {

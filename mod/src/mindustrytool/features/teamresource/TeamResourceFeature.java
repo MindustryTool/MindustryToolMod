@@ -16,6 +16,8 @@ import mindustry.gen.Icon;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
+import mindustrytool.ui.dock.DockPositionConfig;
+import mindustrytool.ui.dock.MindustryDockRegistry;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
@@ -49,6 +51,7 @@ public class TeamResourceFeature extends Feature {
 
     public final Signal<Float> xSignal;
     public final Signal<Float> ySignal;
+    public final DockPositionConfig dockPosition;
 
     private final TeamResourceState state;
     private @Nullable TeamResourceHudView hudView;
@@ -141,6 +144,7 @@ public class TeamResourceFeature extends Feature {
 
         xSignal = xConfig.signal();
         ySignal = yConfig.signal();
+        dockPosition = new DockPositionConfig(config, xConfig, yConfig);
 
         this.state = new TeamResourceState(this);
 
@@ -208,8 +212,7 @@ public class TeamResourceFeature extends Feature {
         float cx = sw > 0 ? Math.max(0f, (sw - width) / 2f) : 200f;
         float cy = getSceneHeight() > 0 ? getSceneHeight() / 2f : 200f;
 
-        xConfig.set(cx);
-        yConfig.set(cy);
+        dockPosition.resetTo(cx, cy);
 
         if (hudView != null) {
             Core.app.post(hudView::keepInScreen);
@@ -231,6 +234,7 @@ public class TeamResourceFeature extends Feature {
             el.name = "team-resources-hud";
             el.visible(() -> Vars.ui.hudfrag != null && Vars.ui.hudfrag.shown && Vars.state != null
                     && Vars.state.isGame());
+            MindustryDockRegistry.get().registerHud("team-resources", el);
 
             Core.settings.put("coreitems", false);
 
@@ -247,6 +251,7 @@ public class TeamResourceFeature extends Feature {
         if (hudView != null) {
             TeamResourceHudView view = hudView;
             hudView = null;
+            MindustryDockRegistry.get().unregisterHud("team-resources");
             Core.app.post(() -> {
                 view.element().remove();
                 view.dispose();

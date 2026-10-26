@@ -24,6 +24,7 @@ import solim.reactive.Readable;
 import solim.reactive.Signal;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.settings.ModSettings;
+import mindustrytool.ui.dock.MindustryDockRegistry;
 
 public class QuickAccessHudView extends Component {
 
@@ -73,6 +74,8 @@ public class QuickAccessHudView extends Component {
                     .elseDo(() -> buildExpandedBar(buttonSize, iconSize, items));
         });
 
+        hud.dockable(null, MindustryDockRegistry.get().engine(), feature.dockPosition, feature.xSignal, feature.ySignal,
+                "quick-access");
         hud.props(opacity(feature.opacityConfig.signal()));
         hud.props(position(feature.xSignal, feature.ySignal));
 
@@ -90,7 +93,7 @@ public class QuickAccessHudView extends Component {
                 .children(() -> button()
                         .props(style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(Core.bundle.get("feature.quick-access.ui.expand")))
                         .onClick(() -> feature.collapsedConfig.set(false))
-                        .props(draggable(feature.xSignal, feature.ySignal))
+                        .props(dockable(MindustryDockRegistry.get().engine(), feature.dockPosition, "quick-access"))
                         .children(() -> icon(FileIcon.of("grid-2x2.png")).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize))));
     }
 
@@ -107,7 +110,8 @@ public class QuickAccessHudView extends Component {
                                     .children(() -> icon(FileIcon.of("chevron-left.png")).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize))))
                             .elseDo(() -> {
                                 button()
-                                        .props(style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), draggable(feature.xSignal, feature.ySignal))
+                                        .props(style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize),
+                                                dockable(MindustryDockRegistry.get().engine(), feature.dockPosition, "quick-access"))
                                         .children(() -> icon(Icon.move).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)));
 
                                 divider(Direction.Y);

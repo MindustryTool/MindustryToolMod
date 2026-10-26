@@ -22,20 +22,45 @@ public final class ChatActionPopup {
     }
 
     public static void install(ChatStore store) {
+        if (menu != null) {
+            menu.dispose();
+        }
         Popup<ParsedChatMessage> p = popup();
         menu = p.props(rounded(2));
         menu.items(request -> menuRows(store, request));
     }
 
+    public static void showFor(ChatStore store, @Nullable ParsedChatMessage message, float stageX, float stageY) {
+        if (store == null || message == null) {
+            return;
+        }
+        if (menu == null) {
+            install(store);
+        }
+        menu.show(message, stageX, stageY);
+    }
+
     public static void showFor(@Nullable ParsedChatMessage message, float stageX, float stageY) {
-        if (menu != null) {
-            menu.show(message, stageX, stageY);
+        if (message == null) {
+            return;
+        }
+        ChatFeature feature = FeatureManager.getFeature(ChatFeature.class);
+        if (feature != null) {
+            showFor(feature.getStore(), message, stageX, stageY);
         }
     }
 
     public static void dismiss() {
         if (menu != null) {
             menu.hide();
+        }
+    }
+
+    public static void dispose() {
+        if (menu != null) {
+            menu.hide();
+            menu.dispose();
+            menu = null;
         }
     }
 

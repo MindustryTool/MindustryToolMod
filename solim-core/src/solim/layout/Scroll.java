@@ -60,12 +60,15 @@ public final class Scroll extends Component
     private boolean updateHooked = false;
 
     public Scroll() {
-        this(new Table());
+        this(new ScrollOuterTable());
     }
 
     private Scroll(Table outer) {
         super(outer);
         this.outer = outer;
+        if (outer instanceof ScrollOuterTable) {
+            ((ScrollOuterTable) outer).owner = this;
+        }
         SolimToken.bind(this.outer, this, constraints);
         this.outer.name = "solim-scroll-pane-outer";
         this.outer.top().left();
@@ -348,7 +351,58 @@ public final class Scroll extends Component
     }
 
     @Override
+    protected void onRealized(Element element) {
+        applyPendingProps();
+    }
+
+    @Override
     public Scroll self() {
         return this;
+    }
+
+    private static final class ScrollOuterTable extends Table {
+        @Nullable Scroll owner;
+
+        @Override
+        public float getPrefHeight() {
+            if (owner != null) {
+                owner.applyPendingProps();
+            }
+            float pref = super.getPrefHeight();
+            if (owner != null && owner.constraints.maxHeight != null) {
+                Float max = owner.constraints.maxHeight.get();
+                if (max != null && max > 0f) {
+                    pref = Math.min(pref, max);
+                }
+            }
+            if (owner != null && owner.constraints.minHeight != null) {
+                Float min = owner.constraints.minHeight.get();
+                if (min != null && min > 0f) {
+                    pref = Math.max(pref, min);
+                }
+            }
+            return pref;
+        }
+
+        @Override
+        public float getPrefWidth() {
+            if (owner != null) {
+                owner.applyPendingProps();
+            }
+            float pref = super.getPrefWidth();
+            if (owner != null && owner.constraints.maxWidth != null) {
+                Float max = owner.constraints.maxWidth.get();
+                if (max != null && max > 0f) {
+                    pref = Math.min(pref, max);
+                }
+            }
+            if (owner != null && owner.constraints.minWidth != null) {
+                Float min = owner.constraints.minWidth.get();
+                if (min != null && min > 0f) {
+                    pref = Math.max(pref, min);
+                }
+            }
+            return pref;
+        }
     }
 }

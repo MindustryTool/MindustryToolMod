@@ -40,6 +40,7 @@ import solim.input.SolimSelect;
 import solim.input.SolimSlider;
 import solim.input.SolimTextField;
 import solim.input.Switch;
+import solim.layout.BlurContainer;
 import solim.layout.Card;
 import solim.layout.Column;
 import solim.layout.Direction;
@@ -73,6 +74,8 @@ import solim.modifier.WrappableCapability;
 import solim.style.InputStyle;
 import solim.style.SolimButtonStyle;
 import solim.style.SolimButtonStyleBuilder;
+import solim.overlay.DockAnchorStore;
+import solim.overlay.DockEngine;
 import solim.overlay.Hud;
 import solim.overlay.Popup;
 import solim.overlay.SolimDialog;
@@ -129,6 +132,22 @@ public final class UI {
 
     public static Card card(@Nullable Drawable background, @Nullable Runnable r) {
         return card(background).children(r);
+    }
+
+    public static BlurContainer blurContainer() {
+        return new BlurContainer();
+    }
+
+    public static BlurContainer blurContainer(float contentBlurRadius) {
+        return new BlurContainer(contentBlurRadius);
+    }
+
+    public static BlurContainer blurContainer(@Nullable Runnable r) {
+        return blurContainer().children(r);
+    }
+
+    public static BlurContainer blurContainer(float contentBlurRadius, @Nullable Runnable r) {
+        return blurContainer(contentBlurRadius).children(r);
     }
 
     public static Row row() {
@@ -783,6 +802,22 @@ public final class UI {
         return Values.backgroundColor(color);
     }
 
+    public static Prop<TableCapability, Float> backdropBlur(float radius) {
+        return Values.backdropBlur(radius);
+    }
+
+    public static Prop<TableCapability, Float> backdropBlur() {
+        return Values.backdropBlur();
+    }
+
+    public static Prop<TableCapability, Float> contentBlur(float radius) {
+        return Values.contentBlur(radius);
+    }
+
+    public static Prop<TableCapability, Float> contentBlur() {
+        return Values.contentBlur();
+    }
+
     public static Prop<TableCapability, Readable<Color>> backgroundColor(@Nullable Readable<Color> color) {
         return Values.backgroundColor(color);
     }
@@ -921,6 +956,25 @@ public final class UI {
 
     public static Prop<ElementCapability, Void> draggable(@Nullable Hud hud, @Nullable Signal<Float> x, @Nullable Signal<Float> y) {
         return Values.draggable(hud, x, y);
+    }
+
+    public static Prop<ElementCapability, Void> dockable(DockEngine engine) {
+        return Values.dockable(engine);
+    }
+
+    public static Prop<ElementCapability, Void> dockable(DockEngine engine, @Nullable DockAnchorStore store) {
+        return Values.dockable(engine, store);
+    }
+
+    public static Prop<ElementCapability, Void> dockable(DockEngine engine, @Nullable DockAnchorStore store,
+            @Nullable String targetId) {
+        return Values.dockable(engine, store, targetId);
+    }
+
+    public static Prop<ElementCapability, Void> dockable(@Nullable Hud hud, DockEngine engine,
+            @Nullable DockAnchorStore store, @Nullable Signal<Float> x, @Nullable Signal<Float> y,
+            @Nullable String targetId) {
+        return Values.dockable(hud, engine, store, x, y, targetId);
     }
 
     public static Prop<ElementCapability, Cons<Element>> update(Cons<Element> fn) {

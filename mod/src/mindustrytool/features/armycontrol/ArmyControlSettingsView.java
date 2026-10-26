@@ -80,8 +80,7 @@ public class ArmyControlSettingsView extends Component {
         return SettingCard.card().props(padding(unit(2.5f)), gap(unit(2))).children(() -> {
             row().props(growX(), gap(unit(2)), center()).children(() -> {
                 button(Core.bundle.get("feature.army-control.settings.reset-position", "Reset HUD Position"), () -> {
-                    feature.xConfig.reset();
-                    feature.yConfig.reset();
+                    feature.resetPosition();
                 }).props(style(WebStyles.secondaryText()), growX());
             });
         });

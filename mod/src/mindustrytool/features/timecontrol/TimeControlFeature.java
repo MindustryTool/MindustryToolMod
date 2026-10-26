@@ -13,6 +13,8 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 import mindustrytool.features.quickaccess.QuickAccessFeature;
+import mindustrytool.ui.dock.DockPositionConfig;
+import mindustrytool.ui.dock.MindustryDockRegistry;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
@@ -50,6 +52,7 @@ public class TimeControlFeature extends Feature {
 
     public final Signal<Float> xSignal;
     public final Signal<Float> ySignal;
+    public final DockPositionConfig dockPosition;
 
     private final Signal<Float> speed = Signal.of(1f);
     private final Signal<Float> selectedPreset = Signal.of(1f);
@@ -97,6 +100,7 @@ public class TimeControlFeature extends Feature {
 
         xSignal = xConfig.signal();
         ySignal = yConfig.signal();
+        dockPosition = new DockPositionConfig(positionGroup, xConfig, yConfig);
 
         Effect.of(speed, value -> {
             if (canApply()) {
@@ -263,8 +267,7 @@ public class TimeControlFeature extends Feature {
         Core.settings.put("mindustrytool.time-control.position.y.portrait", cy);
         Core.settings.put("mindustrytool.time-control.position.y.landscape", cy);
 
-        xConfig.reset();
-        yConfig.reset();
+        dockPosition.resetTo(cx, cy);
 
         if (hudView != null) {
             Core.app.post(hudView::keepInScreen);
@@ -350,6 +353,7 @@ public class TimeControlFeature extends Feature {
         el.name = "time-control-hud";
         el.visible(() -> Vars.ui.hudfrag.shown && Vars.state.isGame()
                 && Boolean.FALSE.equals(Signals.netClient().peek()));
+        MindustryDockRegistry.get().registerHud("time-control", el);
 
         Core.app.post(() -> {
             if (hudView != null && !isPopupActive()) {
@@ -364,6 +368,7 @@ public class TimeControlFeature extends Feature {
         }
         TimeControlHudView view = hudView;
         hudView = null;
+        MindustryDockRegistry.get().unregisterHud("time-control");
         Core.app.post(() -> {
             view.element().remove();
             view.dispose();

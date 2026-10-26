@@ -168,4 +168,35 @@ class ScrollTest extends SolimEnv {
 
         hud.dispose();
     }
+
+    @Test
+    void maxHeightCapsOuterPrefHeight() {
+        Scroll scroll = new Scroll();
+        scroll.props(maxHeight(100f));
+        Table child = new Table();
+        scroll.children(() -> {
+            AttachmentStack.add(child);
+        });
+        child.setSize(50f, 300f);
+        child.invalidate();
+        scroll.content().invalidate();
+        scroll.outer().invalidate();
+        assertTrue(scroll.outer().getPrefHeight() <= 100f);
+        scroll.dispose();
+    }
+
+    @Test
+    void maxHeightLeavesSmallerContentUnchanged() {
+        Scroll scroll = new Scroll();
+        scroll.props(maxHeight(200f));
+        Table child = new Table();
+        scroll.children(() -> {
+            AttachmentStack.add(child);
+        });
+        child.setSize(50f, 50f);
+        scroll.content().invalidate();
+        scroll.outer().invalidate();
+        assertTrue(scroll.outer().getPrefHeight() <= 50f);
+        scroll.dispose();
+    }
 }

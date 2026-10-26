@@ -115,6 +115,24 @@ class PopupEdgePinTest extends SolimEnv {
         }
     }
 
+    @Test
+    void tableBottomPinDoesNotShiftDownWhenContentExceedsStage() {
+        Popup<String> menu = new Popup<>();
+        try {
+            setTableContent(menu, 100f, 80f);
+            menu.table().pack();
+            menu.table().setPosition(50f, 400f);
+            menu.props(pinnedEdge(Popup.Edge.BOTTOM));
+
+            swapTableContent(menu, 100f, 500f);
+            menu.table().validate();
+
+            assertTrue(menu.table().y >= 400f);
+        } finally {
+            disposeQuietly(menu);
+        }
+    }
+
     private static void setTableContent(Popup<String> menu, float width, float height) {
         menu.table().clearChildren();
         Table leaf = new Table();

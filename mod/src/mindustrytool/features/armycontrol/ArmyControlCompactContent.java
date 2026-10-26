@@ -21,7 +21,7 @@ public class ArmyControlCompactContent extends Component {
 
     @Override
     protected Element build() {
-        Readable<Boolean> hasSelection = feature.activeSelectionSignal()
+        Readable<Boolean> hasSelection = feature.discoveredTypesSignal()
                 .map(map -> map != null && map.size > 0);
         Readable<Boolean> hasGroups = feature.controlGroupsSignal()
                 .map(groups -> groups != null && groups.size > 0);

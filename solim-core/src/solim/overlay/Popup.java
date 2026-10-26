@@ -15,6 +15,7 @@ import arc.util.Nullable;
 import arc.util.Time;
 import arc.func.Func;
 import mindustry.game.EventType.ResizeEvent;
+import solim.graphics.BlurHelper;
 import solim.core.Component;
 import solim.core.SolimToken;
 import solim.layout.Spacer;
@@ -124,6 +125,15 @@ public final class Popup<T> extends Component
         return table;
     }
 
+    public Popup<T> blurBackdrop(float radius) {
+        BlurHelper.applyBackdropBlur(table, radius);
+        return this;
+    }
+
+    public Popup<T> blurBackdrop() {
+        return blurBackdrop(8f);
+    }
+
     @Override
     public PendingCellConfig cellConfig() {
         return constraints;
@@ -181,7 +191,14 @@ public final class Popup<T> extends Component
         }
         if (stageW > 0f && stageH > 0f) {
             nx = Math.max(0f, Math.min(nx, Math.max(0f, stageW - newW)));
-            ny = Math.max(0f, Math.min(ny, Math.max(0f, stageH - newH)));
+            if (edge == Edge.BOTTOM) {
+                ny = y;
+            } else if (edge == Edge.TOP) {
+                float top = Math.min(y + h, stageH);
+                ny = Math.max(0f, top - newH);
+            } else {
+                ny = Math.max(0f, Math.min(ny, Math.max(0f, stageH - newH)));
+            }
         }
         return new Vec2(nx, ny);
     }
@@ -229,6 +246,11 @@ public final class Popup<T> extends Component
         }
         y = Math.max(0f, Math.min(y, Math.max(0f, stageHeight - menuHeight)));
         return new Vec2(x, y);
+    }
+
+    @Override
+    protected boolean attachesToParent() {
+        return false;
     }
 
     @Override
@@ -337,16 +359,19 @@ public final class Popup<T> extends Component
 
         @Override
         public void validate() {
+            super.validate();
             if (owner != null) {
                 owner.reconcilePinnedEdge();
+                if (needsLayout()) {
+                    super.validate();
+                }
             }
-            super.validate();
         }
     }
 
     private void reconcilePinnedEdge() {
         Edge edge = pinnedEdge;
-        if (edge == null || !table.needsLayout()) {
+        if (edge == null) {
             return;
         }
         float w = table.getWidth();
@@ -358,8 +383,19 @@ public final class Popup<T> extends Component
         }
         float stageW = stageWidth();
         float stageH = stageHeight();
-        Vec2 pos = pinnedPosition(edge, table.x, table.y, w, h, pw, ph, stageW, stageH);
-        table.setSize(pw, ph);
+        float targetH = ph;
+        if (stageH > 0f) {
+            if (edge == Edge.BOTTOM) {
+                float maxAvailable = Math.max(0f, stageH - table.y);
+                targetH = Math.min(ph, maxAvailable);
+            } else if (edge == Edge.TOP) {
+                float topEdge = table.y + h;
+                float maxAvailable = Math.max(0f, topEdge);
+                targetH = Math.min(ph, maxAvailable);
+            }
+        }
+        Vec2 pos = pinnedPosition(edge, table.x, table.y, w, h, pw, targetH, stageW, stageH);
+        table.setSize(pw, targetH);
         table.setPosition(pos.x, pos.y);
     }
 
