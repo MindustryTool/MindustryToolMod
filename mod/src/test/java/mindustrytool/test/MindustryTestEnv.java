@@ -23,6 +23,7 @@ public abstract class MindustryTestEnv extends SolimEnv {
         snapshotIcons();
         fontsDefSnapshot = Fonts.def;
         FeatureManager.clear();
+        flushEffects();
     }
 
     @AfterEach

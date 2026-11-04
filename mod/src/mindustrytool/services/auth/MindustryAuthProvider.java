@@ -243,42 +243,56 @@ public class MindustryAuthProvider implements AuthProvider {
 
         MindustryTool.getLoginUri().whenComplete((uri, err) -> {
             if (err != null) {
+                Log.err("Failed to get login URI", err);
                 activeLoginId = null;
                 loginFuture.completeExceptionally(new RuntimeException("Failed to get login URI", err));
                 return;
             }
-            try {
-                String loginUrl = uri.getLoginUrl();
-                String loginId = uri.getLoginId();
+            Core.app.post(() -> {
+                try {
+                    String loginUrl = uri.getLoginUrl();
+                    String loginId = uri.getLoginId();
 
-                Core.settings.put(KEY_LOGIN_ID, loginId);
-                Core.settings.put(
-                        KEY_LOGIN_EXPIRY,
-                        Instant.now().plus(Duration.ofMinutes(5)).toEpochMilli());
-                Core.settings.forceSave();
-                activeLoginId = loginId;
+                    Core.settings.put(KEY_LOGIN_ID, loginId);
+                    Core.settings.put(
+                            KEY_LOGIN_EXPIRY,
+                            Instant.now().plus(Duration.ofMinutes(5)).toEpochMilli());
+                    Core.settings.forceSave();
+                    activeLoginId = loginId;
 
-                Core.app.post(() -> Events.fire(new LoginUriEvent(loginUrl, loginId)));
+                    Events.fire(new LoginUriEvent(loginUrl, loginId));
 
-                pollWithRetry(loginId, true).whenComplete((v, e) -> {
-                    if (loginId.equals(activeLoginId)) {
-                        activeLoginId = null;
+                    pollWithRetry(loginId, true).whenComplete((v, e) -> {
+                        if (loginId.equals(activeLoginId)) {
+                            activeLoginId = null;
+                        }
+                        if (e != null) {
+                            loginFuture.completeExceptionally(e);
+                        } else {
+                            loginFuture.complete(null);
+                        }
+                    });
+
+                    try {
+                        if (!Core.app.openURI(loginUrl)) {
+                            Core.app.setClipboardText(loginUrl);
+                            Vars.ui.showInfoFade(Core.bundle.get("auth.login.browser-fallback"));
+                        }
+                    } catch (Throwable t) {
+                        Log.warn("Failed to open login URI via browser", t);
+                        try {
+                            Core.app.setClipboardText(loginUrl);
+                            Vars.ui.showInfoFade(Core.bundle.get("auth.login.browser-fallback"));
+                        } catch (Throwable ct) {
+                            Log.err("Failed to copy login URI to clipboard", ct);
+                        }
                     }
-                    if (e != null) {
-                        loginFuture.completeExceptionally(e);
-                    } else {
-                        loginFuture.complete(null);
-                    }
-                });
-
-                if (!Core.app.openURI(loginUrl)) {
-                    Core.app.setClipboardText(loginUrl);
-                    Core.app.post(() -> Vars.ui.showInfoFade(Core.bundle.get("auth.login.browser-fallback")));
+                } catch (Throwable e) {
+                    Log.err("Failed to start login flow", e);
+                    activeLoginId = null;
+                    loginFuture.completeExceptionally(new RuntimeException("Failed to start login flow", e));
                 }
-            } catch (Exception e) {
-                activeLoginId = null;
-                loginFuture.completeExceptionally(new RuntimeException("Failed to start login flow", e));
-            }
+            });
         });
 
         return loginFuture;
