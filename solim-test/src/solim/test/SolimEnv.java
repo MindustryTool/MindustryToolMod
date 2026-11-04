@@ -13,8 +13,11 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import solim.core.Component;
+import solim.core.Disposable;
+import solim.core.DisposableOwner;
 import solim.core.OwnershipContext;
 import solim.core.SessionRoot;
+import solim.core.SolimAssert;
 import solim.core.SolimToken;
 import solim.modifier.PendingCellConfig;
 import solim.runtime.AttachmentStack;
@@ -23,11 +26,11 @@ import solim.runtime.SignalDispatcher;
 
 public class SolimEnv extends ArcTestEnv {
 
-    static final class Holder implements solim.core.DisposableOwner {
-        final List<solim.core.Disposable> owned = new ArrayList<>();
+    static final class Holder implements DisposableOwner {
+        final List<Disposable> owned = new ArrayList<>();
 
         @Override
-        public void adopt(solim.core.Disposable resource) {
+        public void adopt(Disposable resource) {
             if (resource != null) {
                 owned.add(resource);
             }
@@ -60,6 +63,10 @@ public class SolimEnv extends ArcTestEnv {
 
     public static <T> T inOwnershipWindow(Prov<T> factory) {
         Holder holder = new Holder();
+        DisposableOwner parent = OwnershipContext.current();
+        if (parent != null) {
+            parent.adopt(holder);
+        }
         OwnershipContext.push(holder);
         try {
             return factory.get();
@@ -88,7 +95,10 @@ public class SolimEnv extends ArcTestEnv {
     @AfterEach
     public void verifyAndTearDownSolimEnv() {
         if (opensOwnershipWindow()) {
-            OwnershipContext.pop();
+            DisposableOwner owner = OwnershipContext.pop();
+            if (owner != null) {
+                owner.dispose();
+            }
         }
 
         int parentStackSize = AttachmentStack.size();
@@ -135,6 +145,6 @@ public class SolimEnv extends ArcTestEnv {
         ReactiveContext.clear();
         SignalDispatcher.resetForTests();
         SessionRoot.get().resetForTests();
-        solim.core.SolimAssert.setMainThread(null);
+        SolimAssert.setMainThread(null);
     }
 }
