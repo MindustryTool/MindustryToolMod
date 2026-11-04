@@ -158,8 +158,17 @@ public class AuthOverlay {
                         });
                         return null;
                     }
-                    String detail = cause.getMessage() != null && !cause.getMessage().trim().isEmpty()
-                            ? cause.getMessage()
+                    Throwable root = cause;
+                    while (root.getCause() != null && root.getCause() != root) {
+                        root = root.getCause();
+                    }
+                    String rootMessage = root.getMessage();
+                    String causeMessage = cause.getMessage();
+                    String message = rootMessage != null && !rootMessage.trim().isEmpty()
+                            ? rootMessage
+                            : causeMessage;
+                    String detail = message != null && !message.trim().isEmpty()
+                            ? message
                             : Core.bundle.get("auth.login.failed");
                     Core.app.post(() -> {
                         if (loginDialog != null)
