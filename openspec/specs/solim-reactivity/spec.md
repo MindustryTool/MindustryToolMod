@@ -27,7 +27,7 @@ Mechanical merge of 10 specs per change `spec-domain-merge` (stage 3 core, conca
 - **THEN** a compile-time error is raised because the method does not exist
 
 ### Requirement: Computed with lazy recomputation and dynamic dependencies
-`Computed<T>` SHALL implement `Readable<T>`, `ReactiveSource`, `ReactiveObserver`, and `Disposable`. It SHALL be always and only lazy pull: it marks itself dirty when any dependency invalidates it, and recomputes only when `get()` or `peek()` is called and `dirty` is true. `Computed` SHALL NOT expose a `subscribe()` method and SHALL NOT maintain a listener list. `Computed.invalidate()` SHALL set `dirty = true`, propagate invalidation to downstream observers, and return immediately without recomputing. `Computed` SHALL auto-register with the ambient `OwnershipContext` when constructed.
+`Computed<T>` SHALL implement `Readable<T>`, `ReactiveSource`, `ReactiveObserver`, `DisposableOwner`, and `Disposable`. It SHALL be always and only lazy pull: it marks itself dirty when any dependency invalidates it, and recomputes only when `get()` or `peek()` is called and `dirty` is true. `Computed` SHALL NOT expose a `subscribe()` method and SHALL NOT maintain a listener list. `Computed.invalidate()` SHALL set `dirty = true`, propagate invalidation to downstream observers, and return immediately without recomputing. `Computed` SHALL auto-register with the ambient `OwnershipContext` when constructed. During recomputation, `Computed` SHALL establish its own ownership scope so any `Disposable` created inside its supplier is owned by the `Computed` itself rather than by a transient caller `Effect` scope, and SHALL dispose prior recomputation-owned disposables before recomputing or when the `Computed` is disposed.
 
 #### Scenario: Lazy recomputation only on get
 - **WHEN** a dependency signal changes and `computed.get()` is not yet called
@@ -52,6 +52,14 @@ Mechanical merge of 10 specs per change `spec-domain-merge` (stage 3 core, conca
 #### Scenario: Computed is ownable as a Disposable
 - **WHEN** a `Computed` is constructed inside a component `build()`
 - **THEN** it is auto-registered with the ambient owner and disposed when the component is disposed
+
+#### Scenario: Computed isolates recomputation ownership from transient Effect caller
+- **WHEN** an outer `Computed` owned by a parent scope creates an inner `Disposable` (such as a nested `Computed`) during its supplier evaluation while first read inside a transient `Effect`
+- **THEN** disposing that transient `Effect` SHALL NOT dispose the inner `Disposable` owned by the outer `Computed`, and subsequent dependency updates SHALL continue invalidating and recomputing the outer `Computed`
+
+#### Scenario: Recompute disposes prior iteration owned disposables
+- **WHEN** a `Computed` creates a `Disposable` during evaluation and later recomputes after a dependency changes
+- **THEN** the `Disposable` from the prior evaluation is disposed before the new evaluation runs, and any newly created `Disposable` is disposed when the `Computed` itself is disposed
 
 #### Scenario: No subscribe method exists on Computed
 - **WHEN** a caller attempts to call `computed.subscribe(...)`

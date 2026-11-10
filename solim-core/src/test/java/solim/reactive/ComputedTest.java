@@ -2,9 +2,13 @@ package solim.reactive;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
+import solim.display.Text;
 import solim.runtime.SignalDispatcher;
 import solim.test.SolimEnv;
 
@@ -129,5 +133,87 @@ class ComputedTest extends SolimEnv {
         c.dispose();
         assertEquals(0, s.observerCount());
         assertEquals(0, c.dependencyCount());
+    }
+
+    @Test
+    void transientEffectDisposalDoesNotDisposeInnerComputedOwnedByOuterComputed() {
+        Signal<String> source = Signal.of("v1");
+        Computed<String> outer = Signal.computed(() -> source.map(v -> "mapped:" + v).get());
+
+        AtomicReference<String> seen = new AtomicReference<>();
+        Effect transientEffect = Effect.of(() -> seen.set(outer.get()));
+        assertEquals("mapped:v1", seen.get());
+
+        transientEffect.dispose();
+        source.set("v2");
+
+        assertTrue(outer.isDirty(), "Outer Computed must remain subscribed after transient Effect disposes");
+        assertEquals("mapped:v2", outer.get());
+
+        outer.dispose();
+        assertEquals(0, source.observerCount());
+    }
+
+    @Test
+    void recomputeDisposesPriorOwnedDisposablesAndDisposeCleansCurrent() {
+        Signal<String> source = Signal.of("a");
+        List<Computed<String>> allocated = new ArrayList<>();
+        Computed<String> outer = Signal.computed(() -> {
+            Computed<String> inner = source.map(v -> "inner:" + v);
+            allocated.add(inner);
+            return inner.get();
+        });
+
+        assertEquals("inner:a", outer.get());
+        assertEquals(1, allocated.size());
+        assertFalse(allocated.get(0).isDisposed());
+
+        source.set("b");
+        assertEquals("inner:b", outer.get());
+        assertEquals(2, allocated.size());
+        assertTrue(allocated.get(0).isDisposed(), "Recompute must dispose previous iteration disposables");
+        assertFalse(allocated.get(1).isDisposed());
+
+        outer.dispose();
+        assertTrue(allocated.get(1).isDisposed(), "Disposing Computed must dispose owned disposables");
+        assertEquals(0, source.observerCount());
+    }
+
+    @Test
+    void outerComputedContinuesReactingAcrossQueryViewLoadingTransition() {
+        QueryCache.setInstanceForTest(new QueryCache());
+        QueryKey key = QueryKey.of("computed-qv-transition");
+        AtomicReference<CompletableFuture<String>> futureRef = new AtomicReference<>(
+                CompletableFuture.completedFuture("v1"));
+        Query<String> query = Query.of(key, futureRef::get);
+
+        Computed<String> outer = Signal.computed(() -> query.data().map(v -> "room:" + v).get());
+        AtomicReference<String> rendered = new AtomicReference<>();
+
+        QueryView<String> view = QueryView.of(query)
+                .loading(() -> new Text("Loading"))
+                .data((data, fetching) -> Boolean.TRUE.equals(fetching)
+                        ? new Text("Loading")
+                        : Dynamic.of(outer, val -> {
+                            rendered.set(val);
+                            new Text(val);
+                        }));
+
+        view.element();
+        SignalDispatcher.flush();
+        assertEquals("room:v1", rendered.get());
+
+        CompletableFuture<String> nextFetch = new CompletableFuture<>();
+        futureRef.set(nextFetch);
+        query.refetch();
+        SignalDispatcher.flush();
+
+        nextFetch.complete("v2");
+        SignalDispatcher.flush();
+        assertEquals("room:v2", rendered.get());
+
+        view.dispose();
+        outer.dispose();
+        query.dispose();
     }
 }

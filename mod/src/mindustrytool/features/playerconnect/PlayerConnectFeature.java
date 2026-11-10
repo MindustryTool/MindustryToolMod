@@ -81,11 +81,9 @@ public class PlayerConnectFeature extends Feature {
 
     private final Signal<HostingState> state = Signal.of(HostingState.IDLE);
     private final Signal<Integer> ping = Signal.of(0);
-    private final Query<List<PlayerConnectRoom>> roomsQuery = Query.<List<PlayerConnectRoom>>builder()
-            .key(QueryKey.of("playerconnect", "rooms"))
-            .fetch(() -> MindustryTool.getPlayerConnectRooms(""))
-            .staleTime(Duration.ofSeconds(15))
-            .build();
+    private final Query<List<PlayerConnectRoom>> roomsQuery;
+    private final Readable<List<PlayerConnectRoom>> rooms;
+    private final boolean networkSyncOnEnable;
 
     private final Signal<List<PlayerConnectProvider>> providers = Signal.of(Collections.emptyList());
     private final Signal<JoinRequest> currentRequest = Signal.of(null);
@@ -108,6 +106,10 @@ public class PlayerConnectFeature extends Feature {
     private @Nullable JoinRoomDialog joinRoomDialog;
 
     public PlayerConnectFeature() {
+        this(() -> MindustryTool.getPlayerConnectRooms(""), true);
+    }
+
+    PlayerConnectFeature(Prov<CompletableFuture<List<PlayerConnectRoom>>> roomsFetcher, boolean networkSyncOnEnable) {
         super(FeatureMetadata.builder()
                 .id("player-connect")
                 .icon(Icon.planet)
@@ -115,18 +117,27 @@ public class PlayerConnectFeature extends Feature {
                 .enabledByDefault(true)
                 .build());
 
+        this.networkSyncOnEnable = networkSyncOnEnable;
         config = configGroup();
         roomNameConfig = config.stringValue("roomName", Vars.player != null ? Vars.player.name : "Mindustry Room");
         passwordConfig = config.stringValue("password", "");
         maxPlayerConfig = config.intValue("maxPlayers", Vars.headless ? 30 : 0);
         autoAcceptConfig = config.boolValue("autoAccept", true);
 
+        roomsQuery = Query.<List<PlayerConnectRoom>>builder()
+                .key(QueryKey.of("playerconnect", "rooms"))
+                .enabled(enabled())
+                .fetch(roomsFetcher)
+                .staleTime(Duration.ofSeconds(15))
+                .build();
+        rooms = roomsQuery.data().map(list -> list != null ? list : Collections.emptyList());
+
         registerEventListeners();
         registerCustomPacket();
     }
 
     public Readable<List<PlayerConnectRoom>> getRooms() {
-        return roomsQuery.data().map(list -> list != null ? list : Collections.emptyList());
+        return rooms;
     }
 
     public Query<List<PlayerConnectRoom>> getRoomsQuery() {
@@ -210,8 +221,10 @@ public class PlayerConnectFeature extends Feature {
 
     @Override
     public void onEnable() {
-        refreshProviders();
-        startSseSync();
+        if (networkSyncOnEnable) {
+            refreshProviders();
+            startSseSync();
+        }
 
         Core.app.post(() -> {
             if (approvalHud == null) {
@@ -259,7 +272,6 @@ public class PlayerConnectFeature extends Feature {
         }
 
         PlayerConnectClient.disposePinger();
-        roomsQuery.dispose();
     }
 
     public Readable<Boolean> isFetching() {
@@ -377,9 +389,11 @@ public class PlayerConnectFeature extends Feature {
             Events.fire(new PcRoomClosed());
         }
 
-        Core.app.post(() -> {
-            Vars.ui.showInfoFade("Room closed");
-        });
+        if (wasActive) {
+            Core.app.post(() -> {
+                    Vars.ui.showInfoFade("Room closed");
+            });
+        }
     }
 
     public void updateRoomStats() {
@@ -518,7 +532,10 @@ public class PlayerConnectFeature extends Feature {
         try {
             List<PlayerConnectRoom> list = JsonUtils.fromJsonArray(PlayerConnectRoom.class, json);
             if (list != null) {
-                Core.app.post(() -> roomsQuery.mutate(list));
+                Core.app.post(() -> {
+                    roomsQuery.mutate(list);
+                    Log.info("Updated player connect room list");
+                });
             }
         } catch (Exception e) {
             Log.debug("Failed to parse SSE room payload: @", e);
@@ -563,7 +580,8 @@ public class PlayerConnectFeature extends Feature {
                 });
     }
 
-    // Arc's Settings.getJson(String, Class<T>, Class<?>, Prov<T>) derives T from the container Class, so ArrayMap.class can only yield a raw ArrayMap.
+    // Arc's Settings.getJson(String, Class<T>, Class<?>, Prov<T>) derives T from
+    // the container Class, so ArrayMap.class can only yield a raw ArrayMap.
     @SuppressWarnings("unchecked")
     public ArrayMap<String, String> getCustomProviders() {
         return Core.settings.getJson(
@@ -654,7 +672,8 @@ public class PlayerConnectFeature extends Feature {
             return;
         }
 
-        // Arc's Table.getCells() is declared as Seq<Cell>, with a raw Cell argument that cannot be recovered from that API.
+        // Arc's Table.getCells() is declared as Seq<Cell>, with a raw Cell argument
+        // that cannot be recovered from that API.
         @SuppressWarnings("rawtypes")
         Seq<Cell> cells = root.getCells();
         if (cells.isEmpty()) {
