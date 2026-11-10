@@ -153,6 +153,9 @@ public class PlayerConnectFeature extends Feature {
     }
 
     private void registerCustomPacket() {
+        if (Vars.netClient == null) {
+            return;
+        }
         Vars.netClient.addPacketHandler("has-player-connect", (_ignore) -> {
             Call.serverPacketReliable("has-player-connect", "true");
         });
@@ -227,7 +230,10 @@ public class PlayerConnectFeature extends Feature {
         }
 
         Core.app.post(() -> {
-            if (approvalHud == null) {
+            if (Vars.ui == null) {
+                return;
+            }
+            if (approvalHud == null && Vars.ui.hudGroup != null) {
                 approvalHud = new JoinApprovalHudView(this);
                 Vars.ui.hudGroup.addChild(approvalHud.element());
             }
@@ -391,7 +397,9 @@ public class PlayerConnectFeature extends Feature {
 
         if (wasActive) {
             Core.app.post(() -> {
+                if (Vars.ui != null) {
                     Vars.ui.showInfoFade("Room closed");
+                }
             });
         }
     }
