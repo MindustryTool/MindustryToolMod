@@ -56,11 +56,15 @@ When `autoAccept` is disabled and an incoming guest joins a hosted game, the gue
 - **THEN** the guest connection is cleanly closed with an informative rejection message, and the HUD banner disappears
 
 ### Requirement: Solim Room Browser and Mod Compatibility in Join Dialog
-The system SHALL inject a Solim room browser section into Mindustry's `JoinDialog` (`Vars.ui.join`), displaying active PlayerConnect rooms reactively updated from the rooms query using `QueryView`. Each room card SHALL show the room name, map name, gamemode, player count, lock status, and mod compatibility. If mod differences exist between client and server, the system SHALL display badges indicating missing or unneeded mods and provide a `JoinWarningDialog` offering to disable unneeded mods before connecting.
+The system SHALL inject a Solim room browser section into Mindustry's `JoinDialog` (`Vars.ui.join`), displaying active PlayerConnect rooms reactively updated from the rooms query using `QueryView`. Each room card SHALL show the room name, map name, gamemode, player count, lock status, and mod compatibility. If mod differences exist between client and server, the system SHALL display badges indicating missing or unneeded mods and provide a `JoinWarningDialog` offering to disable unneeded mods before connecting. When `feature.getRoomsQuery().refetch()` is triggered, the room browser SHALL display the loading state while fetching and SHALL render the newly fetched rooms once the refetch completes.
 
 #### Scenario: Room browser reactive display
 - **WHEN** Mindustry's Join Game screen is opened
 - **THEN** the PlayerConnect room section renders room cards using `QueryView` that update automatically as the query data changes
+
+#### Scenario: Manual refetch updates room list after loading
+- **WHEN** the user triggers `feature.getRoomsQuery().refetch()` while rooms are displayed and the fetch completes with updated rooms
+- **THEN** the room browser displays the loading state while fetching and updates to display the newly fetched rooms once fetching completes
 
 #### Scenario: Mod mismatch warning on join
 - **WHEN** a user clicks to join a room requiring different mods
@@ -68,7 +72,8 @@ The system SHALL inject a Solim room browser section into Mindustry's `JoinDialo
 
 ### Requirement: Unified Room Query State
 `PlayerConnectFeature` SHALL use `roomsQuery` as the single source of truth for rooms and SHALL NOT maintain a duplicate `rooms` signal or bridge effects.
-- `getRooms()` SHALL expose a readable derived directly from `roomsQuery.data()`.
+- `getRooms()` SHALL return a single feature-owned `Readable` derived from `roomsQuery.data()` without allocating a new `Computed` on every call.
+- `roomsQuery` SHALL bind its active state to `PlayerConnectFeature.enabled()` and SHALL NOT be permanently disposed in `onDisable()` so that disabling and re-enabling the feature resumes room querying and `refetch()`.
 - Real-time room updates from SSE SHALL mutate `roomsQuery` directly via `roomsQuery.mutate(...)`.
 
 #### Scenario: SSE update mutates roomsQuery
@@ -77,8 +82,11 @@ The system SHALL inject a Solim room browser section into Mindustry's `JoinDialo
 
 #### Scenario: getRooms derives from roomsQuery
 - **WHEN** components observe `feature.getRooms()`
-- **THEN** they SHALL receive updates directly reflecting `roomsQuery.data()`
+- **THEN** they SHALL receive updates directly reflecting `roomsQuery.data()` without creating per-call reactive allocations
 
+#### Scenario: Re-enabling feature preserves roomsQuery
+- **WHEN** `PlayerConnectFeature` is disabled via `disable()` and later re-enabled via `enable()`
+- **THEN** `roomsQuery` SHALL NOT be permanently disposed and `feature.getRoomsQuery().refetch()` SHALL still execute fetches and update `getRooms()`
 
 ### Requirement: Save room password
 The system MUST save passwords using per-room string keys.

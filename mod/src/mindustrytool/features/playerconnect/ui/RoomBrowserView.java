@@ -7,6 +7,7 @@ import arc.graphics.Color;
 import arc.math.Mathf;
 import arc.scene.Element;
 import arc.util.Align;
+import arc.util.Nullable;
 import arc.util.Time;
 
 import java.util.ArrayList;
@@ -69,51 +70,43 @@ public class RoomBrowserView extends Component {
         });
     }
 
-    @Override
-    protected Element build() {
-        Computed<List<PlayerConnectRoom>> filteredRooms = Signal.computed(() -> {
-            List<PlayerConnectRoom> all = feature.getRooms().get();
-            String q = searchQuery.get();
-            if (q == null || q.trim().isEmpty() || all == null) {
-                return all != null ? all : new ArrayList<>();
-            }
-            String queryLower = q.trim().toLowerCase();
-            List<PlayerConnectRoom> result = new ArrayList<>();
-            for (PlayerConnectRoom room : all) {
+    private static List<ProviderRoomGroup> groupRooms(@Nullable List<PlayerConnectRoom> all, @Nullable String query) {
+        if (all == null || all.isEmpty()) {
+            return Collections.emptyList();
+        }
+        String queryLower = (query != null && !query.trim().isEmpty()) ? query.trim().toLowerCase() : null;
+        Map<String, List<PlayerConnectRoom>> map = new LinkedHashMap<>();
+        for (PlayerConnectRoom room : all) {
+            if (queryLower != null) {
                 String name = room.getData() != null && room.getData().getName() != null
                         ? room.getData().getName()
                         : room.getName();
-                if (name != null && name.toLowerCase().contains(queryLower)) {
-                    result.add(room);
+                if (name == null || !name.toLowerCase().contains(queryLower)) {
+                    continue;
                 }
             }
-            return result;
-        });
+            String pName = room.getName() != null && !room.getName().trim().isEmpty()
+                    ? room.getName().trim()
+                    : Core.bundle.get("feature.player-connect.unknown-provider", "Relay Network");
+            List<PlayerConnectRoom> group = map.get(pName);
+            if (group == null) {
+                group = new ArrayList<>();
+                map.put(pName, group);
+            }
+            group.add(room);
+        }
+        if (map.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<ProviderRoomGroup> result = new ArrayList<>();
+        for (Map.Entry<String, List<PlayerConnectRoom>> entry : map.entrySet()) {
+            result.add(new ProviderRoomGroup(entry.getKey(), entry.getValue()));
+        }
+        return result;
+    }
 
-        Computed<List<ProviderRoomGroup>> groupedRooms = Signal.computed(() -> {
-            List<PlayerConnectRoom> list = filteredRooms.get();
-            if (list == null || list.isEmpty()) {
-                return Collections.emptyList();
-            }
-            Map<String, List<PlayerConnectRoom>> map = new LinkedHashMap<>();
-            for (PlayerConnectRoom room : list) {
-                String pName = room.getName() != null && !room.getName().trim().isEmpty()
-                        ? room.getName().trim()
-                        : Core.bundle.get("feature.player-connect.unknown-provider", "Relay Network");
-                List<PlayerConnectRoom> group = map.get(pName);
-                if (group == null) {
-                    group = new ArrayList<>();
-                    map.put(pName, group);
-                }
-                group.add(room);
-            }
-            List<ProviderRoomGroup> result = new ArrayList<>();
-            for (Map.Entry<String, List<PlayerConnectRoom>> entry : map.entrySet()) {
-                result.add(new ProviderRoomGroup(entry.getKey(), entry.getValue()));
-            }
-            return result;
-        });
-
+    @Override
+    protected Element build() {
         return column()
                 .props(growX(), margin(unit(2)), gap(unit(2)), left())
                 .children(() -> {
@@ -178,6 +171,8 @@ public class RoomBrowserView extends Component {
                                         .data((allRooms, fetching) -> Boolean.TRUE.equals(fetching)
                                                 ? roomsLoading()
                                                 : column().props(growX()).children(() -> {
+                                                    Computed<List<ProviderRoomGroup>> groupedRooms = searchQuery
+                                                            .map(q -> groupRooms(allRooms, q));
                                                     dynamic(groupedRooms, groups -> {
                                                         if (groups == null || groups.isEmpty()) {
                                                             column().props(growX(), margin(unit(3)), center())

@@ -9,8 +9,10 @@ import java.util.Objects;
 import java.util.Set;
 import arc.func.Func;
 import arc.func.Prov;
+import arc.util.Nullable;
 import solim.core.DebugReactiveNode;
 import solim.core.Disposable;
+import solim.core.DisposableOwner;
 import solim.core.ReactiveObserver;
 import solim.core.ReactiveSource;
 import solim.core.OwnershipContext;
@@ -20,7 +22,7 @@ import solim.instrumentation.Instrumentation;
 import solim.instrumentation.ReactiveCreated;
 import solim.runtime.ReactiveContext;
 
-public final class Computed<T> implements Disposable, ReactiveObserver, Readable<T>, ReactiveSource,
+public final class Computed<T> implements DisposableOwner, ReactiveObserver, Readable<T>, ReactiveSource,
         DebugReactiveNode {
     private final Prov<T> Prov;
     private T cachedValue;
@@ -34,6 +36,7 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
     private final Set<ReactiveSource> staging = new LinkedHashSet<>();
     private Set<ReactiveSource> collecting = null;
     private final Set<ReactiveObserver> observers = new LinkedHashSet<>();
+    private @Nullable List<Disposable> owned;
 
     public Computed(Prov<T> Prov) {
         this.Prov = Prov;
@@ -72,10 +75,12 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
             throw new IllegalStateException("Cycle detected in Computed");
         }
         computing = true;
+        disposeOwned();
         Set<ReactiveSource> newDeps = staging;
         newDeps.clear();
         collecting = newDeps;
         ReactiveContext.push(this);
+        OwnershipContext.push(this);
         long startNs = System.nanoTime();
         T newValue = null;
         Throwable error = null;
@@ -86,6 +91,7 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
         } finally {
             long durationNs = System.nanoTime() - startNs;
             boolean changed = !hasValue || !Objects.equals(cachedValue, newValue);
+            OwnershipContext.pop(this);
             ReactiveContext.pop(this);
             collecting = null;
             computing = false;
@@ -94,6 +100,7 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
             }
         }
         if (error != null) {
+            disposeOwned();
             updateDependencies(newDeps);
             if (error instanceof RuntimeException) {
                 throw (RuntimeException) error;
@@ -152,11 +159,36 @@ public final class Computed<T> implements Disposable, ReactiveObserver, Readable
     }
 
     @Override
+    public void adopt(Disposable resource) {
+        if (resource != null && !disposed) {
+            if (owned == null) {
+                owned = new ArrayList<>();
+            }
+            owned.add(resource);
+        }
+    }
+
+    private void disposeOwned() {
+        if (owned == null || owned.isEmpty()) {
+            return;
+        }
+        for (int i = owned.size() - 1; i >= 0; i--) {
+            try {
+                owned.get(i).dispose();
+            } catch (Throwable ignored) {
+            }
+        }
+        owned.clear();
+    }
+
+    @Override
     public void dispose() {
         SolimAssert.checkMainThread();
         if (disposed)
             return;
         disposed = true;
+
+        disposeOwned();
 
         for (ReactiveSource dep : new ArrayList<>(dependencies)) {
             dep.removeObserver(this);

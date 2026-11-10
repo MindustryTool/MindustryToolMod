@@ -89,7 +89,7 @@ public class QuickRotateFeature extends Feature {
         if (building == null || building.block == null) {
             return false;
         }
-        if (!building.block.rotate) {
+        if (!building.canBeReplaced(building.block)) {
             return false;
         }
         if (Vars.player == null || building.team != Vars.player.team()) {

@@ -3,21 +3,24 @@
 ## Purpose
 
 In-world floating rotation overlay for player-team rotatable buildings with multiplayer-safe step-rotation controls and automatic selection lifecycle. Created by archiving change block-quick-rotate.
-
 ## Requirements
 
 **Source: block-quick-rotate**
 
 ### Requirement: In-world quick-rotate overlay display
-The system SHALL display an in-world floating rotation overlay when a player selects or taps an eligible rotatable block belonging to their team.
+The system SHALL display an in-world floating rotation overlay when a player selects or taps an eligible rotatable and replaceable block belonging to their team.
 
 #### Scenario: Tapping an eligible rotatable block
-- **WHEN** the player taps or selects an eligible building with `block.rotate == true` on their team
+- **WHEN** the player taps or selects an eligible building with `block.rotate == true` and `building.canBeReplaced(building.block) == true` on their team
 - **THEN** the in-world quick-rotate overlay SHALL be displayed adjacent to the building
 
 #### Scenario: Tapping a non-rotatable block or empty space
 - **WHEN** the player taps empty ground or a building where `block.rotate == false`
 - **THEN** the quick-rotate overlay SHALL be dismissed
+
+#### Scenario: Tapping a turret or non-replaceable block
+- **WHEN** the player taps a building where `building.canBeReplaced(building.block) == false` (such as a turret with `quickRotate == false`)
+- **THEN** the quick-rotate overlay SHALL NOT be displayed and any existing overlay SHALL be dismissed
 
 ### Requirement: Step rotation controls
 The quick-rotate overlay SHALL provide interactive buttons to rotate the building clockwise and counter-clockwise.
@@ -47,3 +50,4 @@ The feature SHALL provide configuration options in the settings dialog and trans
 #### Scenario: Viewing settings and tooltips
 - **WHEN** the user opens settings or hovers over the rotate controls
 - **THEN** all displayed text and tooltips SHALL use localized strings from `bundle.properties`
+
