@@ -10,6 +10,7 @@ import arc.scene.style.TextureRegionDrawable;
 import arc.util.Nullable;
 import java.util.HashSet;
 import java.util.Set;
+import mindustry.Vars;
 import mindustry.gen.Icon;
 import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
@@ -19,7 +20,8 @@ import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
 import mindustrytool.features.FeatureMetadata;
 import solim.core.Component;
-
+import solim.modifier.ElementCapability;
+import solim.modifier.Prop;
 import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
@@ -65,71 +67,76 @@ public class FeatureCard extends Component {
         Readable<Boolean> isFavorite = ModSettings.favoriteFeatures.signal()
                 .map(set -> set != null && set.contains(id));
         Readable<Color> starColor = isFavorite.map(fav -> Boolean.TRUE.equals(fav) ? Pal.accent : Color.gray);
-        Readable<String> favoriteTooltip = isFavorite.map(fav -> Boolean.TRUE.equals(fav)
+        Readable<String> favoriteTooltip = Vars.mobile ? null : isFavorite.map(fav -> Boolean.TRUE.equals(fav)
                 ? Core.bundle.get("feature.button.favorite.remove")
                 : Core.bundle.get("feature.button.favorite.add"));
 
         return card()
-                .name("FeatureCard-" + metadata.getId()).props(height(unit(60)), prefHeight(unit(60)), growX(), rounded(unit(4)), border(1.5f, Color.darkGray), padding(unit(1)), backgroundColor(Color.black), onClick(() -> {
+                .name("FeatureCard-" + metadata.getId())
+                .props(height(unit(60)), prefHeight(unit(60)), growX(), rounded(unit(4)), border(1.5f, Color.darkGray), padding(unit(3)), gap(unit(2)), backgroundColor(Color.black), onClick(() -> {
                     if (!inDevelopment) {
                         feature.setEnabled(!feature.isEnabled());
                     }
                 })).children(() -> {
-                    column().props(grow(), padding(unit(2)), gap(unit(2))).children(() -> {
-                        row().props(growX(), center()).children(() -> {
-                            row().props(gap(unit(2)), center()).children(() -> {
-                                icon(metadata.getIcon()).props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7)));
-                                text(feature.getName()).props(style(Styles.defaultLabel), color(Color.white), ellipsis(true), left());
-                            });
-
-                            spacer();
-
-                            button(() -> toggleFavorite(id))
-                                    .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(favoriteTooltip))
-                                    .children(() -> icon(Icon.star != null ? Icon.star : new TextureRegionDrawable())
-                                            .props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7)), color(starColor)));
-
-                            if (mainDialog != null) {
-                                button(() -> showDialog(mainDialog))
-                                        .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.button.open-dialog")))
-                                        .children(() -> icon(FileIcon.of("external-link.png")).props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7))));
-                            }
-
-                            if (settingDialog != null) {
-                                button(() -> showDialog(settingDialog))
-                                        .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.button.settings")))
-                                        .children(() -> icon(Icon.settings).props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7))));
-                            }
-
-                            button(() -> new FeatureHelpDialog(feature).show())
-                                    .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.button.help")))
-                                    .children(() -> icon(FileIcon.of("info.png")).props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7))));
-                        });
-
-                        text(feature.getDescription()).props(color(Color.lightGray), fontScale(0.9f), textWrap(true), left());
+                    row().props(growX(), center(), gap(unit(2))).children(() -> {
+                        icon(metadata.getIcon()).props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7)));
+                        text(feature.getName()).props(style(Styles.defaultLabel), color(Color.white), ellipsis(true), left());
 
                         spacer();
 
-                        row().props(growX(), center()).children(() -> {
-                            text(statusText).props(style(Styles.defaultLabel), color(statusColor), left());
+                        button(() -> toggleFavorite(id))
+                                .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), cardTooltip(favoriteTooltip))
+                                .children(() -> icon(Icon.star != null ? Icon.star : new TextureRegionDrawable())
+                                        .props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7)), color(starColor)));
 
-                            spacer();
+                        if (mainDialog != null) {
+                            button(() -> showDialog(mainDialog))
+                                    .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), cardTooltip(Core.bundle.get("feature.button.open-dialog")))
+                                    .children(() -> icon(FileIcon.of("external-link.png")).props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7))));
+                        }
 
-                            if (!inDevelopment) {
-                                button(() -> FeatureManager.moveLeft(feature))
-                                        .props(style(WebStyles.ghost()), size(unit(9)), prefWidth(unit(9)), prefHeight(unit(9)), enabled(canMoveLeft), tooltip(Core.bundle.get("feature.button.move-left")))
-                                        .children(() -> icon(FileIcon.of("chevron-left.png", Icon.left)).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
+                        if (settingDialog != null) {
+                            button(() -> showDialog(settingDialog))
+                                    .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), cardTooltip(Core.bundle.get("feature.button.settings")))
+                                    .children(() -> icon(Icon.settings).props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7))));
+                        }
 
-                                button(() -> FeatureManager.moveRight(feature))
-                                        .props(style(WebStyles.ghost()), size(unit(9)), prefWidth(unit(9)), prefHeight(unit(9)), enabled(canMoveRight), tooltip(Core.bundle.get("feature.button.move-right")))
-                                        .children(
-                                                () -> icon(FileIcon.of("chevron-right.png", Icon.right)).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
-                            }
-                        });
-
-                        divider().props(color(statusColor));
+                        button(() -> new FeatureHelpDialog(feature).show())
+                                .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), cardTooltip(Core.bundle.get("feature.button.help")))
+                                .children(() -> icon(FileIcon.of("info.png")).props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7))));
                     });
+
+                    text(feature.getDescription()).props(color(Color.lightGray), fontScale(0.9f), textWrap(true), left());
+
+                    spacer();
+
+                    row().props(growX(), center(), gap(unit(2))).children(() -> {
+                        text(statusText).props(style(Styles.defaultLabel), color(statusColor), left());
+
+                        spacer();
+
+                        if (!inDevelopment) {
+                            button(() -> FeatureManager.moveLeft(feature))
+                                    .props(style(WebStyles.ghost()), size(unit(9)), prefWidth(unit(9)), prefHeight(unit(9)), enabled(canMoveLeft), cardTooltip(Core.bundle.get("feature.button.move-left")))
+                                    .children(() -> icon(FileIcon.of("chevron-left.png", Icon.left)).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
+
+                            button(() -> FeatureManager.moveRight(feature))
+                                    .props(style(WebStyles.ghost()), size(unit(9)), prefWidth(unit(9)), prefHeight(unit(9)), enabled(canMoveRight), cardTooltip(Core.bundle.get("feature.button.move-right")))
+                                    .children(
+                                            () -> icon(FileIcon.of("chevron-right.png", Icon.right)).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6))));
+                        }
+                    });
+
+                    divider().props(color(statusColor));
                 }).element();
+    }
+
+    private static Prop<ElementCapability, Void> cardTooltip(@Nullable Readable<String> tip) {
+        return Vars.mobile ? tooltip((Readable<String>) null) : tooltip(tip);
+    }
+
+    private static Prop<ElementCapability, Void> cardTooltip(@Nullable String tip) {
+        return Vars.mobile ? tooltip((String) null) : tooltip(tip);
     }
 
     private void showDialog(Prov<SolimDialog> dialogProvider) {

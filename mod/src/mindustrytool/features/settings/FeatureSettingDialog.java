@@ -13,12 +13,14 @@ import mindustrytool.Config;
 import mindustrytool.utils.JsonUtils;
 import solim.overlay.SolimDialog;
 import mindustrytool.components.FileIcon;
+import mindustrytool.services.donation.DonationPrompt;
 
 public final class FeatureSettingDialog extends SolimDialog {
     public FeatureSettingDialog() {
         name("featureSettingDialog");
         addCloseButton();
         closeOnBack();
+        hidden(DonationPrompt::maybePrompt);
         children(() -> new FeatureSettingsView());
 
         actionButton(
