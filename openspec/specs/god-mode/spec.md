@@ -58,17 +58,6 @@ The system SHALL allow applying and clearing status effects on the player's curr
 - **WHEN** the player selects a status effect and clicks Clear
 - **THEN** the effect is removed from the player's controlled unit.
 
-### Requirement: Core Placement with Area Validation
-The system SHALL allow placing any core block on the map for any team, provided the target area is valid.
-
-#### Scenario: Place core on valid terrain
-- **WHEN** the player selects a core block, team, and valid target map tile
-- **THEN** the tile is verified for placement suitability and the core block is constructed for that team.
-
-#### Scenario: Reject core placement on invalid terrain
-- **WHEN** the target tile is out of bounds or cannot support the core block
-- **THEN** the placement is rejected or an error is displayed.
-
 ### Requirement: Map Fog Toggle
 The system SHALL provide a toggle switch to clear or restore fog of war.
 
@@ -143,4 +132,37 @@ The system SHALL persist a GodMode display-mode option (`ConfigValue<String>`, H
 
 - **WHEN** GodMode display mode is popup and QuickAccess is off
 - **THEN** the HUD-path behavior applies with no message and the setting stays at popup
+
+### Requirement: Universal Block Placement
+The system SHALL allow placing any synthetic or sandbox block on the map for any team with configurable rotation, overwriting existing tiles at the target location.
+
+#### Scenario: Place block with rotation and overwrite
+- **WHEN** the player selects a block, team, rotation, and target map tile
+- **THEN** the block is placed at the specified tile for that team with the selected orientation, overwriting any prior tile contents.
+
+#### Scenario: Reject placement when tile is out of world bounds
+- **WHEN** the chosen world coordinates fall outside the map boundary or tile is null
+- **THEN** the placement is rejected and returns false.
+
+### Requirement: Block Category and Search Filtering
+The system SHALL organize selectable blocks by their Mindustry Category and allow real-time text query filtering.
+
+#### Scenario: Filter blocks by category
+- **WHEN** the player selects a category filter chip (e.g. All, Turret, Production, Distribution, Liquid, Power, Defense, Crafting, Units, Effect, Logic)
+- **THEN** the visible block list updates to display only blocks matching that category.
+
+#### Scenario: Search blocks by name
+- **WHEN** the player enters a search query in the block search field
+- **THEN** the block list filters to show blocks whose localized name contains the search text case-insensitively.
+
+### Requirement: Dynamic Rotation Controls
+The system SHALL display 4-way rotation controls (0°, 90°, 180°, 270°) when the selected block is rotatable, and hide them when the block does not support rotation.
+
+#### Scenario: Show rotation controls for rotatable block
+- **WHEN** the selected block has `rotate == true`
+- **THEN** the 4-way rotation selector is displayed in the dialog.
+
+#### Scenario: Hide rotation controls for non-rotatable block
+- **WHEN** the selected block has `rotate == false`
+- **THEN** the rotation controls are hidden and rotation defaults to 0.
 
