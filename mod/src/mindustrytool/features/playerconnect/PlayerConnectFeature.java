@@ -572,7 +572,6 @@ public class PlayerConnectFeature extends Feature {
                     if (apiProviders != null) {
                         all.addAll(apiProviders);
                     }
-                    all.add(new PlayerConnectProvider("localhost", "LocalHost", "localhost:11010"));
 
                     List<PlayerConnectProvider> custom = loadCustomProviders();
                     all.addAll(custom);
@@ -581,7 +580,6 @@ public class PlayerConnectFeature extends Feature {
                 })
                 .exceptionally(e -> {
                     List<PlayerConnectProvider> fallback = new ArrayList<>();
-                    fallback.add(new PlayerConnectProvider("localhost", "LocalHost", "localhost:11010"));
                     fallback.addAll(loadCustomProviders());
                     Core.app.post(() -> providers.set(fallback));
                     return null;
