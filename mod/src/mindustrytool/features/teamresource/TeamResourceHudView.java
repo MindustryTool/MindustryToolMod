@@ -72,8 +72,8 @@ public class TeamResourceHudView extends Component {
             Float w = hudWidth.get();
             Float s = scale.get();
             float scaleVal = s != null ? s : 1f;
-            float minCardW = 46f * scaleVal;
-            return Math.max(2, (int) ((w != null ? w : 200f) / (minCardW > 0f ? minCardW : 46f)));
+            float minCardW = 50f * scaleVal;
+            return Math.max(2, (int) ((w != null ? w : 200f) / (minCardW > 0f ? minCardW : 50f)));
         });
 
         Readable<Color> bgColor = feature.hideBackgroundConfig.signal()
@@ -194,7 +194,7 @@ public class TeamResourceHudView extends Component {
                                 .props(growX());
 
                         reactiveGrid(state.usedItemsSignal).columns(itemCols)
-                                .key(item -> item.name).props(growX(), gap(unit(0.5f)))
+                                .key(item -> item.name).props(growX(), gap(unit(1.5f)))
                                 .items(item -> createItemCard(item, itemCardHeight, iconSize, scale));
                     }))
                     .elseDo(() -> row())
@@ -209,7 +209,7 @@ public class TeamResourceHudView extends Component {
                                 .props(growX());
 
                         reactiveGrid(state.usedUnitsSignal).columns(itemCols)
-                                .key(unit -> unit.name).props(growX(), gap(unit(0.5f)))
+                                .key(unit -> unit.name).props(growX(), gap(unit(1.5f)))
                                 .items(unit -> createUnitCard(unit, unitCardHeight, iconSize, scale));
                     }))
                     .elseDo(() -> row())
@@ -225,7 +225,7 @@ public class TeamResourceHudView extends Component {
     private Component createItemCard(Item item, Readable<Float> cardHeight, Readable<Float> iconSize,
             Readable<Float> scale) {
         Row itemRow = row()
-                .props(padding(unit(0.25f)), left(), height(cardHeight), prefHeight(cardHeight), center(), gap(unit(0.5f)))
+                .props(padding(unit(0.5f)), left(), height(cardHeight), prefHeight(cardHeight), center(), gap(unit(0.5f)))
                 .children(() -> {
                     image(new TextureRegionDrawable(item.uiIcon))
                             .props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize), scaling(Scaling.fit));
@@ -247,22 +247,24 @@ public class TeamResourceHudView extends Component {
             table.left();
 
             Table header = new Table();
+            header.left();
             header.add(new Image(item.uiIcon)).size(16f).padRight(4f);
-            header.add(item.localizedName + ": ").color(Color.lightGray);
 
-            Label amountLabel = new Label(() -> String.valueOf(state.getItemAmount(item)));
+            Label amountLabel = new Label("");
             amountLabel.setColor(Color.white);
+            amountLabel.update(() -> amountLabel.setText(String.valueOf(state.getItemAmount(item))));
             header.add(amountLabel);
 
-            Label rateLabel = new Label(() -> " (" + state.getFullFormattedRate(item) + ")");
-            rateLabel.update(() -> rateLabel.setColor(state.getRateColor(item)));
+            Label rateLabel = new Label("");
+            rateLabel.update(() -> {
+                rateLabel.setText(" (" + state.getFullFormattedRate(item) + ")");
+                rateLabel.setColor(state.getRateColor(item));
+            });
             header.add(rateLabel).padLeft(4f);
             table.add(header).left().row();
 
             HistoryBuffer history = state.getItemHistory(item);
-            if (history != null) {
-                table.add(new SparklineWidget(history, Pal.accent)).padTop(4f).row();
-            }
+            table.add(new SparklineWidget(history, Pal.accent)).left().size(160f, 50f).padTop(4f).row();
         }));
 
         return itemRow;
@@ -271,7 +273,7 @@ public class TeamResourceHudView extends Component {
     private Component createUnitCard(UnitType type, Readable<Float> cardHeight, Readable<Float> iconSize,
             Readable<Float> scale) {
         Row unitRow = row()
-                .props(padding(unit(0.25f)), left(), height(cardHeight), prefHeight(cardHeight), center(), gap(unit(0.5f)))
+                .props(padding(unit(0.5f)), left(), height(cardHeight), prefHeight(cardHeight), center(), gap(unit(0.5f)))
                 .children(() -> {
                     image(new TextureRegionDrawable(type.uiIcon))
                             .props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize), scaling(Scaling.fit));
@@ -284,8 +286,9 @@ public class TeamResourceHudView extends Component {
             table.left();
             table.add(new Image(type.uiIcon)).size(16f).padRight(4f);
             table.add(type.localizedName + ": ").color(Color.lightGray);
-            Label countLabel = new Label(() -> state.getUnitCountText(type));
+            Label countLabel = new Label("");
             countLabel.setColor(Color.white);
+            countLabel.update(() -> countLabel.setText(state.getUnitCountText(type)));
             table.add(countLabel);
         }));
 

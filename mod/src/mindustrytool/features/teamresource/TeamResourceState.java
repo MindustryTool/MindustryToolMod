@@ -159,6 +159,7 @@ public class TeamResourceState {
                 if (count > 0 && usedItems.add(item)) {
                     itemsChanged = true;
                     changed = true;
+                    getItemHistory(item);
                 }
             }
             if (itemsChanged) {
@@ -288,6 +289,9 @@ public class TeamResourceState {
     }
 
     public int getItemAmount(Item item) {
+        if (coreItems == null && selectedTeam != null && Vars.state != null && selectedTeam.core() != null) {
+            coreItems = selectedTeam.core().items;
+        }
         return coreItems != null ? coreItems.get(item) : 0;
     }
 
@@ -374,8 +378,19 @@ public class TeamResourceState {
         }
     }
 
-    public @Nullable HistoryBuffer getItemHistory(Item item) {
-        return itemHistories.get(item);
+    public HistoryBuffer getItemHistory(Item item) {
+        HistoryBuffer history = itemHistories.get(item);
+        if (history == null) {
+            history = new HistoryBuffer();
+            if (coreItems == null && selectedTeam != null && Vars.state != null && selectedTeam.core() != null) {
+                coreItems = selectedTeam.core().items;
+            }
+            if (coreItems != null) {
+                history.add(coreItems.get(item));
+            }
+            itemHistories.put(item, history);
+        }
+        return history;
     }
 
     public @Nullable HistoryBuffer getPowerGraphHistory(PowerGraph graph) {
@@ -401,11 +416,7 @@ public class TeamResourceState {
             return;
         }
         for (Item item : usedItems) {
-            HistoryBuffer history = itemHistories.get(item);
-            if (history == null) {
-                history = new HistoryBuffer();
-                itemHistories.put(item, history);
-            }
+            HistoryBuffer history = getItemHistory(item);
             history.add(coreItems != null ? coreItems.get(item) : 0f);
         }
 

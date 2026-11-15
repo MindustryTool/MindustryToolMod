@@ -88,32 +88,32 @@ public class SplitBar extends SolimElement {
                 Table header = new Table();
                 header.add("Power: ").color(Color.lightGray);
 
-                Label storedLabel = new Label(() -> {
+                Label storedLabel = new Label("");
+                storedLabel.setColor(Color.white);
+                storedLabel.update(() -> {
                     float stored = state.getTotalStoredPower();
                     float cap = state.getTotalPowerCapacity();
                     if (Float.isNaN(stored) || Float.isInfinite(stored) || stored < 0f) stored = 0f;
                     if (Float.isNaN(cap) || Float.isInfinite(cap) || cap < 0f) cap = 0f;
-                    return TeamResourceState.formatCompactAmount((long) stored)
-                            + " / " + TeamResourceState.formatCompactAmount((long) cap);
+                    storedLabel.setText(TeamResourceState.formatCompactAmount((long) stored)
+                            + " / " + TeamResourceState.formatCompactAmount((long) cap));
                 });
-                storedLabel.setColor(Color.white);
                 header.add(storedLabel);
 
-                Label balanceLabel = new Label(() -> {
-                    float balance = state.getTotalPowerBalance() * 60f;
-                    if (Float.isNaN(balance) || Float.isInfinite(balance)) balance = 0f;
-                    return " (" + (balance >= 0f ? "+" : "")
-                            + TeamResourceState.formatCompactAmount((long) balance) + "/s)";
-                });
+                Label balanceLabel = new Label("");
                 balanceLabel.update(() -> {
                     float balance = state.getTotalPowerBalance();
+                    float secBalance = balance * 60f;
+                    if (Float.isNaN(secBalance) || Float.isInfinite(secBalance)) secBalance = 0f;
+                    balanceLabel.setText(" (" + (secBalance >= 0f ? "+" : "")
+                            + TeamResourceState.formatCompactAmount((long) secBalance) + "/s)");
                     balanceLabel.setColor(balance >= 0f ? Pal.heal : Pal.remove);
                 });
                 header.add(balanceLabel);
                 table.add(header).left().row();
 
                 HistoryBuffer powerHistory = state.getTotalPowerHistory();
-                table.add(new SparklineWidget(powerHistory, Pal.powerBar)).padTop(4f).row();
+                table.add(new SparklineWidget(powerHistory, Pal.powerBar)).left().size(160f, 50f).padTop(4f).row();
             }));
         }
 

@@ -33,14 +33,15 @@ public class SparklineWidget extends Element {
     public void draw() {
         Draw.reset();
         int size = buffer.size();
-        if (size < 2) {
+        if (size < 1) {
             return;
         }
 
         float min = buffer.min();
         float max = buffer.max();
         float range = max - min;
-        if (range <= 0.0001f) {
+        boolean flat = range <= 0.0001f;
+        if (flat) {
             range = 1f;
         }
 
@@ -84,20 +85,25 @@ public class SparklineWidget extends Element {
         Draw.color(lineColor);
         Lines.stroke(1.5f);
 
-        float stepX = chartWidth / (HistoryBuffer.CAPACITY - 1);
-        float startOffset = (HistoryBuffer.CAPACITY - size) * stepX;
+        if (size == 1) {
+            float yPos = chartY + chartHeight * 0.5f;
+            Lines.line(chartX, yPos, chartX + chartWidth, yPos);
+        } else {
+            float stepX = chartWidth / (HistoryBuffer.CAPACITY - 1);
+            float startOffset = (HistoryBuffer.CAPACITY - size) * stepX;
 
-        float prevX = chartX + startOffset;
-        float prevVal = buffer.get(0);
-        float prevY = chartY + ((prevVal - min) / range) * chartHeight;
+            float prevX = chartX + startOffset;
+            float prevVal = buffer.get(0);
+            float prevY = flat ? (chartY + chartHeight * 0.5f) : (chartY + ((prevVal - min) / range) * chartHeight);
 
-        for (int i = 1; i < size; i++) {
-            float curVal = buffer.get(i);
-            float curX = chartX + startOffset + i * stepX;
-            float curY = chartY + ((curVal - min) / range) * chartHeight;
-            Lines.line(prevX, prevY, curX, curY);
-            prevX = curX;
-            prevY = curY;
+            for (int i = 1; i < size; i++) {
+                float curVal = buffer.get(i);
+                float curX = chartX + startOffset + i * stepX;
+                float curY = flat ? (chartY + chartHeight * 0.5f) : (chartY + ((curVal - min) / range) * chartHeight);
+                Lines.line(prevX, prevY, curX, curY);
+                prevX = curX;
+                prevY = curY;
+            }
         }
 
         Draw.reset();
