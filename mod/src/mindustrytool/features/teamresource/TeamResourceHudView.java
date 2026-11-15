@@ -280,13 +280,25 @@ public class TeamResourceHudView extends Component {
 
             Label amountLabel = new Label("");
             amountLabel.setColor(Color.white);
-            amountLabel.update(() -> amountLabel.setText(String.valueOf(state.getItemAmount(item))));
+            int[] lastAmount = new int[]{-1};
+            amountLabel.update(() -> {
+                int amt = state.getItemAmount(item);
+                if (amt != lastAmount[0]) {
+                    lastAmount[0] = amt;
+                    amountLabel.setText(String.valueOf(amt));
+                }
+            });
             header.add(amountLabel);
 
             Label rateLabel = new Label("");
+            int[] lastRate = new int[]{Integer.MIN_VALUE};
             rateLabel.update(() -> {
-                rateLabel.setText(" (" + state.getFullFormattedRate(item) + ")");
-                rateLabel.setColor(state.getRateColor(item));
+                int rate = state.getItemRate(item);
+                if (rate != lastRate[0]) {
+                    lastRate[0] = rate;
+                    rateLabel.setText(" (" + state.getFullFormattedRate(item) + ")");
+                    rateLabel.setColor(state.getRateColor(item));
+                }
             });
             header.add(rateLabel).padLeft(4f);
             table.add(header).left().row();
@@ -316,7 +328,15 @@ public class TeamResourceHudView extends Component {
             table.add(type.localizedName + ": ").color(Color.lightGray);
             Label countLabel = new Label("");
             countLabel.setColor(Color.white);
-            countLabel.update(() -> countLabel.setText(state.getUnitCountText(type)));
+            int[] lastCount = new int[]{-1};
+            countLabel.update(() -> {
+                int count = state.getSelectedTeam() != null && state.getSelectedTeam().data() != null
+                        ? state.getSelectedTeam().data().countType(type) : 0;
+                if (count != lastCount[0]) {
+                    lastCount[0] = count;
+                    countLabel.setText(state.getUnitCountText(type));
+                }
+            });
             table.add(countLabel);
         }));
 

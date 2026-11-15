@@ -51,6 +51,11 @@ Scratch values SHALL be reused across frames via pre-allocated fields, `arc.util
 - **WHEN** a feature implements a `Trigger.draw` handler that draws every frame
 - **THEN** a test SHALL assert zero bytes allocated on the render thread across a simulated render loop, using `com.sun.management.ThreadMXBean.getThreadAllocatedBytes`, in the manner of the existing `RenderLoopAllocationTest`
 
+#### Scenario: Team resource HUD elements assert zero allocation
+
+- **WHEN** `SplitBar.draw()` and `TeamResourceHudView` update handlers run during steady-state gameplay
+- **THEN** a test using `com.sun.management.ThreadMXBean.getThreadAllocatedBytes` SHALL assert zero heap bytes allocated across simulated frames
+
 ### Requirement: Global listeners and timers have an explicit owner and are released
 
 Every registration of a global event listener (`Events.on`, `Events.run`, `Core.app.addListener`, `Core.app.addCaptureListener`, `Timer.schedule`) SHALL have exactly one declared owner and SHALL be released by that owner's teardown. Teardown SHALL occur in one of:

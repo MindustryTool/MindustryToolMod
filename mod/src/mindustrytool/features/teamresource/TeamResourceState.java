@@ -152,64 +152,16 @@ public class TeamResourceState {
         coreItems = (selectedTeam != null && Vars.state != null && selectedTeam.core() != null)
                 ? selectedTeam.core().items
                 : null;
-        if (coreItems != null && Vars.content != null) {
-            boolean itemsChanged = false;
-            for (Item item : Vars.content.items()) {
-                int count = coreItems.get(item);
-                if (count > 0 && usedItems.add(item)) {
-                    itemsChanged = true;
-                    changed = true;
-                    getItemHistory(item);
-                }
-            }
-            if (itemsChanged) {
-                Seq<Item> list = new Seq<>();
-                for (Item item : Vars.content.items()) {
-                    if (usedItems.contains(item)) {
-                        list.add(item);
-                    }
-                }
-                usedItemsSignal.set(list);
-            }
-        }
-
-        if (selectedTeam != null && Vars.content != null && Vars.state != null) {
-            boolean hideZeroUnits = feature != null && Boolean.TRUE.equals(feature.hideZeroUnitsConfig.get());
-            boolean unitsChanged = false;
-            for (UnitType unit : Vars.content.units()) {
-                try {
-                    int count = selectedTeam.data() != null ? selectedTeam.data().countType(unit) : 0;
-                    int prev = lastUnitCounts.get(unit, -1);
-                    if (count != prev) {
-                        lastUnitCounts.put(unit, count);
-                        changed = true;
-                    }
-                    if (count > 0) {
-                        if (usedUnits.add(unit)) {
-                            unitsChanged = true;
-                            changed = true;
-                        }
-                    } else if (hideZeroUnits) {
-                        if (usedUnits.remove(unit)) {
-                            unitsChanged = true;
-                            changed = true;
-                        }
-                    }
-                } catch (Throwable ignored) {
-                }
-            }
-            if (unitsChanged) {
-                Seq<UnitType> list = new Seq<>();
-                for (UnitType unit : Vars.content.units()) {
-                    if (usedUnits.contains(unit)) {
-                        list.add(unit);
-                    }
-                }
-                usedUnitsSignal.set(list);
-            }
-        }
 
         if (timer.get(0, 30f)) {
+            if (updateCoreItems()) {
+                changed = true;
+            }
+
+            if (updateUnitCounts()) {
+                changed = true;
+            }
+
             if (updateRates()) {
                 changed = true;
             }
@@ -230,6 +182,78 @@ public class TeamResourceState {
             tickSignal.set(tickSignal.get() + 1);
         }
 
+        return changed;
+    }
+
+    private boolean updateCoreItems() {
+        if (coreItems == null || Vars.content == null) {
+            return false;
+        }
+        boolean itemsChanged = false;
+        Seq<Item> allItems = Vars.content.items();
+        for (int i = 0; i < allItems.size; i++) {
+            Item item = allItems.get(i);
+            int count = coreItems.get(item);
+            if (count > 0 && usedItems.add(item)) {
+                itemsChanged = true;
+                getItemHistory(item);
+            }
+        }
+        if (itemsChanged) {
+            Seq<Item> list = new Seq<>();
+            for (int i = 0; i < allItems.size; i++) {
+                Item item = allItems.get(i);
+                if (usedItems.contains(item)) {
+                    list.add(item);
+                }
+            }
+            usedItemsSignal.set(list);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean updateUnitCounts() {
+        if (selectedTeam == null || Vars.content == null || Vars.state == null) {
+            return false;
+        }
+        boolean changed = false;
+        boolean hideZeroUnits = feature != null && Boolean.TRUE.equals(feature.hideZeroUnitsConfig.get());
+        boolean unitsChanged = false;
+        Seq<UnitType> allUnits = Vars.content.units();
+        for (int i = 0; i < allUnits.size; i++) {
+            UnitType unit = allUnits.get(i);
+            try {
+                int count = selectedTeam.data() != null ? selectedTeam.data().countType(unit) : 0;
+                int prev = lastUnitCounts.get(unit, -1);
+                if (count != prev) {
+                    lastUnitCounts.put(unit, count);
+                    changed = true;
+                }
+                if (count > 0) {
+                    if (usedUnits.add(unit)) {
+                        unitsChanged = true;
+                        changed = true;
+                    }
+                } else if (hideZeroUnits) {
+                    if (usedUnits.remove(unit)) {
+                        unitsChanged = true;
+                        changed = true;
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        if (unitsChanged) {
+            Seq<UnitType> list = new Seq<>();
+            for (int i = 0; i < allUnits.size; i++) {
+                UnitType unit = allUnits.get(i);
+                if (usedUnits.contains(unit)) {
+                    list.add(unit);
+                }
+            }
+            usedUnitsSignal.set(list);
+        }
         return changed;
     }
 
@@ -338,7 +362,7 @@ public class TeamResourceState {
     public String getFormattedRate(Item item) {
         int rate = rateDisplay.get(item, 0);
         if (rate == 0) {
-            return "";
+            return "0/s";
         }
         return (rate > 0 ? "+" : "") + formatCompactAmount(rate);
     }
@@ -415,14 +439,19 @@ public class TeamResourceState {
         if (Vars.state == null || selectedTeam == null) {
             return;
         }
-        for (Item item : usedItems) {
-            HistoryBuffer history = getItemHistory(item);
-            history.add(coreItems != null ? coreItems.get(item) : 0f);
+        Seq<Item> items = usedItemsSignal.get();
+        if (items != null) {
+            for (int i = 0; i < items.size; i++) {
+                Item item = items.get(i);
+                HistoryBuffer history = getItemHistory(item);
+                history.add(coreItems != null ? coreItems.get(item) : 0f);
+            }
         }
 
         totalPowerHistory.add(getTotalStoredPower());
 
-        for (PowerGraph graph : teamGraphs) {
+        for (int i = 0; i < teamGraphs.size; i++) {
+            PowerGraph graph = teamGraphs.get(i);
             HistoryBuffer history = graphHistories.get(graph);
             if (history == null) {
                 history = new HistoryBuffer();
@@ -434,8 +463,8 @@ public class TeamResourceState {
 
     public float getTotalPowerBalance() {
         float total = 0f;
-        for (PowerGraph graph : teamGraphs) {
-            total += graph.getPowerBalance();
+        for (int i = 0; i < teamGraphs.size; i++) {
+            total += teamGraphs.get(i).getPowerBalance();
         }
         return total;
     }
@@ -451,16 +480,16 @@ public class TeamResourceState {
 
     public float getTotalStoredPower() {
         float total = 0f;
-        for (PowerGraph graph : teamGraphs) {
-            total += graph.getLastPowerStored();
+        for (int i = 0; i < teamGraphs.size; i++) {
+            total += teamGraphs.get(i).getLastPowerStored();
         }
         return total;
     }
 
     public float getTotalPowerCapacity() {
         float total = 0f;
-        for (PowerGraph graph : teamGraphs) {
-            total += graph.getLastCapacity();
+        for (int i = 0; i < teamGraphs.size; i++) {
+            total += teamGraphs.get(i).getLastCapacity();
         }
         return total;
     }
@@ -511,8 +540,10 @@ public class TeamResourceState {
         }
 
         boolean ratesOrAmountsChanged = false;
+        Seq<Item> allItems = Vars.content.items();
         if (lastSnapshot.size > 0) {
-            for (Item item : Vars.content.items()) {
+            for (int i = 0; i < allItems.size; i++) {
+                Item item = allItems.get(i);
                 if (item != null) {
                     int amount = coreItems.get(item);
                     int previous = lastSnapshot.get(item, amount);
@@ -531,7 +562,8 @@ public class TeamResourceState {
             ratesOrAmountsChanged = true;
         }
         lastSnapshot.clear();
-        for (Item item : Vars.content.items()) {
+        for (int i = 0; i < allItems.size; i++) {
+            Item item = allItems.get(i);
             if (item != null) {
                 lastSnapshot.put(item, coreItems.get(item));
             }

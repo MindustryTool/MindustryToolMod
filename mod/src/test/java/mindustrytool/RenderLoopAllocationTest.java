@@ -15,16 +15,32 @@ import com.sun.management.ThreadMXBean;
 import arc.Core;
 import arc.graphics.Camera;
 import arc.graphics.Color;
+import arc.graphics.Texture;
+import arc.graphics.g2d.Batch;
+import arc.graphics.g2d.Font;
+import arc.graphics.g2d.Font.FontData;
+import arc.graphics.g2d.Font.Glyph;
+import arc.graphics.g2d.TextureRegion;
 import arc.math.Mathf;
 import arc.math.geom.Rect;
 import arc.mock.MockGraphics;
+import arc.scene.Element;
+import arc.scene.Scene;
+import arc.scene.style.TextureRegionDrawable;
+import arc.scene.ui.Label.LabelStyle;
 import mindustry.Vars;
 import mindustry.core.ContentLoader;
 import mindustry.core.GameState;
 import mindustry.core.GameState.State;
 import mindustry.core.UI;
 import mindustry.game.Rules;
+import mindustry.gen.Tex;
+import mindustry.ui.Fonts;
+import mindustry.ui.Styles;
 import mindustry.ui.fragments.HudFragment;
+import mindustrytool.features.teamresource.SplitBar;
+import mindustrytool.features.teamresource.TeamResourceFeature;
+import mindustrytool.features.teamresource.TeamResourceState;
 import mindustrytool.features.visualizer.VisualizerFeature;
 import mindustrytool.features.visualizer.VisualizerFeature.BridgeFlowState;
 import mindustrytool.test.MindustryTestEnv;
@@ -341,5 +357,94 @@ class RenderLoopAllocationTest extends MindustryTestEnv {
 
         assertEquals(0L, allocated, "An idle docked HUD frame must allocate 0 bytes on heap");
         assertNotNull(engine.find("minimap"));
+    }
+
+    @Test
+    void testTeamResourceStateUpdateSteadyStateZeroAllocation() {
+        TeamResourceFeature feature = new TeamResourceFeature();
+        TeamResourceState state = feature.getState();
+
+        for (int frame = 0; frame < 60; frame++) {
+            state.update();
+        }
+
+        long startAlloc = threadBean.getThreadAllocatedBytes(threadId);
+        for (int frame = 0; frame < 60; frame++) {
+            state.update();
+        }
+        long endAlloc = threadBean.getThreadAllocatedBytes(threadId);
+        long allocated = endAlloc - startAlloc;
+
+        assertEquals(0L, allocated, "TeamResourceState steady-state update must allocate 0 bytes on heap");
+    }
+
+    @Test
+    void testTeamResourceSplitBarDrawSteadyStateZeroAllocation() {
+        if (Tex.whiteui == null) {
+            Tex.whiteui = new TextureRegionDrawable(new TextureRegion());
+        }
+        if (Styles.black8 == null) {
+            Styles.black8 = new TextureRegionDrawable(new TextureRegion());
+        }
+        if (Fonts.outline == null) {
+            FontData fontData = new FontData() {
+                @Override
+                public Glyph getGlyph(char ch) {
+                    Glyph g = new Glyph();
+                    g.id = ch;
+                    g.width = 8;
+                    g.height = 10;
+                    g.xadvance = 9;
+                    return g;
+                }
+            };
+            fontData.lineHeight = 18f;
+            fontData.capHeight = 14f;
+            Fonts.outline = new Font(fontData, new TextureRegion(), false);
+        }
+
+        Scene prevScene = Core.scene;
+        Batch prevBatch = Core.batch;
+        try {
+            if (Core.batch == null) {
+                Core.batch = new Batch() {
+                    @Override
+                    protected void draw(TextureRegion region, float x, float y, float originX, float originY, float width, float height, float rotation) {}
+
+                    @Override
+                    protected void draw(Texture texture, float[] spriteVertices, int offset, int count) {}
+
+                    @Override
+                    protected void flush() {}
+                };
+            }
+            if (Core.scene == null) {
+                Core.scene = new Scene();
+            }
+            LabelStyle labelStyle = new LabelStyle(Fonts.outline, Color.white);
+            Core.scene.addStyle(LabelStyle.class, labelStyle);
+
+            TeamResourceFeature feature = new TeamResourceFeature();
+            TeamResourceState state = feature.getState();
+            SplitBar splitBar = new SplitBar(state, () -> 1f);
+            Element barElement = splitBar.element();
+            barElement.setSize(200f, 20f);
+
+            for (int frame = 0; frame < 60; frame++) {
+                barElement.draw();
+            }
+
+            long startAlloc = threadBean.getThreadAllocatedBytes(threadId);
+            for (int frame = 0; frame < 60; frame++) {
+                barElement.draw();
+            }
+            long endAlloc = threadBean.getThreadAllocatedBytes(threadId);
+            long allocated = endAlloc - startAlloc;
+
+            assertEquals(0L, allocated, "SplitBar steady-state draw must allocate 0 bytes on heap");
+        } finally {
+            Core.scene = prevScene;
+            Core.batch = prevBatch;
+        }
     }
 }
