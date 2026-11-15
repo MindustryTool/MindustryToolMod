@@ -3,6 +3,7 @@ package mindustrytool.features.teamresource;
 import arc.func.Cons;
 import arc.graphics.Color;
 import arc.struct.ObjectIntMap;
+import arc.struct.ObjectMap;
 import arc.struct.ObjectSet;
 import arc.struct.Seq;
 import arc.util.Interval;
@@ -25,7 +26,10 @@ import java.util.Comparator;
 public class TeamResourceState {
     private final ObjectSet<Item> usedItems = new ObjectSet<>();
     private final ObjectSet<UnitType> usedUnits = new ObjectSet<>();
-    private final Interval timer = new Interval(2);
+    private final Interval timer = new Interval(3);
+    private final ObjectMap<Item, HistoryBuffer> itemHistories = new ObjectMap<>();
+    private final ObjectMap<PowerGraph, HistoryBuffer> graphHistories = new ObjectMap<>();
+    private final HistoryBuffer totalPowerHistory = new HistoryBuffer();
 
     private @Nullable TeamResourceFeature feature;
     private @Nullable Team selectedTeam;
@@ -113,6 +117,7 @@ public class TeamResourceState {
         lastTotalBalance = 0f;
         lastTotalStored = 0f;
         lastTotalCapacity = 0f;
+        clearHistory();
         if (Vars.player != null && Vars.player.team() != null) {
             selectedTeam = Vars.player.team();
             selectedTeamSignal.set(selectedTeam);
@@ -148,20 +153,12 @@ public class TeamResourceState {
                 ? selectedTeam.core().items
                 : null;
         if (coreItems != null && Vars.content != null) {
-            boolean hideZeroItems = feature != null && Boolean.TRUE.equals(feature.hideZeroItemsConfig.get());
             boolean itemsChanged = false;
             for (Item item : Vars.content.items()) {
                 int count = coreItems.get(item);
-                if (count > 0) {
-                    if (usedItems.add(item)) {
-                        itemsChanged = true;
-                        changed = true;
-                    }
-                } else if (hideZeroItems) {
-                    if (usedItems.remove(item)) {
-                        itemsChanged = true;
-                        changed = true;
-                    }
+                if (count > 0 && usedItems.add(item)) {
+                    itemsChanged = true;
+                    changed = true;
                 }
             }
             if (itemsChanged) {
@@ -224,6 +221,10 @@ public class TeamResourceState {
             }
         }
 
+        if (timer.get(2, 60f)) {
+            sampleHistory();
+        }
+
         if (changed) {
             tickSignal.set(tickSignal.get() + 1);
         }
@@ -238,11 +239,14 @@ public class TeamResourceState {
     public void setSelectedTeam(Team team) {
         this.selectedTeam = team;
         this.selectedTeamSignal.set(team);
+        this.usedItems.clear();
+        this.usedItemsSignal.set(new Seq<>());
         this.usedUnits.clear();
         this.usedUnitsSignal.set(new Seq<>());
         lastSnapshot.clear();
         rateDisplay.clear();
         this.teamGraphs.clear();
+        clearHistory();
         tickSignal.set(tickSignal.get() + 1);
     }
 
@@ -291,30 +295,60 @@ public class TeamResourceState {
         return rateDisplay.get(item, 0);
     }
 
+    public static String formatCompactAmount(long amount) {
+        if (amount == Long.MIN_VALUE) {
+            return "-9.2E";
+        }
+        boolean negative = amount < 0;
+        long abs = negative ? -amount : amount;
+        if (abs < 0) {
+            abs = Long.MAX_VALUE;
+        }
+
+        String result;
+        if (abs < 1000) {
+            result = String.valueOf(abs);
+        } else if (abs < 10000) {
+            long fractional = (abs % 1000) / 100;
+            result = (abs / 1000) + "." + fractional + "k";
+        } else if (abs < 1000000) {
+            result = (abs / 1000) + "k";
+        } else if (abs < 10000000) {
+            long fractional = (abs % 1000000) / 100000;
+            result = (abs / 1000000) + "." + fractional + "M";
+        } else if (abs < 1000000000) {
+            result = (abs / 1000000) + "M";
+        } else {
+            result = (abs / 1000000000) + "B";
+        }
+        return negative ? "-" + result : result;
+    }
+
     public String getFormattedAmount(Item item) {
         if (coreItems == null) {
             return "0";
         }
-        return UI.formatAmount(coreItems.get(item));
+        return formatCompactAmount(coreItems.get(item));
     }
 
     public String getFormattedRate(Item item) {
-        if (rateDisplay == null) {
-            return "0/s";
+        int rate = rateDisplay.get(item, 0);
+        if (rate == 0) {
+            return "";
         }
-        int rate = rateDisplay.get(item);
+        return (rate > 0 ? "+" : "") + formatCompactAmount(rate);
+    }
+
+    public String getFullFormattedRate(Item item) {
+        int rate = rateDisplay.get(item, 0);
         if (rate == 0) {
             return "0/s";
         }
-        String prefix = rate > 0 ? "+" : "";
-        return prefix + rate + "/s";
+        return (rate > 0 ? "+" : "") + rate + "/s";
     }
 
     public Color getRateColor(Item item) {
-        if (rateDisplay == null) {
-            return Color.gray;
-        }
-        int rate = rateDisplay.get(item);
+        int rate = rateDisplay.get(item, 0);
         if (rate > 0) {
             return Pal.heal;
         }
@@ -334,9 +368,56 @@ public class TeamResourceState {
         }
         try {
             int count = current.data() != null ? current.data().countType(type) : 0;
-            return count > 0 ? UI.formatAmount(count) : "";
+            return count > 0 ? formatCompactAmount(count) : "";
         } catch (Throwable t) {
             return "";
+        }
+    }
+
+    public @Nullable HistoryBuffer getItemHistory(Item item) {
+        return itemHistories.get(item);
+    }
+
+    public @Nullable HistoryBuffer getPowerGraphHistory(PowerGraph graph) {
+        return graphHistories.get(graph);
+    }
+
+    public HistoryBuffer getTotalPowerHistory() {
+        return totalPowerHistory;
+    }
+
+    public void clearHistory() {
+        for (HistoryBuffer buffer : itemHistories.values()) {
+            buffer.clear();
+        }
+        for (HistoryBuffer buffer : graphHistories.values()) {
+            buffer.clear();
+        }
+        totalPowerHistory.clear();
+    }
+
+    private void sampleHistory() {
+        if (Vars.state == null || selectedTeam == null) {
+            return;
+        }
+        for (Item item : usedItems) {
+            HistoryBuffer history = itemHistories.get(item);
+            if (history == null) {
+                history = new HistoryBuffer();
+                itemHistories.put(item, history);
+            }
+            history.add(coreItems != null ? coreItems.get(item) : 0f);
+        }
+
+        totalPowerHistory.add(getTotalStoredPower());
+
+        for (PowerGraph graph : teamGraphs) {
+            HistoryBuffer history = graphHistories.get(graph);
+            if (history == null) {
+                history = new HistoryBuffer();
+                graphHistories.put(graph, history);
+            }
+            history.add(graph.getLastPowerStored());
         }
     }
 

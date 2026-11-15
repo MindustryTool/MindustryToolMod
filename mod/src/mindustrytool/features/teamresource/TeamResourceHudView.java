@@ -6,9 +6,10 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.math.Mathf;
 import arc.scene.Element;
-import arc.scene.event.InputEvent;
-import arc.scene.event.InputListener;
 import arc.scene.style.TextureRegionDrawable;
+import arc.scene.ui.Image;
+import arc.scene.ui.Tooltip;
+import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import arc.util.Scaling;
 import mindustry.Vars;
@@ -16,6 +17,7 @@ import mindustry.game.EventType.ResizeEvent;
 import mindustry.game.Team;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
+import mindustry.graphics.Pal;
 import mindustry.type.Item;
 import mindustry.type.UnitType;
 import mindustry.ui.Styles;
@@ -24,7 +26,7 @@ import mindustrytool.features.settings.ModSettings;
 import mindustrytool.ui.dock.MindustryDockRegistry;
 import solim.core.Component;
 import solim.core.EventsUtil;
-import solim.layout.Card;
+import solim.layout.Row;
 import solim.overlay.Hud;
 import solim.reactive.Computed;
 import solim.reactive.Readable;
@@ -69,9 +71,8 @@ public class TeamResourceHudView extends Component {
             Float w = hudWidth.get();
             Float s = scale.get();
             float scaleVal = s != null ? s : 1f;
-            boolean alwaysFlow = Boolean.TRUE.equals(feature.alwaysShowFlowRateConfig.signal().get());
-            float minCardW = (alwaysFlow ? 58f : 50f) * scaleVal;
-            return Math.max(3, (int) ((w != null ? w : 200f) / (minCardW > 0f ? minCardW : 50f)));
+            float minCardW = 54f * scaleVal;
+            return Math.max(3, (int) ((w != null ? w : 200f) / (minCardW > 0f ? minCardW : 54f)));
         });
 
         Readable<Color> bgColor = feature.hideBackgroundConfig.signal()
@@ -175,12 +176,8 @@ public class TeamResourceHudView extends Component {
     }
 
     private Component buildExpandedContent(Readable<Float> scale, Readable<Integer> itemCols) {
-        Readable<Float> itemCardHeight = new Computed<>(() -> {
-            boolean flow = Boolean.TRUE.equals(feature.alwaysShowFlowRateConfig.signal().get());
-            Float s = scale.get();
-            return (flow ? 32f : 24f) * (s != null ? s : 1f);
-        });
-        Readable<Float> unitCardHeight = scale.map(s -> 22f * (s != null ? s : 1f));
+        Readable<Float> itemCardHeight = scale.map(s -> 22f * (s != null ? s : 1f));
+        Readable<Float> unitCardHeight = scale.map(s -> 20f * (s != null ? s : 1f));
         Readable<Float> iconSize = scale.map(s -> 16f * (s != null ? s : 1f));
 
         return column().props(growX(), gap(unit(1))).children(() -> {
@@ -196,7 +193,7 @@ public class TeamResourceHudView extends Component {
                                 .props(growX());
 
                         reactiveGrid(state.usedItemsSignal).columns(itemCols)
-                                .key(item -> item.name).props(growX(), gap(unit(1)))
+                                .key(item -> item.name).props(growX(), gap(unit(0.5f)))
                                 .items(item -> createItemCard(item, itemCardHeight, iconSize, scale));
                     }))
                     .elseDo(() -> row())
@@ -211,7 +208,7 @@ public class TeamResourceHudView extends Component {
                                 .props(growX());
 
                         reactiveGrid(state.usedUnitsSignal).columns(itemCols)
-                                .key(unit -> unit.name).props(growX(), gap(unit(1)))
+                                .key(unit -> unit.name).props(growX(), gap(unit(0.5f)))
                                 .items(unit -> createUnitCard(unit, unitCardHeight, iconSize, scale));
                     }))
                     .elseDo(() -> row())
@@ -226,103 +223,77 @@ public class TeamResourceHudView extends Component {
 
     private Component createItemCard(Item item, Readable<Float> cardHeight, Readable<Float> iconSize,
             Readable<Float> scale) {
-        Card card = card()
-                .props(padding(unit(1f)), rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1f, WebStyles.Colors.BORDER), growX(), height(cardHeight), prefHeight(cardHeight), margin(scale.map(s -> 2f * (s != null ? s : 1f))), onClick(() -> state.setViewingStats(!state.isViewingStats())))
+        Row itemRow = row()
+                .props(padding(unit(0.5f)), left(), height(cardHeight), prefHeight(cardHeight), center(), gap(unit(0.5f)))
                 .children(() -> {
-                    row().props(growX(), gap(unit(1))).children(() -> {
-                        image(new TextureRegionDrawable(item.uiIcon)).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize), scaling(Scaling.fit));
-                        column().props(left()).children(() -> {
-                            text(state.tickSignal.map(t -> state.getFormattedAmount(item)))
-                                    .props(style(Styles.outlineLabel), fontScale(scale.map(s -> 0.72f * (s != null ? s : 1f))));
-                            Readable<String> rateText = new Computed<>(() -> {
-                                state.tickSignal.get();
-                                boolean show = Boolean.TRUE.equals(feature.alwaysShowFlowRateConfig.signal().get())
-                                        || state.isViewingStats();
-                                return show ? state.getFormattedRate(item) : "";
-                            });
-                            text(rateText)
-                                    .props(color(state.tickSignal.map(t -> state.getRateColor(item))), style(Styles.outlineLabel), fontScale(scale.map(s -> 0.60f * (s != null ? s : 1f))));
-                        });
+                    image(new TextureRegionDrawable(item.uiIcon))
+                            .props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize), scaling(Scaling.fit));
+                    row().props(bottom(), left(), gap(unit(0.5f))).children(() -> {
+                        text(state.tickSignal.map(t -> state.getFormattedAmount(item)))
+                                .props(style(Styles.outlineLabel), fontScale(scale.map(s -> 0.72f * (s != null ? s : 1f))));
+                        text(state.tickSignal.map(t -> state.getFormattedRate(item)))
+                                .props(color(state.tickSignal.map(t -> state.getRateColor(item))),
+                                        style(Styles.outlineLabel),
+                                        fontScale(scale.map(s -> 0.55f * (s != null ? s : 1f))));
                     });
                 });
 
-        card.element().addListener(new InputListener() {
-            @Override
-            public void enter(InputEvent event, float x, float y, int pointer, @Nullable Element fromActor) {
-                if (pointer == -1) {
-                    state.setViewingStats(true);
-                    state.clearSnapshot();
-                }
-                super.enter(event, x, y, pointer, fromActor);
-            }
+        itemRow.element().addListener(new Tooltip(table -> {
+            table.background(Styles.black8).margin(8f);
+            table.update(() -> {
+                table.clearChildren();
+                table.left();
 
-            @Override
-            public void exit(InputEvent event, float x, float y, int pointer, @Nullable Element toActor) {
-                if (pointer == -1) {
-                    state.setViewingStats(false);
-                    state.clearSnapshot();
-                }
-                super.exit(event, x, y, pointer, toActor);
-            }
-        });
+                Table header = new Table();
+                header.add(new Image(item.uiIcon)).size(16f).padRight(4f);
+                header.add(item.localizedName + ": ").color(Color.lightGray);
+                header.add(String.valueOf(state.getItemAmount(item))).color(Color.white);
 
-        return card;
+                String fullRate = state.getFullFormattedRate(item);
+                header.add(" (" + fullRate + ")").color(state.getRateColor(item)).padLeft(4f);
+                table.add(header).left().row();
+
+                HistoryBuffer history = state.getItemHistory(item);
+                if (history != null && history.size() > 1) {
+                    table.add(new SparklineWidget(history, Pal.accent)).padTop(4f).row();
+                }
+            });
+        }));
+
+        return itemRow;
     }
 
     private Component createUnitCard(UnitType type, Readable<Float> cardHeight, Readable<Float> iconSize,
             Readable<Float> scale) {
-        return card()
-                .props(padding(unit(1f)), rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1f, WebStyles.Colors.BORDER), growX(), height(cardHeight), prefHeight(cardHeight), margin(scale.map(s -> 2f * (s != null ? s : 1f))))
+        Row unitRow = row()
+                .props(padding(unit(0.5f)), left(), height(cardHeight), prefHeight(cardHeight), center(), gap(unit(0.5f)))
                 .children(() -> {
-                    row().props(growX(), gap(unit(1))).children(() -> {
-                        image(new TextureRegionDrawable(type.uiIcon)).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize), scaling(Scaling.fit));
-                        text(state.tickSignal.map(t -> state.getUnitCountText(type)))
-                                .props(style(Styles.outlineLabel), fontScale(scale.map(s -> 0.72f * (s != null ? s : 1f))));
-                    });
+                    image(new TextureRegionDrawable(type.uiIcon))
+                            .props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize), scaling(Scaling.fit));
+                    text(state.tickSignal.map(t -> state.getUnitCountText(type)))
+                            .props(style(Styles.outlineLabel), fontScale(scale.map(s -> 0.72f * (s != null ? s : 1f))));
                 });
+
+        unitRow.element().addListener(new Tooltip(table -> {
+            table.background(Styles.black8).margin(6f);
+            table.update(() -> {
+                table.clearChildren();
+                table.left();
+                table.add(new Image(type.uiIcon)).size(16f).padRight(4f);
+                table.add(type.localizedName + ": ").color(Color.lightGray);
+                table.add(state.getUnitCountText(type)).color(Color.white);
+            });
+        }));
+
+        return unitRow;
     }
 
     private Component createPowerSection(Readable<Float> scale) {
-        Readable<Float> iconSize = scale.map(s -> 14f * (s != null ? s : 1f));
+        Readable<Float> barHeight = scale.map(s -> 18f * (s != null ? s : 1f));
 
-        return card()
-                .props(padding(unit(1.5f)), gap(unit(1)), rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1f, WebStyles.Colors.BORDER), growX())
-                .children(() -> {
-                    row().props(left(), growX(), gap(unit(1)), center()).children(() -> {
-                        icon(Icon.power).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize), color(state.tickSignal
-                                .map(t -> state.getTeamGraphs().isEmpty() ? Color.gray : state.getPowerBalanceColor())));
-                        text(state.tickSignal.map(t -> {
-                            if (state.getTeamGraphs().isEmpty()) {
-                                return Core.bundle.get("team-resources.no-power", "No power network");
-                            }
-                            return Core.bundle.get("team-resources.power-prefix", "Power: ")
-                                    + state.getFormattedPowerBalance();
-                        }))
-                                .props(color(state.tickSignal.map(t -> state.getTeamGraphs().isEmpty() ? Color.gray
-                                         : state.getPowerBalanceColor())), style(Styles.outlineLabel), fontScale(scale.map(s -> 0.82f * (s != null ? s : 1f))));
-                    });
-
-                    row().props(growX(), height(scale.map(s -> 20f * (s != null ? s : 1f))), prefHeight(scale.map(s -> 20f * (s != null ? s : 1f))))
-                            .children(() -> new SplitBar(state.getTeamGraphs(), SplitBar.Mode.SATISFACTION,
-                                    () -> scale.peek() != null ? scale.peek() : 1f));
-
-                    when(feature.showStoredPowerConfig.signal())
-                            .thenDo(() -> column(() -> {
-                                row().props(left(), growX(), gap(unit(1)), center()).children(() -> {
-                                    icon(Icon.powerSmall).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize));
-                                    text(state.tickSignal
-                                             .map(t -> Core.bundle.get("team-resources.stored-prefix", "Stored: ")
-                                                     + state.getFormattedStoredPower()))
-                                             .props(style(Styles.outlineLabel), fontScale(scale.map(s -> 0.80f * (s != null ? s : 1f))));
-                                });
-
-                                row().props(growX(), height(scale.map(s -> 20f * (s != null ? s : 1f))), prefHeight(scale.map(s -> 20f * (s != null ? s : 1f))))
-                                        .children(() -> new SplitBar(state.getTeamGraphs(), SplitBar.Mode.STORED,
-                                                () -> scale.peek() != null ? scale.peek() : 1f));
-                            }).props(growX(), gap(unit(1))))
-                            .elseDo(() -> row())
-                            .props(growX());
-                });
+        return row()
+                .props(growX(), height(barHeight), prefHeight(barHeight), margin(unit(0.5f)))
+                .children(() -> new SplitBar(state, () -> scale.peek() != null ? scale.peek() : 1f));
     }
 
     public void keepInScreen() {
