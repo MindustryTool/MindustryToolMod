@@ -61,7 +61,7 @@ public class PathfindingFeature extends Feature {
     private static final int MAX_SPAWN_PATH_STEPS = 1000;
 
     private static final int TIMER_CLEANUP = 0;
-    private static final float CLEANUP_SCHEDULE_FRAMES = 60f;
+    private static final float CLEANUP_SCHEDULE_FRAMES = 30f;
 
     public final ConfigGroup config;
     public final ConfigValue<Boolean> drawUnitPathConfig;

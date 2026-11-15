@@ -114,3 +114,56 @@ The system MUST retrieve passwords using per-room string keys.
 - **WHEN** user opens a room prompt that requires a password
 - **THEN** system populates the password field with the saved password if available
 
+### Requirement: Relay room lifetime bound to local hosting
+
+`PlayerConnectFeature` SHALL close the active relay room when the local player stops
+hosting a server, and SHALL NOT close the room merely because the world was reloaded.
+
+Hosting loss SHALL be observed from `ProxyProvider.closeServer()`. `Signals.netServer()`
+SHALL NOT be used for this: `Signals` is event-driven and `ArcNetProvider.closeServer()`
+fires no event, so the `true` to `false` transition is unobservable while only relay
+guests are connected.
+
+A world reload that does not close the local server SHALL leave the room open, including
+its `ProxyProvider` installation and all connected `VirtualConnection` instances.
+
+The room SHALL continue to close when the local player becomes a client
+(`ClientServerConnectEvent`) and when a new local server is started (`HostEvent`).
+
+#### Scenario: Host changes campaign map
+
+- **WHEN** a host with an active relay room selects a different map from the campaign
+  planet map
+- **THEN** the relay room stays open
+- **AND** connected guests remain connected
+- **AND** no room-closed notification is shown
+
+#### Scenario: Host loads a save
+
+- **WHEN** a host with an active relay room loads a save
+- **THEN** the relay room stays open
+
+#### Scenario: Host quits to menu
+
+- **WHEN** a host with an active relay room quits to the menu and `Net.closeServer()` is
+  reached
+- **THEN** `ProxyProvider.closeServer()` signals the room closed
+- **AND** the room is torn down and a room-closed notification is shown
+
+#### Scenario: Host becomes a client
+
+- **WHEN** the local player connects to another server while hosting
+- **THEN** the relay room is closed
+
+#### Scenario: Proxy provider survives world reload
+
+- **WHEN** the world is reloaded while a relay room is active
+- **THEN** `Vars.net.provider` remains the `ProxyProvider`
+- **AND** previously connected `VirtualConnection` instances remain connected
+
+#### Scenario: Repeated close is idempotent
+
+- **WHEN** `closeRoom()` is called more than once
+- **THEN** `ProxyProvider` is restored exactly once
+- **AND** `PcRoomClosed` is not fired when no room was active
+

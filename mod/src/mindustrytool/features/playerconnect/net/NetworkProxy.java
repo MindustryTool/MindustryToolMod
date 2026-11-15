@@ -89,7 +89,14 @@ public class NetworkProxy extends Client implements NetListener {
         if (originalProvider == null) {
             originalProvider = current;
         }
-        Reflect.set(Vars.net, "provider", new ProxyProvider(current, orderedConnections));
+        Reflect.set(Vars.net, "provider",
+                new ProxyProvider(current, orderedConnections, this::onProviderServerClosed));
+    }
+
+    private void onProviderServerClosed() {
+        if (onRoomClosed != null) {
+            onRoomClosed.get(RoomCloseReason.closed);
+        }
     }
 
     public void restoreProvider() {

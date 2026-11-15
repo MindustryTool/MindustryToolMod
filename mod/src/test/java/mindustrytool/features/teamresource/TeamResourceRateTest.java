@@ -190,7 +190,7 @@ class TeamResourceRateTest extends MindustryTestEnv {
         assertTrue(state.tickSignal.get() > initialTick);
 
         assertEquals("0", state.getFormattedAmount(null));
-        assertEquals("", state.getFormattedRate(null));
+        assertEquals("0/s", state.getFormattedRate(null));
         assertEquals("0/s", state.getFullFormattedRate(null));
         assertEquals(Color.gray, state.getRateColor(null));
         assertEquals("", state.getUnitCountText(null));

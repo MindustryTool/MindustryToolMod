@@ -12,7 +12,7 @@ import solim.core.Component;
 
 public class FreeCameraHudView extends Component {
 
-    private static final float TOP_MARGIN = 60f;
+    private static final float BOTTOM_MARGIN = 60f;
 
     private final FreeCameraFeature feature;
 
@@ -27,12 +27,12 @@ public class FreeCameraHudView extends Component {
                 : "Free camera enabled";
 
         return column()
-                .props(fillParent(), top(), center(), touchable(Touchable.childrenOnly))
+                .props(fillParent(), center(), bottom(), touchable(Touchable.childrenOnly))
                 .children(() -> {
                     button(this::handleClick)
                             .props(
                                     style(WebStyles.ghost()),
-                                    marginTop(TOP_MARGIN),
+                                    marginBottom(BOTTOM_MARGIN),
                                     padding(unit(1), unit(2), unit(1), unit(2)),
                                     center()
                             )
