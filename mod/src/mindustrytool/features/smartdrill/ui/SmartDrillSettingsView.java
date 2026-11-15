@@ -8,7 +8,6 @@ import arc.scene.Element;
 import mindustry.gen.Icon;
 import mindustrytool.components.SettingCard;
 import mindustrytool.components.SettingScaffold;
-import mindustrytool.components.SettingSlider;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.smartdrill.SmartDrillFeature;
 import solim.core.Component;
@@ -47,17 +46,6 @@ public class SmartDrillSettingsView extends Component {
                 spacer();
                 checkbox("", feature.autoDisableConfig.signal());
             });
-
-            divider().props(color(WebStyles.Colors.SECTION_BORDER));
-
-            SettingSlider.of(
-                    Core.bundle.get("feature.smart-drill.settings.max-tiles"),
-                    Core.bundle.get("feature.smart-drill.settings.max-tiles.desc"),
-                    feature.maxTilesConfig.signal(),
-                    20,
-                    300,
-                    10,
-                    feature.maxTilesConfig.signal().map(v -> String.valueOf(v != null ? v : 100)));
         });
     }
 

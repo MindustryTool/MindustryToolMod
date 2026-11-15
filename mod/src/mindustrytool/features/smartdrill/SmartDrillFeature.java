@@ -3,26 +3,27 @@ package mindustrytool.features.smartdrill;
 import arc.Core;
 import arc.Events;
 import arc.func.Prov;
-import arc.math.Mathf;
-import arc.math.geom.Point2;
-import arc.math.geom.Vec2;
-import arc.scene.event.Touchable;
-import arc.scene.ui.layout.Table;
-import arc.struct.ObjectSet;
+import arc.graphics.g2d.Draw;
+import arc.scene.Element;
+import arc.scene.style.Drawable;
+import arc.scene.style.TextureRegionDrawable;
 import arc.struct.Seq;
-import arc.util.Align;
+import arc.util.Eachable;
 import arc.util.Nullable;
-import arc.util.Scaling;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import mindustry.Vars;
-import mindustry.content.Blocks;
-import mindustry.core.GameState.State;
+import mindustry.core.GameState;
 import mindustry.entities.units.BuildPlan;
 import mindustry.game.EventType.StateChangeEvent;
 import mindustry.game.EventType.TapEvent;
+import mindustry.game.EventType.Trigger;
+import mindustry.game.Schematic;
 import mindustry.gen.Icon;
-import mindustry.gen.Unit;
+import mindustry.graphics.Layer;
 import mindustry.type.Item;
-import mindustry.ui.Styles;
 import mindustry.world.Block;
 import mindustry.world.Tile;
 import mindustry.world.blocks.production.BeamDrill;
@@ -30,66 +31,92 @@ import mindustry.world.blocks.production.Drill;
 import mindustrytool.components.FileIcon;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureMetadata;
+import mindustrytool.features.smartdrill.plan.DefaultDrillPlanner;
+import mindustrytool.features.smartdrill.plan.DrillPlanRequest;
+import mindustrytool.features.smartdrill.plan.DrillPlanResult;
+import mindustrytool.features.smartdrill.plan.DrillWorldView;
+import mindustrytool.features.smartdrill.plan.MindustryDrillWorldView;
+import mindustrytool.features.smartdrill.plan.OreFlood;
+import mindustrytool.features.smartdrill.plan.OreKind;
+import mindustrytool.features.smartdrill.plan.PlannedBuild;
+import mindustrytool.features.smartdrill.plan.Rect;
+import mindustrytool.features.smartdrill.plan.SchematicData;
+import mindustrytool.features.smartdrill.ui.DrillAreaOverlay;
+import mindustrytool.features.smartdrill.ui.SchematicBindDialog;
+import mindustrytool.features.smartdrill.ui.SmartDrillPanel;
 import mindustrytool.features.smartdrill.ui.SmartDrillSettingsDialog;
+import mindustrytool.utils.JsonUtils;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.overlay.SolimDialog;
-
-import java.util.HashMap;
+import solim.reactive.Readable;
+import solim.reactive.Signal;
 
 public class SmartDrillFeature extends Feature {
 
-    public enum Direction {
-        RIGHT(1, 0, 0),
-        UP(0, 1, 1),
-        LEFT(-1, 0, 2),
-        DOWN(0, -1, 3);
+    public static final int WARNING_DRILL_COUNT = 500;
+
+    public static final class Target {
+        public static final Target NONE = new Target(0, 0, "", OreKind.FLOOR);
 
         public final int x;
         public final int y;
-        public final int rotation;
+        public final String ore;
+        public final OreKind kind;
 
-        Direction(int x, int y, int rotation) {
+        public Target(int x, int y, String ore, OreKind kind) {
             this.x = x;
             this.y = y;
-            this.rotation = rotation;
+            this.ore = ore;
+            this.kind = kind;
         }
 
-        public boolean horizontal() {
-            return this == RIGHT || this == LEFT;
-        }
-
-        public boolean vertical() {
-            return this == UP || this == DOWN;
-        }
-
-        public Point2 mul(int i) {
-            return new Point2(x * i, y * i);
-        }
-
-        public Direction opposite() {
-            switch (this) {
-                case RIGHT:
-                    return LEFT;
-                case UP:
-                    return DOWN;
-                case LEFT:
-                    return RIGHT;
-                case DOWN:
-                    return UP;
-                default:
-                    return this;
-            }
+        public boolean valid() {
+            return !ore.isEmpty();
         }
     }
 
+    public static final class DrillBinding {
+        public String block = "";
+        public String file = "";
+
+        public DrillBinding() {
+        }
+
+        public DrillBinding(String block, String file) {
+            this.block = block;
+            this.file = file;
+        }
+    }
+
+    private static final Eachable<BuildPlan> NO_PLANS = plans -> {
+    };
+
     public final ConfigGroup config;
-    public final ConfigValue<Integer> maxTilesConfig;
     public final ConfigValue<Boolean> autoDisableConfig;
+    public final ConfigValue<String> bindingsConfig;
+
+    private final Signal<Target> target = Signal.of(Target.NONE);
+    private final Signal<Rect> rect = Signal.of(new Rect(0, 0, 1, 1));
+    private final Signal<Integer> facing = Signal.of(0);
+    private final Signal<String> selectedDrill = Signal.of("");
+    private final Signal<String> selectedRig = Signal.of("");
+    private final Signal<DrillPlanResult> plan = Signal.of(DrillPlanResult.EMPTY);
+    private final Signal<Boolean> panelOpen = Signal.of(false);
+
+    private final DefaultDrillPlanner planner = new DefaultDrillPlanner();
+    private final Map<String, String> bindings = new LinkedHashMap<>();
+    private final Seq<BuildPlan> ghosts = new Seq<>();
+
+    private float viewX;
+    private float viewY;
+    private float viewWidth;
+    private float viewHeight;
 
     private @Nullable SmartDrillSettingsDialog settingsDialog;
-    private @Nullable Table currentMenu;
-    private @Nullable Tile selectedTile;
+    private @Nullable SmartDrillPanel panel;
+    private @Nullable DrillAreaOverlay overlay;
+    private boolean suppressTap;
 
     public SmartDrillFeature() {
         super(FeatureMetadata.builder()
@@ -102,33 +129,34 @@ public class SmartDrillFeature extends Feature {
                 .build());
 
         this.config = configGroup();
-        this.maxTilesConfig = config.intValue("maxTiles", 100);
         this.autoDisableConfig = config.boolValue("autoDisable", true);
+        this.bindingsConfig = config.stringValue("bindings", "[]");
+        loadBindings();
 
+        Events.run(Trigger.update, this::update);
+        Events.run(Trigger.draw, this::draw);
         Events.on(TapEvent.class, this::handleTap);
-        Events.on(StateChangeEvent.class, e -> {
-            if (e.to == State.menu) {
-                closeMenu();
+        Events.on(StateChangeEvent.class, event -> {
+            if (event.to == GameState.State.menu) {
+                closePanel();
             }
         });
     }
 
     public void resetToDefaults() {
-        maxTilesConfig.reset();
         autoDisableConfig.reset();
     }
 
     @Override
     public void onEnable() {
         if (Vars.ui != null && Vars.ui.hudfrag != null) {
-            Vars.ui.hudfrag.showToast(Core.bundle.get("feature.smart-drill.active-hint",
-                    "Smart Drill active: Tap an ore patch to plan drills."));
+            Vars.ui.hudfrag.showToast(Core.bundle.get("feature.smart-drill.active-hint"));
         }
     }
 
     @Override
     public void onDisable() {
-        closeMenu();
+        closePanel();
     }
 
     @Override
@@ -141,174 +169,404 @@ public class SmartDrillFeature extends Feature {
         };
     }
 
-    private void handleTap(TapEvent e) {
-        if (!isEnabled() || Vars.state == null || !Vars.state.isGame()
-                || Vars.world == null || Vars.player == null) {
+    private void update() {
+        if (!isEnabled()) {
             return;
         }
+        if (overlay != null) {
+            overlay.update();
+        }
+    }
 
-        if (currentMenu != null && e.tile != selectedTile) {
-            closeMenu();
+    private void draw() {
+        if (!isEnabled() || overlay == null) {
             return;
         }
+        drawGhosts();
+        overlay.draw();
+    }
 
-        Tile tile = e.tile;
+    private void drawGhosts() {
+        if (ghosts.size == 0) {
+            return;
+        }
+        if (Core.camera != null) {
+            viewX = Core.camera.position.x - Core.camera.width / 2f;
+            viewY = Core.camera.position.y - Core.camera.height / 2f;
+            viewWidth = Core.camera.width;
+            viewHeight = Core.camera.height;
+        }
+        float z = Draw.z();
+        Draw.z(Layer.overlayUI);
+        for (int i = 0; i < ghosts.size; i++) {
+            BuildPlan plan = ghosts.get(i);
+            Block block = plan.block;
+            if (block == null) {
+                continue;
+            }
+            if (!visible(plan, block)) {
+                continue;
+            }
+            block.drawPlan(plan, NO_PLANS, true, 0.55f);
+        }
+        Draw.reset();
+        Draw.z(z);
+    }
+
+    private boolean visible(BuildPlan plan, Block block) {
+        if (viewWidth <= 0f || viewHeight <= 0f) {
+            return true;
+        }
+        float wx = plan.x * Vars.tilesize + block.offset;
+        float wy = plan.y * Vars.tilesize + block.offset;
+        float half = block.size * Vars.tilesize / 2f;
+        return wx + half >= viewX && wx - half <= viewX + viewWidth
+                && wy + half >= viewY && wy - half <= viewY + viewHeight;
+    }
+
+    private void handleTap(TapEvent event) {
+        if (!isEnabled() || Vars.state == null || !Vars.state.isGame() || Vars.world == null
+                || Vars.player == null) {
+            return;
+        }
+        if (suppressTap || panelOpen.get()) {
+            return;
+        }
+        Tile tile = event.tile;
         if (tile == null || tile.build != null) {
             return;
         }
-
         Item drop = tile.drop();
         Item wallDrop = tile.wallDrop();
-
         if (drop != null) {
-            showDirectionMenu(tile, drop, false);
+            begin(tile, drop.name, OreKind.FLOOR);
         } else if (wallDrop != null) {
-            showDirectionMenu(tile, wallDrop, true);
+            begin(tile, wallDrop.name, OreKind.WALL);
         }
     }
 
-    public void closeMenu() {
-        if (currentMenu != null) {
-            currentMenu.remove();
-            currentMenu = null;
-            selectedTile = null;
-        }
+    private void begin(Tile tile, String ore, OreKind kind) {
+        DrillWorldView world = worldView();
+        OreFlood.Result flood = kind.isFloor()
+                ? OreFlood.flood(world, tile.x, tile.y, kind, ore, DrillPlanRequest.DEFAULT_MAX_TILES,
+                        DrillPlanRequest.DEFAULT_MAX_RECT_SIZE)
+                : OreFlood.floodDiagonal(world, tile.x, tile.y, kind, ore,
+                        DrillPlanRequest.DEFAULT_MAX_TILES, DrillPlanRequest.DEFAULT_MAX_RECT_SIZE);
+
+        Rect initial = DrillAreaOverlay.clampToWorld(flood.rect);
+        target.set(new Target(tile.x, tile.y, ore, kind));
+        rect.set(initial != null ? initial : new Rect(tile.x, tile.y, 1, 1));
+        facing.set(defaultFacing(rect.get(), tile.x, tile.y));
+        selectedDrill.set("");
+        selectedRig.set("");
+        openPanel();
+        recompute();
     }
 
-    private void showDirectionMenu(Tile tile, Item drop, boolean isBeam) {
-        closeMenu();
-        selectedTile = tile;
-
-        currentMenu = new Table(Styles.black8);
-        currentMenu.visible(() -> Vars.ui != null && Vars.ui.hudfrag != null
-                && Vars.ui.hudfrag.shown && Vars.state != null && Vars.state.isGame());
-        currentMenu.touchable = Touchable.enabled;
-        currentMenu.margin(4f);
-
-        Table directionTable = new Table();
-
-        directionTable.add().size(44f);
-        directionTable.button(Icon.up, () -> showDrillMenu(tile, drop, Direction.UP, isBeam)).size(44f).pad(2);
-        directionTable.add().size(44f).row();
-
-        directionTable.button(Icon.left, () -> showDrillMenu(tile, drop, Direction.LEFT, isBeam)).size(44f).pad(2);
-        directionTable.button(Icon.cancel, this::closeMenu).size(44f).pad(2);
-        directionTable.button(Icon.right, () -> showDrillMenu(tile, drop, Direction.RIGHT, isBeam)).size(44f).pad(2)
-                .row();
-
-        directionTable.add().size(44f);
-        directionTable.button(Icon.down, () -> showDrillMenu(tile, drop, Direction.DOWN, isBeam)).size(44f).pad(2);
-        directionTable.add().size(44f);
-
-        currentMenu.add(directionTable);
-        attachMenuToHud();
+    private static int defaultFacing(Rect rect, int tileX, int tileY) {
+        int dx = tileX - rect.centerX();
+        int dy = tileY - rect.centerY();
+        if (Math.abs(dx) >= Math.abs(dy)) {
+            return dx >= 0 ? 0 : 2;
+        }
+        return dy >= 0 ? 1 : 3;
     }
 
-    private void showDrillMenu(Tile tile, Item drop, Direction direction, boolean isBeam) {
-        if (currentMenu == null) {
-            return;
-        }
-
-        currentMenu.clear();
-
-        Seq<Block> drills = Vars.content.blocks()
-                .select(b -> isBeam ? isValidBeamDrill(b, drop) : isValidDrill(b, drop));
-
-        if (drills.isEmpty()) {
-            if (Vars.ui != null && Vars.ui.hudfrag != null) {
-                Vars.ui.hudfrag.showToast(Core.bundle.get("feature.smart-drill.no-drills",
-                        "No suitable unlocked drills for this ore."));
-            }
-            closeMenu();
-            return;
-        }
-
-        int col = 0;
-        for (Block drill : drills) {
-            currentMenu.button(b -> {
-                if (drill.uiIcon != null) {
-                    b.image(drill.uiIcon).scaling(Scaling.fit).size(32f);
-                }
-            }, Styles.clearNonei, () -> {
-                if (Vars.control != null && Vars.control.input != null) {
-                    Vars.control.input.isBuilding = false;
-                }
-                closeMenu();
-                Core.app.post(() -> executePlacement(tile, direction, drill, drop, isBeam));
-            }).size(48f).pad(3).tooltip(drill.localizedName);
-
-            col++;
-            if (col % 4 == 0 && col < drills.size) {
-                currentMenu.row();
-            }
-        }
-
-        currentMenu.pack();
+    private DrillWorldView worldView() {
+        return new MindustryDrillWorldView(Vars.player.team());
     }
 
-    private void attachMenuToHud() {
-        if (currentMenu == null) {
-            return;
-        }
-
-        currentMenu.update(() -> {
-            if (selectedTile == null || Vars.player == null || Core.camera == null) {
-                closeMenu();
-                return;
+    private void openPanel() {
+        closePanel();
+        overlay = new DrillAreaOverlay(this);
+        panel = new SmartDrillPanel(this);
+        Element element = panel.element();
+        element.name = "smart-drill-panel";
+        panelOpen.set(true);
+        Core.app.post(() -> {
+            SmartDrillPanel current = panel;
+            if (current != null && Vars.ui != null && Vars.ui.hudGroup != null) {
+                Vars.ui.hudGroup.addChild(current.element());
             }
-
-            Vec2 pos = Core.camera.project(selectedTile.worldx(), selectedTile.worldy());
-            float x = pos.x;
-            float y = pos.y;
-
-            if (Core.graphics != null && currentMenu != null) {
-                float w = currentMenu.getWidth();
-                float h = currentMenu.getHeight();
-                x = Mathf.clamp(x, w / 2f + 8f, Core.graphics.getWidth() - w / 2f - 8f);
-                y = Mathf.clamp(y, h / 2f + 8f, Core.graphics.getHeight() - h / 2f - 8f);
-            }
-            currentMenu.setPosition(x, y, Align.center);
         });
+    }
 
-        if (Vars.ui != null && Vars.ui.hudGroup != null) {
-            Vars.ui.hudGroup.addChild(currentMenu);
-            currentMenu.pack();
+    public void closePanel() {
+        SmartDrillPanel previous = panel;
+        panel = null;
+        DrillAreaOverlay previousOverlay = overlay;
+        overlay = null;
+        panelOpen.set(false);
+        if (previousOverlay != null) {
+            previousOverlay.dispose();
+        }
+        if (previous != null) {
+            Element element = previous.element();
+            Core.app.post(() -> {
+                element.remove();
+                previous.dispose();
+            });
+        }
+        ghosts.clear();
+        plan.set(DrillPlanResult.EMPTY);
+        target.set(Target.NONE);
+        selectedDrill.set("");
+        selectedRig.set("");
+    }
+
+    private void recompute() {
+        DrillPlanRequest request = buildRequest();
+        DrillPlanResult result = request == null ? DrillPlanResult.EMPTY : planner.plan(request, worldView());
+        plan.set(result);
+        rebuildGhosts(result);
+    }
+
+    private void rebuildGhosts(DrillPlanResult result) {
+        ghosts.clear();
+        for (int i = 0; i < result.builds.size; i++) {
+            PlannedBuild planned = result.builds.get(i);
+            Block block = Vars.content != null ? Vars.content.block(planned.block) : null;
+            if (block == null) {
+                continue;
+            }
+            BuildPlan buildPlan = new BuildPlan(planned.x, planned.y, planned.rotation, block, planned.config);
+            buildPlan.animScale = 1f;
+            ghosts.add(buildPlan);
         }
     }
 
-    private void executePlacement(Tile tile, Direction direction, Block drill, Item drop, boolean isBeam) {
-        int count = 0;
-        if (isBeam && drill instanceof BeamDrill) {
-            count = placeBeamDrill(tile, direction, (BeamDrill) drill, drop);
-        } else if (drill instanceof Drill) {
-            count = placeFloorDrill(tile, direction, (Drill) drill, drop);
+    private @Nullable DrillPlanRequest buildRequest() {
+        Target current = target.get();
+        String drill = selectedDrill.get();
+        if (!current.valid() || drill.isEmpty()) {
+            return null;
         }
-
-        if (count > 0 && Vars.ui != null && Vars.ui.hudfrag != null) {
-            Vars.ui.hudfrag.showToast(Core.bundle.format("feature.smart-drill.placed",
-                    count, drill.localizedName));
+        DrillPlanRequest.Builder builder = DrillPlanRequest.builder()
+                .target(current.ore, current.kind)
+                .rect(rect.get())
+                .facing(facing.get())
+                .drill(drill);
+        Schematic schematic = selectedSchematic();
+        if (schematic != null) {
+            builder.schematic(toSchematicData(schematic));
         }
+        return builder.build();
+    }
 
+    private static SchematicData toSchematicData(Schematic schematic) {
+        Seq<SchematicData.Tile> tiles = new Seq<>();
+        Seq<Schematic.Stile> source = schematic.tiles;
+        for (int i = 0; i < source.size; i++) {
+            Schematic.Stile stile = source.get(i);
+            tiles.add(new SchematicData.Tile(stile.block.name, stile.x, stile.y, stile.rotation, stile.config));
+        }
+        return new SchematicData(schematic.name(), schematic.width, schematic.height, tiles);
+    }
+
+    private @Nullable Schematic selectedSchematic() {
+        String name = selectedRig.get();
+        if (name.isEmpty() || Vars.schematics == null) {
+            return null;
+        }
+        Seq<Schematic> all = Vars.schematics.all();
+        for (int i = 0; i < all.size; i++) {
+            Schematic schematic = all.get(i);
+            if (schematic != null && name.equals(schematic.name())) {
+                return schematic;
+            }
+        }
+        return null;
+    }
+
+    public void place() {
+        DrillPlanResult result = plan.get();
+        if (result.builds.isEmpty() || Vars.player == null || Vars.player.unit() == null) {
+            closePanel();
+            return;
+        }
+        if (Vars.control != null && Vars.control.input != null) {
+            Vars.control.input.isBuilding = false;
+        }
+        int placed = 0;
+        for (int i = 0; i < result.builds.size; i++) {
+            PlannedBuild planned = result.builds.get(i);
+            Block block = Vars.content != null ? Vars.content.block(planned.block) : null;
+            if (block == null) {
+                continue;
+            }
+            BuildPlan buildPlan = new BuildPlan(planned.x, planned.y, planned.rotation, block, planned.config);
+            if (buildPlan.placeable(Vars.player.team())) {
+                Vars.player.unit().addBuild(buildPlan);
+                placed++;
+            }
+        }
+        closePanel();
+        if (placed > 0 && Vars.ui != null && Vars.ui.hudfrag != null) {
+            Vars.ui.hudfrag.showToast(Core.bundle.format("feature.smart-drill.placed", placed));
+        }
         if (autoDisableConfig.get()) {
             disable();
         }
     }
 
-    public boolean isValidDrill(@Nullable Block block, @Nullable Item drop) {
-        if (!isUnlocked(block) || drop == null) {
-            return false;
-        }
-        return block instanceof Drill && ((Drill) block).tier >= drop.hardness;
+    public void cancel() {
+        closePanel();
     }
 
-    public boolean isValidBeamDrill(@Nullable Block block, @Nullable Item drop) {
-        if (!isUnlocked(block) || drop == null) {
-            return false;
-        }
-        return block instanceof BeamDrill && ((BeamDrill) block).tier >= drop.hardness;
+    public void setFacing(int value) {
+        facing.set(Math.floorMod(value, 4));
+        recompute();
     }
 
-    public boolean isUnlocked(@Nullable Block block) {
+    public int getFacing() {
+        Integer value = facing.get();
+        return value != null ? value : 0;
+    }
+
+    public void setRectFromDrag(Rect value) {
+        rect.set(value);
+    }
+
+    public void onRectDragFinished() {
+        recompute();
+    }
+
+    public void resetRect() {
+        Target current = target.get();
+        if (!current.valid()) {
+            return;
+        }
+        Tile tile = Vars.world != null ? Vars.world.tile(current.x, current.y) : null;
+        if (tile == null) {
+            return;
+        }
+        DrillWorldView world = worldView();
+        OreFlood.Result flood = current.kind.isFloor()
+                ? OreFlood.flood(world, tile.x, tile.y, current.kind, current.ore,
+                        DrillPlanRequest.DEFAULT_MAX_TILES, DrillPlanRequest.DEFAULT_MAX_RECT_SIZE)
+                : OreFlood.floodDiagonal(world, tile.x, tile.y, current.kind, current.ore,
+                        DrillPlanRequest.DEFAULT_MAX_TILES, DrillPlanRequest.DEFAULT_MAX_RECT_SIZE);
+        Rect clamped = DrillAreaOverlay.clampToWorld(flood.rect);
+        rect.set(clamped != null ? clamped : rect.get());
+        recompute();
+    }
+
+    public void selectDrill(String name) {
+        if (name.equals(selectedDrill.get())) {
+            selectedRig.set("");
+        } else {
+            selectedDrill.set(name);
+            selectedRig.set("");
+        }
+        recompute();
+    }
+
+    public void selectRig(String name) {
+        selectedRig.set(name.equals(selectedRig.get()) ? "" : name);
+        recompute();
+    }
+
+    public void openBindDialog() {
+        String drill = selectedDrill.get();
+        if (drill.isEmpty()) {
+            if (Vars.ui != null) {
+                Vars.ui.showInfo(Core.bundle.get("feature.smart-drill.panel.rig.pick-drill"));
+            }
+            return;
+        }
+        SchematicBindDialog dialog = new SchematicBindDialog(this);
+        Core.app.post(dialog::show);
+    }
+
+    public void bind(String schematicFile) {
+        String drill = selectedDrill.get();
+        if (drill.isEmpty()) {
+            return;
+        }
+        bindings.put(drill, schematicFile);
+        bindingsConfig.set(JsonUtils.toJson(toBindingList()));
+        recompute();
+    }
+
+    public void clearBinding() {
+        String drill = selectedDrill.get();
+        if (drill.isEmpty()) {
+            return;
+        }
+        bindings.remove(drill);
+        bindingsConfig.set(JsonUtils.toJson(toBindingList()));
+        recompute();
+    }
+
+    public String getBinding() {
+        String drill = selectedDrill.get();
+        String file = drill.isEmpty() ? null : bindings.get(drill);
+        return file != null ? file : "";
+    }
+
+    private List<DrillBinding> toBindingList() {
+        List<DrillBinding> list = new ArrayList<>();
+        for (Map.Entry<String, String> entry : bindings.entrySet()) {
+            list.add(new DrillBinding(entry.getKey(), entry.getValue()));
+        }
+        return list;
+    }
+
+    private void loadBindings() {
+        bindings.clear();
+        List<DrillBinding> parsed = null;
+        try {
+            parsed = JsonUtils.fromJsonArray(DrillBinding.class, bindingsConfig.get());
+        } catch (RuntimeException ignored) {
+            parsed = null;
+        }
+        if (parsed == null) {
+            return;
+        }
+        for (int i = 0; i < parsed.size(); i++) {
+            DrillBinding binding = parsed.get(i);
+            if (binding != null && binding.block != null && !binding.block.isEmpty()
+                    && binding.file != null && !binding.file.isEmpty()) {
+                bindings.put(binding.block, binding.file);
+            }
+        }
+    }
+
+    public Readable<List<Block>> drills() {
+        return Signal.computed(this::computeDrills);
+    }
+
+    private List<Block> computeDrills() {
+        List<Block> result = new ArrayList<>();
+        Target current = target.get();
+        if (!current.valid() || Vars.content == null) {
+            return result;
+        }
+        Item ore = Vars.content.item(current.ore);
+        if (ore == null) {
+            return result;
+        }
+        Seq<Block> blocks = Vars.content.blocks();
+        for (int i = 0; i < blocks.size; i++) {
+            Block block = blocks.get(i);
+            if (isDrillFor(block, current.kind, ore)) {
+                result.add(block);
+            }
+        }
+        return result;
+    }
+
+    private boolean isDrillFor(Block block, OreKind kind, Item ore) {
+        if (block == null || !isUnlocked(block)) {
+            return false;
+        }
+        if (kind.isFloor()) {
+            return block instanceof Drill && ((Drill) block).tier >= ore.hardness;
+        }
+        return block instanceof BeamDrill && ((BeamDrill) block).tier >= ore.hardness;
+    }
+
+    public boolean isUnlocked(Block block) {
         if (block == null) {
             return false;
         }
@@ -321,265 +579,97 @@ public class SmartDrillFeature extends Feature {
                 && block.supportsEnv(Vars.state.rules.env);
     }
 
-    private int placeFloorDrill(Tile tile, Direction direction, Drill drill, Item drop) {
-        if (drill.size != 2) {
-            if (Vars.ui != null && Vars.ui.hudfrag != null) {
-                Vars.ui.hudfrag.showToast(Core.bundle.get("feature.smart-drill.unsupported-size",
-                        "Auto-placement for this drill size is not supported yet."));
-            }
-            return 0;
-        }
-        return place2x2Drill(tile, direction, drill, drop);
+    public Readable<List<Schematic>> rigs() {
+        return Signal.computed(this::computeRigs);
     }
 
-    private int place2x2Drill(Tile tile, Direction direction, Block drill, Item drop) {
-        Unit unit = Vars.player != null ? Vars.player.unit() : null;
-        if (unit == null) {
-            return 0;
+    private List<Schematic> computeRigs() {
+        List<Schematic> result = new ArrayList<>();
+        String drill = selectedDrill.get();
+        String file = drill.isEmpty() ? null : bindings.get(drill);
+        if (file == null || Vars.schematics == null) {
+            return result;
         }
-
-        int maxTiles = maxTilesConfig.get();
-        Seq<Tile> tiles = findAllConnectedOreTiles(tile, drop, maxTiles);
-        if (tiles.isEmpty()) {
-            return 0;
-        }
-
-        tiles.retainAll(t -> t.drop() == drop);
-        expandTiles(tiles, 3);
-
-        Seq<Tile> drillTiles = tiles.select(this::isDrillTile);
-        Seq<Tile> bridgeTiles = tiles.select(this::isBridgeTile);
-
-        int placed = 0;
-        for (Tile drillTile : drillTiles) {
-            BuildPlan plan = new BuildPlan(drillTile.x, drillTile.y, direction.rotation, drill);
-            if (plan.placeable(Vars.player.team())) {
-                unit.addBuild(plan);
-                placed++;
+        Seq<Schematic> all = Vars.schematics.all();
+        for (int i = 0; i < all.size; i++) {
+            Schematic schematic = all.get(i);
+            if (schematic != null && schematic.file != null && file.equals(schematic.file.name())) {
+                result.add(schematic);
             }
         }
-
-        Tile outMostTile = tiles.max(t -> {
-            switch (direction) {
-                case UP:
-                    return t.y;
-                case DOWN:
-                    return -t.y;
-                case LEFT:
-                    return -t.x;
-                case RIGHT:
-                    return t.x;
-                default:
-                    return 0;
-            }
-        });
-
-        if (outMostTile != null && !bridgeTiles.isEmpty()) {
-            bridgeTiles.sort(t -> t.dst2(outMostTile));
-            Tile output = bridgeTiles.first().nearby(direction.mul(3));
-            Tile outputBridge = output != null ? output : bridgeTiles.first();
-            bridgeTiles.add(outputBridge);
-            bridgeTiles.sort(t -> t.dst2(outputBridge));
-
-            for (Tile bridgeTile : bridgeTiles) {
-                Tile neighbor = bridgeTiles.find(t -> Math.abs(t.x - bridgeTile.x) + Math.abs(t.y - bridgeTile.y) == 3);
-                Point2 bridgeConfig = new Point2();
-                if (neighbor != null && bridgeTile != outputBridge) {
-                    bridgeConfig.set(neighbor.x - bridgeTile.x, neighbor.y - bridgeTile.y);
-                }
-                BuildPlan plan = new BuildPlan(bridgeTile.x, bridgeTile.y, 0, Blocks.itemBridge, bridgeConfig);
-                if (plan.placeable(Vars.player.team())) {
-                    unit.addBuild(plan);
-                    placed++;
-                }
-            }
-        }
-
-        return placed;
+        return result;
     }
 
-    private int placeBeamDrill(Tile tile, Direction direction, BeamDrill drill, Item drop) {
-        Unit unit = Vars.player != null ? Vars.player.unit() : null;
-        if (unit == null) {
-            return 0;
-        }
-
-        int maxTiles = maxTilesConfig.get();
-        Seq<Tile> ores = findAllConnectedWallOreTiles(tile, drop, maxTiles);
-        if (ores.isEmpty()) {
-            return 0;
-        }
-
-        Direction opposite = direction.opposite();
-        HashMap<Integer, Boolean> hasDrill = new HashMap<>();
-        Seq<BuildPlan> drillPlans = new Seq<>();
-        int half = (drill.size - 1) / 2;
-        int placed = 0;
-
-        for (Tile ore : ores) {
-            int gridx = (ore.x / drill.size) * drill.size;
-            int gridy = (ore.y / drill.size) * drill.size;
-            int key = direction.horizontal() ? gridy : gridx;
-
-            if (hasDrill.containsKey(key)) {
-                continue;
-            }
-            hasDrill.put(key, true);
-
-            for (int i = 1; i < drill.range; i++) {
-                int reach = half + 1;
-                int x = gridx + opposite.mul(i).x + half;
-                int y = gridy + opposite.mul(i).y + half;
-
-                BuildPlan drillPlan = new BuildPlan(x, y, direction.rotation, drill);
-                int nodeOffX = direction.horizontal()
-                        ? (direction == Direction.LEFT ? (reach + (drill.size % 2 == 0 ? 1 : 0)) : -reach)
-                        : 0;
-                int nodeOffY = direction.vertical()
-                        ? reach * (direction == Direction.DOWN ? (reach + (drill.size % 2 == 0 ? 1 : 0)) : -reach)
-                        : 0;
-
-                int ductOffX = nodeOffX == 0 ? 1 : 0;
-                int ductOffY = nodeOffY == 0 ? 1 : 0;
-
-                BuildPlan powerNodePlan = new BuildPlan(x + nodeOffX, y + nodeOffY, direction.rotation,
-                        Blocks.beamNode);
-                BuildPlan drillDuctPlan = new BuildPlan(x + nodeOffX + ductOffX, y + nodeOffY + ductOffY,
-                        opposite.rotation, Blocks.duct);
-
-                if (drillPlan.placeable(Vars.player.team())
-                        && powerNodePlan.placeable(Vars.player.team())
-                        && drillDuctPlan.placeable(Vars.player.team())) {
-                    unit.addBuild(drillPlan);
-                    unit.addBuild(powerNodePlan);
-                    unit.addBuild(drillDuctPlan);
-                    drillPlans.add(drillPlan);
-                    placed += 3;
-                    break;
-                }
-            }
-        }
-
-        return placed;
+    public Readable<Boolean> hasRigs() {
+        return rigs().map(list -> list != null && !list.isEmpty());
     }
 
-    public Seq<Tile> findAllConnectedOreTiles(Tile start, Item drop, int maxTiles) {
-        Seq<Tile> tiles = new Seq<>();
-        Seq<Tile> queue = new Seq<>();
-        ObjectSet<Tile> visited = new ObjectSet<>();
-
-        int centerX = start.x;
-        int centerY = start.y;
-
-        queue.add(start);
-        visited.add(start);
-
-        while (!queue.isEmpty() && tiles.size < maxTiles) {
-            queue.sort(t -> {
-                float dx = Math.abs(t.x - centerX);
-                float dy = Math.abs(t.y - centerY);
-                float diff = Math.abs(dx - dy);
-                return Math.max(dx * dx + diff, dy * dy + diff);
-            });
-
-            Tile tile = queue.remove(0);
-            tiles.add(tile);
-
-            for (int i = 0; i < 4; i++) {
-                Tile neighbor = tile.nearby(i);
-                if (neighbor == null || visited.contains(neighbor)
-                        || (neighbor.drop() != drop && neighbor.wallDrop() != drop)) {
-                    continue;
-                }
-                visited.add(neighbor);
-                queue.add(neighbor);
-            }
-        }
-
-        return tiles;
+    public Readable<String> readout() {
+        return plan.map(result -> Core.bundle.format("feature.smart-drill.panel.readout",
+                result.drillCount, result.coveredOre, result.bridgeCount, result.placedBlocks));
     }
 
-    public Seq<Tile> findAllConnectedWallOreTiles(Tile start, Item drop, int maxTiles) {
-        Seq<Tile> tiles = new Seq<>();
-        Seq<Tile> queue = new Seq<>();
-        ObjectSet<Tile> visited = new ObjectSet<>();
-
-        queue.add(start);
-        visited.add(start);
-
-        while (!queue.isEmpty() && tiles.size < maxTiles) {
-            Tile tile = queue.remove(0);
-            tiles.add(tile);
-
-            for (int x = -1; x <= 1; x++) {
-                for (int y = -1; y <= 1; y++) {
-                    if (x == 0 && y == 0) {
-                        continue;
-                    }
-                    Tile neighbor = tile.nearby(x, y);
-                    if (neighbor == null || visited.contains(neighbor) || neighbor.wallDrop() != drop) {
-                        continue;
-                    }
-                    visited.add(neighbor);
-                    queue.add(neighbor);
-                }
-            }
-        }
-
-        return tiles;
+    public Readable<String> warning() {
+        return plan.map(result -> result.drillCount > WARNING_DRILL_COUNT
+                ? Core.bundle.format("feature.smart-drill.panel.warning", result.drillCount)
+                : "");
     }
 
-    public void expandTiles(Seq<Tile> tiles, int times) {
-        for (int i = 0; i < times; i++) {
-            expandTiles(tiles);
-        }
+    public Readable<Boolean> hasPlan() {
+        return plan.map(result -> result != null && !result.builds.isEmpty());
     }
 
-    private void expandTiles(Seq<Tile> tiles) {
-        Seq<Tile> newTiles = new Seq<>();
-        for (Tile tile : tiles) {
-            for (int i = 0; i < 4; i++) {
-                Tile neighbor = tile.nearby(i);
-                if (neighbor == null || tiles.contains(neighbor)) {
-                    continue;
-                }
-                newTiles.addUnique(neighbor);
-            }
-        }
-        tiles.addAll(newTiles);
+    public Readable<String> rectLabel() {
+        return rect.map(value -> Core.bundle.format("feature.smart-drill.panel.area.size",
+                value.width, value.height));
     }
 
-    public boolean isDrillTile(Tile tile) {
-        switch (tile.x % 6) {
-            case 0:
-            case 2:
-                if ((tile.y - 1) % 6 == 0) {
-                    return true;
-                }
-                break;
-            case 1:
-                if ((tile.y - 3) % 6 == 0 || (tile.y - 3) % 6 == 2) {
-                    return true;
-                }
-                break;
-            case 3:
-            case 5:
-                if ((tile.y - 4) % 6 == 0) {
-                    return true;
-                }
-                break;
-            case 4:
-                if (tile.y % 6 == 0 || tile.y % 6 == 2) {
-                    return true;
-                }
-                break;
-            default:
-                break;
-        }
-        return false;
+    public Readable<String> targetName() {
+        return target.map(value -> value.valid()
+                ? Core.bundle.format("feature.smart-drill.panel.target", oreName(value.ore))
+                : Core.bundle.get("feature.smart-drill.panel.no-target"));
     }
 
-    public boolean isBridgeTile(Tile tile) {
-        return tile.x % 3 == 0 && tile.y % 3 == 0;
+    public Readable<String> targetBadge() {
+        return target.map(value -> value.valid()
+                ? Core.bundle.get(value.kind.isFloor()
+                        ? "feature.smart-drill.panel.target.floor"
+                        : "feature.smart-drill.panel.target.wall")
+                : "");
+    }
+
+    public Drawable targetIcon() {
+        Target current = target.get();
+        Item ore = Vars.content != null && current.valid() ? Vars.content.item(current.ore) : null;
+        return ore != null && ore.fullIcon != null ? new TextureRegionDrawable(ore.fullIcon)
+                : Icon.wrench;
+    }
+
+    private static String oreName(String ore) {
+        Item item = Vars.content != null ? Vars.content.item(ore) : null;
+        return item != null ? item.localizedName : ore;
+    }
+
+    public String getSelectedDrillName() {
+        String drill = selectedDrill.get();
+        Block block = Vars.content != null && !drill.isEmpty() ? Vars.content.block(drill) : null;
+        return block != null ? block.localizedName : "";
+    }
+
+    public Rect getRect() {
+        return rect.get();
+    }
+
+    public DrillPlanResult getPlan() {
+        DrillPlanResult value = plan.get();
+        return value != null ? value : DrillPlanResult.EMPTY;
+    }
+
+    public boolean isPanelOpen() {
+        return Boolean.TRUE.equals(panelOpen.get());
+    }
+
+    public void setSuppressTap(boolean value) {
+        this.suppressTap = value;
     }
 }
