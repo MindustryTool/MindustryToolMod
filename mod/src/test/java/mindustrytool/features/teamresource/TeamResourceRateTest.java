@@ -2,11 +2,15 @@ package mindustrytool.features.teamresource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.sun.management.ThreadMXBean;
+import java.lang.management.ManagementFactory;
 import org.junit.jupiter.api.Test;
 import arc.graphics.Color;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
+import mindustry.content.Items;
+import mindustry.type.Item;
 import mindustrytool.test.MindustryTestEnv;
 
 class TeamResourceRateTest extends MindustryTestEnv {
@@ -249,11 +253,11 @@ class TeamResourceRateTest extends MindustryTestEnv {
 
     @Test
     void testHistoryBufferZeroAllocation() {
-        java.lang.management.ThreadMXBean baseBean = java.lang.management.ManagementFactory.getThreadMXBean();
-        if (!(baseBean instanceof com.sun.management.ThreadMXBean)) {
+        java.lang.management.ThreadMXBean baseBean = ManagementFactory.getThreadMXBean();
+        if (!(baseBean instanceof ThreadMXBean)) {
             return;
         }
-        com.sun.management.ThreadMXBean threadBean = (com.sun.management.ThreadMXBean) baseBean;
+        ThreadMXBean threadBean = (ThreadMXBean) baseBean;
         long threadId = Thread.currentThread().getId();
 
         HistoryBuffer buffer = new HistoryBuffer();
@@ -283,7 +287,7 @@ class TeamResourceRateTest extends MindustryTestEnv {
         TeamResourceFeature feature = new TeamResourceFeature();
         TeamResourceState state = feature.getState();
 
-        mindustry.type.Item testItem = mindustry.content.Items.copper;
+        Item testItem = Items.copper;
         if (testItem == null) {
             return;
         }
