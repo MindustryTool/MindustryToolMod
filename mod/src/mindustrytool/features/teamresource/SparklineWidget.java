@@ -21,12 +21,12 @@ public class SparklineWidget extends Element {
 
     @Override
     public float getPrefWidth() {
-        return 160f;
+        return 250f;
     }
 
     @Override
     public float getPrefHeight() {
-        return 50f;
+        return 70f;
     }
 
     @Override
