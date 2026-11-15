@@ -36,3 +36,9 @@ feature.background.badge.graphics
 feature.chat.badge.communication
 feature.joystick.badge.controls
 feature.god-mode.badge.sandbox
+
+# Universal Mathematical & Degree Notations
+feature.god-mode.block.rotation.deg0
+feature.god-mode.block.rotation.deg90
+feature.god-mode.block.rotation.deg180
+feature.god-mode.block.rotation.deg270

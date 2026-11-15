@@ -10,9 +10,34 @@ import solim.reactive.Signal;
 
 public class WavePreviewState {
     private final Signal<Seq<WaveSectionData>> waves = Signal.of(new Seq<>());
+    private final Signal<Boolean> collapsed = Signal.of(false);
 
     public Readable<Seq<WaveSectionData>> waves() {
         return waves;
+    }
+
+    public void setWaves(Seq<WaveSectionData> waveList) {
+        waves.set(waveList);
+    }
+
+    public Readable<Boolean> collapsed() {
+        return collapsed;
+    }
+
+    public boolean isCollapsed() {
+        return Boolean.TRUE.equals(collapsed.get());
+    }
+
+    public void setCollapsed(boolean value) {
+        collapsed.set(value);
+    }
+
+    public void toggleCollapsed() {
+        Seq<WaveSectionData> currentWaves = waves.get();
+        if (currentWaves == null || currentWaves.size <= 1) {
+            return;
+        }
+        collapsed.set(!isCollapsed());
     }
 
     public void recompute(int currentWave, int depth) {
@@ -90,5 +115,6 @@ public class WavePreviewState {
 
     public void clear() {
         waves.set(new Seq<>());
+        collapsed.set(false);
     }
 }

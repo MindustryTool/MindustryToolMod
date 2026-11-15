@@ -23,7 +23,11 @@ public interface GodModeProvider {
 
     void clearEffect(StatusEffect effect);
 
-    boolean placeCore(Block coreBlock, Team team, float x, float y);
+    default boolean placeCore(Block coreBlock, Team team, float x, float y) {
+        return placeBlock(coreBlock, team, x, y, 0);
+    }
+
+    boolean placeBlock(Block block, Team team, float x, float y, int rotation);
 
     void setFog(boolean enabled);
 }

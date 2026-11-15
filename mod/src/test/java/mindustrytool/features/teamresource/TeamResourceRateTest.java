@@ -2,11 +2,15 @@ package mindustrytool.features.teamresource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.sun.management.ThreadMXBean;
+import java.lang.management.ManagementFactory;
 import org.junit.jupiter.api.Test;
 import arc.graphics.Color;
 import arc.scene.ui.layout.Cell;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
+import mindustry.content.Items;
+import mindustry.type.Item;
 import mindustrytool.test.MindustryTestEnv;
 
 class TeamResourceRateTest extends MindustryTestEnv {
@@ -186,10 +190,112 @@ class TeamResourceRateTest extends MindustryTestEnv {
         assertTrue(state.tickSignal.get() > initialTick);
 
         assertEquals("0", state.getFormattedAmount(null));
-        assertEquals("0/s", state.getFormattedRate(null));
+        assertEquals("", state.getFormattedRate(null));
+        assertEquals("0/s", state.getFullFormattedRate(null));
         assertEquals(Color.gray, state.getRateColor(null));
         assertEquals("", state.getUnitCountText(null));
         assertTrue(state.getFormattedPowerBalance().contains("0"));
         assertTrue(state.getFormattedStoredPower().contains("/"));
+    }
+
+    @Test
+    void testFormatCompactAmount() {
+        assertEquals("0", TeamResourceState.formatCompactAmount(0));
+        assertEquals("100", TeamResourceState.formatCompactAmount(100));
+        assertEquals("999", TeamResourceState.formatCompactAmount(999));
+        assertEquals("1.0k", TeamResourceState.formatCompactAmount(1000));
+        assertEquals("1.2k", TeamResourceState.formatCompactAmount(1200));
+        assertEquals("8.0k", TeamResourceState.formatCompactAmount(8000));
+        assertEquals("15k", TeamResourceState.formatCompactAmount(15000));
+        assertEquals("150k", TeamResourceState.formatCompactAmount(150000));
+        assertEquals("1.2M", TeamResourceState.formatCompactAmount(1200000));
+        assertEquals("15M", TeamResourceState.formatCompactAmount(15000000));
+        assertEquals("-15", TeamResourceState.formatCompactAmount(-15));
+        assertEquals("-500", TeamResourceState.formatCompactAmount(-500));
+        assertEquals("-2.4k", TeamResourceState.formatCompactAmount(-2400));
+        assertEquals("-9.2E", TeamResourceState.formatCompactAmount(Long.MIN_VALUE));
+    }
+
+    @Test
+    void testHistoryBuffer() {
+        HistoryBuffer buffer = new HistoryBuffer();
+        assertEquals(0, buffer.size());
+        assertEquals(0f, buffer.min(), 0.001f);
+        assertEquals(0f, buffer.max(), 0.001f);
+
+        buffer.add(10f);
+        assertEquals(1, buffer.size());
+        assertEquals(10f, buffer.min(), 0.001f);
+        assertEquals(10f, buffer.max(), 0.001f);
+        assertEquals(10f, buffer.latest(), 0.001f);
+
+        buffer.add(25f);
+        buffer.add(5f);
+        assertEquals(3, buffer.size());
+        assertEquals(5f, buffer.min(), 0.001f);
+        assertEquals(25f, buffer.max(), 0.001f);
+        assertEquals(5f, buffer.latest(), 0.001f);
+        assertEquals(10f, buffer.get(0), 0.001f);
+        assertEquals(25f, buffer.get(1), 0.001f);
+        assertEquals(5f, buffer.get(2), 0.001f);
+
+        for (int i = 0; i < 70; i++) {
+            buffer.add(100f + i);
+        }
+        assertEquals(HistoryBuffer.CAPACITY, buffer.size());
+        assertEquals(169f, buffer.latest(), 0.001f);
+        assertEquals(110f, buffer.min(), 0.001f);
+        assertEquals(169f, buffer.max(), 0.001f);
+
+        buffer.clear();
+        assertEquals(0, buffer.size());
+    }
+
+    @Test
+    void testHistoryBufferZeroAllocation() {
+        java.lang.management.ThreadMXBean baseBean = ManagementFactory.getThreadMXBean();
+        if (!(baseBean instanceof ThreadMXBean)) {
+            return;
+        }
+        ThreadMXBean threadBean = (ThreadMXBean) baseBean;
+        long threadId = Thread.currentThread().getId();
+
+        HistoryBuffer buffer = new HistoryBuffer();
+        for (int i = 0; i < 100; i++) {
+            buffer.add((float) i);
+            buffer.get(i % HistoryBuffer.CAPACITY);
+            buffer.min();
+            buffer.max();
+        }
+
+        long startAlloc = threadBean.getThreadAllocatedBytes(threadId);
+        for (int i = 0; i < 1000; i++) {
+            buffer.add((float) i);
+            float v = buffer.get(i % HistoryBuffer.CAPACITY);
+            float min = buffer.min();
+            float max = buffer.max();
+            if (v < min || v > max) {
+                fail();
+            }
+        }
+        long endAlloc = threadBean.getThreadAllocatedBytes(threadId);
+        assertEquals(0L, endAlloc - startAlloc);
+    }
+
+    @Test
+    void testEverSeenItemRetention() {
+        TeamResourceFeature feature = new TeamResourceFeature();
+        TeamResourceState state = feature.getState();
+
+        Item testItem = Items.copper;
+        if (testItem == null) {
+            return;
+        }
+
+        state.getUsedItems().add(testItem);
+        assertTrue(state.getUsedItems().contains(testItem));
+
+        state.update();
+        assertTrue(state.getUsedItems().contains(testItem));
     }
 }

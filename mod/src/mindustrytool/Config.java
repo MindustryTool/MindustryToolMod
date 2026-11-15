@@ -20,6 +20,7 @@ public class Config {
             + "/main/preview/";
 
     public static final String WEB_URL = "https://mindustry-tool.com";
+    public static final String DONATE_URL = WEB_URL + "/donate";
     public static final String UPLOAD_SCHEMATIC_URL = WEB_URL + "/schematics?upload=true";
     public static final String UPLOAD_MAP_URL = WEB_URL + "/maps?upload=true";
     public static final String UPLOAD_PATCH_URL = WEB_URL + "/content-patches?upload=true";

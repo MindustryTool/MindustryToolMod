@@ -287,7 +287,7 @@ The `perf-guideline-for-ai-agents` change records current outstanding violations
 | D9 | `features/blockstats/BlockStatsDisplayFeature.java:276-278` | Boxing ×3 per frame | Deferred |
 | D10 | `features/togglerendering/ToggleRenderingFeature.java:127` | Lambda capture + reflection per frame | Deferred |
 | D11 | `features/autoplay/AutoplayFeature.java:483` | String concat per frame | Deferred |
-| D12 | `features/freecamera/FreeCameraFeature.java:120` | `Core.bundle.get` per frame | Deferred |
+| D12 | `features/freecamera/FreeCameraFeature.java` | `Core.bundle.get` per frame | Fixed |
 | D13 | `features/music/MusicFeature.java:87-101` | Frame work with no `isEnabled()` guard | Deferred |
 | D14 | `features/logicvisualizer/LogicVisualizerFeature.java:104` | Iterates all units, no frustum culling | Deferred |
 | D15 | `features/chat/state/ChatMessages.messages`, `ChatUsers.users` | Grow without trim | Deferred |

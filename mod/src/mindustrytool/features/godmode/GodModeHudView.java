@@ -91,8 +91,8 @@ public class GodModeHudView extends Component {
                     .children(() -> icon(Icon.effect).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)));
 
             button()
-                    .onClick(() -> new GodModeCoreDialog(provider).show())
-                    .props(enabled(canEdit), style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(Core.bundle.get("feature.god-mode.hud.core")))
+                    .onClick(() -> new GodModeBlockDialog(provider).show())
+                    .props(enabled(canEdit), style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize), tooltip(Core.bundle.get("feature.god-mode.hud.block")))
                     .children(() -> icon(Icon.hammer).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize)));
 
             button()

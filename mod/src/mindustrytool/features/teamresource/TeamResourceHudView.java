@@ -6,9 +6,11 @@ import arc.Core;
 import arc.graphics.Color;
 import arc.math.Mathf;
 import arc.scene.Element;
-import arc.scene.event.InputEvent;
-import arc.scene.event.InputListener;
 import arc.scene.style.TextureRegionDrawable;
+import arc.scene.ui.Image;
+import arc.scene.ui.Label;
+import arc.scene.ui.Tooltip;
+import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
 import arc.util.Scaling;
 import mindustry.Vars;
@@ -16,6 +18,7 @@ import mindustry.game.EventType.ResizeEvent;
 import mindustry.game.Team;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
+import mindustry.graphics.Pal;
 import mindustry.type.Item;
 import mindustry.type.UnitType;
 import mindustry.ui.Styles;
@@ -24,7 +27,7 @@ import mindustrytool.features.settings.ModSettings;
 import mindustrytool.ui.dock.MindustryDockRegistry;
 import solim.core.Component;
 import solim.core.EventsUtil;
-import solim.layout.Card;
+import solim.layout.Row;
 import solim.overlay.Hud;
 import solim.reactive.Computed;
 import solim.reactive.Readable;
@@ -35,6 +38,7 @@ public class TeamResourceHudView extends Component {
     private final TeamResourceFeature feature;
     private final TeamResourceState state;
     private @Nullable Hud hud;
+    private float lastHeight = -1f;
 
     public TeamResourceHudView(TeamResourceFeature feature, TeamResourceState state) {
         this.feature = feature;
@@ -69,9 +73,8 @@ public class TeamResourceHudView extends Component {
             Float w = hudWidth.get();
             Float s = scale.get();
             float scaleVal = s != null ? s : 1f;
-            boolean alwaysFlow = Boolean.TRUE.equals(feature.alwaysShowFlowRateConfig.signal().get());
-            float minCardW = (alwaysFlow ? 58f : 50f) * scaleVal;
-            return Math.max(3, (int) ((w != null ? w : 200f) / (minCardW > 0f ? minCardW : 50f)));
+            float minCardW = 50f * scaleVal;
+            return Math.max(2, (int) ((w != null ? w : 200f) / (minCardW > 0f ? minCardW : 50f)));
         });
 
         Readable<Color> bgColor = feature.hideBackgroundConfig.signal()
@@ -81,7 +84,7 @@ public class TeamResourceHudView extends Component {
 
         hud = hud();
         hud.children(() -> {
-            column().props(maxWidth(hudWidth), padding(unit(1.5f)), left(), gap(unit(1.5f))).children(() -> {
+            column().props(width(hudWidth), maxWidth(hudWidth), padding(unit(1.5f)), left(), gap(unit(1.5f))).children(() -> {
 
                 when(feature.hideHeaderConfig.signal())
                         .elseDo(() -> row().props(growX(), gap(unit(1))).children(() -> {
@@ -166,21 +169,44 @@ public class TeamResourceHudView extends Component {
         });
 
         hud.element().update(() -> {
-            if (!hud.element().visible)
+            if (!hud.element().visible) {
                 return;
+            }
             state.update();
+
+            float currentH = hud.element().getHeight();
+            float screenH = TeamResourceFeature.getSceneHeight();
+            if (currentH > 0f && screenH > 0f) {
+                if (lastHeight > 0f && Math.abs(currentH - lastHeight) > 0.5f) {
+                    boolean isUpperHalf = (hud.element().y + lastHeight * 0.5f) > (screenH * 0.5f);
+                    float newY = isUpperHalf ? (hud.element().y + lastHeight - currentH) : hud.element().y;
+                    if (newY + currentH > screenH) {
+                        newY = Math.max(0f, screenH - currentH);
+                    }
+                    if (newY < 0f) {
+                        newY = 0f;
+                    }
+                    if (Math.abs(newY - hud.element().y) > 0.5f) {
+                        hud.element().y = newY;
+                        feature.ySignal.set(newY);
+                    }
+                } else if (lastHeight < 0f) {
+                    if (hud.element().y + currentH > screenH) {
+                        float newY = Math.max(0f, screenH - currentH);
+                        hud.element().y = newY;
+                        feature.ySignal.set(newY);
+                    }
+                }
+                lastHeight = currentH;
+            }
         });
 
         return hud.element();
     }
 
     private Component buildExpandedContent(Readable<Float> scale, Readable<Integer> itemCols) {
-        Readable<Float> itemCardHeight = new Computed<>(() -> {
-            boolean flow = Boolean.TRUE.equals(feature.alwaysShowFlowRateConfig.signal().get());
-            Float s = scale.get();
-            return (flow ? 32f : 24f) * (s != null ? s : 1f);
-        });
-        Readable<Float> unitCardHeight = scale.map(s -> 22f * (s != null ? s : 1f));
+        Readable<Float> itemCardHeight = scale.map(s -> 24f * (s != null ? s : 1f));
+        Readable<Float> unitCardHeight = scale.map(s -> 20f * (s != null ? s : 1f));
         Readable<Float> iconSize = scale.map(s -> 16f * (s != null ? s : 1f));
 
         return column().props(growX(), gap(unit(1))).children(() -> {
@@ -196,7 +222,7 @@ public class TeamResourceHudView extends Component {
                                 .props(growX());
 
                         reactiveGrid(state.usedItemsSignal).columns(itemCols)
-                                .key(item -> item.name).props(growX(), gap(unit(1)))
+                                .key(item -> item.name).props(growX(), gap(unit(1.5f)))
                                 .items(item -> createItemCard(item, itemCardHeight, iconSize, scale));
                     }))
                     .elseDo(() -> row())
@@ -211,7 +237,7 @@ public class TeamResourceHudView extends Component {
                                 .props(growX());
 
                         reactiveGrid(state.usedUnitsSignal).columns(itemCols)
-                                .key(unit -> unit.name).props(growX(), gap(unit(1)))
+                                .key(unit -> unit.name).props(growX(), gap(unit(1.5f)))
                                 .items(unit -> createUnitCard(unit, unitCardHeight, iconSize, scale));
                     }))
                     .elseDo(() -> row())
@@ -226,103 +252,82 @@ public class TeamResourceHudView extends Component {
 
     private Component createItemCard(Item item, Readable<Float> cardHeight, Readable<Float> iconSize,
             Readable<Float> scale) {
-        Card card = card()
-                .props(padding(unit(1f)), rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1f, WebStyles.Colors.BORDER), growX(), height(cardHeight), prefHeight(cardHeight), margin(scale.map(s -> 2f * (s != null ? s : 1f))), onClick(() -> state.setViewingStats(!state.isViewingStats())))
+        Row itemRow = row()
+                .props(padding(unit(0.5f)), left(), height(cardHeight), prefHeight(cardHeight), center(), gap(unit(0.5f)))
                 .children(() -> {
-                    row().props(growX(), gap(unit(1))).children(() -> {
-                        image(new TextureRegionDrawable(item.uiIcon)).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize), scaling(Scaling.fit));
-                        column().props(left()).children(() -> {
-                            text(state.tickSignal.map(t -> state.getFormattedAmount(item)))
-                                    .props(style(Styles.outlineLabel), fontScale(scale.map(s -> 0.72f * (s != null ? s : 1f))));
-                            Readable<String> rateText = new Computed<>(() -> {
-                                state.tickSignal.get();
-                                boolean show = Boolean.TRUE.equals(feature.alwaysShowFlowRateConfig.signal().get())
-                                        || state.isViewingStats();
-                                return show ? state.getFormattedRate(item) : "";
-                            });
-                            text(rateText)
-                                    .props(color(state.tickSignal.map(t -> state.getRateColor(item))), style(Styles.outlineLabel), fontScale(scale.map(s -> 0.60f * (s != null ? s : 1f))));
-                        });
+                    image(new TextureRegionDrawable(item.uiIcon))
+                            .props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize), scaling(Scaling.fit));
+                    column().props(left(), bottom()).children(() -> {
+                        text(state.tickSignal.map(t -> state.getFormattedAmount(item)))
+                                .props(style(Styles.outlineLabel), fontScale(scale.map(s -> 0.70f * (s != null ? s : 1f))));
+                        when(state.tickSignal.map(t -> !state.getFormattedRate(item).isEmpty()))
+                                .thenDo(() -> text(state.tickSignal.map(t -> state.getFormattedRate(item)))
+                                        .props(color(state.tickSignal.map(t -> state.getRateColor(item))),
+                                                style(Styles.outlineLabel),
+                                                fontScale(scale.map(s -> 0.50f * (s != null ? s : 1f))),
+                                                right()))
+                                .elseDo(() -> row());
                     });
                 });
 
-        card.element().addListener(new InputListener() {
-            @Override
-            public void enter(InputEvent event, float x, float y, int pointer, @Nullable Element fromActor) {
-                if (pointer == -1) {
-                    state.setViewingStats(true);
-                    state.clearSnapshot();
-                }
-                super.enter(event, x, y, pointer, fromActor);
-            }
+        itemRow.element().addListener(new Tooltip(table -> {
+            table.background(Styles.black8).margin(8f);
+            table.left();
 
-            @Override
-            public void exit(InputEvent event, float x, float y, int pointer, @Nullable Element toActor) {
-                if (pointer == -1) {
-                    state.setViewingStats(false);
-                    state.clearSnapshot();
-                }
-                super.exit(event, x, y, pointer, toActor);
-            }
-        });
+            Table header = new Table();
+            header.left();
+            header.add(new Image(item.uiIcon)).size(16f).padRight(4f);
 
-        return card;
+            Label amountLabel = new Label("");
+            amountLabel.setColor(Color.white);
+            amountLabel.update(() -> amountLabel.setText(String.valueOf(state.getItemAmount(item))));
+            header.add(amountLabel);
+
+            Label rateLabel = new Label("");
+            rateLabel.update(() -> {
+                rateLabel.setText(" (" + state.getFullFormattedRate(item) + ")");
+                rateLabel.setColor(state.getRateColor(item));
+            });
+            header.add(rateLabel).padLeft(4f);
+            table.add(header).left().row();
+
+            HistoryBuffer history = state.getItemHistory(item);
+            table.add(new SparklineWidget(history, Pal.accent)).left().size(160f, 50f).padTop(4f).row();
+        }));
+
+        return itemRow;
     }
 
     private Component createUnitCard(UnitType type, Readable<Float> cardHeight, Readable<Float> iconSize,
             Readable<Float> scale) {
-        return card()
-                .props(padding(unit(1f)), rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1f, WebStyles.Colors.BORDER), growX(), height(cardHeight), prefHeight(cardHeight), margin(scale.map(s -> 2f * (s != null ? s : 1f))))
+        Row unitRow = row()
+                .props(padding(unit(0.5f)), left(), height(cardHeight), prefHeight(cardHeight), center(), gap(unit(0.5f)))
                 .children(() -> {
-                    row().props(growX(), gap(unit(1))).children(() -> {
-                        image(new TextureRegionDrawable(type.uiIcon)).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize), scaling(Scaling.fit));
-                        text(state.tickSignal.map(t -> state.getUnitCountText(type)))
-                                .props(style(Styles.outlineLabel), fontScale(scale.map(s -> 0.72f * (s != null ? s : 1f))));
-                    });
+                    image(new TextureRegionDrawable(type.uiIcon))
+                            .props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize), scaling(Scaling.fit));
+                    text(state.tickSignal.map(t -> state.getUnitCountText(type)))
+                            .props(style(Styles.outlineLabel), fontScale(scale.map(s -> 0.70f * (s != null ? s : 1f))));
                 });
+
+        unitRow.element().addListener(new Tooltip(table -> {
+            table.background(Styles.black8).margin(6f);
+            table.left();
+            table.add(new Image(type.uiIcon)).size(16f).padRight(4f);
+            table.add(type.localizedName + ": ").color(Color.lightGray);
+            Label countLabel = new Label("");
+            countLabel.setColor(Color.white);
+            countLabel.update(() -> countLabel.setText(state.getUnitCountText(type)));
+            table.add(countLabel);
+        }));
+
+        return unitRow;
     }
 
     private Component createPowerSection(Readable<Float> scale) {
-        Readable<Float> iconSize = scale.map(s -> 14f * (s != null ? s : 1f));
+        Readable<Float> barHeight = scale.map(s -> 18f * (s != null ? s : 1f));
 
-        return card()
-                .props(padding(unit(1.5f)), gap(unit(1)), rounded(unit(2), WebStyles.Colors.SECONDARY_BG), border(1f, WebStyles.Colors.BORDER), growX())
-                .children(() -> {
-                    row().props(left(), growX(), gap(unit(1)), center()).children(() -> {
-                        icon(Icon.power).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize), color(state.tickSignal
-                                .map(t -> state.getTeamGraphs().isEmpty() ? Color.gray : state.getPowerBalanceColor())));
-                        text(state.tickSignal.map(t -> {
-                            if (state.getTeamGraphs().isEmpty()) {
-                                return Core.bundle.get("team-resources.no-power", "No power network");
-                            }
-                            return Core.bundle.get("team-resources.power-prefix", "Power: ")
-                                    + state.getFormattedPowerBalance();
-                        }))
-                                .props(color(state.tickSignal.map(t -> state.getTeamGraphs().isEmpty() ? Color.gray
-                                         : state.getPowerBalanceColor())), style(Styles.outlineLabel), fontScale(scale.map(s -> 0.82f * (s != null ? s : 1f))));
-                    });
-
-                    row().props(growX(), height(scale.map(s -> 20f * (s != null ? s : 1f))), prefHeight(scale.map(s -> 20f * (s != null ? s : 1f))))
-                            .children(() -> new SplitBar(state.getTeamGraphs(), SplitBar.Mode.SATISFACTION,
-                                    () -> scale.peek() != null ? scale.peek() : 1f));
-
-                    when(feature.showStoredPowerConfig.signal())
-                            .thenDo(() -> column(() -> {
-                                row().props(left(), growX(), gap(unit(1)), center()).children(() -> {
-                                    icon(Icon.powerSmall).props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize));
-                                    text(state.tickSignal
-                                             .map(t -> Core.bundle.get("team-resources.stored-prefix", "Stored: ")
-                                                     + state.getFormattedStoredPower()))
-                                             .props(style(Styles.outlineLabel), fontScale(scale.map(s -> 0.80f * (s != null ? s : 1f))));
-                                });
-
-                                row().props(growX(), height(scale.map(s -> 20f * (s != null ? s : 1f))), prefHeight(scale.map(s -> 20f * (s != null ? s : 1f))))
-                                        .children(() -> new SplitBar(state.getTeamGraphs(), SplitBar.Mode.STORED,
-                                                () -> scale.peek() != null ? scale.peek() : 1f));
-                            }).props(growX(), gap(unit(1))))
-                            .elseDo(() -> row())
-                            .props(growX());
-                });
+        return new SplitBar(state, () -> scale.peek() != null ? scale.peek() : 1f)
+                .props(growX(), height(barHeight), prefHeight(barHeight), margin(unit(0.5f)));
     }
 
     public void keepInScreen() {

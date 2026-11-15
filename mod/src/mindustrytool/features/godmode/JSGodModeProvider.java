@@ -65,9 +65,9 @@ public class JSGodModeProvider implements GodModeProvider {
     }
 
     @Override
-    public boolean placeCore(@Nullable Block coreBlock, @Nullable Team team, float x, float y) {
-        if (coreBlock != null && team != null) {
-            js("Vars.world.tileWorld(@, @).setNet(Vars.content.block(@), Team.get(@), 0);", x, y, coreBlock.id, team.id);
+    public boolean placeBlock(@Nullable Block block, @Nullable Team team, float x, float y, int rotation) {
+        if (block != null && team != null) {
+            js("var t = Vars.world.tileWorld(@, @); if(t != null) t.setNet(Vars.content.block(@), Team.get(@), @);", x, y, block.id, team.id, rotation);
             return true;
         }
         return false;

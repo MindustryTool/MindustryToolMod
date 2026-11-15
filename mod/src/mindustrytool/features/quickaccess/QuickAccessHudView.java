@@ -44,6 +44,7 @@ public class QuickAccessHudView extends Component {
 
     private final QuickAccessFeature feature;
     private @Nullable Hud hud;
+    private @Nullable FeatureSettingDialog settingDialog;
 
     public QuickAccessHudView(QuickAccessFeature feature) {
         this.feature = feature;
@@ -171,7 +172,12 @@ public class QuickAccessHudView extends Component {
         } else {
             return button()
                     .props(style(WebStyles.ghost()), size(buttonSize), prefWidth(buttonSize), prefHeight(buttonSize))
-                    .onClick(() -> new FeatureSettingDialog().show())
+                    .onClick(() -> {
+                        if (settingDialog == null) {
+                            settingDialog = new FeatureSettingDialog();
+                        }
+                        settingDialog.show();
+                    })
                     .onLongClick(300L, () -> {
                         Prov<SolimDialog> dlg = feature.getSettingDialog();
                         if (dlg != null) {
@@ -190,5 +196,10 @@ public class QuickAccessHudView extends Component {
         if (hud != null) {
             hud.keepInScreen();
         }
+    }
+
+    @Override
+    protected void onDispose() {
+        settingDialog = null;
     }
 }

@@ -1,19 +1,24 @@
 package mindustrytool.features.teamresource;
+
 import static solim.UI.*;
 
-
+import arc.Core;
 import arc.func.Floatp;
 import arc.graphics.Color;
 import arc.graphics.g2d.Draw;
 import arc.graphics.g2d.Font;
 import arc.graphics.g2d.GlyphLayout;
+import arc.math.Mathf;
 import arc.scene.Element;
+import arc.scene.ui.Label;
+import arc.scene.ui.Tooltip;
+import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
 import arc.util.Nullable;
-import mindustry.core.UI;
 import mindustry.gen.Tex;
 import mindustry.graphics.Pal;
 import mindustry.ui.Fonts;
+import mindustry.ui.Styles;
 import mindustry.world.blocks.power.PowerGraph;
 import solim.core.SolimElement;
 
@@ -23,7 +28,13 @@ public class SplitBar extends SolimElement {
 
     public enum Mode {
         SATISFACTION,
-        STORED
+        STORED,
+        UNIFIED
+    }
+
+    public SplitBar(TeamResourceState state, @Nullable Floatp scaleSupplier) {
+        bar = new Bar(state, scaleSupplier);
+        props(growX());
     }
 
     public SplitBar(Seq<PowerGraph> graphs, Mode mode, float fontScale) {
@@ -42,17 +53,68 @@ public class SplitBar extends SolimElement {
 
     private static final class Bar extends Element {
 
+        private final @Nullable TeamResourceState state;
         private final Seq<PowerGraph> graphs;
         private final Mode mode;
         private final float fontScale;
         private final @Nullable Floatp scaleSupplier;
         private final GlyphLayout layout = new GlyphLayout();
 
+        Bar(TeamResourceState state, @Nullable Floatp scaleSupplier) {
+            this.state = state;
+            this.graphs = state.getTeamGraphs();
+            this.mode = Mode.UNIFIED;
+            this.scaleSupplier = scaleSupplier;
+            this.fontScale = scaleSupplier != null ? scaleSupplier.get() : 1f;
+            attachTooltip();
+        }
+
         Bar(Seq<PowerGraph> graphs, Mode mode, @Nullable Floatp scaleSupplier) {
+            this.state = null;
             this.graphs = graphs;
             this.mode = mode;
             this.scaleSupplier = scaleSupplier;
             this.fontScale = scaleSupplier != null ? scaleSupplier.get() : 1f;
+        }
+
+        private void attachTooltip() {
+            if (state == null) {
+                return;
+            }
+            addListener(new Tooltip(table -> {
+                table.background(Styles.black8).margin(8f);
+                table.left();
+
+                Table header = new Table();
+                header.add("Power: ").color(Color.lightGray);
+
+                Label storedLabel = new Label("");
+                storedLabel.setColor(Color.white);
+                storedLabel.update(() -> {
+                    float stored = state.getTotalStoredPower();
+                    float cap = state.getTotalPowerCapacity();
+                    if (Float.isNaN(stored) || Float.isInfinite(stored) || stored < 0f) stored = 0f;
+                    if (Float.isNaN(cap) || Float.isInfinite(cap) || cap < 0f) cap = 0f;
+                    storedLabel.setText(TeamResourceState.formatCompactAmount((long) stored)
+                            + " / " + TeamResourceState.formatCompactAmount((long) cap));
+                });
+                header.add(storedLabel);
+
+                Label balanceLabel = new Label("");
+                balanceLabel.update(() -> {
+                    float balance = state.getTotalPowerBalance();
+                    float secBalance = balance * 60f;
+                    if (Float.isNaN(secBalance) || Float.isInfinite(secBalance)) secBalance = 0f;
+                    balanceLabel.setText(" (" + (secBalance >= 0f ? "+" : "")
+                            + TeamResourceState.formatCompactAmount((long) secBalance) + "/s)");
+                    balanceLabel.setColor(balance >= 0f ? Pal.heal : Pal.remove);
+                });
+                header.add(balanceLabel);
+                table.add(header).left().row();
+
+                HistoryBuffer powerHistory = state.getTotalPowerHistory();
+                table.add(new SparklineWidget(powerHistory, Pal.powerBar)).left().size(160f, 50f).padTop(4f).row();
+            }));
         }
 
         @Override
@@ -76,16 +138,28 @@ public class SplitBar extends SolimElement {
             Draw.color(Color.black);
             Tex.whiteui.draw(x, y, width, height);
 
-            if (graphs.isEmpty()) {
-                return;
-            }
-
             float totalWeight = 0f;
-            for (PowerGraph graph : graphs) {
-                totalWeight += getWeight(graph);
+            for (int i = 0; i < graphs.size; i++) {
+                totalWeight += getWeight(graphs.get(i));
             }
 
-            if (totalWeight <= 0.0001f) {
+            if (graphs.isEmpty() || totalWeight <= 0.0001f) {
+                Font font = Fonts.outline;
+                float originalScaleX = font.getScaleX();
+                float originalScaleY = font.getScaleY();
+                try {
+                    float currentScale = scale();
+                    font.getData().setScale(originalScaleX * currentScale * 0.70f, originalScaleY * currentScale * 0.70f);
+                    font.setColor(Color.gray);
+                    String msg = Core.bundle.get("team-resources.no-power", "No power network");
+                    layout.setText(font, msg);
+                    if (layout.width < width - 4f) {
+                        font.draw(msg, x + width / 2f - layout.width / 2f, y + height / 2f + layout.height / 2f);
+                    }
+                } finally {
+                    font.getData().setScale(originalScaleX, originalScaleY);
+                }
+                Draw.reset();
                 return;
             }
 
@@ -97,7 +171,7 @@ public class SplitBar extends SolimElement {
 
             try {
                 float currentScale = scale();
-                font.getData().setScale(originalScaleX * currentScale * 0.8f, originalScaleY * currentScale * 0.8f);
+                font.getData().setScale(originalScaleX * currentScale * 0.72f, originalScaleY * currentScale * 0.72f);
 
                 for (int i = 0; i < graphs.size; i++) {
                     PowerGraph graph = graphs.get(i);
@@ -106,25 +180,28 @@ public class SplitBar extends SolimElement {
                         continue;
                     }
 
-                    float sectionWidth = width * (weight / totalWeight);
-                    float fraction = getFraction(graph);
+                    float rawWidth = width * (weight / totalWeight);
+                    float sectionWidth = (i == graphs.size - 1) ? Math.max(0f, (x + width) - currentX) : Math.min(rawWidth, (x + width) - currentX);
+                    if (sectionWidth <= 0f) {
+                        continue;
+                    }
 
-                    if (fraction > 0.01f) {
-                        if (mode == Mode.SATISFACTION && graph.getPowerBalance() < 0f) {
-                            Draw.color(Color.scarlet);
+                    float fraction = getFraction(graph);
+                    if (fraction > 0.001f) {
+                        if (graph.getPowerBalance() < 0f) {
+                            Draw.color(Pal.remove);
                         } else {
                             Draw.color(Pal.powerBar);
                         }
 
-                        float fillWidth = sectionWidth * fraction;
+                        float fillWidth = Mathf.clamp(sectionWidth * fraction, 0f, sectionWidth);
                         if (fillWidth > 0.5f) {
                             Tex.whiteui.draw(currentX, y, fillWidth, height);
                         }
                     }
 
                     if (i < graphs.size - 1) {
-                        Draw.color(Color.black);
-                        Draw.alpha(0.5f);
+                        Draw.color(Color.black, 0.7f);
                         Tex.whiteui.draw(currentX + sectionWidth - 1f, y, 2f, height);
                     }
 
@@ -132,7 +209,7 @@ public class SplitBar extends SolimElement {
                     if (!text.isEmpty()) {
                         layout.setText(font, text);
 
-                        if (layout.width < sectionWidth - 4f) {
+                        if (layout.width < sectionWidth - 6f) {
                             font.setColor(Color.white);
                             font.draw(text, currentX + sectionWidth / 2f - layout.width / 2f,
                                     y + height / 2f + layout.height / 2f);
@@ -151,26 +228,41 @@ public class SplitBar extends SolimElement {
         private float getWeight(PowerGraph graph) {
             if (mode == Mode.SATISFACTION) {
                 return Math.max(graph.getLastPowerProduced(), graph.getLastPowerNeeded());
-            } else {
-                return graph.getLastCapacity();
             }
+            float cap = graph.getLastCapacity();
+            if (cap > 0f) {
+                return cap;
+            }
+            return Math.max(1f, Math.max(graph.getLastPowerProduced(), graph.getLastPowerNeeded()));
         }
 
         private float getFraction(PowerGraph graph) {
             if (mode == Mode.SATISFACTION) {
-                return graph.getSatisfaction();
-            } else {
-                return graph.getLastCapacity() <= 0f ? 0f : graph.getLastPowerStored() / graph.getLastCapacity();
+                return Mathf.clamp(graph.getSatisfaction());
             }
+            float cap = graph.getLastCapacity();
+            if (cap > 0f) {
+                return Mathf.clamp(graph.getLastPowerStored() / cap);
+            }
+            return Mathf.clamp(graph.getSatisfaction());
         }
 
         private String getSectionText(PowerGraph graph) {
-            if (mode == Mode.SATISFACTION) {
-                float balance = graph.getPowerBalance();
-                return (balance >= 0f ? "+" : "") + UI.formatAmount((long) (balance * 60f));
-            } else {
-                return UI.formatAmount((long) graph.getLastPowerStored());
+            float balance = graph.getPowerBalance();
+            if (Float.isNaN(balance) || Float.isInfinite(balance)) {
+                balance = 0f;
             }
+            if (mode == Mode.SATISFACTION) {
+                return (balance >= 0f ? "+" : "") + TeamResourceState.formatCompactAmount((long) (balance * 60f));
+            }
+            float balancePerSec = balance * 60f;
+            float stored = graph.getLastPowerStored();
+            if (Float.isNaN(stored) || Float.isInfinite(stored) || stored < 0f) {
+                stored = 0f;
+            }
+            String storedStr = TeamResourceState.formatCompactAmount((long) stored);
+            String netStr = (balancePerSec >= 0f ? "+" : "") + TeamResourceState.formatCompactAmount((long) balancePerSec);
+            return storedStr + " " + netStr;
         }
     }
 }

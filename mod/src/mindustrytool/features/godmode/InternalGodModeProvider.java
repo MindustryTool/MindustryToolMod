@@ -13,7 +13,6 @@ import mindustry.type.StatusEffect;
 import mindustry.type.UnitType;
 import mindustry.world.Block;
 import mindustry.world.Tile;
-import mindustry.world.blocks.storage.CoreBlock;
 
 public class InternalGodModeProvider implements GodModeProvider {
 
@@ -71,24 +70,15 @@ public class InternalGodModeProvider implements GodModeProvider {
     }
 
     @Override
-    public boolean placeCore(@Nullable Block coreBlock, @Nullable Team team, float x, float y) {
-        if (coreBlock == null || team == null || !(coreBlock instanceof CoreBlock)) {
+    public boolean placeBlock(@Nullable Block block, @Nullable Team team, float x, float y, int rotation) {
+        if (block == null || team == null || Vars.world == null) {
             return false;
         }
         Tile tile = Vars.world.tileWorld(x, y);
         if (tile == null) {
             return false;
         }
-        int offset = -(coreBlock.size - 1) / 2;
-        for (int dx = 0; dx < coreBlock.size; dx++) {
-            for (int dy = 0; dy < coreBlock.size; dy++) {
-                Tile t = Vars.world.tile(tile.x + offset + dx, tile.y + offset + dy);
-                if (t == null || t.solid()) {
-                    return false;
-                }
-            }
-        }
-        tile.setNet(coreBlock, team, 0);
+        tile.setNet(block, team, rotation);
         return true;
     }
 

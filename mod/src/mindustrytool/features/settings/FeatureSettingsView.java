@@ -8,8 +8,10 @@ import arc.scene.Element;
 import arc.struct.Seq;
 import java.util.Set;
 import mindustry.gen.Icon;
+import mindustry.graphics.Pal;
 import mindustry.ui.Styles;
 import mindustrytool.Config;
+import mindustrytool.components.FileIcon;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.Feature;
 import mindustrytool.features.FeatureManager;
@@ -18,10 +20,15 @@ import mindustrytool.features.web.WebFeatureCard;
 import solim.core.Units;
 import solim.core.Component;
 import solim.reactive.Computed;
+import solim.reactive.Effect;
 import solim.reactive.Signal;
 
 public final class FeatureSettingsView extends Component {
+    private static final int INITIAL_BATCH = 6;
+    private static final int BATCH_SIZE = 6;
+
     private final Signal<String> filter = Signal.of("");
+    private final Signal<Integer> visibleCount = Signal.of(INITIAL_BATCH);
 
     @Override
     protected Element build() {
@@ -56,13 +63,50 @@ public final class FeatureSettingsView extends Component {
             return all.select(f -> !favs.contains(f.getMetadata().getId()));
         });
 
+        Computed<Seq<Feature>> visibleStandardFeatures = Signal.computed(() -> {
+            Seq<Feature> all = standardFeatures.get();
+            if (all == null) {
+                return new Seq<>();
+            }
+            String q = filter.get();
+            if (q != null && !q.trim().isEmpty()) {
+                return all;
+            }
+            int limit = visibleCount.get();
+            if (all.size <= limit) {
+                return all;
+            }
+            Seq<Feature> slice = new Seq<>(limit);
+            for (int i = 0; i < limit; i++) {
+                slice.add(all.get(i));
+            }
+            return slice;
+        });
+
+        Effect.of(() -> {
+            Seq<Feature> all = standardFeatures.get();
+            String q = filter.get();
+            if (q != null && !q.trim().isEmpty()) {
+                return;
+            }
+            int total = all != null ? all.size : 0;
+            int current = visibleCount.get();
+            if (current < total) {
+                Core.app.post(() -> {
+                    if (!isDisposed() && visibleCount.peek() < total) {
+                        visibleCount.set(Math.min(total, visibleCount.peek() + BATCH_SIZE));
+                    }
+                });
+            }
+        });
+
         Computed<Boolean> reorderAllowed = filter.map(q -> q == null || q.trim().isEmpty());
 
         Computed<Seq<WebFeature>> filteredWebFeatures = filter.map(
                 q -> WebFeature.defaults.select(w -> matchesWebFilter(w, q != null ? q.trim().toLowerCase() : "")));
 
         Computed<Boolean> hasFavorites = favoritedFeatures.map(seq -> seq != null && !seq.isEmpty());
-        Computed<Boolean> hasStandardFeatures = standardFeatures.map(seq -> seq != null && !seq.isEmpty());
+        Computed<Boolean> hasStandardFeatures = visibleStandardFeatures.map(seq -> seq != null && !seq.isEmpty());
         Computed<Boolean> hasFeatures = Signal.computed(
                 () -> Boolean.TRUE.equals(hasFavorites.get()) || Boolean.TRUE.equals(hasStandardFeatures.get()));
         Computed<Boolean> hasWebFeatures = filteredWebFeatures.map(seq -> seq != null && !seq.isEmpty());
@@ -97,7 +141,7 @@ public final class FeatureSettingsView extends Component {
                             text(Core.bundle.get("feature.section.mod-features", "Mod Features"))
                                     .props(style(Styles.defaultLabel), left());
                         });
-                        reactiveGrid(standardFeatures).columns(columnCount)
+                        reactiveGrid(visibleStandardFeatures).columns(columnCount)
                                 .key(feature -> feature.getMetadata().getId())
                                 .props(gap(unit(2)))
                                 .items(feature -> new FeatureCard(feature, reorderAllowed));
@@ -143,6 +187,13 @@ public final class FeatureSettingsView extends Component {
                         .children(() -> {
                             icon(Icon.link).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)));
                             text(Core.bundle.get("feature.button.create-suggestion"));
+                        });
+
+                button(() -> Core.app.openURI(Config.DONATE_URL))
+                        .props(style(WebStyles.secondary()), height(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.button.donate.tooltip")), gap(unit(2)))
+                        .children(() -> {
+                            icon(FileIcon.of("heart.png")).props(size(unit(6)), prefWidth(unit(6)), prefHeight(unit(6)), color(Pal.accent));
+                            text(Core.bundle.get("feature.button.donate"));
                         });
 
                 button(() -> new GeneralSettingsDialog().show()).props(style(WebStyles.primary()), height(unit(11)), prefHeight(unit(11)), tooltip(Core.bundle.get("feature.button.settings")), gap(unit(2))).children(() -> {

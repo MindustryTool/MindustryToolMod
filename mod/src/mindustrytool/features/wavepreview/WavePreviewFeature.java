@@ -51,6 +51,7 @@ public class WavePreviewFeature extends Feature {
 
         Events.run(WorldLoadEvent.class, () -> Core.app.post(() -> {
             if (isEnabled()) {
+                state.setCollapsed(false);
                 injectPanel();
             }
         }));

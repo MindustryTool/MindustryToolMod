@@ -34,11 +34,23 @@ The system SHALL synchronize the active room directory in real time by managing 
 - **THEN** the custom provider is validated, added to the provider list, and persisted in `Core.settings`
 
 ### Requirement: Declarative Solim Host and Manage Dialogs
-The system SHALL provide declarative Solim dialogs for hosting and managing relay rooms. `HostRoomDialog` SHALL guide the user through setting the room name, password, max player limit, auto-accept toggle, and selecting a relay server provider with live ping checks. `ManageRoomDialog` SHALL display active room status, a button to copy the join link to the clipboard, and a button to close the room. A button in Mindustry's pause menu (`Vars.ui.paused`) SHALL dynamically open `HostRoomDialog` or `ManageRoomDialog` depending on whether a room is currently active.
+The system SHALL provide declarative Solim dialogs for hosting and managing relay rooms. `HostRoomDialog` SHALL guide the user through setting the room name, password, max player limit, auto-accept toggle, and selecting a relay server provider with live concurrent ping checks. The provider list SHALL reactively observe provider updates. Provider pings SHALL execute concurrently via raw TCP socket handshakes with an 8-second timeout, displaying latency independently as each server responds. Custom relay providers SHALL display a delete button that prompts for confirmation before removing the provider. `ManageRoomDialog` SHALL display active room status, a button to copy the join link to the clipboard, and a button to close the room. A button in Mindustry's pause menu (`Vars.ui.paused`) SHALL dynamically open `HostRoomDialog` or `ManageRoomDialog` depending on whether a room is currently active.
 
 #### Scenario: Host room dialog configuration
 - **WHEN** the host opens `HostRoomDialog`
 - **THEN** room configurations (name, password, max players, auto-accept) are bound to reactive inputs, and the provider list displays live ping status for each server
+
+#### Scenario: Concurrent provider pinging
+- **WHEN** the provider selection screen in `HostRoomDialog` is shown or refreshed
+- **THEN** all providers are pinged concurrently using TCP socket connections with an 8-second timeout, and each provider displays its ping in milliseconds as soon as its handshake completes without waiting for other providers
+
+#### Scenario: Provider ping timeout
+- **WHEN** a relay provider does not complete the TCP connection within 8 seconds
+- **THEN** that provider's ping status updates to timeout independently without blocking other providers
+
+#### Scenario: Removing a custom provider
+- **WHEN** a user clicks the delete button on a custom provider card and confirms the prompt
+- **THEN** the provider is removed from settings, the reactive provider list updates immediately, and any active selection on that provider is cleared
 
 #### Scenario: Pause menu button state
 - **WHEN** the game is paused while hosting a room
@@ -101,3 +113,4 @@ The system MUST retrieve passwords using per-room string keys.
 #### Scenario: Retrieve password
 - **WHEN** user opens a room prompt that requires a password
 - **THEN** system populates the password field with the saved password if available
+

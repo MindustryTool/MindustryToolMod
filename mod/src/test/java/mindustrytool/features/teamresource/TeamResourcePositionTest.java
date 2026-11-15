@@ -252,6 +252,52 @@ class TeamResourcePositionTest extends MindustryTestEnv {
     }
 
     @Test
+    void testTopAnchoredGrowthWhenHeightChanges() {
+        mockGraphics.width = 1000;
+        mockGraphics.height = 800;
+        Scl.setProduct(1.0f);
+
+        TeamResourceFeature feature = new TeamResourceFeature();
+        feature.onEnable();
+        Element root = feature.getHudView().element();
+        root.validate();
+
+        feature.yConfig.set(600f);
+        root.y = 600f;
+        root.validate();
+        root.act(0.1f);
+
+        float initialY = root.y;
+        float initialH = root.getHeight();
+        float initialTop = initialY + initialH;
+
+        root.setHeight(initialH + 60f);
+        root.act(0.1f);
+
+        assertEquals(initialTop, root.y + root.getHeight(), 1.0f);
+        assertEquals(initialY - 60f, root.y, 1.0f);
+        assertEquals(initialY - 60f, feature.y(), 1.0f);
+    }
+
+    @Test
+    void testInitialLoadClampsDownWhenTopExceedsScreen() {
+        mockGraphics.width = 1000;
+        mockGraphics.height = 800;
+        Scl.setProduct(1.0f);
+
+        TeamResourceFeature feature = new TeamResourceFeature();
+        feature.yConfig.set(750f);
+        feature.onEnable();
+        Element root = feature.getHudView().element();
+        root.setHeight(150f);
+        root.act(0.1f);
+
+        assertTrue(root.y + root.getHeight() <= 800f);
+        assertEquals(800f - 150f, root.y, 1.0f);
+        assertEquals(800f - 150f, feature.y(), 1.0f);
+    }
+
+    @Test
     void testLayoutPrefWidthWithItems() {
         mockGraphics.width = 1000;
         mockGraphics.height = 800;
