@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import arc.Events;
 import arc.func.Cons;
 import arc.struct.Seq;
 import arc.util.Nullable;
@@ -12,6 +13,7 @@ import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import mindustry.Vars;
+import mindustry.game.EventType.ResetEvent;
 import mindustry.gen.Icon;
 import mindustry.gen.Player;
 import arc.scene.style.TextureRegionDrawable;
@@ -61,7 +63,7 @@ class PlayerConnectRoomLifetimeTest extends MindustryTestEnv {
     @Test
     void closeRoomDoesNotNotifyWhenNoRoomWasActive() {
         AtomicInteger closedEvents = new AtomicInteger();
-        arc.Events.on(PcRoomClosed.class, event -> closedEvents.incrementAndGet());
+        Events.on(PcRoomClosed.class, event -> closedEvents.incrementAndGet());
 
         feature.closeRoom();
         feature.closeRoom();
@@ -75,9 +77,9 @@ class PlayerConnectRoomLifetimeTest extends MindustryTestEnv {
     @Test
     void worldReloadDoesNotCloseTheRoom() {
         AtomicInteger closedEvents = new AtomicInteger();
-        arc.Events.on(PcRoomClosed.class, event -> closedEvents.incrementAndGet());
+        Events.on(PcRoomClosed.class, event -> closedEvents.incrementAndGet());
 
-        arc.Events.fire(new mindustry.game.EventType.ResetEvent());
+        Events.fire(new ResetEvent());
 
         assertEquals(0, closedEvents.get(),
                 "A world reload such as a campaign map change must not close the relay room");
