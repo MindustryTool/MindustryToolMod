@@ -8,6 +8,7 @@ import arc.math.Mathf;
 import arc.scene.Element;
 import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.Image;
+import arc.scene.ui.Label;
 import arc.scene.ui.Tooltip;
 import arc.scene.ui.layout.Table;
 import arc.util.Nullable;
@@ -71,8 +72,8 @@ public class TeamResourceHudView extends Component {
             Float w = hudWidth.get();
             Float s = scale.get();
             float scaleVal = s != null ? s : 1f;
-            float minCardW = 54f * scaleVal;
-            return Math.max(3, (int) ((w != null ? w : 200f) / (minCardW > 0f ? minCardW : 54f)));
+            float minCardW = 46f * scaleVal;
+            return Math.max(2, (int) ((w != null ? w : 200f) / (minCardW > 0f ? minCardW : 46f)));
         });
 
         Readable<Color> bgColor = feature.hideBackgroundConfig.signal()
@@ -82,7 +83,7 @@ public class TeamResourceHudView extends Component {
 
         hud = hud();
         hud.children(() -> {
-            column().props(maxWidth(hudWidth), padding(unit(1.5f)), left(), gap(unit(1.5f))).children(() -> {
+            column().props(width(hudWidth), maxWidth(hudWidth), padding(unit(1.5f)), left(), gap(unit(1.5f))).children(() -> {
 
                 when(feature.hideHeaderConfig.signal())
                         .elseDo(() -> row().props(growX(), gap(unit(1))).children(() -> {
@@ -176,7 +177,7 @@ public class TeamResourceHudView extends Component {
     }
 
     private Component buildExpandedContent(Readable<Float> scale, Readable<Integer> itemCols) {
-        Readable<Float> itemCardHeight = scale.map(s -> 22f * (s != null ? s : 1f));
+        Readable<Float> itemCardHeight = scale.map(s -> 24f * (s != null ? s : 1f));
         Readable<Float> unitCardHeight = scale.map(s -> 20f * (s != null ? s : 1f));
         Readable<Float> iconSize = scale.map(s -> 16f * (s != null ? s : 1f));
 
@@ -224,40 +225,44 @@ public class TeamResourceHudView extends Component {
     private Component createItemCard(Item item, Readable<Float> cardHeight, Readable<Float> iconSize,
             Readable<Float> scale) {
         Row itemRow = row()
-                .props(padding(unit(0.5f)), left(), height(cardHeight), prefHeight(cardHeight), center(), gap(unit(0.5f)))
+                .props(padding(unit(0.25f)), left(), height(cardHeight), prefHeight(cardHeight), center(), gap(unit(0.5f)))
                 .children(() -> {
                     image(new TextureRegionDrawable(item.uiIcon))
                             .props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize), scaling(Scaling.fit));
-                    row().props(bottom(), left(), gap(unit(0.5f))).children(() -> {
+                    column().props(left(), bottom()).children(() -> {
                         text(state.tickSignal.map(t -> state.getFormattedAmount(item)))
-                                .props(style(Styles.outlineLabel), fontScale(scale.map(s -> 0.72f * (s != null ? s : 1f))));
-                        text(state.tickSignal.map(t -> state.getFormattedRate(item)))
-                                .props(color(state.tickSignal.map(t -> state.getRateColor(item))),
-                                        style(Styles.outlineLabel),
-                                        fontScale(scale.map(s -> 0.55f * (s != null ? s : 1f))));
+                                .props(style(Styles.outlineLabel), fontScale(scale.map(s -> 0.70f * (s != null ? s : 1f))));
+                        when(state.tickSignal.map(t -> !state.getFormattedRate(item).isEmpty()))
+                                .thenDo(() -> text(state.tickSignal.map(t -> state.getFormattedRate(item)))
+                                        .props(color(state.tickSignal.map(t -> state.getRateColor(item))),
+                                                style(Styles.outlineLabel),
+                                                fontScale(scale.map(s -> 0.50f * (s != null ? s : 1f))),
+                                                right()))
+                                .elseDo(() -> row());
                     });
                 });
 
         itemRow.element().addListener(new Tooltip(table -> {
             table.background(Styles.black8).margin(8f);
-            table.update(() -> {
-                table.clearChildren();
-                table.left();
+            table.left();
 
-                Table header = new Table();
-                header.add(new Image(item.uiIcon)).size(16f).padRight(4f);
-                header.add(item.localizedName + ": ").color(Color.lightGray);
-                header.add(String.valueOf(state.getItemAmount(item))).color(Color.white);
+            Table header = new Table();
+            header.add(new Image(item.uiIcon)).size(16f).padRight(4f);
+            header.add(item.localizedName + ": ").color(Color.lightGray);
 
-                String fullRate = state.getFullFormattedRate(item);
-                header.add(" (" + fullRate + ")").color(state.getRateColor(item)).padLeft(4f);
-                table.add(header).left().row();
+            Label amountLabel = new Label(() -> String.valueOf(state.getItemAmount(item)));
+            amountLabel.setColor(Color.white);
+            header.add(amountLabel);
 
-                HistoryBuffer history = state.getItemHistory(item);
-                if (history != null && history.size() > 1) {
-                    table.add(new SparklineWidget(history, Pal.accent)).padTop(4f).row();
-                }
-            });
+            Label rateLabel = new Label(() -> " (" + state.getFullFormattedRate(item) + ")");
+            rateLabel.update(() -> rateLabel.setColor(state.getRateColor(item)));
+            header.add(rateLabel).padLeft(4f);
+            table.add(header).left().row();
+
+            HistoryBuffer history = state.getItemHistory(item);
+            if (history != null) {
+                table.add(new SparklineWidget(history, Pal.accent)).padTop(4f).row();
+            }
         }));
 
         return itemRow;
@@ -266,23 +271,22 @@ public class TeamResourceHudView extends Component {
     private Component createUnitCard(UnitType type, Readable<Float> cardHeight, Readable<Float> iconSize,
             Readable<Float> scale) {
         Row unitRow = row()
-                .props(padding(unit(0.5f)), left(), height(cardHeight), prefHeight(cardHeight), center(), gap(unit(0.5f)))
+                .props(padding(unit(0.25f)), left(), height(cardHeight), prefHeight(cardHeight), center(), gap(unit(0.5f)))
                 .children(() -> {
                     image(new TextureRegionDrawable(type.uiIcon))
                             .props(size(iconSize), prefWidth(iconSize), prefHeight(iconSize), scaling(Scaling.fit));
                     text(state.tickSignal.map(t -> state.getUnitCountText(type)))
-                            .props(style(Styles.outlineLabel), fontScale(scale.map(s -> 0.72f * (s != null ? s : 1f))));
+                            .props(style(Styles.outlineLabel), fontScale(scale.map(s -> 0.70f * (s != null ? s : 1f))));
                 });
 
         unitRow.element().addListener(new Tooltip(table -> {
             table.background(Styles.black8).margin(6f);
-            table.update(() -> {
-                table.clearChildren();
-                table.left();
-                table.add(new Image(type.uiIcon)).size(16f).padRight(4f);
-                table.add(type.localizedName + ": ").color(Color.lightGray);
-                table.add(state.getUnitCountText(type)).color(Color.white);
-            });
+            table.left();
+            table.add(new Image(type.uiIcon)).size(16f).padRight(4f);
+            table.add(type.localizedName + ": ").color(Color.lightGray);
+            Label countLabel = new Label(() -> state.getUnitCountText(type));
+            countLabel.setColor(Color.white);
+            table.add(countLabel);
         }));
 
         return unitRow;
@@ -291,9 +295,8 @@ public class TeamResourceHudView extends Component {
     private Component createPowerSection(Readable<Float> scale) {
         Readable<Float> barHeight = scale.map(s -> 18f * (s != null ? s : 1f));
 
-        return row()
-                .props(growX(), height(barHeight), prefHeight(barHeight), margin(unit(0.5f)))
-                .children(() -> new SplitBar(state, () -> scale.peek() != null ? scale.peek() : 1f));
+        return new SplitBar(state, () -> scale.peek() != null ? scale.peek() : 1f)
+                .props(growX(), height(barHeight), prefHeight(barHeight), margin(unit(0.5f)));
     }
 
     public void keepInScreen() {

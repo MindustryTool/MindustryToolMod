@@ -207,6 +207,9 @@ class TeamResourceRateTest extends MindustryTestEnv {
         assertEquals("1.2M", TeamResourceState.formatCompactAmount(1200000));
         assertEquals("15M", TeamResourceState.formatCompactAmount(15000000));
         assertEquals("-15", TeamResourceState.formatCompactAmount(-15));
+        assertEquals("-500", TeamResourceState.formatCompactAmount(-500));
+        assertEquals("-2.4k", TeamResourceState.formatCompactAmount(-2400));
+        assertEquals("-9.2E", TeamResourceState.formatCompactAmount(Long.MIN_VALUE));
     }
 
     @Test

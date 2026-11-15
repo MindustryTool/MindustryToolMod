@@ -10,6 +10,7 @@ import arc.graphics.g2d.Font;
 import arc.graphics.g2d.GlyphLayout;
 import arc.math.Mathf;
 import arc.scene.Element;
+import arc.scene.ui.Label;
 import arc.scene.ui.Tooltip;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
@@ -82,31 +83,37 @@ public class SplitBar extends SolimElement {
             }
             addListener(new Tooltip(table -> {
                 table.background(Styles.black8).margin(8f);
-                table.update(() -> {
-                    table.clearChildren();
-                    table.left();
+                table.left();
 
+                Table header = new Table();
+                header.add("Power: ").color(Color.lightGray);
+
+                Label storedLabel = new Label(() -> {
                     float stored = state.getTotalStoredPower();
                     float cap = state.getTotalPowerCapacity();
-                    float balance = state.getTotalPowerBalance() * 60f;
-
-                    String storedText = TeamResourceState.formatCompactAmount((long) stored)
+                    if (Float.isNaN(stored) || Float.isInfinite(stored) || stored < 0f) stored = 0f;
+                    if (Float.isNaN(cap) || Float.isInfinite(cap) || cap < 0f) cap = 0f;
+                    return TeamResourceState.formatCompactAmount((long) stored)
                             + " / " + TeamResourceState.formatCompactAmount((long) cap);
-                    String balanceText = (balance >= 0f ? "+" : "")
-                            + TeamResourceState.formatCompactAmount((long) balance) + "/s";
-
-                    Table header = new Table();
-                    header.add("Power: ").color(Color.lightGray);
-                    header.add(storedText).color(Color.white);
-                    header.add(" (" + balanceText + ")").color(balance >= 0f ? Pal.heal : Pal.remove);
-                    table.add(header).left().row();
-
-                    HistoryBuffer powerHistory = state.getTotalPowerHistory();
-                    if (powerHistory.size() > 1) {
-                        Color chartColor = balance >= 0f ? Pal.powerBar : Pal.remove;
-                        table.add(new SparklineWidget(powerHistory, chartColor)).padTop(4f).row();
-                    }
                 });
+                storedLabel.setColor(Color.white);
+                header.add(storedLabel);
+
+                Label balanceLabel = new Label(() -> {
+                    float balance = state.getTotalPowerBalance() * 60f;
+                    if (Float.isNaN(balance) || Float.isInfinite(balance)) balance = 0f;
+                    return " (" + (balance >= 0f ? "+" : "")
+                            + TeamResourceState.formatCompactAmount((long) balance) + "/s)";
+                });
+                balanceLabel.update(() -> {
+                    float balance = state.getTotalPowerBalance();
+                    balanceLabel.setColor(balance >= 0f ? Pal.heal : Pal.remove);
+                });
+                header.add(balanceLabel);
+                table.add(header).left().row();
+
+                HistoryBuffer powerHistory = state.getTotalPowerHistory();
+                table.add(new SparklineWidget(powerHistory, Pal.powerBar)).padTop(4f).row();
             }));
         }
 
@@ -164,7 +171,7 @@ public class SplitBar extends SolimElement {
 
             try {
                 float currentScale = scale();
-                font.getData().setScale(originalScaleX * currentScale * 0.75f, originalScaleY * currentScale * 0.75f);
+                font.getData().setScale(originalScaleX * currentScale * 0.72f, originalScaleY * currentScale * 0.72f);
 
                 for (int i = 0; i < graphs.size; i++) {
                     PowerGraph graph = graphs.get(i);
@@ -173,25 +180,28 @@ public class SplitBar extends SolimElement {
                         continue;
                     }
 
-                    float sectionWidth = width * (weight / totalWeight);
-                    float fraction = getFraction(graph);
+                    float rawWidth = width * (weight / totalWeight);
+                    float sectionWidth = (i == graphs.size - 1) ? Math.max(0f, (x + width) - currentX) : Math.min(rawWidth, (x + width) - currentX);
+                    if (sectionWidth <= 0f) {
+                        continue;
+                    }
 
-                    if (fraction > 0.01f) {
+                    float fraction = getFraction(graph);
+                    if (fraction > 0.001f) {
                         if (graph.getPowerBalance() < 0f) {
                             Draw.color(Pal.remove);
                         } else {
                             Draw.color(Pal.powerBar);
                         }
 
-                        float fillWidth = sectionWidth * fraction;
+                        float fillWidth = Mathf.clamp(sectionWidth * fraction, 0f, sectionWidth);
                         if (fillWidth > 0.5f) {
                             Tex.whiteui.draw(currentX, y, fillWidth, height);
                         }
                     }
 
                     if (i < graphs.size - 1) {
-                        Draw.color(Color.black);
-                        Draw.alpha(0.6f);
+                        Draw.color(Color.black, 0.7f);
                         Tex.whiteui.draw(currentX + sectionWidth - 1f, y, 2f, height);
                     }
 
@@ -238,14 +248,21 @@ public class SplitBar extends SolimElement {
         }
 
         private String getSectionText(PowerGraph graph) {
+            float balance = graph.getPowerBalance();
+            if (Float.isNaN(balance) || Float.isInfinite(balance)) {
+                balance = 0f;
+            }
             if (mode == Mode.SATISFACTION) {
-                float balance = graph.getPowerBalance();
                 return (balance >= 0f ? "+" : "") + TeamResourceState.formatCompactAmount((long) (balance * 60f));
             }
-            float balance = graph.getPowerBalance() * 60f;
-            String stored = TeamResourceState.formatCompactAmount((long) graph.getLastPowerStored());
-            String net = (balance >= 0f ? "+" : "") + TeamResourceState.formatCompactAmount((long) balance);
-            return stored + " " + net;
+            float balancePerSec = balance * 60f;
+            float stored = graph.getLastPowerStored();
+            if (Float.isNaN(stored) || Float.isInfinite(stored) || stored < 0f) {
+                stored = 0f;
+            }
+            String storedStr = TeamResourceState.formatCompactAmount((long) stored);
+            String netStr = (balancePerSec >= 0f ? "+" : "") + TeamResourceState.formatCompactAmount((long) balancePerSec);
+            return storedStr + " " + netStr;
         }
     }
 }
