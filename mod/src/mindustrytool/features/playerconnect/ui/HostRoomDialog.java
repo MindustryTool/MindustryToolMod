@@ -7,7 +7,9 @@ import arc.graphics.Color;
 import arc.scene.Element;
 import arc.struct.ObjectMap;
 import arc.util.Nullable;
+import java.util.List;
 import mindustry.Vars;
+import mindustry.gen.Icon;
 import mindustry.graphics.Pal;
 import mindustrytool.components.WebStyles;
 import mindustrytool.features.playerconnect.PlayerConnectFeature;
@@ -52,6 +54,12 @@ public class HostRoomDialog extends SolimDialog {
                 Core.app.post(() -> {
                     step.set(Step.CONFIG);
                 });
+            });
+
+            Effect.of(feature.providersSignal(), list -> {
+                if (step.get() == Step.PROVIDER) {
+                    pingAllProviders();
+                }
             });
         }
 
@@ -158,11 +166,10 @@ public class HostRoomDialog extends SolimDialog {
                         divider();
 
                         scroll().props(height(unit(80)), prefHeight(unit(80)), growX(), scrollX(false)).children(() -> {
-                            column().props(growX(), gap(unit(2))).children(() -> {
-                                for (PlayerConnectProvider p : feature.providersSignal().get()) {
-                                    providerCard(p);
-                                }
-                            });
+                            reactiveGrid(feature.providersSignal())
+                                    .key(PlayerConnectProvider::getAddress)
+                                    .props(growX(), gap(unit(2)))
+                                    .items(this::providerCard);
                         });
 
                         divider();
@@ -183,6 +190,7 @@ public class HostRoomDialog extends SolimDialog {
             Computed<Boolean> isSelected = selectedProvider
                     .map(sel -> sel != null && sel.getAddress().equals(provider.getAddress()));
             Computed<Boolean> showAddress = Units.dvw.map(w -> w >= 700f);
+            boolean isCustom = provider.getId() != null && provider.getId().startsWith("custom-");
 
             return card()
                     .props(background(WebStyles.Colors.SECONDARY), border(1.5f, isSelected.map(s -> s ? Pal.accent : WebStyles.Colors.BORDER_INPUT)), growX(), minHeight(unit(12)), padding(unit(2), unit(3), unit(2), unit(3)), onClick(() -> selectedProvider.set(provider)))
@@ -194,7 +202,28 @@ public class HostRoomDialog extends SolimDialog {
                                     .thenDo(() -> text(provider.getAddress()).props(color(Color.lightGray)));
                             text(pingSignal)
                                     .props(color(pingSignal.map(this::getPingColor)), width(unit(22)), prefWidth(unit(22)), right());
+
+                            if (isCustom) {
+                                button()
+                                        .props(style(WebStyles.ghost()), size(unit(9)), prefWidth(unit(9)), prefHeight(unit(9)), tooltip(Core.bundle.get("delete", "Delete")))
+                                        .onClick(() -> confirmRemoveCustomProvider(provider))
+                                        .children(() -> icon(Icon.trash).props(size(unit(5)), prefWidth(unit(5)), prefHeight(unit(5)), color(Color.scarlet)));
+                            }
                         });
+                    });
+        }
+
+        private void confirmRemoveCustomProvider(PlayerConnectProvider provider) {
+            Vars.ui.showConfirm(
+                    Core.bundle.get("feature.player-connect.remove-provider-title", "Remove Provider"),
+                    Core.bundle.format("feature.player-connect.remove-provider-confirm", provider.getName()),
+                    () -> {
+                        PlayerConnectProvider current = selectedProvider.peek();
+                        if (current != null && current.getAddress().equals(provider.getAddress())) {
+                            selectedProvider.set(null);
+                        }
+                        pings.remove(provider.getAddress());
+                        feature.removeCustomProvider(provider.getName());
                     });
         }
 
@@ -222,7 +251,11 @@ public class HostRoomDialog extends SolimDialog {
         }
 
         private void pingAllProviders() {
-            for (PlayerConnectProvider p : feature.providersSignal().get()) {
+            List<PlayerConnectProvider> list = feature.providersSignal().get();
+            if (list == null) {
+                return;
+            }
+            for (PlayerConnectProvider p : list) {
                 String addr = p.getAddress();
                 Signal<String> sig = getOrCreatePingSignal(addr);
                 sig.set("...");
