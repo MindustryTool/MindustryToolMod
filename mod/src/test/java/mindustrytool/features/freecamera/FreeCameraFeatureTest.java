@@ -15,6 +15,7 @@ import arc.graphics.Camera;
 import arc.scene.Element;
 import arc.scene.ui.Button;
 import arc.scene.ui.layout.Table;
+import arc.util.Align;
 import mindustry.Vars;
 import mindustry.core.ContentLoader;
 import mindustry.gen.Player;
@@ -96,6 +97,10 @@ class FreeCameraFeatureTest extends MindustryTestEnv {
 
         Element rootElement = feature.getHudView().element();
         assertNotNull(rootElement);
+        assertTrue(rootElement instanceof Table);
+        Table table = (Table) rootElement;
+        assertTrue((table.getAlign() & Align.bottom) != 0);
+        assertTrue((table.getAlign() & Align.center) != 0);
 
         feature.onDisable();
         assertNull(feature.getHudView());

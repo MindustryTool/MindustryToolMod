@@ -70,11 +70,11 @@ All user-facing strings for Free Camera (name, description, help, keybinds, and 
 - **THEN** the text resolves from `feature.free-camera.name` and `feature.free-camera.description`
 
 ### Requirement: Enabled-State Status Indicator
-The system SHALL display an interactive Solim HUD status label reading the translated `status.free-camera.enabled` label mounted to `Vars.ui.hudGroup` while `FreeCameraFeature` is enabled during gameplay. The indicator SHALL be horizontally centered near the top-center of the screen, render its text in `Pal.accent` matching the outline text appearance, and provide subtle hover feedback. Clicking or tapping the status indicator SHALL immediately disable `FreeCameraFeature` and invoke `snapToPlayer()` to return the camera to the player unit or core. The indicator SHALL unmount or hide whenever the feature is disabled, the HUD is hidden, or the player is not in-game.
+The system SHALL display an interactive Solim HUD status label reading the translated `status.free-camera.enabled` label mounted to `Vars.ui.hudGroup` while `FreeCameraFeature` is enabled during gameplay. The indicator SHALL be horizontally centered near the bottom-center of the screen, render its text in `Pal.accent` matching the outline text appearance, and provide subtle hover feedback. Clicking or tapping the status indicator SHALL immediately disable `FreeCameraFeature` and invoke `snapToPlayer()` to return the camera to the player unit or core. The indicator SHALL unmount or hide whenever the feature is disabled, the HUD is hidden, or the player is not in-game.
 
 #### Scenario: Indicator visible while free camera enabled in game
 - **WHEN** `FreeCameraFeature` is enabled, `Vars.ui.hudfrag.shown` is true, and `Vars.state.isGame()` is true
-- **THEN** an interactive top-center Solim HUD label showing the `status.free-camera.enabled` text in `Pal.accent` is visible and horizontally centered
+- **THEN** an interactive bottom-center Solim HUD label showing the `status.free-camera.enabled` text in `Pal.accent` is visible and horizontally centered
 
 #### Scenario: Clicking indicator disables free camera and snaps to player
 - **WHEN** the player clicks or taps the status indicator while Free Camera is active
@@ -94,7 +94,7 @@ The system SHALL display an interactive Solim HUD status label reading the trans
 
 #### Scenario: Indicator stays centered at any size, zoom, or locale
 - **WHEN** the screen is resized or rotated, the camera zoom changes, or the locale changes the label width while the indicator is visible
-- **THEN** the label remains horizontally centered near the top-center conforming to Solim HUD scaling rather than camera zoom level
+- **THEN** the label remains horizontally centered near the bottom-center conforming to Solim HUD scaling rather than camera zoom level
 
 #### Scenario: Indicator label is translatable
 - **WHEN** the indicator is rendered under any locale
