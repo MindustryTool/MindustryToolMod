@@ -15,8 +15,8 @@ import arc.func.Cons;
 import mindustry.Vars;
 import mindustry.core.ContentLoader;
 import mindustrytool.features.quickaccess.QuickAccessFeature;
-import mindustrytool.features.teamresource.TeamResourceFeature;
-import mindustrytool.features.teamresource.TeamResourceState;
+import mindustrytool.features.resourcemonitor.ResourceMonitorFeature;
+import mindustrytool.features.resourcemonitor.ResourceMonitorState;
 import mindustrytool.features.timecontrol.TimeControlFeature;
 import mindustrytool.test.MindustryTestEnv;
 import solim.reactive.Computed;
@@ -35,7 +35,7 @@ class HudViewReactivityTest extends MindustryTestEnv {
 
     @Test
     void testTeamResourceSignalPropagationToCardDimensions() {
-        TeamResourceFeature feature = new TeamResourceFeature();
+        ResourceMonitorFeature feature = new ResourceMonitorFeature();
 
         Readable<Float> scale = feature.scaleConfig.signal();
         Readable<Boolean> alwaysFlow = feature.alwaysShowFlowRateConfig.signal();
@@ -60,8 +60,8 @@ class HudViewReactivityTest extends MindustryTestEnv {
 
     @Test
     void testTeamResourceStateUpdateAbsenceOfRedundantTicks() {
-        TeamResourceFeature feature = new TeamResourceFeature();
-        TeamResourceState state = feature.getState();
+        ResourceMonitorFeature feature = new ResourceMonitorFeature();
+        ResourceMonitorState state = feature.getState();
 
         long initialTick = state.tickSignal.get();
         AtomicInteger notificationCount = new AtomicInteger(0);
@@ -194,22 +194,31 @@ class HudViewReactivityTest extends MindustryTestEnv {
 
     @Test
     void testAbsenceOfCascadingLayoutInvalidationStorms() {
-        AtomicInteger layoutInvalidations = new AtomicInteger(0);
+        AtomicInteger scaleEvaluations = new AtomicInteger(0);
+        AtomicInteger opacityEvaluations = new AtomicInteger(0);
 
         Signal<Float> scale = Signal.of(1.0f);
         Signal<Float> opacity = Signal.of(1.0f);
 
-        Computed<Float> scaledSize = scale.map(s -> 24f * s);
-        Computed<Float> effectiveOpacity = opacity.map(o -> Math.max(0.2f, o));
+        Computed<Float> scaledSize = scale.map(s -> {
+            scaleEvaluations.incrementAndGet();
+            return 24f * s;
+        });
+        Computed<Float> effectiveOpacity = opacity.map(o -> {
+            opacityEvaluations.incrementAndGet();
+            return Math.max(0.2f, o);
+        });
 
         for (int i = 0; i < 100; i++) {
             scale.set(1.0f + (i % 5) * 0.1f);
             opacity.set(1.0f - (i % 4) * 0.1f);
         }
 
+        assertEquals(0, scaleEvaluations.get(), "Lazy Computed must not evaluate before being read");
+        assertEquals(0, opacityEvaluations.get(), "Lazy Computed must not evaluate before being read");
         assertNotNull(scaledSize.get());
         assertNotNull(effectiveOpacity.get());
-        assertEquals(0, layoutInvalidations.get(),
-                "Pure reactive signal transformations must produce 0 hierarchy invalidations");
+        assertEquals(1, scaleEvaluations.get(), "Lazy Computed must evaluate only once when read after batch updates");
+        assertEquals(1, opacityEvaluations.get(), "Lazy Computed must evaluate only once when read after batch updates");
     }
 }

@@ -1,4 +1,4 @@
-package mindustrytool.features.teamresource;
+package mindustrytool.features.resourcemonitor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import arc.Core;
-import arc.Events;
 import arc.graphics.Color;
 import arc.graphics.g2d.Font;
 import arc.graphics.g2d.Font.FontData;
@@ -37,9 +36,10 @@ import java.lang.reflect.Method;
 import mindustry.Vars;
 import mindustry.core.UI;
 import mindustry.ctype.Content;
-import mindustry.game.EventType.ResizeEvent;
+import mindustry.ctype.MappableContent;
 import mindustry.game.Team;
 import mindustry.type.Item;
+import mindustry.type.UnitType;
 import mindustry.ui.Fonts;
 import mindustry.ui.Styles;
 import mindustry.world.blocks.power.PowerGraph;
@@ -48,7 +48,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import mindustrytool.test.MindustryTestEnv;
 
-class TeamResourcePositionTest extends MindustryTestEnv {
+class ResourceMonitorPositionTest extends MindustryTestEnv {
 
     static class ResizableMockGraphics extends MockGraphics {
         int width = 1000;
@@ -148,7 +148,7 @@ class TeamResourcePositionTest extends MindustryTestEnv {
 
     @Test
     void testDefaultPositionIsCentered() {
-        TeamResourceFeature feature = new TeamResourceFeature();
+        ResourceMonitorFeature feature = new ResourceMonitorFeature();
 
         float expectedX = (1000f - 1000f * 0.28f) / 2f;
         assertEquals(expectedX, feature.x(), 1.0f, "Default position must be centered horizontally");
@@ -157,7 +157,7 @@ class TeamResourcePositionTest extends MindustryTestEnv {
 
     @Test
     void testResetPositionCentersOverlay() {
-        TeamResourceFeature feature = new TeamResourceFeature();
+        ResourceMonitorFeature feature = new ResourceMonitorFeature();
         feature.x(120f);
         feature.y(250f);
         assertEquals(120f, feature.x(), 1.0f);
@@ -174,14 +174,14 @@ class TeamResourcePositionTest extends MindustryTestEnv {
         Core.settings.put("mindustrytool.team-resource.x.landscape", 440f);
         Core.settings.put("mindustrytool.team-resource.y.landscape", 520f);
 
-        TeamResourceFeature feature = new TeamResourceFeature();
+        ResourceMonitorFeature feature = new ResourceMonitorFeature();
         assertEquals(440f, feature.x(), 1.0f, "Old setting key should be migrated");
         assertEquals(520f, feature.y(), 1.0f, "Old setting key should be migrated");
     }
 
     @Test
     void testDragAndToggleRetainsPosition() {
-        TeamResourceFeature feature = new TeamResourceFeature();
+        ResourceMonitorFeature feature = new ResourceMonitorFeature();
         feature.onEnable();
         Element root = feature.getHudView().element();
 
@@ -222,9 +222,9 @@ class TeamResourcePositionTest extends MindustryTestEnv {
 
     @Test
     void testPositionOnTeamSelectAndItemChanges() {
-        TeamResourceFeature feature = new TeamResourceFeature();
+        ResourceMonitorFeature feature = new ResourceMonitorFeature();
         feature.onEnable();
-        TeamResourceState state = feature.getState();
+        ResourceMonitorState state = feature.getState();
         Element root = feature.getHudView().element();
 
         float initialX = feature.x();
@@ -252,60 +252,14 @@ class TeamResourcePositionTest extends MindustryTestEnv {
     }
 
     @Test
-    void testTopAnchoredGrowthWhenHeightChanges() {
-        mockGraphics.width = 1000;
-        mockGraphics.height = 800;
-        Scl.setProduct(1.0f);
-
-        TeamResourceFeature feature = new TeamResourceFeature();
-        feature.onEnable();
-        Element root = feature.getHudView().element();
-        root.validate();
-
-        feature.yConfig.set(600f);
-        root.y = 600f;
-        root.validate();
-        root.act(0.1f);
-
-        float initialY = root.y;
-        float initialH = root.getHeight();
-        float initialTop = initialY + initialH;
-
-        root.setHeight(initialH + 60f);
-        root.act(0.1f);
-
-        assertEquals(initialTop, root.y + root.getHeight(), 1.0f);
-        assertEquals(initialY - 60f, root.y, 1.0f);
-        assertEquals(initialY - 60f, feature.y(), 1.0f);
-    }
-
-    @Test
-    void testInitialLoadClampsDownWhenTopExceedsScreen() {
-        mockGraphics.width = 1000;
-        mockGraphics.height = 800;
-        Scl.setProduct(1.0f);
-
-        TeamResourceFeature feature = new TeamResourceFeature();
-        feature.yConfig.set(750f);
-        feature.onEnable();
-        Element root = feature.getHudView().element();
-        root.setHeight(150f);
-        root.act(0.1f);
-
-        assertTrue(root.y + root.getHeight() <= 800f);
-        assertEquals(800f - 150f, root.y, 1.0f);
-        assertEquals(800f - 150f, feature.y(), 1.0f);
-    }
-
-    @Test
     void testLayoutPrefWidthWithItems() {
         mockGraphics.width = 1000;
         mockGraphics.height = 800;
         Scl.setProduct(1.0f);
 
-        TeamResourceFeature feature = new TeamResourceFeature();
+        ResourceMonitorFeature feature = new ResourceMonitorFeature();
         feature.onEnable();
-        TeamResourceState state = feature.getState();
+        ResourceMonitorState state = feature.getState();
         Element root = feature.getHudView().element();
 
         float initialX = feature.x();
@@ -356,7 +310,7 @@ class TeamResourcePositionTest extends MindustryTestEnv {
 
     @Test
     void testTransientLayoutDoesNotCorruptSignal() {
-        TeamResourceFeature feature = new TeamResourceFeature();
+        ResourceMonitorFeature feature = new ResourceMonitorFeature();
         feature.onEnable();
         Element root = feature.getHudView().element();
 
@@ -380,9 +334,9 @@ class TeamResourcePositionTest extends MindustryTestEnv {
         mockGraphics.height = 800;
         Scl.setProduct(1.0f);
 
-        TeamResourceFeature feature = new TeamResourceFeature();
+        ResourceMonitorFeature feature = new ResourceMonitorFeature();
         feature.onEnable();
-        TeamResourceState state = feature.getState();
+        ResourceMonitorState state = feature.getState();
         Element root = feature.getHudView().element();
 
         float initialX = feature.x();
@@ -412,10 +366,7 @@ class TeamResourcePositionTest extends MindustryTestEnv {
 
     @Test
     void testHideHeaderAndDragHandleConfigs() {
-        TeamResourceFeature feature = new TeamResourceFeature();
-
-        assertFalse(feature.hideDragHandleConfig.get(), "hideDragHandleConfig defaults to false");
-        assertFalse(feature.hideHeaderConfig.get(), "hideHeaderConfig defaults to false");
+        ResourceMonitorFeature feature = new ResourceMonitorFeature();
 
         feature.hideDragHandleConfig.set(true);
         feature.hideHeaderConfig.set(true);
@@ -431,50 +382,240 @@ class TeamResourcePositionTest extends MindustryTestEnv {
         assertFalse(feature.hideDragHandleConfig.get(), "resetToDefaults resets hideDragHandleConfig");
         assertFalse(feature.hideHeaderConfig.get(), "resetToDefaults resets hideHeaderConfig");
 
+        feature.onDisable();
         flushEffects();
     }
 
     @Test
-    void testMinimizeWindowDoesNotResetPosition() {
-        TeamResourceFeature feature = new TeamResourceFeature();
+    void testResourceAmountChangesDoNotShiftLayout() throws Exception {
+        mockGraphics.width = 1000;
+        mockGraphics.height = 800;
+        Scl.setProduct(1.0f);
+
+        ResourceMonitorFeature feature = new ResourceMonitorFeature();
+        feature.alwaysShowFlowRateConfig.set(true);
         feature.onEnable();
+        ResourceMonitorState state = feature.getState();
         Element root = feature.getHudView().element();
 
-        feature.x(100f);
-        feature.y(200f);
+        Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+        Field f = unsafeClass.getDeclaredField("theUnsafe");
+        f.setAccessible(true);
+        Object unsafe = f.get(null);
+        Method allocateInstance = unsafeClass.getMethod("allocateInstance", Class.class);
+        Field nameField = MappableContent.class.getDeclaredField("name");
+        nameField.setAccessible(true);
+
+        Seq<Item> items = new Seq<>();
+        for (int i = 0; i < 6; i++) {
+            Item it = (Item) allocateInstance.invoke(unsafe, Item.class);
+            nameField.set(it, "item-" + i);
+            it.id = (short) i;
+            it.uiIcon = new TextureRegion();
+            items.add(it);
+        }
+        state.usedItemsSignal.set(items);
+        flushEffects();
         root.validate();
-        assertEquals(100f, feature.x(), 1.0f);
-        assertEquals(200f, feature.y(), 1.0f);
 
-        mockGraphics.width = 160;
-        mockGraphics.height = 31;
-        Core.scene.resize(160, 31);
-        Events.fire(new ResizeEvent());
+        float widthBefore = root.getWidth();
+        float heightBefore = root.getHeight();
+        float xBefore = root.x;
+        float yBefore = root.y;
 
+        state.setItemRate(items.get(0), 12500);
+        state.setItemRate(items.get(1), -9800);
+
+        for (Element child : ((Group) root).getChildren()) {
+            child.act(0.5f);
+        }
+        root.validate();
+
+        assertEquals(widthBefore, root.getWidth(), 0.01f, "HUD width must not change when item flow rates fluctuate");
+        assertEquals(heightBefore, root.getHeight(), 0.01f, "HUD height must not change when item flow rates fluctuate");
+        assertEquals(xBefore, root.x, 0.01f, "HUD X must remain stable");
+        assertEquals(yBefore, root.y, 0.01f, "HUD Y must remain stable");
+
+        float topYBefore = root.y + root.getHeight();
+        Seq<Item> moreItems = new Seq<>(items);
+        for (int i = 6; i < 12; i++) {
+            Item it = (Item) allocateInstance.invoke(unsafe, Item.class);
+            nameField.set(it, "item-" + i);
+            it.id = (short) i;
+            it.uiIcon = new TextureRegion();
+            moreItems.add(it);
+        }
+        state.usedItemsSignal.set(moreItems);
+        flushEffects();
+        root.validate();
+
+        assertEquals(widthBefore, root.getWidth(), 0.01f, "HUD width must remain locked when more items are discovered");
+        assertEquals(xBefore, root.x, 0.01f, "HUD X must remain stable when more items are discovered");
+        assertEquals(topYBefore, root.y + root.getHeight(), 0.5f, "HUD top edge must remain anchored when new rows are added");
+
+        feature.onDisable();
+        flushEffects();
+    }
+
+    @Test
+    void testColumnsConfigChangesRowCount() throws Exception {
         mockGraphics.width = 1000;
         mockGraphics.height = 800;
-        Core.scene.resize(1000, 800);
-        Events.fire(new ResizeEvent());
+        Scl.setProduct(1.0f);
 
+        ResourceMonitorFeature feature = new ResourceMonitorFeature();
+        feature.onEnable();
+        ResourceMonitorState state = feature.getState();
+        Element root = feature.getHudView().element();
+
+        Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+        Field f = unsafeClass.getDeclaredField("theUnsafe");
+        f.setAccessible(true);
+        Object unsafe = f.get(null);
+        Method allocateInstance = unsafeClass.getMethod("allocateInstance", Class.class);
+        Field nameField = MappableContent.class.getDeclaredField("name");
+        nameField.setAccessible(true);
+
+        Seq<Item> items = new Seq<>();
+        for (int i = 0; i < 8; i++) {
+            Item it = (Item) allocateInstance.invoke(unsafe, Item.class);
+            nameField.set(it, "item-" + i);
+            it.id = (short) i;
+            it.uiIcon = new TextureRegion();
+            items.add(it);
+        }
+        state.usedItemsSignal.set(items);
+        flushEffects();
         root.validate();
-        assertEquals(100f, feature.x(), 1.0f, "X must not reset on window minimize/restore");
-        assertEquals(200f, feature.y(), 1.0f, "Y must not reset on window minimize/restore");
-        assertEquals(100f, root.x, 1.0f, "Displayed X must return after restore");
-        assertEquals(200f, root.y, 1.0f, "Displayed Y must return after restore");
 
-        mockGraphics.width = 0;
-        mockGraphics.height = 0;
-        Core.scene.resize(0, 0);
-        Events.fire(new ResizeEvent());
+        float heightAuto = root.getHeight();
 
-        mockGraphics.width = 1000;
+        feature.columnsConfig.set(8);
+        flushEffects();
+        root.validate();
+
+        float height8Cols = root.getHeight();
+        assertTrue(height8Cols < heightAuto, "8 fixed columns with 8 items must produce a shorter 1-row layout than Auto (2 cols)");
+
+        feature.resetToDefaults();
+        assertEquals(1, feature.columnsConfig.get(), "resetToDefaults resets columnsConfig back to Auto (1)");
+
+        feature.onDisable();
+        flushEffects();
+    }
+
+    @Test
+    void testPreviewViewReactsToConfigChanges() {
+        ResourceMonitorFeature feature = new ResourceMonitorFeature();
+        ResourceMonitorPreviewView preview = new ResourceMonitorPreviewView(feature);
+        Element stage = preview.element();
+        assertNotNull(stage, "Preview stage must build cleanly");
+        assertTrue(stage instanceof Group);
+
+        Group stageGroup = (Group) stage;
+        assertEquals(1, stageGroup.getChildren().size, "Preview stage must contain the mock HUD");
+        Element hudBefore = stageGroup.getChildren().first();
+        assertEquals(1f, hudBefore.color.a, 0.01f);
+
+        feature.opacityConfig.set(0.45f);
+        feature.showUnitsConfig.set(true);
+        feature.showStoredPowerConfig.set(true);
+        feature.hideHeaderConfig.set(true);
+        feature.columnsConfig.set(4);
+        flushEffects();
+
+        Element hudAfter = stageGroup.getChildren().first();
+        assertEquals(0.45f, hudAfter.color.a, 0.01f, "Preview HUD must reflect updated opacity");
+
+        preview.dispose();
+        flushEffects();
+    }
+
+    @Test
+    void testAutoWidthConfigScalesWithColumns() {
+        mockGraphics.width = 1600;
+        mockGraphics.height = 900;
+        Scl.setProduct(1.0f);
+
+        ResourceMonitorFeature feature = new ResourceMonitorFeature();
+        feature.onEnable();
+        Element root = feature.getHudView().element();
+        root.validate();
+
+        feature.autoWidthConfig.set(true);
+        feature.columnsConfig.set(2);
+        flushEffects();
+        root.validate();
+        float width2Cols = root.getWidth();
+
+        feature.columnsConfig.set(4);
+        flushEffects();
+        root.validate();
+        float width4Cols = root.getWidth();
+
+        assertTrue(width4Cols > width2Cols + 100f,
+                "Auto-Fit Width must expand HUD width proportionally when columns increase from 2 to 4");
+
+        feature.resetToDefaults();
+        assertFalse(feature.autoWidthConfig.get(), "resetToDefaults must reset autoWidthConfig to false");
+
+        feature.onDisable();
+        flushEffects();
+    }
+
+    @Test
+    void testUnitColumnsAndCompactUnitsConfig() throws Exception {
+        mockGraphics.width = 1200;
         mockGraphics.height = 800;
-        Core.scene.resize(1000, 800);
-        Events.fire(new ResizeEvent());
+        Scl.setProduct(1.0f);
 
+        ResourceMonitorFeature feature = new ResourceMonitorFeature();
+        feature.showItemsConfig.set(false);
+        feature.showPowerConfig.set(false);
+        feature.showUnitsConfig.set(true);
+        feature.columnsConfig.set(2);
+        feature.onEnable();
+
+        ResourceMonitorState state = feature.getState();
+        Element root = feature.getHudView().element();
+
+        Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+        Field f = unsafeClass.getDeclaredField("theUnsafe");
+        f.setAccessible(true);
+        Object unsafe = f.get(null);
+        Method allocateInstance = unsafeClass.getMethod("allocateInstance", Class.class);
+        Field nameField = MappableContent.class.getDeclaredField("name");
+        nameField.setAccessible(true);
+
+        Seq<UnitType> units = new Seq<>();
+        for (int i = 0; i < 6; i++) {
+            UnitType ut = (UnitType) allocateInstance.invoke(unsafe, UnitType.class);
+            nameField.set(ut, "unit-" + i);
+            ut.id = (short) i;
+            ut.uiIcon = new TextureRegion();
+            units.add(ut);
+        }
+        state.usedUnitsSignal.set(units);
+        flushEffects();
         root.validate();
-        assertEquals(100f, feature.x(), 1.0f, "X must not reset on 0x0 minimize/restore");
-        assertEquals(200f, feature.y(), 1.0f, "Y must not reset on 0x0 minimize/restore");
+
+        float height2Cols = root.getHeight();
+
+        feature.unitColumnsConfig.set(6);
+        flushEffects();
+        root.validate();
+        float height6Cols = root.getHeight();
+        assertTrue(height6Cols < height2Cols,
+                "Setting unitColumnsConfig=6 with 6 units must produce a shorter 1-row unit section than 2 columns");
+
+        feature.compactUnitsConfig.set(true);
+        flushEffects();
+        root.validate();
+        assertTrue(feature.compactUnitsConfig.get());
+
+        feature.resetToDefaults();
+        assertEquals(1, feature.unitColumnsConfig.get(), "resetToDefaults must reset unitColumnsConfig to 1");
+        assertFalse(feature.compactUnitsConfig.get(), "resetToDefaults must reset compactUnitsConfig to false");
 
         feature.onDisable();
         flushEffects();

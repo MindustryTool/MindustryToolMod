@@ -93,8 +93,36 @@ public abstract class Feature {
 		return null;
 	}
 
+	public boolean hasSettingDialog() {
+		return getSettingDialog() != null;
+	}
+
+	public void showSettingDialog() {
+		Prov<SolimDialog> settingDlg = getSettingDialog();
+		if (settingDlg != null) {
+			SolimDialog d = settingDlg.get();
+			if (d != null) {
+				d.show();
+			}
+		}
+	}
+
 	public @Nullable Prov<SolimDialog> getMainDialog() {
 		return null;
+	}
+
+	public boolean hasMainDialog() {
+		return getMainDialog() != null;
+	}
+
+	public void showMainDialog() {
+		Prov<SolimDialog> dlg = getMainDialog();
+		if (dlg != null) {
+			SolimDialog d = dlg.get();
+			if (d != null) {
+				d.show();
+			}
+		}
 	}
 
 	public Seq<FeatureKeybind> getKeybinds() {
@@ -150,9 +178,10 @@ public abstract class Feature {
 	}
 
 	public void onQuickAccessLongClick() {
-		Prov<SolimDialog> dlg = getSettingDialog() != null ? getSettingDialog() : getMainDialog();
-		if (dlg != null) {
-			dlg.get().show();
+		if (hasSettingDialog()) {
+			showSettingDialog();
+		} else if (hasMainDialog()) {
+			showMainDialog();
 		}
 	}
 

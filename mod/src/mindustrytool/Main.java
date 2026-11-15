@@ -36,7 +36,7 @@ import mindustrytool.features.screenshot.ScreenshotFeature;
 import mindustrytool.features.smartdrill.SmartDrillFeature;
 import mindustrytool.features.smartupgrade.SmartUpgradeFeature;
 import mindustrytool.features.schematicgrid.QuickSchematicGridFeature;
-import mindustrytool.features.teamresource.TeamResourceFeature;
+import mindustrytool.features.resourcemonitor.ResourceMonitorFeature;
 import mindustrytool.features.timecontrol.TimeControlFeature;
 import mindustrytool.features.togglerendering.ToggleRenderingFeature;
 import mindustrytool.features.translation.TranslationFeature;
@@ -98,7 +98,7 @@ public class Main extends Mod {
                 new QuickAccessFeature(),
                 new ChatFeature(),
                 new CalloutFeature(),
-                new TeamResourceFeature(),
+                new ResourceMonitorFeature(),
                 new TranslationFeature(),
                 new SchematicBrowserFeature(),
                 new MapBrowserFeature(),

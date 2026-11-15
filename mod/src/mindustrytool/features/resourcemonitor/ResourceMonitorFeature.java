@@ -1,4 +1,4 @@
-package mindustrytool.features.teamresource;
+package mindustrytool.features.resourcemonitor;
 
 import arc.Core;
 import arc.Events;
@@ -6,8 +6,7 @@ import arc.func.Prov;
 import arc.scene.Element;
 import arc.scene.style.Drawable;
 import arc.scene.style.TextureRegionDrawable;
-
-import solim.overlay.SolimDialog;
+import arc.scene.ui.layout.Scl;
 import arc.util.Nullable;
 import mindustry.Vars;
 import mindustry.game.EventType.ResetEvent;
@@ -21,21 +20,25 @@ import mindustrytool.ui.dock.MindustryDockRegistry;
 import solim.config.ConfigGroup;
 import solim.config.ConfigValue;
 import solim.config.ContextualConfigValue;
-import arc.scene.ui.layout.Scl;
-import solim.reactive.Effect;
+import solim.overlay.SolimDialog;
 import solim.reactive.Signal;
 import solim.reactive.Signals;
 
-public class TeamResourceFeature extends Feature {
+public class ResourceMonitorFeature extends Feature {
 
     public final ConfigGroup config;
     public final ConfigValue<Float> opacityConfig;
+    public final ConfigValue<Float> backgroundOpacityConfig;
     public final ConfigValue<Float> scaleConfig;
     public final ConfigValue<Float> overlayWidthConfig;
     public final ConfigValue<Float> overlayHeightConfig;
+    public final ConfigValue<Float> rowSpacingConfig;
+    public final ConfigValue<Integer> columnsConfig;
+    public final ConfigValue<Integer> unitColumnsConfig;
 
     public final ConfigValue<Boolean> showItemsConfig;
     public final ConfigValue<Boolean> showUnitsConfig;
+    public final ConfigValue<Boolean> compactUnitsConfig;
     public final ConfigValue<Boolean> showPowerConfig;
     public final ConfigValue<Boolean> showStoredPowerConfig;
     public final ConfigValue<Boolean> hideBackgroundConfig;
@@ -45,6 +48,8 @@ public class TeamResourceFeature extends Feature {
     public final ConfigValue<Boolean> expandedConfig;
     public final ConfigValue<Boolean> hideDragHandleConfig;
     public final ConfigValue<Boolean> hideHeaderConfig;
+    public final ConfigValue<Boolean> autoWidthConfig;
+    public final ConfigValue<Boolean> limitHeightConfig;
 
     public final ContextualConfigValue<Float, Boolean> xConfig;
     public final ContextualConfigValue<Float, Boolean> yConfig;
@@ -53,13 +58,14 @@ public class TeamResourceFeature extends Feature {
     public final Signal<Float> ySignal;
     public final DockPositionConfig dockPosition;
 
-    private final TeamResourceState state;
-    private @Nullable TeamResourceHudView hudView;
-    private @Nullable TeamResourceSettingsDialog settingsDialog;
+    private final ResourceMonitorState state;
+    private @Nullable ResourceMonitorHudView hudView;
+    private @Nullable ResourceMonitorSettingsDialog settingsDialog;
+    private boolean previousCoreItems = true;
 
-    public TeamResourceFeature() {
+    public ResourceMonitorFeature() {
         super(FeatureMetadata.builder()
-                .id("team-resources")
+                .id("resource-monitor")
                 .icon(getFeatureIcon())
                 .order(0)
                 .enabledByDefault(true)
@@ -70,12 +76,17 @@ public class TeamResourceFeature extends Feature {
         config = configGroup();
 
         opacityConfig = config.floatValue("opacity", 1f);
+        backgroundOpacityConfig = config.floatValue("background-opacity", 0.65f);
         scaleConfig = config.floatValue("scale", 1f);
         overlayWidthConfig = config.floatValue("overlay-width", 0.28f);
         overlayHeightConfig = config.floatValue("overlay-height", 0.60f);
+        rowSpacingConfig = config.floatValue("row-spacing", 2f);
+        columnsConfig = config.intValue("columns", 1);
+        unitColumnsConfig = config.intValue("unit-columns", 1);
 
         showItemsConfig = config.boolValue("show-items", true);
         showUnitsConfig = config.boolValue("show-units", false);
+        compactUnitsConfig = config.boolValue("compact-units", false);
         showPowerConfig = config.boolValue("show-power", true);
         showStoredPowerConfig = config.boolValue("show-stored-power", false);
         hideBackgroundConfig = config.boolValue("hide-background", false);
@@ -85,6 +96,8 @@ public class TeamResourceFeature extends Feature {
         expandedConfig = config.boolValue("expanded", true);
         hideDragHandleConfig = config.boolValue("hide-drag-handle", false);
         hideHeaderConfig = config.boolValue("hide-header", false);
+        autoWidthConfig = config.boolValue("auto-width", false);
+        limitHeightConfig = config.boolValue("limit-height", false);
 
         xConfig = config.floatValueKeyed(
                 "x",
@@ -92,7 +105,7 @@ public class TeamResourceFeature extends Feature {
                 p -> p ? "portrait" : "landscape",
                 p -> {
                     float sw = getSceneWidth();
-                    Float wFrac = overlayWidthConfig != null ? overlayWidthConfig.get() : 0.28f;
+                    Float wFrac = overlayWidthConfig.get();
                     float width = sw * (wFrac != null ? wFrac : 0.28f);
                     float defX = sw > 0 ? Math.max(0f, (sw - width) / 2f) : 200f;
                     String oldKey = p ? "mindustrytool.team-resource.x.portrait"
@@ -146,15 +159,20 @@ public class TeamResourceFeature extends Feature {
         ySignal = yConfig.signal();
         dockPosition = new DockPositionConfig(config, xConfig, yConfig);
 
-        this.state = new TeamResourceState(this);
+        this.state = new ResourceMonitorState(this);
 
-        Effect.of(Signals.isPortrait(), p -> {
-            if (hudView != null) {
-                Core.app.post(hudView::keepInScreen);
+        Events.on(WorldLoadEvent.class, e -> {
+            if (!isEnabled()) {
+                return;
             }
+            state.onWorldLoad();
         });
-        Events.on(WorldLoadEvent.class, e -> state.onWorldLoad());
-        Events.on(ResetEvent.class, e -> state.reset());
+        Events.on(ResetEvent.class, e -> {
+            if (!isEnabled()) {
+                return;
+            }
+            state.reset();
+        });
     }
 
     public float x() {
@@ -163,7 +181,7 @@ public class TeamResourceFeature extends Feature {
             return val;
         }
         float sw = getSceneWidth();
-        Float wFrac = overlayWidthConfig != null ? overlayWidthConfig.get() : 0.28f;
+        Float wFrac = overlayWidthConfig.get();
         float width = sw * (wFrac != null ? wFrac : 0.28f);
         return sw > 0 ? Math.max(0f, (sw - width) / 2f) : 200f;
     }
@@ -189,11 +207,16 @@ public class TeamResourceFeature extends Feature {
 
     public void resetToDefaults() {
         opacityConfig.reset();
+        backgroundOpacityConfig.reset();
         scaleConfig.reset();
         overlayWidthConfig.reset();
         overlayHeightConfig.reset();
+        rowSpacingConfig.reset();
+        columnsConfig.reset();
+        unitColumnsConfig.reset();
         showItemsConfig.reset();
         showUnitsConfig.reset();
+        compactUnitsConfig.reset();
         showPowerConfig.reset();
         showStoredPowerConfig.reset();
         hideBackgroundConfig.reset();
@@ -203,6 +226,8 @@ public class TeamResourceFeature extends Feature {
         expandedConfig.reset();
         hideDragHandleConfig.reset();
         hideHeaderConfig.reset();
+        autoWidthConfig.reset();
+        limitHeightConfig.reset();
     }
 
     public void resetPosition() {
@@ -229,17 +254,19 @@ public class TeamResourceFeature extends Feature {
 
             state.reset();
 
-            hudView = new TeamResourceHudView(this, state);
-            Element el = hudView.element();
-            el.name = "team-resources-hud";
+            ResourceMonitorHudView view = new ResourceMonitorHudView(this, state);
+            hudView = view;
+            Element el = view.element();
+            el.name = "resource-monitor-hud";
             el.visible(() -> Vars.ui.hudfrag != null && Vars.ui.hudfrag.shown && Vars.state != null
                     && Vars.state.isGame());
-            MindustryDockRegistry.get().registerHud("team-resources", el);
+            MindustryDockRegistry.get().registerHud("resource-monitor", el);
 
+            previousCoreItems = Core.settings.getBool("coreitems", true);
             Core.settings.put("coreitems", false);
 
             Core.app.post(() -> {
-                if (hudView != null && Vars.ui != null && Vars.ui.hudGroup != null) {
+                if (isEnabled() && hudView == view && Vars.ui != null && Vars.ui.hudGroup != null) {
                     Vars.ui.hudGroup.addChild(el);
                 }
             });
@@ -249,32 +276,30 @@ public class TeamResourceFeature extends Feature {
     @Override
     public void onDisable() {
         if (hudView != null) {
-            TeamResourceHudView view = hudView;
+            ResourceMonitorHudView view = hudView;
             hudView = null;
-            MindustryDockRegistry.get().unregisterHud("team-resources");
-            Core.app.post(() -> {
-                view.element().remove();
-                view.dispose();
-            });
+            MindustryDockRegistry.get().unregisterHud("resource-monitor");
+            view.element().remove();
+            view.dispose();
         }
-        Core.settings.put("coreitems", true);
+        Core.settings.put("coreitems", previousCoreItems);
     }
 
     @Override
     public @Nullable Prov<SolimDialog> getSettingDialog() {
         return () -> {
             if (settingsDialog == null) {
-                settingsDialog = new TeamResourceSettingsDialog(this);
+                settingsDialog = new ResourceMonitorSettingsDialog(this);
             }
             return settingsDialog;
         };
     }
 
-    public TeamResourceState getState() {
+    public ResourceMonitorState getState() {
         return state;
     }
 
-    public @Nullable TeamResourceHudView getHudView() {
+    public @Nullable ResourceMonitorHudView getHudView() {
         return hudView;
     }
 

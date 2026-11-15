@@ -3,7 +3,6 @@ package mindustrytool.features.settings;
 import static solim.UI.*;
 
 import arc.Core;
-import arc.func.Prov;
 import arc.graphics.Color;
 import arc.scene.Element;
 import arc.scene.style.TextureRegionDrawable;
@@ -22,7 +21,6 @@ import mindustrytool.features.FeatureMetadata;
 import solim.core.Component;
 import solim.modifier.ElementCapability;
 import solim.modifier.Prop;
-import solim.overlay.SolimDialog;
 import solim.reactive.Readable;
 import solim.reactive.Signal;
 
@@ -60,8 +58,8 @@ public class FeatureCard extends Component {
                 : Signal.computed(() -> Boolean.TRUE.equals(reorderAllowed.get())
                         && Boolean.TRUE.equals(FeatureManager.canMoveRightSignal(feature).get()));
 
-        Prov<SolimDialog> mainDialog = feature.getMainDialog();
-        Prov<SolimDialog> settingDialog = feature.getSettingDialog();
+        boolean hasMainDialog = feature.hasMainDialog();
+        boolean hasSettingDialog = feature.hasSettingDialog();
 
         String id = metadata.getId();
         Readable<Boolean> isFavorite = ModSettings.favoriteFeatures.signal()
@@ -89,14 +87,14 @@ public class FeatureCard extends Component {
                                 .children(() -> icon(Icon.star != null ? Icon.star : new TextureRegionDrawable())
                                         .props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7)), color(starColor)));
 
-                        if (mainDialog != null) {
-                            button(() -> showDialog(mainDialog))
+                        if (hasMainDialog) {
+                            button(feature::showMainDialog)
                                     .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), cardTooltip(Core.bundle.get("feature.button.open-dialog")))
                                     .children(() -> icon(FileIcon.of("external-link.png")).props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7))));
                         }
 
-                        if (settingDialog != null) {
-                            button(() -> showDialog(settingDialog))
+                        if (hasSettingDialog) {
+                            button(feature::showSettingDialog)
                                     .props(style(WebStyles.ghost()), size(unit(11)), prefWidth(unit(11)), prefHeight(unit(11)), cardTooltip(Core.bundle.get("feature.button.settings")))
                                     .children(() -> icon(Icon.settings).props(size(unit(7)), prefWidth(unit(7)), prefHeight(unit(7))));
                         }
@@ -137,14 +135,6 @@ public class FeatureCard extends Component {
 
     private static Prop<ElementCapability, Void> cardTooltip(@Nullable String tip) {
         return Vars.mobile ? tooltip((String) null) : tooltip(tip);
-    }
-
-    private void showDialog(Prov<SolimDialog> dialogProvider) {
-        @Nullable
-        SolimDialog dialog = dialogProvider.get();
-        if (dialog != null) {
-            dialog.show();
-        }
     }
 
     private void toggleFavorite(String id) {
