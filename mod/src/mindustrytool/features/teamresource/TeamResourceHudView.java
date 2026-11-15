@@ -38,6 +38,7 @@ public class TeamResourceHudView extends Component {
     private final TeamResourceFeature feature;
     private final TeamResourceState state;
     private @Nullable Hud hud;
+    private float lastHeight = -1f;
 
     public TeamResourceHudView(TeamResourceFeature feature, TeamResourceState state) {
         this.feature = feature;
@@ -168,9 +169,36 @@ public class TeamResourceHudView extends Component {
         });
 
         hud.element().update(() -> {
-            if (!hud.element().visible)
+            if (!hud.element().visible) {
                 return;
+            }
             state.update();
+
+            float currentH = hud.element().getHeight();
+            float screenH = TeamResourceFeature.getSceneHeight();
+            if (currentH > 0f && screenH > 0f) {
+                if (lastHeight > 0f && Math.abs(currentH - lastHeight) > 0.5f) {
+                    boolean isUpperHalf = (hud.element().y + lastHeight * 0.5f) > (screenH * 0.5f);
+                    float newY = isUpperHalf ? (hud.element().y + lastHeight - currentH) : hud.element().y;
+                    if (newY + currentH > screenH) {
+                        newY = Math.max(0f, screenH - currentH);
+                    }
+                    if (newY < 0f) {
+                        newY = 0f;
+                    }
+                    if (Math.abs(newY - hud.element().y) > 0.5f) {
+                        hud.element().y = newY;
+                        feature.ySignal.set(newY);
+                    }
+                } else if (lastHeight < 0f) {
+                    if (hud.element().y + currentH > screenH) {
+                        float newY = Math.max(0f, screenH - currentH);
+                        hud.element().y = newY;
+                        feature.ySignal.set(newY);
+                    }
+                }
+                lastHeight = currentH;
+            }
         });
 
         return hud.element();

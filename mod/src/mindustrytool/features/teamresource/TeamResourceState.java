@@ -137,7 +137,7 @@ public class TeamResourceState {
     public boolean update() {
         boolean changed = false;
 
-        if (selectedTeam == null || !selectedTeam.active()) {
+        if (selectedTeam == null || (Vars.state != null && !selectedTeam.active())) {
             if (Vars.player != null && Vars.player.team() != null) {
                 selectedTeam = Vars.player.team();
                 selectedTeamSignal.set(selectedTeam);
