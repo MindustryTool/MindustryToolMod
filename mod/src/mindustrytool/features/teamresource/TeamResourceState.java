@@ -429,9 +429,11 @@ public class TeamResourceState {
         for (HistoryBuffer buffer : itemHistories.values()) {
             buffer.clear();
         }
+        itemHistories.clear();
         for (HistoryBuffer buffer : graphHistories.values()) {
             buffer.clear();
         }
+        graphHistories.clear();
         totalPowerHistory.clear();
     }
 

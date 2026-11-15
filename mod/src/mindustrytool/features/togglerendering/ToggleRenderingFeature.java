@@ -120,14 +120,16 @@ public class ToggleRenderingFeature extends Feature {
         }
 
         toHide.clear();
-        Groups.draw.each(entity -> {
+        int drawSize = Groups.draw.size();
+        for (int i = 0; i < drawSize; i++) {
+            Object entity = Groups.draw.index(i);
             if (entity instanceof Unit) {
                 Unit unit = (Unit) entity;
                 if (shouldHideUnit(unit)) {
                     toHide.add(unit);
                 }
             }
-        });
+        }
 
         for (int i = 0; i < toHide.size; i++) {
             Unit unit = toHide.get(i);
@@ -135,7 +137,9 @@ public class ToggleRenderingFeature extends Feature {
                 int idx = unitDrawIndexField != null ? unitDrawIndexField.getInt(unit) : -1;
                 if (idx != -1) {
                     Groups.draw.removeIndex(unit, idx);
-                    unitDrawIndexField.setInt(unit, -1);
+                    if (unitDrawIndexField != null) {
+                        unitDrawIndexField.setInt(unit, -1);
+                    }
                     hiddenUnits.add(unit);
                 }
             } catch (Exception error) {
@@ -151,7 +155,12 @@ public class ToggleRenderingFeature extends Feature {
                 @SuppressWarnings("unchecked")
                 Seq<Tile> tileview = (Seq<Tile>) tileviewField.get(Vars.renderer.blocks);
                 if (tileview != null && !tileview.isEmpty()) {
-                    tileview.removeAll(tile -> tile.build != null);
+                    for (int i = tileview.size - 1; i >= 0; i--) {
+                        Tile tile = tileview.get(i);
+                        if (tile != null && tile.build != null) {
+                            tileview.remove(i);
+                        }
+                    }
                 }
             } catch (Exception error) {
                 Log.err("ToggleRendering: Failed to update building visibility", error);
