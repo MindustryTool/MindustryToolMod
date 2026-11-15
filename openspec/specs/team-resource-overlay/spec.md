@@ -1,5 +1,8 @@
-## ADDED Requirements
+# team-resource-overlay Specification
 
+## Purpose
+TBD - created by archiving change redesign-team-resources. Update Purpose after archive.
+## Requirements
 ### Requirement: Minimalist Flow-Wrap Resource Display
 The Team Resource overlay SHALL display core item indicators in a flow-wrapped layout without individual card backgrounds, borders, or excessive padding, allowing items to sit closely adjacent to one another.
 
@@ -80,3 +83,4 @@ The system SHALL maintain a 60-second historical ring buffer sampled at 1Hz for 
 #### Scenario: Zero-allocation steady state sampling
 - **WHEN** the 1Hz history update executes during normal gameplay
 - **THEN** ring buffers record new values without allocating heap objects on the frame or timer thread
+
