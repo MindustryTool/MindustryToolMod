@@ -13,10 +13,17 @@ import mindustry.net.NetConnection;
 public class ProxyProvider implements NetProvider {
     private final NetProvider delegate;
     private final Seq<NetworkProxy.VirtualConnection> virtualConnections;
+    private final Runnable onServerClosed;
 
     public ProxyProvider(NetProvider delegate, Seq<NetworkProxy.VirtualConnection> virtualConnections) {
+        this(delegate, virtualConnections, () -> {});
+    }
+
+    public ProxyProvider(NetProvider delegate, Seq<NetworkProxy.VirtualConnection> virtualConnections,
+            Runnable onServerClosed) {
         this.delegate = delegate;
         this.virtualConnections = virtualConnections;
+        this.onServerClosed = onServerClosed;
     }
 
     public NetProvider getDelegate() {
@@ -113,5 +120,6 @@ public class ProxyProvider implements NetProvider {
     @Override
     public void closeServer() {
         delegate.closeServer();
+        onServerClosed.run();
     }
 }

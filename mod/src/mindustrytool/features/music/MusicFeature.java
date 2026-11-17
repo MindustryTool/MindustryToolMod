@@ -79,6 +79,9 @@ public class MusicFeature extends Feature {
         }
 
         Timer.schedule(() -> {
+            if (!isEnabled()) {
+                return;
+            }
             currentMusic.set(Vars.control.sound.getCurrent());
 
             boolean inMenu = Vars.state.isMenu();

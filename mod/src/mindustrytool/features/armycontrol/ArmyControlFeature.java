@@ -123,16 +123,17 @@ public class ArmyControlFeature extends Feature {
         });
 
         Events.run(Trigger.update, () -> {
-            if (isEnabled() && Vars.state != null && Vars.state.isGame() && !Vars.mobile) {
+            if (!isEnabled()) {
+                return;
+            }
+            if (Vars.state != null && Vars.state.isGame() && !Vars.mobile) {
                 checkControlGroupShortcuts();
             }
             if (++pollTicks < SELECTION_POLL_INTERVAL) {
                 return;
             }
             pollTicks = 0;
-            if (isEnabled()) {
-                refreshActiveSelection();
-            }
+            refreshActiveSelection();
         });
     }
 

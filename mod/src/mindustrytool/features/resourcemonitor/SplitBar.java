@@ -30,7 +30,6 @@ public class SplitBar extends Element {
     private final Mode mode;
     private final float fontScale;
     private final @Nullable Floatp scaleSupplier;
-    private final GlyphLayout layout = new GlyphLayout();
     private final ObjectFloatMap<PowerGraph> smoothFractions = new ObjectFloatMap<>();
     private final ObjectFloatMap<PowerGraph> smoothWeights = new ObjectFloatMap<>();
     private final ObjectMap<PowerGraph, SectionTextEntry> sectionTextCache = new ObjectMap<>();
@@ -39,7 +38,9 @@ public class SplitBar extends Element {
     private static final class SectionTextEntry {
         long val = Long.MIN_VALUE;
         boolean positive = false;
+        float lastScale = -1f;
         String text = "";
+        final GlyphLayout layout = new GlyphLayout();
     }
 
     public SplitBar(Seq<PowerGraph> graphs, Mode mode, float fontScale) {
@@ -151,10 +152,10 @@ public class SplitBar extends Element {
 
         float originalScaleX = font != null ? font.getScaleX() : 1f;
         float originalScaleY = font != null ? font.getScaleY() : 1f;
+        float currentScale = scale();
 
         try {
             if (font != null) {
-                float currentScale = scale();
                 font.getData().setScale(originalScaleX * currentScale * 0.8f, originalScaleY * currentScale * 0.8f);
             }
 
@@ -186,15 +187,11 @@ public class SplitBar extends Element {
                 }
 
                 if (font != null) {
-                    String text = getSectionText(graph);
-                    if (!text.isEmpty()) {
-                        layout.setText(font, text);
-
-                        if (layout.width < sectionWidth - 4f) {
-                            font.setColor(1f, 1f, 1f, alpha);
-                            font.draw(text, currentX + sectionWidth / 2f - layout.width / 2f,
-                                    y + height / 2f + layout.height / 2f);
-                        }
+                    SectionTextEntry entry = getSectionEntry(graph, font, currentScale);
+                    if (!entry.text.isEmpty() && entry.layout.width < sectionWidth - 4f) {
+                        font.setColor(1f, 1f, 1f, alpha);
+                        font.draw(entry.text, currentX + sectionWidth / 2f - entry.layout.width / 2f,
+                                y + height / 2f + entry.layout.height / 2f);
                     }
                 }
 
@@ -221,12 +218,13 @@ public class SplitBar extends Element {
                 : (graph.getLastCapacity() <= 0f ? 0f : graph.getLastPowerStored() / graph.getLastCapacity());
     }
 
-    private String getSectionText(PowerGraph graph) {
+    private SectionTextEntry getSectionEntry(PowerGraph graph, Font font, float currentScale) {
         SectionTextEntry entry = sectionTextCache.get(graph);
         if (entry == null) {
             entry = new SectionTextEntry();
             sectionTextCache.put(graph, entry);
         }
+        boolean textChanged = false;
         if (mode == Mode.SATISFACTION) {
             float balance = graph.getPowerBalance();
             long val = (long) (balance * 60f);
@@ -235,14 +233,20 @@ public class SplitBar extends Element {
                 entry.val = val;
                 entry.positive = pos;
                 entry.text = (pos ? "+" : "") + UI.formatAmount(val);
+                textChanged = true;
             }
-            return entry.text;
+        } else {
+            long val = (long) graph.getLastPowerStored();
+            if (entry.val != val || entry.text.isEmpty()) {
+                entry.val = val;
+                entry.text = UI.formatAmount(val);
+                textChanged = true;
+            }
         }
-        long val = (long) graph.getLastPowerStored();
-        if (entry.val != val || entry.text.isEmpty()) {
-            entry.val = val;
-            entry.text = UI.formatAmount(val);
+        if (textChanged || Math.abs(entry.lastScale - currentScale) > 0.001f) {
+            entry.lastScale = currentScale;
+            entry.layout.setText(font, entry.text);
         }
-        return entry.text;
+        return entry;
     }
 }

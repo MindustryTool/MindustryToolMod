@@ -90,6 +90,9 @@ public class AutoplayFeature extends Feature {
     private @Nullable AutoplayHudView hudView;
     private boolean quickAccessHooked = false;
 
+    private int cachedCooldownTenths = -1;
+    private String cachedCooldownLabel = null;
+
     public AutoplayFeature() {
         super(FeatureMetadata.builder()
                 .id("autoplay")
@@ -480,13 +483,20 @@ public class AutoplayFeature extends Feature {
         if (currentTask instanceof FactorySupplyTask) {
             float cooldown = ((FactorySupplyTask) currentTask).cooldownSeconds();
             if (cooldown > 0.05f && Fonts.outline != null) {
-
-                String label = ((int) Math.round(cooldown * 10f)) / 10f + "s";
+                int tenths = (int) Math.round(cooldown * 10f);
+                if (tenths != cachedCooldownTenths || cachedCooldownLabel == null) {
+                    cachedCooldownTenths = tenths;
+                    cachedCooldownLabel = (tenths / 10f) + "s";
+                }
+                String label = cachedCooldownLabel;
                 Draw.z(Layer.overlayUI);
                 Fonts.outline.draw(label,
                         unit.x, unit.y + unit.hitSize * 2f + 10f, Pal.accent, 0.25f, false, Align.center);
                 Draw.reset();
             }
+        } else {
+            cachedCooldownTenths = -1;
+            cachedCooldownLabel = null;
         }
 
         Vec2 targetPos = currentTask.getTargetPos();

@@ -97,6 +97,10 @@ public class BlockStatsDisplayFeature extends Feature {
     private float frameOpacity;
     private float frameScale;
 
+    private float cachedZoomThreshold = 0.5f;
+    private float cachedOpacity = 1f;
+    private float cachedScale = 1f;
+
     public BlockStatsDisplayFeature() {
         super(FeatureMetadata.builder()
                 .id("blockstats-display")
@@ -113,6 +117,10 @@ public class BlockStatsDisplayFeature extends Feature {
         zoomThresholdConfig = config.floatValue("zoom-threshold", 0.5f);
         opacityConfig = config.floatValue("opacity", 1f);
         scaleConfig = config.floatValue("scale", 1f);
+
+        Effect.of(zoomThresholdConfig.signal(), v -> cachedZoomThreshold = v != null ? v : 0.5f);
+        Effect.of(opacityConfig.signal(), v -> cachedOpacity = v != null ? v : 1f);
+        Effect.of(scaleConfig.signal(), v -> cachedScale = v != null ? v : 1f);
 
         bindToggle("blockstatstoggle", KeyCode.unset);
         bindDialog("blockstatssettings", KeyCode.unset, getSettingDialog(), false);
@@ -274,13 +282,9 @@ public class BlockStatsDisplayFeature extends Feature {
             return;
         }
 
-        Float zoomThreshold = zoomThresholdConfig.signal().peek();
-        Float opacity = opacityConfig.signal().peek();
-        Float scale = scaleConfig.signal().peek();
-
-        float threshold = zoomThreshold != null ? zoomThreshold : 0.5f;
-        frameOpacity = opacity != null ? opacity : 1f;
-        frameScale = ModSettings.effectiveScale(scale != null ? scale : 1f);
+        float threshold = cachedZoomThreshold;
+        frameOpacity = cachedOpacity;
+        frameScale = ModSettings.effectiveScale(cachedScale);
 
         if (frameOpacity <= 0.01f) {
             return;

@@ -383,6 +383,7 @@ public class VisualizerFeature extends Feature {
             }
         }
         bridgeFlowStates.clear();
+        statePool.clear();
     }
 
     @Override

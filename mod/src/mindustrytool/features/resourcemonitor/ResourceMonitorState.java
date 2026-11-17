@@ -611,10 +611,12 @@ public class ResourceMonitorState {
         }
 
         tempGraphSeq.clear();
-        for (PowerGraph graph : tempPowerGraphs) {
-            tempGraphSeq.add(graph);
+        if (tempPowerGraphs.size > 0) {
+            for (PowerGraph graph : tempPowerGraphs) {
+                tempGraphSeq.add(graph);
+            }
+            tempGraphSeq.sort(GRAPH_COMPARATOR);
         }
-        tempGraphSeq.sort(GRAPH_COMPARATOR);
 
         if (!tempGraphSeq.equals(teamGraphs)) {
             teamGraphs.set(new Seq<>(tempGraphSeq));
